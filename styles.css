@@ -1118,7 +1118,79 @@
   color: var(--text-muted);
   font-style: italic;
   text-align: center;
-  background: var(--background-secondary-alt);
+}
+
+/* ===========================================
+   Task Sections (Mini Objectives)
+   =========================================== */
+.qb-card-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-xs);
+  margin-top: var(--qb-spacing-xs);
+}
+
+.qb-section {
+  background: var(--background-modifier-hover);
+  border-radius: var(--qb-radius-sm);
+  overflow: hidden;
+}
+
+.qb-section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.15s ease;
+}
+
+.qb-section-header:hover {
+  background: var(--background-modifier-border);
+}
+
+.qb-section-header.complete {
+  opacity: 0.7;
+}
+
+.qb-section-toggle {
+  width: 12px;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.qb-section-icon {
+  font-size: 0.85rem;
+}
+
+.qb-section-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qb-section-badge {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--background-primary);
+  padding: 2px 6px;
+  border-radius: var(--qb-radius-sm);
+}
+
+.qb-section-badge.complete {
+  background: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+}
+
+.qb-section-tasks {
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 /* ===========================================
@@ -1370,15 +1442,32 @@
 /* ===========================================
    Focused Sidebar View
    =========================================== */
+
+/* Target the Obsidian view container directly */
+.workspace-leaf-content[data-type="quest-sidebar"] {
+  overflow: hidden !important;
+}
+
+.workspace-leaf-content[data-type="quest-sidebar"]>.view-content {
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
 .qb-sidebar-container {
-  height: 100%;
-  overflow: auto;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .qb-sidebar-quests {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1 1 0;
+  min-height: 0 !important;
+  overflow: hidden;
+  position: relative;
 }
 
 /* Tab Navigation */
@@ -1389,6 +1478,7 @@
   padding: var(--qb-spacing-sm);
   background: var(--background-secondary);
   border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
 }
 
 .qb-sb-tab {
@@ -1424,13 +1514,36 @@
   font-weight: 600;
 }
 
+/* Content wrapper - takes remaining space after tabs (~48px for tabs) */
+.qb-sb-content-wrapper {
+  height: calc(100% - 48px);
+  overflow: hidden;
+}
+
 .qb-sb-content {
-  flex: 1;
-  overflow-y: auto;
+  height: 100%;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   padding: var(--qb-spacing-sm);
-  display: flex;
-  flex-direction: column;
-  gap: var(--qb-spacing-sm);
+}
+
+/* Force visible scrollbar */
+.qb-sb-content::-webkit-scrollbar {
+  width: 8px;
+  display: block !important;
+}
+
+.qb-sb-content::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+}
+
+.qb-sb-content::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+}
+
+.qb-sb-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 .qb-sb-title {

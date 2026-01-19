@@ -14,11 +14,12 @@ import { Quest, isAIGeneratedQuest, isManualQuest } from '../models/Quest';
 import { useQuestStore } from '../store/questStore';
 import { useCharacterStore } from '../store/characterStore';
 import { loadAllQuests, watchQuestFolder, saveManualQuest, saveAIQuest } from '../services/QuestService';
-import { readTasksFromFile, getTaskCompletion, TaskCompletion, Task, toggleTaskInFile } from '../services/TaskFileService';
+import { readTasksWithSections, getTaskCompletion, TaskCompletion, TaskSection, toggleTaskInFile } from '../services/TaskFileService';
 import { getXPProgress } from '../services/XPSystem';
 import { QuestCard } from './QuestCard';
 import { CLASS_INFO } from '../models/Character';
 import { useXPAward } from '../hooks/useXPAward';
+import { useTaskSectionsStore } from '../store/taskSectionsStore';
 
 interface FullKanbanProps {
     plugin: QuestBoardPlugin;
@@ -40,9 +41,11 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     const character = useCharacterStore((state) => state.character);
     const setCharacter = useCharacterStore((state) => state.setCharacter);
 
-    // Task progress and tasks cache
-    const [taskProgressMap, setTaskProgressMap] = useState<Record<string, TaskCompletion>>({});
-    const [tasksMap, setTasksMap] = useState<Record<string, Task[]>>({});
+    // Task sections and progress from shared store
+    const sectionsMap = useTaskSectionsStore((state) => state.sectionsMap);
+    const taskProgressMap = useTaskSectionsStore((state) => state.progressMap);
+    const setSections = useTaskSectionsStore((state) => state.setSections);
+    const setAllSections = useTaskSectionsStore((state) => state.setAllSections);
 
     // Collapsed columns state
     const [collapsedColumns, setCollapsedColumns] = useState<Record<QuestStatus, boolean>>({
@@ -106,19 +109,18 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                 setQuests(result.quests);
 
                 const progressMap: Record<string, TaskCompletion> = {};
-                const allTasksMap: Record<string, Task[]> = {};
+                const allSectionsMap: Record<string, TaskSection[]> = {};
 
                 for (const quest of result.quests) {
                     if (isManualQuest(quest) && quest.linkedTaskFile) {
-                        const taskResult = await readTasksFromFile(app.vault, quest.linkedTaskFile);
+                        const taskResult = await readTasksWithSections(app.vault, quest.linkedTaskFile);
                         if (taskResult.success) {
-                            progressMap[quest.questId] = getTaskCompletion(taskResult.tasks);
-                            allTasksMap[quest.questId] = taskResult.tasks;
+                            progressMap[quest.questId] = getTaskCompletion(taskResult.allTasks);
+                            allSectionsMap[quest.questId] = taskResult.sections;
                         }
                     }
                 }
-                setTaskProgressMap(progressMap);
-                setTasksMap(allTasksMap);
+                setAllSections(allSectionsMap, progressMap);
             } catch (error) {
                 setError(`Failed to load quests: ${error}`);
             }
@@ -131,19 +133,18 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
             setQuests(result.quests);
 
             const progressMap: Record<string, TaskCompletion> = {};
-            const allTasksMap: Record<string, Task[]> = {};
+            const allSectionsMap: Record<string, TaskSection[]> = {};
 
             for (const quest of result.quests) {
                 if (isManualQuest(quest) && quest.linkedTaskFile) {
-                    const taskResult = await readTasksFromFile(app.vault, quest.linkedTaskFile);
+                    const taskResult = await readTasksWithSections(app.vault, quest.linkedTaskFile);
                     if (taskResult.success) {
-                        progressMap[quest.questId] = getTaskCompletion(taskResult.tasks);
-                        allTasksMap[quest.questId] = taskResult.tasks;
+                        progressMap[quest.questId] = getTaskCompletion(taskResult.allTasks);
+                        allSectionsMap[quest.questId] = taskResult.sections;
                     }
                 }
             }
-            setTaskProgressMap(progressMap);
-            setTasksMap(allTasksMap);
+            setAllSections(allSectionsMap, progressMap);
         });
 
         return () => unsubscribe();
@@ -157,18 +158,11 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         const success = await toggleTaskInFile(app.vault, quest.linkedTaskFile, lineNumber);
         if (!success) return;
 
-        const taskResult = await readTasksFromFile(app.vault, quest.linkedTaskFile);
+        const taskResult = await readTasksWithSections(app.vault, quest.linkedTaskFile);
         if (taskResult.success) {
-            setTaskProgressMap(prev => ({
-                ...prev,
-                [questId]: getTaskCompletion(taskResult.tasks)
-            }));
-            setTasksMap(prev => ({
-                ...prev,
-                [questId]: taskResult.tasks
-            }));
+            setSections(questId, taskResult.sections, getTaskCompletion(taskResult.allTasks));
         }
-    }, [app.vault]);
+    }, [app.vault, setSections]);
 
     // Handle quest move
     const handleMoveQuest = useCallback(async (questId: string, newStatus: QuestStatus) => {
@@ -319,7 +313,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                                                             onMove={handleMoveQuest}
                                                             onToggleTask={handleToggleTask}
                                                             taskProgress={taskProgressMap[quest.questId]}
-                                                            tasks={tasksMap[quest.questId]}
+                                                            sections={sectionsMap[quest.questId]}
                                                         />
                                                     )}
                                                 </div>
