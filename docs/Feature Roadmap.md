@@ -1,4 +1,4 @@
-# Quest Board - Feature Priority List
+# Quest Board - Feature Roadmap
 
 **Goal:** Complete fully-functional personal plugin in ~2 weeks (1/22 - early Feb)
 
@@ -10,18 +10,18 @@
 
 | Priority | Feature | Details | Notes |
 |----------|---------|---------|-------|
-| 1 | **Plugin Scaffold** | TypeScript (OOP!), esbuild, manifest.json, styles.css, .env.example, .gitignore | Copy from existing plugin, enforce OOP from start |
-| 2 | **Data Models** | Quest, Character, Consumable, QuestStatus, CharacterClass enums, storage utils | OOP structure, separate concerns |
-| 2a | **Zustand Setup** | Install Zustand, create questStore, characterStore, uiStore | State management foundation |
-| 2b | **Security Utils** | envLoader.ts (read .env file), sanitizer.ts (DOMPurify), validator.ts | Security from day 1 |
+| 1 | **Plugin Scaffold** | TypeScript (OOP!), esbuild, manifest.json, styles.css, .gitignore | Copy from existing plugin, enforce OOP from start |
+| 2 | **Data Models** | Quest (with schemaVersion), Character (with spriteVersion), Consumable, QuestStatus, CharacterClass enums | OOP structure, separate concerns |
+| 2a | **Zustand Setup** | Install Zustand, create questStore, characterStore, uiStore (persist UI state only) | State management foundation |
+| 2b | **Security Utils** | safeJson.ts (prototype pollution), sanitizer.ts (DOMPurify), validator.ts (schema validation), pathValidator.ts | Security from day 1 |
 | 3 | **Character Creation Modal** | First launch modal: name, class selection (7 classes), appearance (simple) | Use placeholder visuals (emoji/SVG) |
 | 4 | **Character Storage** | Save character to settings, load on plugin init | Include class, appearance, level, XP |
 | 5 | **Class System** | 7 classes with XP bonuses, starting perks | Calculate bonuses in XPSystem service |
 | 6 | **Task File Linking** | Quests link to markdown files, read tasks, bidirectional confirmation | Test with real task files |
 | 7 | **Quest Storage** | Manual quests (markdown), AI quests (JSON) in `Life/Quest Board/` | Test read/write early |
-| 7a | **Quest Cache** | In-memory cache with file watcher, only reload on modify/delete events | Performance optimization |
-| 7b | **Quest Validator** | Validate all loaded quests, type coercion for common errors | Prevent crashes from manual edits |
-| 8 | **Basic Settings Tab** | Character data, storage location, weekly goal, class bonuses | Editable character appearance |
+| 7a | **Quest Cache** | In-memory cache with debounced file watcher (300ms), only reload on modify/delete events | Performance optimization |
+| 7b | **Quest Validator** | Validate all loaded quests with schema versioning, type coercion for common errors | Prevent crashes from manual edits |
+| 8 | **Basic Settings Tab** | API key field, character data, storage location, weekly goal, class bonuses | Editable character appearance |
 | 9 | **Kanban Board View** | React component with 4 columns, quest cards, character name in header, use Zustand store | No drag-drop yet |
 | 10 | **Quest Card Component** | Display title, category, progress (X/Y tasks), XP earned, use React.memo for performance | Clean, readable design |
 | 11 | **Card Actions** | Move between columns (buttons), edit, delete | Context menu or buttons |
@@ -69,7 +69,7 @@
 | 25 | **Quest Visibility Controls** | Show next 3-4 tasks, hide future tasks with hints | "Choose your adventure" feel |
 | 26 | **Achievement System** | Track and display achievements (placeholder badges) | First Quest, Level 10, etc. |
 | 27 | **Gear Slot UI** | Display empty gear slots on character sheet | Outlines for weapon, armor, accessories |
-| 28 | **Sprite Renderer Service** | SpriteRenderer class with caching (Map<cacheKey, dataURL>) | Only recomposite when character changes |
+| 28 | **Sprite Renderer Service** | SpriteRenderer class with version-based caching (spriteVersion → dataURL) | Only recomposite when character changes |
 | 29 | **React UI Polish** | Smooth animations, transitions, hover effects, React.memo on all cards/columns | Use CSS transitions |
 | 30 | **Theme Compatibility** | Test with popular themes, ensure class-based colors readable | Dark/light mode support |
 | 31 | **Filter/Search** | Filter quests by category, priority, or search text | Add to board header |
@@ -98,17 +98,17 @@
 
 | Priority | Feature | Details | Notes |
 |----------|---------|---------|-------|
-| 32 | **Environment Variable Setup** | Create .env file, load API keys securely, never commit to git | GEMINI_API_KEY from .env |
+| 32 | **API Key in Settings** | Gemini API key stored in plugin settings (standard for AI plugins) | User pastes key in Settings tab |
 | 33 | **Sprite Generation (Veo)** | Generate ~100-120 pixel art sprites using Google Veo | 7 classes × 5 tiers + customization + gear + consumables |
-| 32 | **Sprite Asset Organization** | Bundle sprites with plugin in assets folder | 16×16 or 32×32 px PNG files |
-| 33 | **Sprite Layering System** | Client-side Canvas-based sprite assembly | Base + skin + hair + accessories + gear |
+| 34 | **Sprite Asset Organization** | Bundle sprites with plugin in assets folder | 16×16 or 32×32 px PNG files |
+| 35 | **Sprite Layering System** | Client-side Canvas-based sprite assembly | Base + skin + hair + accessories + gear |
 | 34 | **Replace Placeholder Visuals** | Swap all placeholders with real pixel art | Character sheet, board header, everywhere |
 | 35 | **Level Tier Transitions** | Animate sprite change when crossing tier boundary | Levels 5→6, 12→13, 17→18, 24→25 |
 | 36 | **Gear Visual System** | Display equipped gear on character sprite | Weapon, armor, accessories overlay |
 | 37 | **Dual-Class Unlock** | At Level 25, unlock secondary class selection | Modal, XP bonus, visual blending |
 | 38 | **Dual-Class Visual** | Blend sprites from both classes | Secondary class element added to sprite |
 | 39 | **Class Change System** | Command to change class, costs XP formula | Modal showing cost, confirmation |
-| 40 | **AI Quest Generation (Gemini)** | Modal for quest parameters, API call using env key, sanitize output, preview, save | User edits title/description, masked details |
+| 40 | **AI Quest Generation (Gemini)** | Modal for quest parameters, API call using Settings key, sanitize output with DOMPurify, preview, save | User edits title/description, masked details |
 | 41 | **Quest Generation Preview** | Show generated quest with hints, not full details, sanitize all text fields | "Contains X tasks, Y rewards" |
 | 42 | **Progressive Quest Reveal** | Hide future milestones/tasks until reached | Update as quest progresses |
 | 43 | **Enrage System** | EnrageSystem service: check quests in progress > 7 days, apply XP penalty | Red glow, warning notices |
@@ -129,7 +129,7 @@
 **Deliverable:** Full visual experience with pixel art, AI quest generation, dual-class system, ecosystem integration.
 
 **Test Checklist:**
-- [ ] .env file setup works, API key loads correctly
+- [ ] API key in Settings works correctly
 - [ ] All ~100-120 sprites generated and bundled (includes consumables)
 - [ ] Sprite layering works correctly
 - [ ] Sprite caching prevents redundant composition
@@ -263,4 +263,4 @@
 
 ---
 
-**Last Updated:** 2026-01-15
+**Last Updated:** 2026-01-18

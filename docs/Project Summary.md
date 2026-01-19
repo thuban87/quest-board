@@ -37,9 +37,13 @@ Life/Quest Board/
 │   ├── main/              # Main questline quests
 │   ├── training/          # Training mode (Roman numerals)
 │   └── ai-generated/      # AI-created quests
-├── templates/             # Reusable quest templates
-└── .quest-data/          # Hidden metadata (hide in Obsidian)
+└── templates/             # Reusable quest templates
 ```
+
+**Plugin State Storage:**
+- Character data (XP, level, achievements, inventory) is stored via Obsidian's `loadData()`/`saveData()` API
+- This data lives in `.obsidian/plugins/quest-board/data.json`
+- Quest files remain in visible vault folders for easy editing
 
 **File Formats:**
 - **Manual Quests:** Markdown with frontmatter (easy to read/edit)
@@ -502,6 +506,7 @@ quest-board/
 ### Data Structure (Quest JSON)
 ```json
 {
+  "schemaVersion": 1,
   "id": "unique-id",
   "title": "Apply to Acme Corp - Junior Dev",
   "category": "dev",
@@ -718,4 +723,4 @@ Quest Board transforms mundane tasks into epic quests. Whether you're job huntin
 
 ---
 
-**Links:** [[Idea List]] | [[Feature Priority List]] | [[Session Log]]
+**Links:** [[Idea List]] | [[Feature Roadmap]] | [[Session Log]]

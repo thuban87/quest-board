@@ -569,6 +569,7 @@ Bard:         🟣 🎵
     "secondaryClass": null,
     "level": 8,
     "totalXP": 1250,
+    "spriteVersion": 3,
     "appearance": {
       "skinTone": "light",
       "hairStyle": "short",
@@ -629,4 +630,4 @@ Bard:         🟣 🎵
 
 **Last Updated:** 2026-01-18
 
-**Links:** [[Project Summary]] | [[Feature Priority List]] | [[CLAUDE.md]]
+**Links:** [[Project Summary]] | [[Feature Roadmap]] | [[CLAUDE.md]]
