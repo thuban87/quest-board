@@ -2,19 +2,23 @@
  * Quest Card Component
  * 
  * Displays a single quest in the Kanban board.
- * Shows title, category, progress, and XP reward.
+ * Shows title, category, tasks, progress, and XP reward.
  */
 
-import React, { memo, useEffect, useState } from 'react';
+import React, { memo } from 'react';
 import { Quest, isManualQuest } from '../models/Quest';
 import { QuestStatus, QuestPriority } from '../models/QuestStatus';
 import { CLASS_INFO } from '../models/Character';
 import { useCharacterStore } from '../store/characterStore';
+import { Task } from '../services/TaskFileService';
 
 interface QuestCardProps {
     quest: Quest;
     onMove: (questId: string, newStatus: QuestStatus) => void;
+    onToggleTask: (questId: string, lineNumber: number) => void;
     taskProgress?: { completed: number; total: number };
+    tasks?: Task[];
+    visibleTaskCount?: number;
 }
 
 /**
@@ -49,7 +53,10 @@ const MOVE_LABELS: Record<QuestStatus, string> = {
 const QuestCardComponent: React.FC<QuestCardProps> = ({
     quest,
     onMove,
+    onToggleTask,
     taskProgress,
+    tasks,
+    visibleTaskCount = 4,
 }) => {
     const character = useCharacterStore((state) => state.character);
 
@@ -64,6 +71,16 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
 
     // Get available moves for this quest
     const availableMoves = STATUS_TRANSITIONS[quest.status] || [];
+
+    // Get visible tasks (completed + next N incomplete)
+    const visibleTasks = React.useMemo(() => {
+        if (!tasks) return [];
+        const completed = tasks.filter(t => t.completed);
+        const incomplete = tasks.filter(t => !t.completed);
+        return [...completed, ...incomplete.slice(0, visibleTaskCount)];
+    }, [tasks, visibleTaskCount]);
+
+    const hiddenTaskCount = tasks ? tasks.length - visibleTasks.length : 0;
 
     return (
         <div
@@ -94,6 +111,29 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
                     </span>
                 )}
             </div>
+
+            {/* Task List */}
+            {visibleTasks.length > 0 && (
+                <div className="qb-card-tasks">
+                    {visibleTasks.map((task) => (
+                        <div
+                            key={task.lineNumber}
+                            className={`qb-task-item ${task.completed ? 'completed' : ''}`}
+                            onClick={() => onToggleTask(quest.questId, task.lineNumber)}
+                        >
+                            <span className="qb-task-checkbox">
+                                {task.completed ? '☑' : '☐'}
+                            </span>
+                            <span className="qb-task-text">{task.text}</span>
+                        </div>
+                    ))}
+                    {hiddenTaskCount > 0 && (
+                        <div className="qb-tasks-hidden">
+                            +{hiddenTaskCount} more task{hiddenTaskCount > 1 ? 's' : ''}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Progress */}
             {taskProgress && taskProgress.total > 0 && (
@@ -139,3 +179,4 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
 
 // Memoize for performance
 export const QuestCard = memo(QuestCardComponent);
+

@@ -1057,3 +1057,66 @@
   margin: 0;
   color: var(--text-muted);
 }
+
+/* ===========================================
+   Task List on Quest Cards
+   =========================================== */
+.qb-card-tasks {
+  margin-bottom: var(--qb-spacing-sm);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-sm);
+  overflow: hidden;
+}
+
+.qb-task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background var(--qb-transition-fast);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.qb-task-item:last-child {
+  border-bottom: none;
+}
+
+.qb-task-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-task-item.completed {
+  background: rgba(40, 167, 69, 0.1);
+}
+
+.qb-task-item.completed .qb-task-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.qb-task-checkbox {
+  font-size: 1rem;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.qb-task-item.completed .qb-task-checkbox {
+  color: #28a745;
+}
+
+.qb-task-text {
+  flex: 1;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.qb-tasks-hidden {
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  background: var(--background-secondary-alt);
+}

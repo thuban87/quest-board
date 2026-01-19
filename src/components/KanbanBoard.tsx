@@ -8,11 +8,11 @@
 import React, { useEffect, useCallback } from 'react';
 import { Vault } from 'obsidian';
 import { QuestStatus } from '../models/QuestStatus';
-import { Quest, isAIGeneratedQuest } from '../models/Quest';
-import { useQuestStore, selectQuestsByStatus } from '../store/questStore';
+import { Quest, isAIGeneratedQuest, isManualQuest } from '../models/Quest';
+import { useQuestStore } from '../store/questStore';
 import { useCharacterStore } from '../store/characterStore';
 import { loadAllQuests, watchQuestFolder, saveManualQuest, saveAIQuest } from '../services/QuestService';
-import { readTasksFromFile, getTaskCompletion, TaskCompletion } from '../services/TaskFileService';
+import { readTasksFromFile, getTaskCompletion, TaskCompletion, Task, toggleTaskInFile } from '../services/TaskFileService';
 import { QuestCard } from './QuestCard';
 
 interface KanbanBoardProps {
@@ -37,10 +37,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     const { setQuests, upsertQuest, loading, setLoading, setError } = useQuestStore();
     const character = useCharacterStore((state) => state.character);
 
-    // Task progress cache
+    // Task progress and tasks cache
     const [taskProgressMap, setTaskProgressMap] = React.useState<Record<string, TaskCompletion>>({});
+    const [tasksMap, setTasksMap] = React.useState<Record<string, Task[]>>({});
 
-    // Load quests on mount
+    // Load quests and tasks on mount
     useEffect(() => {
         const loadQuests = async () => {
             setLoading(true);
@@ -52,20 +53,25 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     console.warn('[KanbanBoard] Some quests failed to load:', result.errors);
                 }
 
-                // Load task progress for each quest
+                // Load task progress and tasks for each quest
                 const progressMap: Record<string, TaskCompletion> = {};
+                const allTasksMap: Record<string, Task[]> = {};
+
                 for (const quest of result.quests) {
-                    if ('linkedTaskFile' in quest && quest.linkedTaskFile) {
+                    if (isManualQuest(quest) && quest.linkedTaskFile) {
                         const taskResult = await readTasksFromFile(vault, quest.linkedTaskFile);
                         if (taskResult.success) {
                             progressMap[quest.questId] = getTaskCompletion(taskResult.tasks);
+                            allTasksMap[quest.questId] = taskResult.tasks;
                         }
                     }
                 }
                 setTaskProgressMap(progressMap);
+                setTasksMap(allTasksMap);
             } catch (error) {
                 setError(`Failed to load quests: ${error}`);
             }
+            setLoading(false);
         };
 
         loadQuests();
@@ -74,21 +80,48 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         const unsubscribe = watchQuestFolder(vault, storageFolder, async (result) => {
             setQuests(result.quests);
 
-            // Refresh task progress
+            // Refresh task progress and tasks
             const progressMap: Record<string, TaskCompletion> = {};
+            const allTasksMap: Record<string, Task[]> = {};
+
             for (const quest of result.quests) {
-                if ('linkedTaskFile' in quest && quest.linkedTaskFile) {
+                if (isManualQuest(quest) && quest.linkedTaskFile) {
                     const taskResult = await readTasksFromFile(vault, quest.linkedTaskFile);
                     if (taskResult.success) {
                         progressMap[quest.questId] = getTaskCompletion(taskResult.tasks);
+                        allTasksMap[quest.questId] = taskResult.tasks;
                     }
                 }
             }
             setTaskProgressMap(progressMap);
+            setTasksMap(allTasksMap);
         });
 
         return () => unsubscribe();
     }, [vault, storageFolder, setQuests, setLoading, setError]);
+
+    // Handle task toggle
+    const handleToggleTask = useCallback(async (questId: string, lineNumber: number) => {
+        const quest = useQuestStore.getState().quests.get(questId);
+        if (!quest || !isManualQuest(quest) || !quest.linkedTaskFile) return;
+
+        // Toggle the task in the file
+        const success = await toggleTaskInFile(vault, quest.linkedTaskFile, lineNumber);
+        if (!success) return;
+
+        // Reload tasks for this quest
+        const taskResult = await readTasksFromFile(vault, quest.linkedTaskFile);
+        if (taskResult.success) {
+            setTaskProgressMap(prev => ({
+                ...prev,
+                [questId]: getTaskCompletion(taskResult.tasks)
+            }));
+            setTasksMap(prev => ({
+                ...prev,
+                [questId]: taskResult.tasks
+            }));
+        }
+    }, [vault]);
 
     // Handle quest move
     const handleMoveQuest = useCallback(async (questId: string, newStatus: QuestStatus) => {
@@ -170,7 +203,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                             key={quest.questId}
                                             quest={quest}
                                             onMove={handleMoveQuest}
+                                            onToggleTask={handleToggleTask}
                                             taskProgress={taskProgressMap[quest.questId]}
+                                            tasks={tasksMap[quest.questId]}
                                         />
                                     ))
                                 )}
