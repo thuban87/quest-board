@@ -14,12 +14,13 @@ import { Quest, isAIGeneratedQuest, isManualQuest } from '../models/Quest';
 import { useQuestStore } from '../store/questStore';
 import { useCharacterStore } from '../store/characterStore';
 import { loadAllQuests, watchQuestFolder, saveManualQuest, saveAIQuest } from '../services/QuestService';
-import { readTasksFromFile, getTaskCompletion, TaskCompletion, Task, toggleTaskInFile } from '../services/TaskFileService';
+import { readTasksWithSections, getTaskCompletion, TaskCompletion, TaskSection, toggleTaskInFile } from '../services/TaskFileService';
 import { getXPProgress } from '../services/XPSystem';
 import { QuestCard } from './QuestCard';
 import { CharacterSheet } from './CharacterSheet';
 import { CLASS_INFO } from '../models/Character';
 import { useXPAward } from '../hooks/useXPAward';
+import { useTaskSectionsStore } from '../store/taskSectionsStore';
 
 interface SidebarQuestsProps {
     plugin: QuestBoardPlugin;
@@ -54,9 +55,11 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         [QuestStatus.COMPLETED]: true,
     });
 
-    // Task data
-    const [taskProgressMap, setTaskProgressMap] = useState<Record<string, TaskCompletion>>({});
-    const [tasksMap, setTasksMap] = useState<Record<string, Task[]>>({});
+    // Task sections and progress from shared store
+    const sectionsMap = useTaskSectionsStore((state) => state.sectionsMap);
+    const taskProgressMap = useTaskSectionsStore((state) => state.progressMap);
+    const setSections = useTaskSectionsStore((state) => state.setSections);
+    const setAllSections = useTaskSectionsStore((state) => state.setAllSections);
 
     // Save character callback
     const handleSaveCharacter = useCallback(async () => {
@@ -97,19 +100,18 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                 setQuests(result.quests);
 
                 const progressMap: Record<string, TaskCompletion> = {};
-                const allTasksMap: Record<string, Task[]> = {};
+                const allSectionsMap: Record<string, TaskSection[]> = {};
 
                 for (const quest of result.quests) {
                     if (isManualQuest(quest) && quest.linkedTaskFile) {
-                        const taskResult = await readTasksFromFile(app.vault, quest.linkedTaskFile);
+                        const taskResult = await readTasksWithSections(app.vault, quest.linkedTaskFile);
                         if (taskResult.success) {
-                            progressMap[quest.questId] = getTaskCompletion(taskResult.tasks);
-                            allTasksMap[quest.questId] = taskResult.tasks;
+                            progressMap[quest.questId] = getTaskCompletion(taskResult.allTasks);
+                            allSectionsMap[quest.questId] = taskResult.sections;
                         }
                     }
                 }
-                setTaskProgressMap(progressMap);
-                setTasksMap(allTasksMap);
+                setAllSections(allSectionsMap, progressMap);
             } catch (error) {
                 setError(`Failed to load quests: ${error}`);
             }
@@ -122,19 +124,18 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
             setQuests(result.quests);
 
             const progressMap: Record<string, TaskCompletion> = {};
-            const allTasksMap: Record<string, Task[]> = {};
+            const allSectionsMap: Record<string, TaskSection[]> = {};
 
             for (const quest of result.quests) {
                 if (isManualQuest(quest) && quest.linkedTaskFile) {
-                    const taskResult = await readTasksFromFile(app.vault, quest.linkedTaskFile);
+                    const taskResult = await readTasksWithSections(app.vault, quest.linkedTaskFile);
                     if (taskResult.success) {
-                        progressMap[quest.questId] = getTaskCompletion(taskResult.tasks);
-                        allTasksMap[quest.questId] = taskResult.tasks;
+                        progressMap[quest.questId] = getTaskCompletion(taskResult.allTasks);
+                        allSectionsMap[quest.questId] = taskResult.sections;
                     }
                 }
             }
-            setTaskProgressMap(progressMap);
-            setTasksMap(allTasksMap);
+            setAllSections(allSectionsMap, progressMap);
         });
 
         return () => unsubscribe();
@@ -148,18 +149,11 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         const success = await toggleTaskInFile(app.vault, quest.linkedTaskFile, lineNumber);
         if (!success) return;
 
-        const taskResult = await readTasksFromFile(app.vault, quest.linkedTaskFile);
+        const taskResult = await readTasksWithSections(app.vault, quest.linkedTaskFile);
         if (taskResult.success) {
-            setTaskProgressMap(prev => ({
-                ...prev,
-                [questId]: getTaskCompletion(taskResult.tasks)
-            }));
-            setTasksMap(prev => ({
-                ...prev,
-                [questId]: taskResult.tasks
-            }));
+            setSections(questId, taskResult.sections, getTaskCompletion(taskResult.allTasks));
         }
-    }, [app.vault]);
+    }, [app.vault, setSections]);
 
     // Handle quest move
     const handleMoveQuest = useCallback(async (questId: string, newStatus: QuestStatus) => {
@@ -245,53 +239,55 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
             </div>
 
             {/* Content based on current view */}
-            {currentView === 'quests' ? (
-                /* Quest Sections */
-                <div className="qb-sb-content">
-                    {SECTIONS.map(({ status, title, emoji }) => {
-                        const quests = getQuestsForSection(status);
-                        const isCollapsed = collapsed[status];
+            <div className="qb-sb-content-wrapper">
+                {currentView === 'quests' ? (
+                    /* Quest Sections */
+                    <div className="qb-sb-content">
+                        {SECTIONS.map(({ status, title, emoji }) => {
+                            const quests = getQuestsForSection(status);
+                            const isCollapsed = collapsed[status];
 
-                        return (
-                            <div key={status} className="qb-sb-section">
-                                <div
-                                    className="qb-sb-section-header"
-                                    onClick={() => toggleSection(status)}
-                                >
-                                    <span className="qb-sb-collapse-icon">
-                                        {isCollapsed ? '▶' : '▼'}
-                                    </span>
-                                    <span className="qb-sb-section-emoji">{emoji}</span>
-                                    <span className="qb-sb-section-title">{title}</span>
-                                    <span className="qb-sb-section-count">({quests.length})</span>
-                                </div>
-
-                                {!isCollapsed && (
-                                    <div className="qb-sb-section-content">
-                                        {quests.length === 0 ? (
-                                            <div className="qb-sb-empty">No quests</div>
-                                        ) : (
-                                            quests.map((quest) => (
-                                                <QuestCard
-                                                    key={quest.questId}
-                                                    quest={quest}
-                                                    onMove={handleMoveQuest}
-                                                    onToggleTask={handleToggleTask}
-                                                    taskProgress={taskProgressMap[quest.questId]}
-                                                    tasks={tasksMap[quest.questId]}
-                                                />
-                                            ))
-                                        )}
+                            return (
+                                <div key={status} className="qb-sb-section">
+                                    <div
+                                        className="qb-sb-section-header"
+                                        onClick={() => toggleSection(status)}
+                                    >
+                                        <span className="qb-sb-collapse-icon">
+                                            {isCollapsed ? '▶' : '▼'}
+                                        </span>
+                                        <span className="qb-sb-section-emoji">{emoji}</span>
+                                        <span className="qb-sb-section-title">{title}</span>
+                                        <span className="qb-sb-section-count">({quests.length})</span>
                                     </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            ) : (
-                /* Full Character Sheet */
-                <CharacterSheet onBack={() => setCurrentView('quests')} />
-            )}
+
+                                    {!isCollapsed && (
+                                        <div className="qb-sb-section-content">
+                                            {quests.length === 0 ? (
+                                                <div className="qb-sb-empty">No quests</div>
+                                            ) : (
+                                                quests.map((quest) => (
+                                                    <QuestCard
+                                                        key={quest.questId}
+                                                        quest={quest}
+                                                        onMove={handleMoveQuest}
+                                                        onToggleTask={handleToggleTask}
+                                                        taskProgress={taskProgressMap[quest.questId]}
+                                                        sections={sectionsMap[quest.questId]}
+                                                    />
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    /* Full Character Sheet */
+                    <CharacterSheet onBack={() => setCurrentView('quests')} />
+                )}
+            </div>
         </div>
     );
 };

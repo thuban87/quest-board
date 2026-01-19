@@ -2,21 +2,25 @@
  * Quest Card Component
  * 
  * Displays a single quest in the Kanban board.
- * Shows title, category, tasks, progress, and XP reward.
+ * Shows title, category, tasks grouped by sections, progress, and XP reward.
+ * Sections are collapsible "Mini Objectives" with completion badges.
  */
 
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { Quest, isManualQuest } from '../models/Quest';
 import { QuestStatus, QuestPriority } from '../models/QuestStatus';
 import { CLASS_INFO } from '../models/Character';
 import { useCharacterStore } from '../store/characterStore';
-import { Task } from '../services/TaskFileService';
+import { TaskSection, Task } from '../services/TaskFileService';
 
 interface QuestCardProps {
     quest: Quest;
     onMove: (questId: string, newStatus: QuestStatus) => void;
     onToggleTask: (questId: string, lineNumber: number) => void;
     taskProgress?: { completed: number; total: number };
+    /** Sections with grouped tasks (new) */
+    sections?: TaskSection[];
+    /** Flat tasks array (legacy fallback) */
     tasks?: Task[];
     visibleTaskCount?: number;
 }
@@ -55,10 +59,14 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
     onMove,
     onToggleTask,
     taskProgress,
+    sections,
     tasks,
     visibleTaskCount = 4,
 }) => {
     const character = useCharacterStore((state) => state.character);
+
+    // Track which sections are collapsed
+    const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
     // Calculate XP with class bonus indicator
     const baseXP = isManualQuest(quest)
@@ -72,15 +80,106 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
     // Get available moves for this quest
     const availableMoves = STATUS_TRANSITIONS[quest.status] || [];
 
-    // Get visible tasks (completed + next N incomplete)
-    const visibleTasks = React.useMemo(() => {
-        if (!tasks) return [];
-        const completed = tasks.filter(t => t.completed);
-        const incomplete = tasks.filter(t => !t.completed);
-        return [...completed, ...incomplete.slice(0, visibleTaskCount)];
-    }, [tasks, visibleTaskCount]);
+    // Toggle section collapse
+    const toggleSection = (headerText: string) => {
+        setCollapsedSections(prev => {
+            const next = new Set(prev);
+            if (next.has(headerText)) {
+                next.delete(headerText);
+            } else {
+                next.add(headerText);
+            }
+            return next;
+        });
+    };
 
-    const hiddenTaskCount = tasks ? tasks.length - visibleTasks.length : 0;
+    // Render a single task with indentation
+    const renderTask = (task: Task) => (
+        <div
+            key={task.lineNumber}
+            className={`qb-task-item ${task.completed ? 'completed' : ''}`}
+            style={{ marginLeft: task.indentLevel * 16 }}
+            onClick={() => onToggleTask(quest.questId, task.lineNumber)}
+        >
+            <span className="qb-task-checkbox">
+                {task.completed ? '☑' : '☐'}
+            </span>
+            <span className="qb-task-text">{task.text}</span>
+        </div>
+    );
+
+    // Render sections if available
+    const renderSections = () => {
+        if (!sections || sections.length === 0) {
+            // Fallback to flat tasks (legacy)
+            if (tasks && tasks.length > 0) {
+                const incompleteTasks = tasks.filter(t => !t.completed).slice(0, visibleTaskCount);
+                const hiddenCount = tasks.filter(t => !t.completed).length - incompleteTasks.length;
+
+                return (
+                    <div className="qb-card-tasks">
+                        {incompleteTasks.map(renderTask)}
+                        {hiddenCount > 0 && (
+                            <div className="qb-tasks-hidden">
+                                +{hiddenCount} more task{hiddenCount > 1 ? 's' : ''}
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+            return null;
+        }
+
+        return (
+            <div className="qb-card-sections">
+                {sections.map((section) => {
+                    const isCollapsed = collapsedSections.has(section.headerText);
+                    const isComplete = section.completion.completed === section.completion.total;
+                    const hasIncompleteTasks = section.incompleteTasks.length > 0;
+
+                    // Skip sections with no tasks at all
+                    if (section.tasks.length === 0) return null;
+
+                    return (
+                        <div key={section.headerText} className="qb-section">
+                            {/* Section Header - Always show */}
+                            <div
+                                className={`qb-section-header ${isComplete ? 'complete' : ''}`}
+                                onClick={() => toggleSection(section.headerText)}
+                            >
+                                <span className="qb-section-toggle">
+                                    {hasIncompleteTasks ? (isCollapsed ? '▶' : '▼') : ''}
+                                </span>
+                                <span className="qb-section-icon">📋</span>
+                                <span className="qb-section-title">{section.headerText}</span>
+                                <span className={`qb-section-badge ${isComplete ? 'complete' : ''}`}>
+                                    ({section.completion.completed}/{section.completion.total}
+                                    {isComplete && ' ✓'})
+                                </span>
+                            </div>
+
+                            {/* Section Tasks - Only show first N incomplete, hidden when collapsed */}
+                            {!isCollapsed && hasIncompleteTasks && (() => {
+                                const visibleTasks = section.incompleteTasks.slice(0, visibleTaskCount);
+                                const hiddenCount = section.incompleteTasks.length - visibleTasks.length;
+
+                                return (
+                                    <div className="qb-section-tasks">
+                                        {visibleTasks.map(renderTask)}
+                                        {hiddenCount > 0 && (
+                                            <div className="qb-tasks-hidden">
+                                                +{hiddenCount} more task{hiddenCount > 1 ? 's' : ''}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
 
     return (
         <div
@@ -112,28 +211,8 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
                 )}
             </div>
 
-            {/* Task List */}
-            {visibleTasks.length > 0 && (
-                <div className="qb-card-tasks">
-                    {visibleTasks.map((task) => (
-                        <div
-                            key={task.lineNumber}
-                            className={`qb-task-item ${task.completed ? 'completed' : ''}`}
-                            onClick={() => onToggleTask(quest.questId, task.lineNumber)}
-                        >
-                            <span className="qb-task-checkbox">
-                                {task.completed ? '☑' : '☐'}
-                            </span>
-                            <span className="qb-task-text">{task.text}</span>
-                        </div>
-                    ))}
-                    {hiddenTaskCount > 0 && (
-                        <div className="qb-tasks-hidden">
-                            +{hiddenTaskCount} more task{hiddenTaskCount > 1 ? 's' : ''}
-                        </div>
-                    )}
-                </div>
-            )}
+            {/* Sections or Tasks */}
+            {renderSections()}
 
             {/* Progress */}
             {taskProgress && taskProgress.total > 0 && (
@@ -179,4 +258,3 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
 
 // Memoize for performance
 export const QuestCard = memo(QuestCardComponent);
-

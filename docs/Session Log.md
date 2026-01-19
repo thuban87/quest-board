@@ -455,6 +455,48 @@ Step 18 is complete. The Quest Board now has:
 
 ---
 
+## 2026-01-19 - Step 18.5: Section Parsing & Task Display Enhancement
+
+**Focus:** Enhanced task display with section parsing, collapsible mini-objectives, and view synchronization
+
+**Branch:** `feat/adjusting-card-layouts`
+
+**Completed:**
+- ✅ Added `TaskSection` interface and `readTasksWithSections()` to TaskFileService
+- ✅ Parses both `##` and `###` headers as section dividers
+- ✅ Collapsible "Mini Objective" sections on quest cards
+- ✅ Completion badges per section `(5/12)` with green `(5/5 ✓)` for complete
+- ✅ Hide completed tasks (only show incomplete in each section)
+- ✅ Nested task indentation based on `indentLevel`
+- ✅ `visibleTasksPerSection` - Shows first 4 tasks with "+N more" indicator
+- ✅ Created `taskSectionsStore.ts` for shared state between views
+- ✅ Sidebar and Full-Page board now sync when tasks are toggled
+- ✅ Fixed sidebar scrolling with `calc(100% - 48px)`
+
+**Files Changed:**
+- `TaskFileService.ts` - New `TaskSection` type, `readTasksWithSections()`
+- `QuestCard.tsx` - Complete rewrite for section display
+- `FullKanban.tsx` - Use sections, shared store
+- `SidebarQuests.tsx` - Use sections, shared store, content wrapper
+- `taskSectionsStore.ts` - New shared Zustand store
+- `styles.css` - ~100 lines for section and scroll styling
+
+**Testing Notes:**
+- Section parsing works with both `##` and `###` headers
+- Collapsing sections works correctly
+- Task limits per section display "+N more" indicator
+- View sync confirmed working between sidebar and full board
+- Sidebar scroll works after multiple CSS attempts
+
+**Next Steps:**
+- Merge `feat/adjusting-card-layouts` branch
+- Implement Quest Creation Modal (Step 19)
+
+**Hours Worked:** ~2 hours
+**Phase:** 2
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD

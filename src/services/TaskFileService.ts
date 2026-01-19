@@ -46,6 +46,22 @@ export interface TaskCompletion {
 }
 
 /**
+ * A section of tasks grouped under a markdown header (## or ###)
+ */
+export interface TaskSection {
+    /** Section header text (from ## or ### heading) */
+    headerText: string;
+    /** Header level (2 for ##, 3 for ###) */
+    level: number;
+    /** Tasks in this section (all tasks, for XP tracking) */
+    tasks: Task[];
+    /** Incomplete tasks only (for display) */
+    incompleteTasks: Task[];
+    /** Completion stats for this section */
+    completion: TaskCompletion;
+}
+
+/**
  * Regex to match markdown checkboxes
  * Matches: - [ ] task, - [x] task, * [ ] task, * [x] task
  * Also matches numbered lists: 1. [ ] task
@@ -129,6 +145,100 @@ export function getTaskCompletion(tasks: Task[]): TaskCompletion {
         total,
         percentComplete: total > 0 ? Math.round((completed / total) * 100) : 0,
     };
+}
+
+/**
+ * Regex to match markdown headers (## or ###)
+ */
+const HEADER_REGEX = /^(#{2,3})\s+(.+)$/;
+
+/**
+ * Read tasks from a file, grouped by section headers
+ * Parses ## and ### as section dividers
+ */
+export async function readTasksWithSections(
+    vault: Vault,
+    filePath: string
+): Promise<{ success: boolean; sections: TaskSection[]; allTasks: Task[]; error?: string }> {
+    const file = validateLinkedPath(vault, filePath);
+    if (!file) {
+        return {
+            success: false,
+            sections: [],
+            allTasks: [],
+            error: `File not found or invalid path: ${filePath}`,
+        };
+    }
+
+    try {
+        const content = await vault.cachedRead(file);
+        const lines = content.split('\n');
+
+        const sections: TaskSection[] = [];
+        const allTasks: Task[] = [];
+
+        // Start with a "General" section for tasks before any header
+        let currentSection: TaskSection = {
+            headerText: 'General',
+            level: 0,
+            tasks: [],
+            incompleteTasks: [],
+            completion: { completed: 0, total: 0, percentComplete: 0 },
+        };
+
+        lines.forEach((line, index) => {
+            const lineNumber = index + 1;
+
+            // Check for header
+            const headerMatch = line.match(HEADER_REGEX);
+            if (headerMatch) {
+                // Save previous section if it has tasks
+                if (currentSection.tasks.length > 0) {
+                    currentSection.completion = getTaskCompletion(currentSection.tasks);
+                    currentSection.incompleteTasks = currentSection.tasks.filter(t => !t.completed);
+                    sections.push(currentSection);
+                }
+
+                // Start new section
+                const level = headerMatch[1].length; // 2 for ##, 3 for ###
+                currentSection = {
+                    headerText: headerMatch[2].trim(),
+                    level,
+                    tasks: [],
+                    incompleteTasks: [],
+                    completion: { completed: 0, total: 0, percentComplete: 0 },
+                };
+                return;
+            }
+
+            // Check for task
+            const task = parseTaskLine(line, lineNumber);
+            if (task) {
+                currentSection.tasks.push(task);
+                allTasks.push(task);
+            }
+        });
+
+        // Don't forget the last section
+        if (currentSection.tasks.length > 0) {
+            currentSection.completion = getTaskCompletion(currentSection.tasks);
+            currentSection.incompleteTasks = currentSection.tasks.filter(t => !t.completed);
+            sections.push(currentSection);
+        }
+
+        return {
+            success: true,
+            sections,
+            allTasks,
+        };
+    } catch (error) {
+        return {
+            success: false,
+            sections: [],
+            allTasks: [],
+            error: `Failed to read file: ${error}`,
+        };
+    }
 }
 
 /**
