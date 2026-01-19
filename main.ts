@@ -13,6 +13,7 @@ import {
     QuestBoardView,
     QuestSidebarView
 } from './src/views';
+import { CreateQuestModal } from './src/modals/CreateQuestModal';
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
@@ -65,6 +66,18 @@ export default class QuestBoardPlugin extends Plugin {
             callback: () => {
                 // TODO: Open character creation modal
                 console.log('Character creation modal - coming soon');
+            },
+        });
+
+        // Add command to create a new quest
+        this.addCommand({
+            id: 'create-quest',
+            name: 'Create New Quest',
+            callback: () => {
+                new CreateQuestModal(this.app, this, () => {
+                    // Refresh views after quest creation
+                    this.app.workspace.trigger('quest-board:refresh');
+                }).open();
             },
         });
 
