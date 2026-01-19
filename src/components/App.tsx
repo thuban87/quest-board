@@ -14,6 +14,7 @@ import { KanbanBoard } from './KanbanBoard';
 import { CharacterSheet } from './CharacterSheet';
 import { CLASS_INFO } from '../models/Character';
 import { getXPProgress, getLevelUpMessage } from '../services/XPSystem';
+import { useXPAward } from '../hooks/useXPAward';
 
 interface AppProps {
     plugin: QuestBoardPlugin;
@@ -37,6 +38,24 @@ export const App: React.FC<AppProps> = ({ plugin, app }) => {
     // Track level for level-up detection
     const [prevLevel, setPrevLevel] = useState<number | null>(null);
 
+    // Save character to plugin settings
+    const handleSaveCharacter = useCallback(async () => {
+        const currentCharacter = useCharacterStore.getState().character;
+        const currentInventory = useCharacterStore.getState().inventory;
+        const currentAchievements = useCharacterStore.getState().achievements;
+
+        plugin.settings.character = currentCharacter;
+        plugin.settings.inventory = currentInventory;
+        plugin.settings.achievements = currentAchievements;
+        await plugin.saveSettings();
+    }, [plugin]);
+
+    // XP Award hook - watches task files and awards XP
+    useXPAward({
+        vault: app.vault,
+        onSaveCharacter: handleSaveCharacter,
+    });
+
     // Load character from plugin settings on mount
     useEffect(() => {
         if (plugin.settings.character) {
@@ -51,7 +70,7 @@ export const App: React.FC<AppProps> = ({ plugin, app }) => {
         }
     }, [plugin.settings, setCharacter, setInventoryAndAchievements]);
 
-    // Level-up detection
+    // Level-up detection (for manual XP additions, hook handles task completions)
     useEffect(() => {
         if (character && prevLevel !== null && character.level > prevLevel) {
             const message = getLevelUpMessage(character.class, character.level, false);
@@ -61,18 +80,6 @@ export const App: React.FC<AppProps> = ({ plugin, app }) => {
             setPrevLevel(character.level);
         }
     }, [character?.level]);
-
-    // Save character to plugin settings when it changes
-    const handleSaveCharacter = useCallback(async () => {
-        const currentCharacter = useCharacterStore.getState().character;
-        const currentInventory = useCharacterStore.getState().inventory;
-        const currentAchievements = useCharacterStore.getState().achievements;
-
-        plugin.settings.character = currentCharacter;
-        plugin.settings.inventory = currentInventory;
-        plugin.settings.achievements = currentAchievements;
-        await plugin.saveSettings();
-    }, [plugin]);
 
     // If no character exists, show welcome/create character prompt
     if (!character) {
