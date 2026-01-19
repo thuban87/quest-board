@@ -131,16 +131,196 @@ Development log for tracking progress, decisions, and blockers.
 
 ---
 
+## 2026-01-19 - Phase 1 Complete (Steps 4-16)
+
+**Focus:** Core services, Kanban UI, and Character Sheet
+
+### Files Created
+
+**Services (`src/services/`):**
+- `XPSystem.ts` - XP calculation engine
+  - `XP_THRESHOLDS[]` - 30 level thresholds based on age milestones
+  - `TRAINING_XP_THRESHOLDS[]` - 4 training levels at 100 XP each
+  - `calculateLevel(totalXP)` / `calculateTrainingLevel(trainingXP)`
+  - `getXPProgress(totalXP)` - returns 0-1 for progress bar
+  - `categoryMatchesClass()` - checks if quest category grants class bonus
+  - `getClassBonus()` / `getCombinedClassBonus()` - primary + 50% secondary bonus
+  - `calculateXPWithBonus()` - applies class bonus + class-specific perks:
+    - Warrior: +5% XP on completion streaks
+    - Technomancer: +25% XP on multi-day projects
+    - Rogue: +20% XP when completing faster than estimate
+    - Cleric: +5% per day on wellness streaks (caps at 35%)
+  - `checkLevelUp()` - returns old/new level, tier change detection
+  - `getLevelUpMessage()` - class-themed celebration messages
+
+- `TaskFileService.ts` - Markdown task parsing
+  - `Task` interface with lineNumber, text, completed, indentLevel
+  - `TASK_REGEX` - matches `- [ ]`, `- [x]`, `* [ ]`, numbered lists
+  - `readTasksFromFile(vault, path)` - returns TaskFileResult
+  - `getTaskCompletion(tasks)` - completed/total/percentComplete
+  - `getVisibleTasks(tasks, count)` - progressive reveal
+  - `countNewlyCompleted(old, new)` - detects XP-worthy completions
+  - `watchTaskFile(vault, path, callback, debounceMs)` - debounced file watcher
+  - `toggleTaskInFile()` - modifies checkbox in file
+
+- `QuestService.ts` - Quest file management
+  - `QUEST_FOLDERS` - subfolders for main/training/side/ai-generated
+  - `parseQuestFrontmatter()` - YAML parser for quest markdown
+  - `loadMarkdownQuest()` / `loadJsonQuest()` - load single quest
+  - `loadQuestsFromFolder()` / `loadAllQuests()` - batch loading
+  - `ensureQuestFolders()` - creates folder structure
+  - `generateQuestFrontmatter()` - serializes quest to YAML
+  - `saveManualQuest()` / `saveAIQuest()` / `deleteQuestFile()`
+  - `watchQuestFolder()` - debounced folder watcher with create/modify/delete/rename events
+
+- `index.ts` - barrel export for all services
+
+**Components (`src/components/`):**
+- `QuestCard.tsx` (141 lines)
+  - Props: quest, onMove callback, taskProgress
+  - `PRIORITY_COLORS` - maps priority to color
+  - `STATUS_TRANSITIONS` - defines valid moves per status
+  - `MOVE_LABELS` - button labels with emojis
+  - Class bonus indicator (colored left border + badge)
+  - Progress bar with percentage fill
+  - XP display with "+bonus" indicator
+  - Action buttons for valid status transitions
+  - Wrapped in React.memo for performance
+
+- `KanbanBoard.tsx` (185 lines)
+  - Props: vault, storageFolder
+  - `COLUMNS[]` - 4-column config (Available/Active/InProgress/Completed)
+  - Loads quests from QuestService on mount
+  - Maintains `taskProgressMap` for all quests
+  - Sets up folder watcher with cleanup on unmount
+  - `handleMoveQuest()` - updates store immediately, then saves to file
+  - Renders loading state, header with character name + level badge, 4 columns
+
+- `CharacterSheet.tsx` (138 lines)
+  - Props: onBack callback
+  - Back button navigation
+  - Character header with class-colored sprite placeholder (emoji)
+  - XP section with progress bar, current/next threshold, total XP
+  - Class perk display with bonus categories
+  - Stats grid: quests completed, active quests, achievements, total XP
+  - Training mode notice when active
+
+**App.tsx Updates:**
+- Added `ViewMode` type ('board' | 'sheet')
+- Added `currentView` state for tab switching
+- Added `prevLevel` state for level-up detection
+- Level-up effect: shows Obsidian Notice with class-themed message
+- New header with:
+  - Tab buttons (⚔️ Board, [class emoji] Character)
+  - XP bar (100px wide, class-colored fill)
+  - Level display (supports T-X format for training)
+- Conditional rendering of KanbanBoard or CharacterSheet
+
+**CSS Additions (~490 lines total across session):**
+- `.qb-main-header` - flex header with tabs and XP bar
+- `.qb-tab-btn` / `.qb-tab-btn.active` - tab styling
+- `.qb-header-xp` / `.qb-header-xp-bar` / `.qb-header-xp-fill` - XP bar
+- `.qb-character-sheet` - sheet container
+- `.qb-sheet-header` / `.qb-sheet-sprite` / `.qb-sheet-emoji` - character display
+- `.qb-sheet-xp-section` / `.qb-sheet-xp-bar` - larger XP bar
+- `.qb-sheet-perk` / `.qb-perk-bonus` - perk display
+- `.qb-stats-grid` / `.qb-stat-item` / `.qb-stat-value` - stats grid
+- `.qb-training-notice` - yellow-tinted training mode banner
+- `.qb-kanban-board` / `.qb-columns` / `.qb-column` - board layout
+- `.qb-quest-card` / `.qb-card-header` / `.qb-card-actions` - card styling
+- `.qb-progress-bar` / `.qb-progress-fill` - task progress
+- `.qb-class-bonus-badge` - small badge for class bonus
+
+**Example Files (`examples/`):**
+- `sample-quest.md` - Example quest with complete frontmatter
+- `sample-task-file.md` - Example task file with checkboxes
+
+### Design Decisions
+
+1. **Frontmatter parsing:** Simple line-by-line YAML parsing (no full YAML library) - handles quoted strings, comma-separated tags
+2. **Quest type validation:** Only accepts 'main'|'training'|'side' for manual quests to satisfy TypeScript union
+3. **Task progress caching:** Stored in component state, refreshed on folder watcher callback
+4. **Level-up detection:** Uses prevLevel state to detect changes, fires once per level
+5. **View switching:** Simple state toggle, no router needed for MVP
+
+### Testing Performed
+
+- Created character → saved to settings ✅
+- Reload Obsidian → character persists ✅
+- Created quest file with frontmatter → appeared on board ✅
+- Moved quest Available → Active → In Progress → Completed ✅
+- Quest file updated with new status ✅
+- Task file linked → progress bar shows X/Y ✅
+- Tab switching Board ↔ Character works ✅
+- Character Sheet shows correct stats ✅
+- XP bar in header displays correctly ✅
+
+### Git Branches
+
+- `feat/phase-1/steps-4-5` - XPSystem + TaskFileService
+- `feat/phase-1/steps-7-8` - QuestService + examples
+- `feat/phase-1/steps-9-11` - KanbanBoard + QuestCard
+- `feat/phase-1/steps-12-16` - CharacterSheet + App updates
+
+**Hours Worked:** ~2 hours
+**Phase:** 1 (Complete!)
+
+---
+
 ## Next Session Prompt
 
-**Continue Phase 1 (Steps 4-7)**
+**Phase 2: UI Polish & Training Mode (Steps 17-31)**
 
-Character creation complete. Next steps:
-1. **Step 4: Character Storage** - Already done via settings, verify reload behavior
-2. **Step 5: Class System** - XPSystem service with class bonus calculations
-3. **Step 6: Task File Linking** - Read tasks from linked markdown files
-4. **Step 7: Quest Storage** - Load/save quest files from vault folder
-5. **Step 7a/7b: Quest Cache & Validator** - Performance and validation
+You're continuing the Quest Board Obsidian plugin. Phase 1 is complete - the core mechanics work. Now you're adding polish and the training mode feature.
+
+### Current State
+
+**What's working:**
+- Character creation modal with 7 classes, appearance customization
+- Kanban board with 4 columns (Available → Active → In Progress → Completed)
+- Quest cards load from `Life/Quest Board/` vault folder (YAML frontmatter)
+- Tasks read from linked markdown files via `TaskFileService`
+- XP system with class bonuses via `XPSystem` service
+- Character Sheet with stats grid, XP bar, class perk display
+- Tab switching between Board and Character views
+- Level-up detection shows Obsidian Notice
+
+**Key files to know:**
+- `src/services/XPSystem.ts` - class bonuses, level calc, perks
+- `src/services/TaskFileService.ts` - markdown task parsing
+- `src/services/QuestService.ts` - quest loading/saving
+- `src/components/KanbanBoard.tsx` - main board, uses questStore
+- `src/components/QuestCard.tsx` - individual cards, React.memo'd
+- `src/components/CharacterSheet.tsx` - stats and XP display
+- `src/store/characterStore.ts` - has `addXP()` action ready to use
+- `docs/Feature Roadmap.md` - full feature list with priorities
+
+### Phase 2 Priority Order
+
+1. **Step 17: Drag-and-Drop** - Use react-beautiful-dnd or similar. Current move uses buttons in `QuestCard.tsx` → `onMove(questId, newStatus)`. Replace with drag between columns. `KanbanBoard.tsx` has `handleMoveQuest()` callback.
+
+2. **Step 20-21: XP Animations & Level-Up** - Current level-up is just a Notice. Add confetti/modal celebration. XP bar in header (`.qb-header-xp-bar`) needs smooth fill animation. Consider CSS transitions or framer-motion.
+
+3. **Step 24: Training Mode** - Character model already has `isTrainingMode`, `trainingLevel`, `trainingXP`. XPSystem has `calculateTrainingLevel()` and `TRAINING_XP_THRESHOLDS`. Need: graduation modal at Level IV, transition to real game.
+
+4. **Step 28: Sprite Renderer** - Character has `spriteVersion` field for cache invalidation. Create `SpriteRenderer` service that composites layers → data URL. Cache by spriteVersion. Placeholder currently uses class emoji.
+
+### What's NOT wired yet (deferred to this phase)
+- Task completion → XP award (TaskFileService has `countNewlyCompleted()`, characterStore has `addXP()`)
+- Quest completion bonus XP
+- Streak tracking
+
+### Docs to reference
+- `docs/Feature Roadmap.md` - Phase 2 checklist (steps 17-31)
+- `docs/Character Creation & Visual Design.md` - sprite layer specs
+- `docs/Sprite Generation Prompts.md` - Whisk prompts for sprites
+- `CLAUDE.md` - architecture overview, OOP patterns, security requirements
+
+### Branch naming
+Use `feat/phase-2/step-XX` or group related steps like `feat/phase-2/drag-drop`.
+
+### Deploy command
+`npm run deploy` builds and copies to Brad's production vault at `G:\My Drive\IT\Obsidian Vault\My Notebooks\.obsidian\plugins\quest-board\`.
 
 ---
 

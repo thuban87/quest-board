@@ -37,16 +37,16 @@
 - [x] First launch shows character creation modal
 - [x] Can create character with name, class, appearance
 - [x] Character data saves to settings
-- [ ] Can create quest linked to task markdown file
-- [ ] Quest reads tasks from linked file
-- [ ] Quest appears on kanban board
-- [ ] Move quest through all 4 columns
-- [ ] Checking off task in file awards XP (with class bonus if applicable)
-- [ ] XP increases correctly per task + completion bonus
-- [ ] Level updates when XP threshold reached
-- [ ] Character sheet displays name, class, level, XP bar
+- [x] Can create quest linked to task markdown file
+- [x] Quest reads tasks from linked file
+- [x] Quest appears on kanban board
+- [x] Move quest through all 4 columns
+- [ ] Checking off task in file awards XP (with class bonus if applicable) *(Phase 2)*
+- [ ] XP increases correctly per task + completion bonus *(Phase 2)*
+- [ ] Level updates when XP threshold reached *(Phase 2)*
+- [x] Character sheet displays name, class, level, XP bar
 - [x] Placeholder character visual shows (emoji/SVG)
-- [ ] Stats display accurate numbers
+- [x] Stats display accurate numbers
 - [x] Plugin survives Obsidian reload
 - [x] Character data persists across reloads
 
