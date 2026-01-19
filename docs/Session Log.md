@@ -330,6 +330,73 @@ Development log for tracking progress, decisions, and blockers.
 
 ---
 
+## 2026-01-19 - Step 18: UI Redesign - Full-Page Kanban & Focused Sidebar
+
+**Focus:** Redesign Quest Board UI with full-page Kanban view and focused sidebar
+
+### Files Created
+
+**Views (`src/views/`):**
+- `constants.ts` (7 lines) - View type constants
+- `QuestBoardView.tsx` (56 lines) - Full-page ItemView, renders FullKanban
+- `QuestSidebarView.tsx` (55 lines) - Sidebar ItemView, renders SidebarQuests
+- `index.ts` (8 lines) - Barrel export
+
+**Components (`src/components/`):**
+- `FullKanban.tsx` (339 lines) - Full-page board with:
+  - 4 columns (Available, Active, In Progress, Completed)
+  - RPG-themed colored borders
+  - Collapsible columns (thin bar with vertical title)
+  - Collapsible quest cards (shows name + XP when collapsed)
+  - Expanded columns grow to fill space when others collapse
+- `SidebarQuests.tsx` (299 lines) - Focused sidebar with:
+  - Tab navigation: Quests | Character
+  - Collapsible sections (no Completed)
+  - Full CharacterSheet on Character tab
+  - Simplified level display (no "T-" prefix)
+
+### Files Modified
+
+**`main.ts`:**
+- Registers both views with `registerView()`
+- Ribbon icon opens focused sidebar
+- Command: "Open Quest Board (Sidebar)" → right panel
+- Command: "Open Quest Board (Full Page)" → main tab
+
+**`styles.css` (+400 lines):**
+- `.qb-fullpage-*` - Full-page board, header, columns
+- `.qb-fp-column.collapsed` - Thin bar with vertical title
+- `.qb-fp-card-wrapper` - Card with collapse toggle
+- `.qb-fp-card-collapsed` - Minimized card (name + XP)
+- `.qb-sb-tabs` - Tab navigation
+- `.qb-sb-section` - Collapsible quest sections
+
+### Files Removed
+
+- `App.tsx` - Old sidebar container
+- `KanbanBoard.tsx` - Old 4-column sidebar board
+- `QuestBoardView.ts` - Old view file (replaced with .tsx)
+
+### Testing Performed
+
+- Ribbon icon opens focused sidebar ✅
+- Full-page opens via command palette ✅
+- Collapsible columns work (click header) ✅
+- Columns grow when others collapse ✅
+- Collapsible quest cards work (click ▼) ✅
+- Tab navigation switches between Quests/Character ✅
+- Task toggle works in both views ✅
+- XP awards work in both views ✅
+
+### Git Branch
+
+- `feat/phase-1/step-18`
+
+**Hours Worked:** ~1.5 hours
+**Phase:** 2 (Step 18)
+
+---
+
 ## Next Session Prompt
 
 **Phase 2 Continues**

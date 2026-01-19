@@ -58,21 +58,22 @@
 
 | Priority | Feature | Details | Notes |
 |----------|---------|---------|-------|
-| 17 | **Drag-and-Drop** | Enable dragging cards between columns | Use React DnD or similar |
+| 17 | **XP Wiring & Task Display** ✅ | Task completion → XP awards, task checkboxes on cards, class bonuses | `useXPAward` hook, `toggleTaskInFile` |
 | 18 | ~~Enhanced Placeholder Visuals~~ **UI Redesign** ✅ | Full-page Kanban + Focused Sidebar views, collapsible columns/cards | Replaced old App.tsx/KanbanBoard.tsx |
-| 19 | **Character Sheet Layout** | Finalize hybrid layout: character visual left, stats right, gear slots below | Placeholder visual in place |
-| 20 | **XP Progress Bar** | Animated fill bar showing XP toward next level | Satisfying fill animation |
-| 21 | **Level-Up Celebration** | Confetti, modal, XP gain animation on level-up | Class-themed messages |
-| 22 | **Weekly Streak Tracker** | Count consecutive days with quest completions | Display prominently |
-| 23 | **Power-Ups Display** | Show active class perk + other bonuses from settings | "Task Slayer: +5% XP" |
-| 24 | **Training Mode** | Roman numeral levels (I-IV), separate XP pool, graduation to Level 1 | Test mechanics safely |
-| 25 | **Quest Visibility Controls** | Show next 3-4 tasks, hide future tasks with hints | "Choose your adventure" feel |
-| 26 | **Achievement System** | Track and display achievements (placeholder badges) | First Quest, Level 10, etc. |
-| 27 | **Gear Slot UI** | Display empty gear slots on character sheet | Outlines for weapon, armor, accessories |
-| 28 | **Sprite Renderer Service** | SpriteRenderer class with version-based caching (spriteVersion → dataURL) | Only recomposite when character changes |
-| 29 | **React UI Polish** | Smooth animations, transitions, hover effects, React.memo on all cards/columns | Use CSS transitions |
-| 30 | **Theme Compatibility** | Test with popular themes, ensure class-based colors readable | Dark/light mode support |
-| 31 | **Filter/Search** | Filter quests by category, priority, or search text | Add to board header |
+| 19 | **Drag-and-Drop** | Enable dragging cards between columns | Use React DnD or similar |
+| 20 | **Character Sheet Layout** | Finalize hybrid layout: character visual left, stats right, gear slots below | Placeholder visual in place |
+| 21 | **XP Progress Bar** | Animated fill bar showing XP toward next level | Satisfying fill animation |
+| 22 | **Level-Up Celebration** | Confetti, modal, XP gain animation on level-up | Class-themed messages |
+| 23 | **Weekly Streak Tracker** | Count consecutive days with quest completions | Display prominently |
+| 24 | **Power-Ups Display** | Show active class perk + other bonuses from settings | "Task Slayer: +5% XP" |
+| 25 | **Training Mode** | Roman numeral levels (I-IV), separate XP pool, graduation to Level 1 | Test mechanics safely |
+| 26 | **Quest Visibility Controls** | Show next 3-4 tasks, hide future tasks with hints | "Choose your adventure" feel |
+| 27 | **Achievement System** | Track and display achievements (placeholder badges) | First Quest, Level 10, etc. |
+| 28 | **Gear Slot UI** | Display empty gear slots on character sheet | Outlines for weapon, armor, accessories |
+| 29 | **Sprite Renderer Service** | SpriteRenderer class with version-based caching (spriteVersion → dataURL) | Only recomposite when character changes |
+| 30 | **React UI Polish** | Smooth animations, transitions, hover effects, React.memo on all cards/columns | Use CSS transitions |
+| 31 | **Theme Compatibility** | Test with popular themes, ensure class-based colors readable | Dark/light mode support |
+| 32 | **Filter/Search** | Filter quests by category, priority, or search text | Add to board header |
 
 **Deliverable:** Plugin feels polished, rewarding, visually engaging. Training mode works. Placeholder visuals improved.
 
