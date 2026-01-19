@@ -4,19 +4,23 @@
  * Root component that handles routing between Board, Sheet, and Sprint views.
  */
 
-import React, { useCallback, useEffect } from 'react';
-import { App as ObsidianApp } from 'obsidian';
+import React, { useCallback, useEffect, useState } from 'react';
+import { App as ObsidianApp, Notice } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { useCharacterStore } from '../store/characterStore';
 import { useUIStore, selectIsCharacterCreationOpen } from '../store/uiStore';
 import { CharacterCreationModal } from './CharacterCreationModal';
 import { KanbanBoard } from './KanbanBoard';
+import { CharacterSheet } from './CharacterSheet';
 import { CLASS_INFO } from '../models/Character';
+import { getXPProgress, getLevelUpMessage } from '../services/XPSystem';
 
 interface AppProps {
     plugin: QuestBoardPlugin;
     app: ObsidianApp;
 }
+
+type ViewMode = 'board' | 'sheet';
 
 /**
  * Main App component
@@ -27,10 +31,17 @@ export const App: React.FC<AppProps> = ({ plugin, app }) => {
     const openCharacterCreation = useUIStore((state) => state.openCharacterCreation);
     const closeModals = useUIStore((state) => state.closeModals);
 
+    // View state
+    const [currentView, setCurrentView] = useState<ViewMode>('board');
+
+    // Track level for level-up detection
+    const [prevLevel, setPrevLevel] = useState<number | null>(null);
+
     // Load character from plugin settings on mount
     useEffect(() => {
         if (plugin.settings.character) {
             setCharacter(plugin.settings.character);
+            setPrevLevel(plugin.settings.character.level);
         }
         if (plugin.settings.inventory || plugin.settings.achievements) {
             setInventoryAndAchievements(
@@ -39,6 +50,17 @@ export const App: React.FC<AppProps> = ({ plugin, app }) => {
             );
         }
     }, [plugin.settings, setCharacter, setInventoryAndAchievements]);
+
+    // Level-up detection
+    useEffect(() => {
+        if (character && prevLevel !== null && character.level > prevLevel) {
+            const message = getLevelUpMessage(character.class, character.level, false);
+            new Notice(message, 5000);
+        }
+        if (character) {
+            setPrevLevel(character.level);
+        }
+    }, [character?.level]);
 
     // Save character to plugin settings when it changes
     const handleSaveCharacter = useCallback(async () => {
@@ -77,14 +99,61 @@ export const App: React.FC<AppProps> = ({ plugin, app }) => {
         );
     }
 
-    // Character exists, show the Quest Board
+    const classInfo = CLASS_INFO[character.class];
+    const xpProgress = character.isTrainingMode
+        ? (character.trainingXP % 100) / 100
+        : getXPProgress(character.totalXP);
+
+    // Character exists, show the Quest Board or Character Sheet
     return (
         <div className="quest-board-main">
-            {/* Kanban Board */}
-            <KanbanBoard
-                vault={app.vault}
-                storageFolder={plugin.settings.storageFolder}
-            />
+            {/* Header with XP Bar */}
+            <header className="qb-main-header">
+                <div className="qb-header-left">
+                    <button
+                        className={`qb-tab-btn ${currentView === 'board' ? 'active' : ''}`}
+                        onClick={() => setCurrentView('board')}
+                    >
+                        ⚔️ Board
+                    </button>
+                    <button
+                        className={`qb-tab-btn ${currentView === 'sheet' ? 'active' : ''}`}
+                        onClick={() => setCurrentView('sheet')}
+                    >
+                        {classInfo.emoji} Character
+                    </button>
+                </div>
+
+                <div className="qb-header-right">
+                    <div className="qb-header-xp">
+                        <span className="qb-header-level">
+                            Lvl {character.isTrainingMode
+                                ? `T-${character.trainingLevel}`
+                                : character.level}
+                        </span>
+                        <div className="qb-header-xp-bar">
+                            <div
+                                className="qb-header-xp-fill"
+                                style={{
+                                    width: `${xpProgress * 100}%`,
+                                    backgroundColor: classInfo.primaryColor
+                                }}
+                            />
+                        </div>
+                        <span className="qb-header-xp-text">{character.totalXP} XP</span>
+                    </div>
+                </div>
+            </header>
+
+            {/* Content */}
+            {currentView === 'board' ? (
+                <KanbanBoard
+                    vault={app.vault}
+                    storageFolder={plugin.settings.storageFolder}
+                />
+            ) : (
+                <CharacterSheet onBack={() => setCurrentView('board')} />
+            )}
 
             {/* Modals */}
             {isCharacterCreationOpen && (
