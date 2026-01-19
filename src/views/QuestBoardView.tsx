@@ -1,21 +1,18 @@
 /**
- * Quest Board - Main View
+ * QuestBoardView - Full-page ItemView for the Quest Board Kanban
  * 
- * The primary React-based view for the Quest Board plugin.
- * Renders the Kanban board, character sheet, and sprint view.
+ * Uses React for rendering the full-page board UI.
  */
 
 import { ItemView, WorkspaceLeaf } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
-import React from 'react';
+import { QUEST_BOARD_VIEW_TYPE } from './constants';
+import { FullKanban } from '../components/FullKanban';
 import type QuestBoardPlugin from '../../main';
-import { App } from '../components/App';
-
-export const QUEST_BOARD_VIEW_TYPE = 'quest-board-view';
 
 export class QuestBoardView extends ItemView {
-    plugin: QuestBoardPlugin;
     private root: Root | null = null;
+    private plugin: QuestBoardPlugin;
 
     constructor(leaf: WorkspaceLeaf, plugin: QuestBoardPlugin) {
         super(leaf);
@@ -31,26 +28,25 @@ export class QuestBoardView extends ItemView {
     }
 
     getIcon(): string {
-        return 'sword';
+        return 'swords';
     }
 
     async onOpen(): Promise<void> {
         const container = this.containerEl.children[1];
         container.empty();
-        container.addClass('quest-board-container');
+        container.addClass('qb-fullpage-container');
 
-        // Mount React app
-        this.root = createRoot(container);
+        // Create React root and render
+        this.root = createRoot(container as HTMLElement);
         this.root.render(
-            React.createElement(App, {
-                plugin: this.plugin,
-                app: this.app,
-            })
+            <FullKanban
+                plugin={this.plugin}
+                app={this.app}
+            />
         );
     }
 
     async onClose(): Promise<void> {
-        // Cleanup React
         if (this.root) {
             this.root.unmount();
             this.root = null;

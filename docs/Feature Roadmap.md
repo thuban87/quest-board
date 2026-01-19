@@ -59,7 +59,7 @@
 | Priority | Feature | Details | Notes |
 |----------|---------|---------|-------|
 | 17 | **Drag-and-Drop** | Enable dragging cards between columns | Use React DnD or similar |
-| 18 | **Enhanced Placeholder Visuals** | Better SVG character representations, class-colored shapes | Still placeholders, but nicer |
+| 18 | ~~Enhanced Placeholder Visuals~~ **UI Redesign** ✅ | Full-page Kanban + Focused Sidebar views, collapsible columns/cards | Replaced old App.tsx/KanbanBoard.tsx |
 | 19 | **Character Sheet Layout** | Finalize hybrid layout: character visual left, stats right, gear slots below | Placeholder visual in place |
 | 20 | **XP Progress Bar** | Animated fill bar showing XP toward next level | Satisfying fill animation |
 | 21 | **Level-Up Celebration** | Confetti, modal, XP gain animation on level-up | Class-themed messages |
