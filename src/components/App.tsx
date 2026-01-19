@@ -10,6 +10,7 @@ import type QuestBoardPlugin from '../../main';
 import { useCharacterStore } from '../store/characterStore';
 import { useUIStore, selectIsCharacterCreationOpen } from '../store/uiStore';
 import { CharacterCreationModal } from './CharacterCreationModal';
+import { KanbanBoard } from './KanbanBoard';
 import { CLASS_INFO } from '../models/Character';
 
 interface AppProps {
@@ -20,7 +21,7 @@ interface AppProps {
 /**
  * Main App component
  */
-export const App: React.FC<AppProps> = ({ plugin }) => {
+export const App: React.FC<AppProps> = ({ plugin, app }) => {
     const { character, setCharacter, setInventoryAndAchievements } = useCharacterStore();
     const isCharacterCreationOpen = useUIStore(selectIsCharacterCreationOpen);
     const openCharacterCreation = useUIStore((state) => state.openCharacterCreation);
@@ -76,74 +77,14 @@ export const App: React.FC<AppProps> = ({ plugin }) => {
         );
     }
 
-    // Get class info for display
-    const classInfo = CLASS_INFO[character.class];
-
     // Character exists, show the Quest Board
     return (
         <div className="quest-board-main">
-            {/* Header */}
-            <header className="quest-board-header">
-                <h1>⚔️ Quest Board</h1>
-                <div className="character-info">
-                    <span className="character-name">{character.name}</span>
-                    <span className="character-level">
-                        Level {character.isTrainingMode ? character.trainingLevel : character.level} {classInfo.name}
-                        {character.isTrainingMode && ' (Training)'}
-                    </span>
-                </div>
-            </header>
-
-            {/* Kanban Board (placeholder for now) */}
-            <div className="quest-board-kanban">
-                <div className="quest-column">
-                    <div className="quest-column-header">
-                        <span>Available</span>
-                        <span className="quest-column-count">0</span>
-                    </div>
-                    <div className="quest-column-cards">
-                        <div className="quest-board-empty" style={{ minHeight: '100px' }}>
-                            <p>No quests available</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="quest-column">
-                    <div className="quest-column-header">
-                        <span>In Progress</span>
-                        <span className="quest-column-count">0</span>
-                    </div>
-                    <div className="quest-column-cards">
-                        <div className="quest-board-empty" style={{ minHeight: '100px' }}>
-                            <p>No quests in progress</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="quest-column">
-                    <div className="quest-column-header">
-                        <span>Active</span>
-                        <span className="quest-column-count">0</span>
-                    </div>
-                    <div className="quest-column-cards">
-                        <div className="quest-board-empty" style={{ minHeight: '100px' }}>
-                            <p>No active quests</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="quest-column">
-                    <div className="quest-column-header">
-                        <span>Completed</span>
-                        <span className="quest-column-count">0</span>
-                    </div>
-                    <div className="quest-column-cards">
-                        <div className="quest-board-empty" style={{ minHeight: '100px' }}>
-                            <p>No completed quests</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* Kanban Board */}
+            <KanbanBoard
+                vault={app.vault}
+                storageFolder={plugin.settings.storageFolder}
+            />
 
             {/* Modals */}
             {isCharacterCreationOpen && (
