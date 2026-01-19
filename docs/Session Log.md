@@ -267,60 +267,124 @@ Development log for tracking progress, decisions, and blockers.
 
 ---
 
+## 2026-01-19 - Step 17: XP Wiring & Task Display
+
+**Focus:** Wire task completion to XP awards and add task display to quest cards
+
+### Files Created
+
+**Hooks (`src/hooks/`):**
+- `useXPAward.ts` (181 lines) - Task file watching and XP award hook
+  - `UseXPAwardOptions` interface - vault reference, save callback
+  - `TaskSnapshot` - tracks questId, filePath, tasks, completion count
+  - `awardXPForTasks()` - calculates XP with class bonus, detects level-up
+  - `checkTaskFile()` - reads task file, compares to snapshot, awards XP for new completions
+  - File watchers with debounced callbacks (500ms)
+  - Quest completion bonus detection (all tasks done → bonus XP)
+  - Persists character after XP changes via callback
+- `index.ts` - barrel export
+
+### Files Modified
+
+**`QuestCard.tsx`:**
+- Added `tasks?: Task[]` prop for task list
+- Added `onToggleTask: (questId, lineNumber) => void` handler
+- Added `visibleTaskCount` prop (default 4)
+- New `visibleTasks` calculation - shows completed + next N incomplete
+- Renders clickable task list with ☐/☑ checkboxes
+- Strikethrough styling for completed tasks
+- "+N more tasks" indicator for hidden tasks
+
+**`KanbanBoard.tsx`:**
+- Added `tasksMap` state to cache tasks per quest
+- Added `handleToggleTask()` - calls `toggleTaskInFile()`, reloads tasks
+- Passes `tasks` and `onToggleTask` to QuestCard
+- Added `setLoading(false)` after initial load
+
+**`App.tsx`:**
+- Integrated `useXPAward` hook with vault and save callback
+- Moved `handleSaveCharacter` before hook call (dependency order)
+
+**`styles.css` (+63 lines):**
+- `.qb-card-tasks` - container styling
+- `.qb-task-item` - clickable row with hover states
+- `.qb-task-item.completed` - green tint, strikethrough text
+- `.qb-task-checkbox` - checkbox styling
+- `.qb-tasks-hidden` - "+N more" indicator
+
+### Testing Performed
+
+- Click task checkbox → toggles in file ✅
+- XP notification appears → "+X XP for 1 task" ✅
+- Class bonus applies when category matches ✅
+- Quest completion bonus fires when all tasks done ✅
+- XP persists after Obsidian reload ✅
+- Progress bar updates correctly ✅
+
+### Git Branch
+
+- `feat/phase-1/step-17`
+
+**Hours Worked:** ~1 hour
+**Phase:** 1 (Step 17)
+
+---
+
 ## Next Session Prompt
 
-**Phase 2: UI Polish & Training Mode (Steps 17-31)**
+**Phase 2 Continues**
 
-You're continuing the Quest Board Obsidian plugin. Phase 1 is complete - the core mechanics work. Now you're adding polish and the training mode feature.
+Step 18 is complete. The Quest Board now has:
+- **Full-page Kanban** - Opens as a main tab with 4 columns
+- **Focused Sidebar** - Opens in right panel with collapsible sections
 
-### Current State
+### What's Working
 
-**What's working:**
-- Character creation modal with 7 classes, appearance customization
-- Kanban board with 4 columns (Available → Active → In Progress → Completed)
-- Quest cards load from `Life/Quest Board/` vault folder (YAML frontmatter)
-- Tasks read from linked markdown files via `TaskFileService`
-- XP system with class bonuses via `XPSystem` service
-- Character Sheet with stats grid, XP bar, class perk display
-- Tab switching between Board and Character views
-- Level-up detection shows Obsidian Notice
+**Full-Page Kanban (`Ctrl+P` → "Open Quest Board (Full Page)"):**
+- 4 columns with RPG-themed colored borders
+- Collapsible columns (click header → thin bar with vertical title)
+- Collapsible quest cards (click ▼ → shows just name + XP)
+- Expanded columns grow to fill space when others collapse
+- Task checkboxes and XP awards work
 
-**Key files to know:**
-- `src/services/XPSystem.ts` - class bonuses, level calc, perks
-- `src/services/TaskFileService.ts` - markdown task parsing
-- `src/services/QuestService.ts` - quest loading/saving
-- `src/components/KanbanBoard.tsx` - main board, uses questStore
-- `src/components/QuestCard.tsx` - individual cards, React.memo'd
-- `src/components/CharacterSheet.tsx` - stats and XP display
-- `src/store/characterStore.ts` - has `addXP()` action ready to use
-- `docs/Feature Roadmap.md` - full feature list with priorities
+**Focused Sidebar (ribbon icon or `Ctrl+P` → "Open Quest Board (Sidebar)"):**
+- Tab navigation: Quests | Character
+- Collapsible sections: Available, Active, In Progress (no Completed)
+- Full CharacterSheet component on Character tab
+- Simplified level display (no "T-" prefix)
+
+### Key Files
+
+**Views (`src/views/`):**
+- `QuestBoardView.tsx` - Full-page ItemView
+- `QuestSidebarView.tsx` - Sidebar ItemView
+- `constants.ts` - View type constants
+- `index.ts` - Barrel export
+
+**Components (`src/components/`):**
+- `FullKanban.tsx` - Full-page board with collapsible columns/cards
+- `SidebarQuests.tsx` - Focused sidebar with tabs and collapsible sections
+- `QuestCard.tsx` - Quest card (shared by both views)
+- `CharacterSheet.tsx` - Full character display
+
+**Removed:**
+- `App.tsx` - Old sidebar container
+- `KanbanBoard.tsx` - Old 4-column sidebar board
+- `QuestBoardView.ts` - Old view (replaced with .tsx version)
 
 ### Phase 2 Priority Order
 
-1. **Step 17: Drag-and-Drop** - Use react-beautiful-dnd or similar. Current move uses buttons in `QuestCard.tsx` → `onMove(questId, newStatus)`. Replace with drag between columns. `KanbanBoard.tsx` has `handleMoveQuest()` callback.
+1. **Drag-and-Drop** - For moving quests between columns
+2. **XP Animations & Level-Up** - Confetti/modal celebration
+3. **Training Mode** - Graduation at Level IV
+4. **Sprite Renderer** - Layer compositing service
 
-2. **Step 20-21: XP Animations & Level-Up** - Current level-up is just a Notice. Add confetti/modal celebration. XP bar in header (`.qb-header-xp-bar`) needs smooth fill animation. Consider CSS transitions or framer-motion.
+### Docs to Reference
+- `docs/Feature Roadmap.md` - Full feature checklist
+- `CLAUDE.md` - Architecture overview
 
-3. **Step 24: Training Mode** - Character model already has `isTrainingMode`, `trainingLevel`, `trainingXP`. XPSystem has `calculateTrainingLevel()` and `TRAINING_XP_THRESHOLDS`. Need: graduation modal at Level IV, transition to real game.
-
-4. **Step 28: Sprite Renderer** - Character has `spriteVersion` field for cache invalidation. Create `SpriteRenderer` service that composites layers → data URL. Cache by spriteVersion. Placeholder currently uses class emoji.
-
-### What's NOT wired yet (deferred to this phase)
-- Task completion → XP award (TaskFileService has `countNewlyCompleted()`, characterStore has `addXP()`)
-- Quest completion bonus XP
-- Streak tracking
-
-### Docs to reference
-- `docs/Feature Roadmap.md` - Phase 2 checklist (steps 17-31)
-- `docs/Character Creation & Visual Design.md` - sprite layer specs
-- `docs/Sprite Generation Prompts.md` - Whisk prompts for sprites
-- `CLAUDE.md` - architecture overview, OOP patterns, security requirements
-
-### Branch naming
-Use `feat/phase-2/step-XX` or group related steps like `feat/phase-2/drag-drop`.
-
-### Deploy command
-`npm run deploy` builds and copies to Brad's production vault at `G:\My Drive\IT\Obsidian Vault\My Notebooks\.obsidian\plugins\quest-board\`.
+### Deploy
+`npm run deploy`
 
 ---
 
