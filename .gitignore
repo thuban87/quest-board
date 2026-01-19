@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build output
+main.js
+*.js.map
+
+# Environment (though we're using Settings now, good to have)
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+
+# Sync files
+*.ffs_db
+
+# Obsidian
+data.json
