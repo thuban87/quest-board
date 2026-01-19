@@ -61,7 +61,7 @@
 | 17 | **XP Wiring & Task Display** ✅ | Task completion → XP awards, task checkboxes on cards, class bonuses | `useXPAward` hook, `toggleTaskInFile` |
 | 18 | ~~Enhanced Placeholder Visuals~~ **UI Redesign** ✅ | Full-page Kanban + Focused Sidebar views, collapsible columns/cards | Replaced old App.tsx/KanbanBoard.tsx |
 | 18.5 | **Section Parsing & Task Display** ✅ | `##`/`###` as Mini Objectives, collapsible sections, hide completed tasks, visibleTasksPerSection, view sync, sidebar scroll | `taskSectionsStore`, `readTasksWithSections()` |
-| 19 | **Quest Creation Modal** | Modal to create quest files with frontmatter: name, category (autocomplete), priority, linkedTaskFile, XP values, Description/Objectives/Rewards sections | Replaces manual quest file creation |
+| 19 | **Quest Creation Modal** ✅ | Modal to create quest files with frontmatter: name, category (dropdown), priority, linkedTaskFile (Browse), XP values, Description/Objectives/Rewards sections | `CreateQuestModal.ts`, FuzzySuggestModal |
 | 20 | **Drag-and-Drop** | Enable dragging cards between columns | Use React DnD or similar |
 | 21 | **Character Sheet Layout** | Finalize hybrid layout: character visual left, stats right, gear slots below | Placeholder visual in place |
 | 22 | **XP Progress Bar** | Animated fill bar showing XP toward next level | Satisfying fill animation |
