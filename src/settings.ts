@@ -7,53 +7,17 @@
 
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type QuestBoardPlugin from '../main';
+import type { Character } from './models/Character';
+import type { InventoryItem } from './models/Consumable';
 
 /**
- * Character class types
+ * Achievement data structure
  */
-export type CharacterClass =
-    | 'warrior'
-    | 'paladin'
-    | 'technomancer'
-    | 'scholar'
-    | 'rogue'
-    | 'cleric'
-    | 'bard';
-
-/**
- * Character appearance configuration
- */
-export interface CharacterAppearance {
-    skinTone: 'light' | 'medium' | 'tan' | 'dark';
-    hairStyle: 'short' | 'medium' | 'long' | 'bald';
-    hairColor: 'brown' | 'black' | 'blonde' | 'red';
-    accessory: 'none' | 'glasses' | 'hat' | 'headphones';
-    outfitPrimary: string;
-    outfitSecondary: string;
-}
-
-/**
- * Equipped gear item
- */
-export interface EquippedGear {
-    slot: 'weapon' | 'armor' | 'accessory1' | 'accessory2' | 'accessory3';
-    itemId: string;
-}
-
-/**
- * Character data structure
- */
-export interface Character {
+export interface Achievement {
+    id: string;
     name: string;
-    class: CharacterClass;
-    secondaryClass: CharacterClass | null;
-    level: number;
-    totalXP: number;
-    spriteVersion: number;
-    appearance: CharacterAppearance;
-    equippedGear: EquippedGear[];
-    createdDate: string;
-    lastModified: string;
+    description: string;
+    dateUnlocked: string;
 }
 
 /**
@@ -86,16 +50,8 @@ export interface QuestBoardSettings {
     character: Character | null;
 
     // Achievements and inventory (stored here instead of hidden folder)
-    achievements: Array<{
-        id: string;
-        name: string;
-        dateUnlocked: string;
-    }>;
-    inventory: Array<{
-        id: string;
-        name: string;
-        quantity: number;
-    }>;
+    achievements: Achievement[];
+    inventory: InventoryItem[];
 
     // UI state (persisted)
     uiState: UIState;
@@ -116,18 +72,6 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
         activeTab: 'board',
         filters: {},
     },
-};
-
-/**
- * Default character appearance
- */
-export const DEFAULT_APPEARANCE: CharacterAppearance = {
-    skinTone: 'light',
-    hairStyle: 'short',
-    hairColor: 'brown',
-    accessory: 'none',
-    outfitPrimary: '#6f42c1',
-    outfitSecondary: '#ffc107',
 };
 
 /**

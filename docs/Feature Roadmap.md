@@ -34,9 +34,9 @@
 **Deliverable:** Character creation works, quests link to task files, XP system with class bonuses functional, placeholder visuals in place.
 
 **Test Checklist:**
-- [ ] First launch shows character creation modal
-- [ ] Can create character with name, class, appearance
-- [ ] Character data saves to settings
+- [x] First launch shows character creation modal
+- [x] Can create character with name, class, appearance
+- [x] Character data saves to settings
 - [ ] Can create quest linked to task markdown file
 - [ ] Quest reads tasks from linked file
 - [ ] Quest appears on kanban board
@@ -45,10 +45,10 @@
 - [ ] XP increases correctly per task + completion bonus
 - [ ] Level updates when XP threshold reached
 - [ ] Character sheet displays name, class, level, XP bar
-- [ ] Placeholder character visual shows (emoji/SVG)
+- [x] Placeholder character visual shows (emoji/SVG)
 - [ ] Stats display accurate numbers
-- [ ] Plugin survives Obsidian reload
-- [ ] Character data persists across reloads
+- [x] Plugin survives Obsidian reload
+- [x] Character data persists across reloads
 
 ---
 
@@ -263,4 +263,4 @@
 
 ---
 
-**Last Updated:** 2026-01-18
+**Last Updated:** 2026-01-19
