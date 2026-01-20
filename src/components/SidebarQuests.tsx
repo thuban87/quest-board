@@ -21,6 +21,15 @@ import { CharacterSheet } from './CharacterSheet';
 import { CLASS_INFO } from '../models/Character';
 import { useXPAward } from '../hooks/useXPAward';
 import { useTaskSectionsStore } from '../store/taskSectionsStore';
+import {
+    DndContext,
+    DragEndEvent,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 
 interface SidebarQuestsProps {
     plugin: QuestBoardPlugin;
@@ -37,6 +46,33 @@ const SECTIONS: { status: QuestStatus; title: string; emoji: string }[] = [
     { status: QuestStatus.ACTIVE, title: 'Active', emoji: '⚡' },
     { status: QuestStatus.IN_PROGRESS, title: 'In Progress', emoji: '🔨' },
 ];
+
+/**
+ * Droppable section wrapper for sidebar
+ */
+const DroppableSection: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
+    const { setNodeRef, isOver } = useDroppable({ id });
+    return (
+        <div ref={setNodeRef} style={{ opacity: isOver ? 0.8 : 1 }}>
+            {children}
+        </div>
+    );
+};
+
+/**
+ * Draggable card wrapper for sidebar
+ */
+const DraggableSidebarCard: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
+    const style = transform
+        ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.5 : 1 }
+        : undefined;
+    return (
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+            {children}
+        </div>
+    );
+};
 
 export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => {
     const { setQuests, upsertQuest, loading, setLoading, setError } = useQuestStore();
@@ -188,6 +224,23 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         return quests ? Array.from(quests.values()).filter(q => q.status === status) : [];
     };
 
+    // DnD sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: { distance: 8 },
+        })
+    );
+
+    // Handle drag end
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over) return;
+        const questId = active.id as string;
+        const newStatus = over.id as QuestStatus;
+        if (!Object.values(QuestStatus).includes(newStatus)) return;
+        handleMoveQuest(questId, newStatus);
+    }, [handleMoveQuest]);
+
     if (!character) {
         return (
             <div className="qb-sidebar-empty">
@@ -242,50 +295,66 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
             <div className="qb-sb-content-wrapper">
                 {currentView === 'quests' ? (
                     /* Quest Sections */
-                    <div className="qb-sb-content">
-                        {SECTIONS.map(({ status, title, emoji }) => {
-                            const quests = getQuestsForSection(status);
-                            const isCollapsed = collapsed[status];
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <div className="qb-sb-content">
+                            {SECTIONS.map(({ status, title, emoji }) => {
+                                const quests = getQuestsForSection(status);
+                                const isCollapsed = collapsed[status];
 
-                            return (
-                                <div key={status} className="qb-sb-section">
-                                    <div
-                                        className="qb-sb-section-header"
-                                        onClick={() => toggleSection(status)}
-                                    >
-                                        <span className="qb-sb-collapse-icon">
-                                            {isCollapsed ? '▶' : '▼'}
-                                        </span>
-                                        <span className="qb-sb-section-emoji">{emoji}</span>
-                                        <span className="qb-sb-section-title">{title}</span>
-                                        <span className="qb-sb-section-count">({quests.length})</span>
-                                    </div>
-
-                                    {!isCollapsed && (
-                                        <div className="qb-sb-section-content">
-                                            {quests.length === 0 ? (
-                                                <div className="qb-sb-empty">No quests</div>
-                                            ) : (
-                                                quests.map((quest) => (
-                                                    <QuestCard
-                                                        key={quest.questId}
-                                                        quest={quest}
-                                                        onMove={handleMoveQuest}
-                                                        onToggleTask={handleToggleTask}
-                                                        taskProgress={taskProgressMap[quest.questId]}
-                                                        sections={sectionsMap[quest.questId]}
-                                                    />
-                                                ))
-                                            )}
+                                return (
+                                    <div key={status} className="qb-sb-section">
+                                        <div
+                                            className="qb-sb-section-header"
+                                            onClick={() => toggleSection(status)}
+                                        >
+                                            <span className="qb-sb-collapse-icon">
+                                                {isCollapsed ? '▶' : '▼'}
+                                            </span>
+                                            <span className="qb-sb-section-emoji">{emoji}</span>
+                                            <span className="qb-sb-section-title">{title}</span>
+                                            <span className="qb-sb-section-count">({quests.length})</span>
                                         </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
+
+                                        {!isCollapsed && (
+                                            <DroppableSection id={status}>
+                                                <div className="qb-sb-section-content">
+                                                    {quests.length === 0 ? (
+                                                        <div className="qb-sb-empty">No quests</div>
+                                                    ) : (
+                                                        quests.map((quest) => (
+                                                            <DraggableSidebarCard key={quest.questId} id={quest.questId}>
+                                                                <QuestCard
+                                                                    quest={quest}
+                                                                    onMove={handleMoveQuest}
+                                                                    onToggleTask={handleToggleTask}
+                                                                    taskProgress={taskProgressMap[quest.questId]}
+                                                                    sections={sectionsMap[quest.questId]}
+                                                                />
+                                                            </DraggableSidebarCard>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </DroppableSection>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </DndContext>
                 ) : (
                     /* Full Character Sheet */
-                    <CharacterSheet onBack={() => setCurrentView('quests')} />
+                    <CharacterSheet
+                        onBack={() => setCurrentView('quests')}
+                        spriteFolder={plugin.settings.spriteFolder}
+                        spriteResourcePath={(() => {
+                            const spritePath = `${plugin.settings.spriteFolder}/south.png`;
+                            const file = app.vault.getAbstractFileByPath(spritePath);
+                            if (file) {
+                                return app.vault.getResourcePath(file as any);
+                            }
+                            return undefined;
+                        })()}
+                    />
                 )}
             </div>
         </div>

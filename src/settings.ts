@@ -41,6 +41,7 @@ export interface QuestBoardSettings {
 
     // Storage configuration
     storageFolder: string;
+    spriteFolder: string;  // Path to sprite folder (e.g., 'Quest Board/assets/sprites/paladin')
 
     // Game settings
     weeklyGoal: number;
@@ -63,6 +64,7 @@ export interface QuestBoardSettings {
 export const DEFAULT_SETTINGS: QuestBoardSettings = {
     geminiApiKey: '',
     storageFolder: 'Life/Quest Board',
+    spriteFolder: 'Life/Quest Board/assets/sprites/paladin',
     weeklyGoal: 8,
     enableTrainingMode: true,
     character: null,
@@ -121,6 +123,17 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.storageFolder)
                 .onChange(async (value) => {
                     this.plugin.settings.storageFolder = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Sprite Folder')
+            .setDesc('Path to character sprite folder (must contain south.png)')
+            .addText(text => text
+                .setPlaceholder('Life/Quest Board/assets/sprites/paladin')
+                .setValue(this.plugin.settings.spriteFolder)
+                .onChange(async (value) => {
+                    this.plugin.settings.spriteFolder = value;
                     await this.plugin.saveSettings();
                 }));
 
