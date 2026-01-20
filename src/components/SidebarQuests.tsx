@@ -14,7 +14,7 @@ import { Quest, isAIGeneratedQuest, isManualQuest } from '../models/Quest';
 import { useQuestStore } from '../store/questStore';
 import { useCharacterStore } from '../store/characterStore';
 import { loadAllQuests, watchQuestFolder, saveManualQuest, saveAIQuest } from '../services/QuestService';
-import { readTasksWithSections, getTaskCompletion, TaskCompletion, TaskSection, toggleTaskInFile } from '../services/TaskFileService';
+import { readTasksWithSections, readTasksFromMultipleFiles, getTaskCompletion, TaskCompletion, TaskSection, toggleTaskInFile } from '../services/TaskFileService';
 import { getXPProgress, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 import { QuestCard } from './QuestCard';
 import { CharacterSheet } from './CharacterSheet';
@@ -141,7 +141,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
 
                 for (const quest of result.quests) {
                     if (isManualQuest(quest) && quest.linkedTaskFile) {
-                        const taskResult = await readTasksWithSections(app.vault, quest.linkedTaskFile);
+                        const taskResult = await readTasksFromMultipleFiles(app.vault, quest.linkedTaskFile, quest.linkedTaskFiles);
                         if (taskResult.success) {
                             progressMap[quest.questId] = getTaskCompletion(taskResult.allTasks);
                             allSectionsMap[quest.questId] = taskResult.sections;
@@ -165,7 +165,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
 
             for (const quest of result.quests) {
                 if (isManualQuest(quest) && quest.linkedTaskFile) {
-                    const taskResult = await readTasksWithSections(app.vault, quest.linkedTaskFile);
+                    const taskResult = await readTasksFromMultipleFiles(app.vault, quest.linkedTaskFile, quest.linkedTaskFiles);
                     if (taskResult.success) {
                         progressMap[quest.questId] = getTaskCompletion(taskResult.allTasks);
                         allSectionsMap[quest.questId] = taskResult.sections;
@@ -186,7 +186,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         const success = await toggleTaskInFile(app.vault, quest.linkedTaskFile, lineNumber);
         if (!success) return;
 
-        const taskResult = await readTasksWithSections(app.vault, quest.linkedTaskFile);
+        const taskResult = await readTasksFromMultipleFiles(app.vault, quest.linkedTaskFile, quest.linkedTaskFiles);
         if (taskResult.success) {
             setSections(questId, taskResult.sections, getTaskCompletion(taskResult.allTasks));
         }

@@ -15,6 +15,7 @@ import {
 } from './src/views';
 import { CreateQuestModal } from './src/modals/CreateQuestModal';
 import { ApplicationGauntletModal, InterviewArenaModal } from './src/modals/JobHuntModal';
+import { openSmartTemplateModal } from './src/modals/SmartTemplateModal';
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
@@ -82,7 +83,7 @@ export default class QuestBoardPlugin extends Plugin {
             },
         });
 
-        // Add command for Application Gauntlet
+        // Add command for Application Gauntlet (legacy - kept for quick access)
         this.addCommand({
             id: 'create-application-gauntlet',
             name: 'New Application Gauntlet',
@@ -91,12 +92,21 @@ export default class QuestBoardPlugin extends Plugin {
             },
         });
 
-        // Add command for Interview Arena
+        // Add command for Interview Arena (legacy - kept for quick access)
         this.addCommand({
             id: 'create-interview-arena',
             name: 'New Interview Arena',
             callback: () => {
                 new InterviewArenaModal(this.app).open();
+            },
+        });
+
+        // Add unified smart template command
+        this.addCommand({
+            id: 'create-quest-from-template',
+            name: 'Create Quest from Template',
+            callback: () => {
+                openSmartTemplateModal(this.app, this);
             },
         });
 
