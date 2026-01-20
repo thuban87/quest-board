@@ -101,39 +101,39 @@
 
 | Priority | Feature | Details | Notes |
 |----------|---------|---------|-------|
-| 32 | **API Key in Settings** | Gemini API key stored in plugin settings (standard for AI plugins) | User pastes key in Settings tab |
-| 33 | **Sprite Generation (Veo)** | Generate ~100-120 pixel art sprites using Google Veo | 7 classes × 5 tiers + customization + gear + consumables |
-| 34 | **Sprite Asset Organization** | Bundle sprites with plugin in assets folder | 16×16 or 32×32 px PNG files |
-| 35 | **Sprite Layering System** | Client-side Canvas-based sprite assembly | Base + skin + hair + accessories + gear |
-| 34 | **Replace Placeholder Visuals** | Swap all placeholders with real pixel art | Character sheet, board header, everywhere |
-| 35 | **Level Tier Transitions** | Animate sprite change when crossing tier boundary | Levels 5→6, 12→13, 17→18, 24→25 |
-| 36 | **Gear Visual System** | Display equipped gear on character sprite | Weapon, armor, accessories overlay |
-| 37 | **Dual-Class Unlock** | At Level 25, unlock secondary class selection | Modal, XP bonus, visual blending |
-| 38 | **Dual-Class Visual** | Blend sprites from both classes | Secondary class element added to sprite |
-| 39 | **Class Change System** | Command to change class, costs XP formula | Modal showing cost, confirmation |
-| 40 | **AI Quest Generation (Gemini)** | Modal for quest parameters, API call using Settings key, sanitize output with DOMPurify, preview, save | User edits title/description, masked details |
-| 41 | **Quest Generation Preview** | Show generated quest with hints, not full details, sanitize all text fields | "Contains X tasks, Y rewards" |
-| 42 | **Progressive Quest Reveal** | Hide future milestones/tasks until reached | Update as quest progresses |
-| 43 | **Enrage System** | EnrageSystem service: check quests in progress > 7 days, apply XP penalty | Red glow, warning notices |
-| 44 | **Loot System** | LootSystem service: roll for consumables on quest/task complete | Loot drop modal, inventory display |
-| 45 | **Consumable Usage** | Use consumable items (Pomodoro timer, restore streak, skip task, XP boost) | Apply effects to character/quests |
-| 46 | **Tavern View** | TavernView component: cozy rest screen with sitting character sprite | Manual toggle or weekend auto-enable |
-| 47 | **"Take Quest" Button** | Pick random Available quest, open details | Prominent button in header |
-| 48 | **Weekly Sprint View** | Dedicated view showing weekly progress with character sprite | Switch Board/Sheet/Sprint |
-| 49 | **Sprint Progress Bars** | Visual bars per category showing goal vs actual | Class-colored bars |
-| 50 | **Daily Note Integration** | Append completed quests to daily note | Configurable template |
-| 51 | **Chronos Integration** | "Schedule Quest Block" button creates calendar event | Check if Chronos installed |
-| 52 | **Switchboard Integration** | Export "Quest Mode" line configuration | Check if Switchboard installed |
-| 53 | **Export Stats** | Generate formatted text for sharing | Include character name/class |
-| 54 | **Advanced Settings** | Character re-customization, API key management, all other settings | Full control panel |
-| 55 | **Category Management** | Add/edit/delete custom categories with class bonuses | Dynamic system |
-| 56 | **Import/Export** | Export all quests and character data, import from backup | Safety net |
+| 34 | **API Key in Settings** | Gemini API key stored in plugin settings (standard for AI plugins) | User pastes key in Settings tab |
+| 35 | **Sprite Generation (Whisk/Veo)** | Generate ~51 sprites for Paladin class + shared assets | Paladin only (Brad's class) + icon packs for items |
+| 36 | **Sprite Asset Organization** | Bundle sprites with plugin in assets folder | 32×32 px PNG files |
+| 37 | **Sprite Layering System** | Client-side Canvas-based sprite assembly | Base + skin + hair + accessories + gear |
+| 38 | **Replace Placeholder Visuals** | Swap all placeholders with real pixel art | Character sheet, board header, everywhere |
+| 39 | **Level Tier Transitions** | Animate sprite change when crossing tier boundary | Levels 5→6, 12→13, 17→18, 24→25 |
+| 40 | **Gear Visual System** | Display equipped gear on character sprite | Weapon, armor, accessories overlay |
+| 41 | **Dual-Class Unlock** | At Level 25, unlock secondary class selection | Modal, XP bonus, visual blending |
+| 42 | **Dual-Class Visual** | Blend sprites from both classes | Secondary class element added to sprite |
+| 43 | **Class Change System** | Command to change class, costs XP formula | Modal showing cost, confirmation |
+| 44 | **AI Quest Generation (Gemini)** | Modal for quest parameters, API call using Settings key, sanitize output with DOMPurify, preview, save | User edits title/description, masked details |
+| 45 | **Quest Generation Preview** | Show generated quest with hints, not full details, sanitize all text fields | "Contains X tasks, Y rewards" |
+| 46 | **Progressive Quest Reveal** | Hide future milestones/tasks until reached | Update as quest progresses |
+| 47 | **Enrage System** | EnrageSystem service: check quests in progress > 7 days, apply XP penalty | Red glow, warning notices |
+| 48 | **Loot System** | LootSystem service: roll for consumables on quest/task complete | Loot drop modal, inventory display |
+| 49 | **Consumable Usage** | Use consumable items (Pomodoro timer, restore streak, skip task, XP boost) | Apply effects to character/quests |
+| 50 | **Tavern View** | TavernView component: cozy rest screen with sitting character sprite | Manual toggle or weekend auto-enable |
+| 51 | **"Take Quest" Button** | Pick random Available quest, open details | Prominent button in header |
+| 52 | **Weekly Sprint View** | Dedicated view showing weekly progress with character sprite | Switch Board/Sheet/Sprint |
+| 53 | **Sprint Progress Bars** | Visual bars per category showing goal vs actual | Class-colored bars |
+| 54 | **Daily Note Integration** | Append completed quests to daily note | Configurable template |
+| 55 | **Chronos Integration** | "Schedule Quest Block" button creates calendar event | Check if Chronos installed |
+| 56 | **Switchboard Integration** | Export "Quest Mode" line configuration | Check if Switchboard installed |
+| 57 | **Export Stats** | Generate formatted text for sharing | Include character name/class |
+| 58 | **Advanced Settings** | Character re-customization, API key management, all other settings | Full control panel |
+| 59 | **Category Management** | Add/edit/delete custom categories with class bonuses | Dynamic system |
+| 60 | **Import/Export** | Export all quests and character data, import from backup | Safety net |
 
 **Deliverable:** Full visual experience with pixel art, AI quest generation, dual-class system, ecosystem integration.
 
 **Test Checklist:**
 - [ ] API key in Settings works correctly
-- [ ] All ~100-120 sprites generated and bundled (includes consumables)
+- [ ] ~51 sprites generated for Paladin class + shared assets (Whisk/Veo)
 - [ ] Sprite layering works correctly
 - [ ] Sprite caching prevents redundant composition
 - [ ] Character sprite updates correctly with customization changes

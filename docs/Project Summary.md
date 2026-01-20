@@ -1,7 +1,7 @@
 # Quest Board - Project Summary
 
-**Status:** Planning → Development starts 1/22/26
-**Target Completion:** 1/29/26 (All 3 phases)
+**Status:** Active Development (Phase 2 complete, Phase 3 in progress)
+**Development Started:** 2026-01-22
 **Type:** Obsidian Plugin (React-based)
 **Purpose:** Gamified task/project tracker with RPG mechanics for ADHD brains
 **Primary Use:** Personal power tool (public release potential for far future)
@@ -334,14 +334,12 @@ Each class provides **15% XP bonus** to specific quest types and unique starting
 ### Phase 3: AI Integration & Advanced Features
 **Timeline:** 1/27 - 1/29 (2-3 days)
 
-1. **Pixel Art Sprite Generation (Veo)**
-   - Generate character sprites using Google Veo (Gemini Ultra subscription)
-   - 7 classes × 5 level tiers = 35 base sprites (16×16 or 32×32 px)
-   - Customization layers:
-     - 4 hair styles × 4 colors = 16 hair sprites
-     - 4 skin tone overlays
-     - 4 accessory sprites
-   - Total: ~60 small pixel art images
+1. **Pixel Art Sprite Generation (Whisk/Veo)**
+   - Generate Paladin class sprites only (Brad's class)
+   - 5 level tiers × 6 gear slots = ~30 class sprites
+   - Shared assets: body base, skin tones, hair, accessories (~21 sprites)
+   - **Revised total: ~51 sprites** (down from original 100-120 estimate)
+   - Use existing icon packs for additional items as needed
    - Bundle sprites with plugin (no runtime API calls)
 
 2. **Sprite Layering System**

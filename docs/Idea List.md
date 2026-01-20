@@ -146,4 +146,4 @@ Ideas and features that didn't make the MVP cut. These can be evaluated for futu
 
 ---
 
-**Last Updated:** 2026-01-18
+**Last Updated:** 2026-01-20
