@@ -20,6 +20,16 @@ import { QuestCard } from './QuestCard';
 import { CLASS_INFO } from '../models/Character';
 import { useXPAward } from '../hooks/useXPAward';
 import { useTaskSectionsStore } from '../store/taskSectionsStore';
+import {
+    DndContext,
+    DragEndEvent,
+    DragOverlay,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 
 interface FullKanbanProps {
     plugin: QuestBoardPlugin;
@@ -35,6 +45,33 @@ const COLUMNS: { status: QuestStatus; title: string; emoji: string; themeClass: 
     { status: QuestStatus.IN_PROGRESS, title: 'In Progress', emoji: '🔨', themeClass: 'qb-col-progress' },
     { status: QuestStatus.COMPLETED, title: 'Completed', emoji: '✅', themeClass: 'qb-col-completed' },
 ];
+
+/**
+ * Droppable column wrapper
+ */
+const DroppableColumn: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
+    const { setNodeRef, isOver } = useDroppable({ id });
+    return (
+        <div ref={setNodeRef} style={{ opacity: isOver ? 0.8 : 1 }}>
+            {children}
+        </div>
+    );
+};
+
+/**
+ * Draggable card wrapper
+ */
+const DraggableCard: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
+    const style = transform
+        ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.5 : 1 }
+        : undefined;
+    return (
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+            {children}
+        </div>
+    );
+};
 
 export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     const { setQuests, upsertQuest, loading, setLoading, setError } = useQuestStore();
@@ -192,6 +229,29 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         return quests ? Array.from(quests.values()).filter(q => q.status === status) : [];
     };
 
+    // DnD sensors - require slight movement before dragging starts
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        })
+    );
+
+    // Handle drag end - move quest to new column
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over) return;
+
+        const questId = active.id as string;
+        const newStatus = over.id as QuestStatus;
+
+        // Check if valid status
+        if (!Object.values(QuestStatus).includes(newStatus)) return;
+
+        handleMoveQuest(questId, newStatus);
+    }, [handleMoveQuest]);
+
     if (!character) {
         return (
             <div className="qb-fullpage-empty">
@@ -238,95 +298,100 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
             </header>
 
             {/* Columns */}
-            <div className="qb-fullpage-columns">
-                {COLUMNS.map(({ status, title, emoji, themeClass }) => {
-                    const quests = getQuestsForColumn(status);
-                    const isCollapsed = collapsedColumns[status];
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <div className="qb-fullpage-columns">
+                    {COLUMNS.map(({ status, title, emoji, themeClass }) => {
+                        const quests = getQuestsForColumn(status);
+                        const isCollapsed = collapsedColumns[status];
 
-                    return (
-                        <div
-                            key={status}
-                            className={`qb-fp-column ${themeClass} ${isCollapsed ? 'collapsed' : ''}`}
-                        >
-                            {/* Column Header - clickable to toggle */}
+                        return (
                             <div
-                                className="qb-fp-column-header"
-                                onClick={() => toggleColumn(status)}
-                                title={isCollapsed ? 'Click to expand' : 'Click to collapse'}
+                                key={status}
+                                className={`qb-fp-column ${themeClass} ${isCollapsed ? 'collapsed' : ''}`}
                             >
-                                {isCollapsed ? (
-                                    /* Collapsed: Vertical title */
-                                    <div className="qb-fp-col-collapsed">
-                                        <span className="qb-fp-column-emoji">{emoji}</span>
-                                        <span className="qb-fp-col-vertical-title">{title}</span>
-                                        <span className="qb-fp-column-count">{quests.length}</span>
-                                    </div>
-                                ) : (
-                                    /* Expanded: Normal header */
-                                    <>
-                                        <span className="qb-fp-column-emoji">{emoji}</span>
-                                        <span className="qb-fp-column-title">{title}</span>
-                                        <span className="qb-fp-column-count">{quests.length}</span>
-                                    </>
-                                )}
-                            </div>
-
-                            {/* Column Content - hidden when collapsed */}
-                            {!isCollapsed && (
-                                <div className="qb-fp-column-content">
-                                    {quests.length === 0 ? (
-                                        <div className="qb-fp-column-empty">
-                                            No quests
+                                {/* Column Header - clickable to toggle */}
+                                <div
+                                    className="qb-fp-column-header"
+                                    onClick={() => toggleColumn(status)}
+                                    title={isCollapsed ? 'Click to expand' : 'Click to collapse'}
+                                >
+                                    {isCollapsed ? (
+                                        /* Collapsed: Vertical title */
+                                        <div className="qb-fp-col-collapsed">
+                                            <span className="qb-fp-column-emoji">{emoji}</span>
+                                            <span className="qb-fp-col-vertical-title">{title}</span>
+                                            <span className="qb-fp-column-count">{quests.length}</span>
                                         </div>
                                     ) : (
-                                        quests.map((quest) => {
-                                            const isCardCollapsed = collapsedCards.has(quest.questId);
-
-                                            return (
-                                                <div key={quest.questId} className="qb-fp-card-wrapper">
-                                                    {/* Card collapse toggle */}
-                                                    <div
-                                                        className="qb-fp-card-toggle"
-                                                        onClick={() => toggleCard(quest.questId)}
-                                                        title={isCardCollapsed ? 'Expand' : 'Collapse'}
-                                                    >
-                                                        {isCardCollapsed ? '▶' : '▼'}
-                                                    </div>
-
-                                                    {isCardCollapsed ? (
-                                                        /* Collapsed card: just name and XP */
-                                                        <div
-                                                            className="qb-fp-card-collapsed"
-                                                            onClick={() => toggleCard(quest.questId)}
-                                                        >
-                                                            <span className="qb-fp-card-name">{quest.questName}</span>
-                                                            <span className="qb-fp-card-xp">
-                                                                ⭐ {isManualQuest(quest)
-                                                                    ? quest.xpPerTask + quest.completionBonus
-                                                                    : quest.xpTotal} XP
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        /* Expanded card: full QuestCard */
-                                                        <QuestCard
-                                                            quest={quest}
-                                                            onMove={handleMoveQuest}
-                                                            onToggleTask={handleToggleTask}
-                                                            taskProgress={taskProgressMap[quest.questId]}
-                                                            sections={sectionsMap[quest.questId]}
-                                                        />
-                                                    )}
-                                                </div>
-                                            );
-                                        })
+                                        /* Expanded: Normal header */
+                                        <>
+                                            <span className="qb-fp-column-emoji">{emoji}</span>
+                                            <span className="qb-fp-column-title">{title}</span>
+                                            <span className="qb-fp-column-count">{quests.length}</span>
+                                        </>
                                     )}
                                 </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+
+                                {/* Column Content - hidden when collapsed */}
+                                {!isCollapsed && (
+                                    <DroppableColumn id={status}>
+                                        <div className="qb-fp-column-content">
+                                            {quests.length === 0 ? (
+                                                <div className="qb-fp-column-empty">
+                                                    No quests
+                                                </div>
+                                            ) : (
+                                                quests.map((quest) => {
+                                                    const isCardCollapsed = collapsedCards.has(quest.questId);
+
+                                                    return (
+                                                        <DraggableCard key={quest.questId} id={quest.questId}>
+                                                            <div className="qb-fp-card-wrapper">
+                                                                {/* Card collapse toggle */}
+                                                                <div
+                                                                    className="qb-fp-card-toggle"
+                                                                    onClick={() => toggleCard(quest.questId)}
+                                                                    title={isCardCollapsed ? 'Expand' : 'Collapse'}
+                                                                >
+                                                                    {isCardCollapsed ? '▶' : '▼'}
+                                                                </div>
+
+                                                                {isCardCollapsed ? (
+                                                                    /* Collapsed card: just name and XP */
+                                                                    <div
+                                                                        className="qb-fp-card-collapsed"
+                                                                        onClick={() => toggleCard(quest.questId)}
+                                                                    >
+                                                                        <span className="qb-fp-card-name">{quest.questName}</span>
+                                                                        <span className="qb-fp-card-xp">
+                                                                            ⭐ {isManualQuest(quest)
+                                                                                ? quest.xpPerTask + quest.completionBonus
+                                                                                : quest.xpTotal} XP
+                                                                        </span>
+                                                                    </div>
+                                                                ) : (
+                                                                    /* Expanded card: full QuestCard */
+                                                                    <QuestCard
+                                                                        quest={quest}
+                                                                        onMove={handleMoveQuest}
+                                                                        onToggleTask={handleToggleTask}
+                                                                        taskProgress={taskProgressMap[quest.questId]}
+                                                                        sections={sectionsMap[quest.questId]}
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        </DraggableCard>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    </DroppableColumn>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </DndContext>
         </div>
     );
 };
-

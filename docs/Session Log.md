@@ -536,6 +536,46 @@ Step 18 is complete. The Quest Board now has:
 
 ---
 
+## 2026-01-19 - Steps 20-21: Drag-and-Drop & Character Sheet
+
+**Focus:** Enable card dragging between columns, character sheet sprite display
+
+**Branch:** `feat/phase-2/steps-20-21`
+
+**Completed:**
+- ✅ Installed `@dnd-kit/core` and `@dnd-kit/sortable`
+- ✅ Added drag-and-drop to FullKanban (DndContext, DroppableColumn, DraggableCard)
+- ✅ Added drag-and-drop to SidebarQuests (DroppableSection, DraggableSidebarCard)
+- ✅ Dragging cards between columns updates quest status and saves
+- ✅ Added gear slot placeholders to CharacterSheet (6 slots: head, chest, legs, boots, weapon, shield)
+- ✅ Added `spriteFolder` setting for character sprite path
+- ✅ Sprite loading via `vault.getResourcePath()` with emoji fallback
+- ✅ Fixed character sheet scrolling overflow
+
+**Files Changed:**
+- `src/components/FullKanban.tsx` - DnD wrappers and handlers
+- `src/components/SidebarQuests.tsx` - DnD wrappers and sprite resource path
+- `src/components/CharacterSheet.tsx` - Gear slots, sprite display
+- `src/settings.ts` - Added spriteFolder setting
+- `styles.css` - Gear slot and sprite styling
+- `package.json` - Added @dnd-kit dependencies
+
+**Testing Notes:**
+- Drag-and-drop works in both views
+- Sprite displays correctly from vault folder
+- Fallback to class emoji if sprite missing
+
+**Bugs/Issues:**
+- None outstanding
+
+**Next Session Prompt:**
+> Steps 20-21 complete. Next: Step 22 (XP Progress Bar animation) or Step 23 (Level-Up Celebration). Consider building the full-page CharacterSheetView when ready to expand character features.
+
+**Hours Worked:** ~3 hours
+**Phase:** 2
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD

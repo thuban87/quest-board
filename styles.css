@@ -893,6 +893,8 @@
 .qb-character-sheet {
   padding: var(--qb-spacing-lg);
   max-width: 600px;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .qb-back-btn {
@@ -1761,4 +1763,103 @@
   border-radius: var(--qb-radius-sm);
   background: var(--background-primary);
   color: var(--text-normal);
+}
+
+/* ===========================================
+   Character Sheet Sprite & Gear Slots
+   =========================================== */
+.qb-sheet-sprite-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+}
+
+.qb-sheet-sprite {
+  width: 128px;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-secondary);
+  border: 3px solid var(--interactive-accent);
+  border-radius: var(--qb-radius-md);
+  overflow: hidden;
+}
+
+.qb-sprite-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.qb-sprite-shadow {
+  width: 80px;
+  height: 12px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.3) 0%, transparent 70%);
+  margin-top: -4px;
+}
+
+/* Gear Slots */
+.qb-sheet-gear {
+  margin-top: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+}
+
+.qb-sheet-gear h3 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 1rem;
+  color: var(--text-normal);
+}
+
+.qb-gear-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-gear-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--qb-spacing-sm);
+  background: var(--background-primary);
+  border: 2px dashed var(--background-modifier-border);
+  border-radius: var(--qb-radius-sm);
+  cursor: pointer;
+  transition: border-color var(--qb-transition-fast);
+}
+
+.qb-gear-slot:hover {
+  border-color: var(--interactive-accent);
+}
+
+.qb-gear-slot-icon {
+  font-size: 1.5rem;
+  margin-bottom: var(--qb-spacing-xs);
+}
+
+.qb-gear-slot-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.qb-gear-slot-empty {
+  font-size: 0.65rem;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.qb-sprite-placeholder {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.qb-sprite-placeholder.hidden {
+  display: none;
 }

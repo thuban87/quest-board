@@ -62,8 +62,8 @@
 | 18 | ~~Enhanced Placeholder Visuals~~ **UI Redesign** ✅ | Full-page Kanban + Focused Sidebar views, collapsible columns/cards | Replaced old App.tsx/KanbanBoard.tsx |
 | 18.5 | **Section Parsing & Task Display** ✅ | `##`/`###` as Mini Objectives, collapsible sections, hide completed tasks, visibleTasksPerSection, view sync, sidebar scroll | `taskSectionsStore`, `readTasksWithSections()` |
 | 19 | **Quest Creation Modal** ✅ | Modal to create quest files with frontmatter: name, category (dropdown), priority, linkedTaskFile (Browse), XP values, Description/Objectives/Rewards sections | `CreateQuestModal.ts`, FuzzySuggestModal |
-| 20 | **Drag-and-Drop** | Enable dragging cards between columns | Use React DnD or similar |
-| 21 | **Character Sheet Layout** | Finalize hybrid layout: character visual left, stats right, gear slots below | Placeholder visual in place |
+| 20 | **Drag-and-Drop** ✅ | Enable dragging cards between columns | @dnd-kit/core, DroppableColumn, DraggableCard |
+| 21 | **Character Sheet Layout** ✅ | Gear slots, sprite folder setting, vault.getResourcePath() | spriteFolder setting, emoji fallback |
 | 22 | **XP Progress Bar** | Animated fill bar showing XP toward next level | Satisfying fill animation |
 | 23 | **Level-Up Celebration** | Confetti, modal, XP gain animation on level-up | Class-themed messages |
 | 24 | **Weekly Streak Tracker** | Count consecutive days with quest completions | Display prominently |
