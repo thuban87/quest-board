@@ -747,7 +747,17 @@ Bug fixes:
 
 **Suggested Commit:** `feat(achievements): add full achievement system with hub, triggers, and unlock animations`
 
-**Next Session Prompt:** "Continue with Achievement System polish or move to next Phase 2 feature"
+**Next Session Prompt:**
+> Review Feature Roadmap Phase 2 incomplete items and pick next priority. Remaining Phase 2 work:
+> - **Weekly Streak Tracker (P24)** - Consecutive days with quest completions, display prominently
+> - **Power-Ups Display (P25)** - Show active class perk + bonuses (e.g., "Task Slayer: +5% XP")
+> - **Quest Visibility Controls (P27)** - Show next 3-4 tasks, hide future with hints
+> - **Gear Slot UI (P29)** - Empty gear slot outlines on character sheet
+> - **Sprite Renderer Service (P30)** - Version-based caching for character sprites
+> - **Filter/Search (P33)** - Filter quests by category, priority, or search text
+> - **Theme Compatibility (P32)** - Dark/light mode, test popular themes
+>
+> Also consider: Streak tracking integration with daily notes, achievement streak trigger wiring
 
 ---
 

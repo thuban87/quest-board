@@ -70,7 +70,7 @@
 | 25 | **Power-Ups Display** | Show active class perk + other bonuses from settings | "Task Slayer: +5% XP" |
 | 26 | **Training Mode** ✅ | Roman numeral levels (I-X), separate XP pool, 75 XP per level, graduation to Level 1 | 10 training levels, LevelUpModal graduation |
 | 27 | **Quest Visibility Controls** | Show next 3-4 tasks, hide future tasks with hints | "Choose your adventure" feel |
-| 28 | **Achievement System** | Track and display achievements (placeholder badges) | First Quest, Level 10, etc. |
+| 28 | **Achievement System** ✅ | Track and display achievements, unlock popups, hub modal | 32 defaults, AchievementHubModal, level/category triggers, confetti |
 | 29 | **Gear Slot UI** | Display empty gear slots on character sheet | Outlines for weapon, armor, accessories |
 | 30 | **Sprite Renderer Service** | SpriteRenderer class with version-based caching (spriteVersion → dataURL) | Only recomposite when character changes |
 | 31 | **React UI Polish** | Smooth animations, transitions, hover effects, React.memo on all cards/columns | Use CSS transitions |
@@ -80,11 +80,11 @@
 **Deliverable:** Plugin feels polished, rewarding, visually engaging. Training mode works. Placeholder visuals improved.
 
 **Test Checklist:**
-- [ ] Drag quest from Available to Completed
+- [x] Drag quest from Available to Completed (via buttons or drag-drop)
 - [x] XP bar animates smoothly (0.5s CSS transition)
 - [x] Level-up celebration appears with class-themed message and confetti
 - [ ] Character Sheet shows accurate stats with better placeholder visual
-- [ ] Achievements unlock correctly (placeholder badges)
+- [x] Achievements unlock correctly (32 defaults, category triggers, unlock popup with confetti)
 - [x] Training mode: Roman numerals I-X, separate XP (75/level), graduation works
 - [ ] Quest visibility: Next 3-4 tasks shown, future hidden
 - [ ] Gear slots displayed (empty outlines)
@@ -266,4 +266,4 @@
 
 ---
 
-**Last Updated:** 2026-01-19
+**Last Updated:** 2026-01-20
