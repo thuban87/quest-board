@@ -19,15 +19,43 @@ import { openSmartTemplateModal } from './src/modals/SmartTemplateModal';
 import { CreateAchievementModal } from './src/modals/CreateAchievementModal';
 import { AchievementHubModal } from './src/modals/AchievementHubModal';
 import { useCharacterStore } from './src/store/characterStore';
+import { RecurringQuestService } from './src/services/RecurringQuestService';
+import { RecurringQuestsDashboardModal } from './src/modals/RecurringQuestsDashboardModal';
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
+    recurringQuestService!: RecurringQuestService;
+    private lastRecurrenceCheckHour: number = -1;
 
     async onload(): Promise<void> {
         console.log('Loading Quest Board plugin');
 
         // Load settings
         await this.loadSettings();
+
+        // Initialize recurring quest service
+        this.recurringQuestService = new RecurringQuestService(this.app.vault);
+
+        // Process recurring quests on startup (small delay to let vault load)
+        setTimeout(async () => {
+            await this.recurringQuestService.processRecurrence();
+        }, 2000);
+
+        // Register interval to check at 1am daily
+        this.registerInterval(
+            window.setInterval(() => {
+                const now = new Date();
+                const currentHour = now.getHours();
+                // Check if it's 1am and we haven't processed this hour yet
+                if (currentHour === 1 && this.lastRecurrenceCheckHour !== 1) {
+                    this.lastRecurrenceCheckHour = 1;
+                    this.recurringQuestService.processRecurrence();
+                } else if (currentHour !== 1) {
+                    // Reset so we can trigger again tomorrow at 1am
+                    this.lastRecurrenceCheckHour = currentHour;
+                }
+            }, 60 * 1000) // Check every minute
+        );
 
         // Register the full-page view
         this.registerView(
@@ -144,6 +172,29 @@ export default class QuestBoardPlugin extends Plugin {
             },
         });
 
+        // Add command to manually trigger recurring quest processing
+        this.addCommand({
+            id: 'process-recurring-quests',
+            name: 'Process Recurring Quests Now',
+            callback: async () => {
+                await this.recurringQuestService.processRecurrence();
+                this.app.workspace.trigger('quest-board:refresh');
+            },
+        });
+
+        // Add command to open recurring quests dashboard
+        this.addCommand({
+            id: 'recurring-quests-dashboard',
+            name: 'Recurring Quests Dashboard',
+            callback: () => {
+                new RecurringQuestsDashboardModal(
+                    this.app,
+                    this.recurringQuestService,
+                    () => this.app.workspace.trigger('quest-board:refresh')
+                ).open();
+            },
+        });
+
         // Add settings tab
         this.addSettingTab(new QuestBoardSettingTab(this.app, this));
 
@@ -210,5 +261,3 @@ export default class QuestBoardPlugin extends Plugin {
         }
     }
 }
-
-

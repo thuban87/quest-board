@@ -2528,3 +2528,203 @@
 .qb-hub-btn-danger:hover {
   background: rgba(255, 0, 0, 0.2);
 }
+
+/* ===========================================
+   Recurring Quests Dashboard
+   =========================================== */
+.qb-recurring-dashboard {
+  padding: var(--qb-spacing-lg);
+  min-width: 500px;
+}
+
+.qb-dashboard-header {
+  margin-bottom: var(--qb-spacing-lg);
+}
+
+.qb-dashboard-header h2 {
+  margin: 0 0 var(--qb-spacing-xs) 0;
+  font-size: 1.35rem;
+}
+
+.qb-dashboard-folder {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+}
+
+.qb-dashboard-loading {
+  text-align: center;
+  padding: var(--qb-spacing-xl);
+  color: var(--text-muted);
+}
+
+.qb-dashboard-empty {
+  text-align: center;
+  padding: var(--qb-spacing-lg);
+  color: var(--text-muted);
+}
+
+.qb-dashboard-empty code {
+  display: block;
+  margin-top: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-sm);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.85rem;
+}
+
+.qb-dashboard-hint {
+  margin-bottom: var(--qb-spacing-xs) !important;
+}
+
+.qb-dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--qb-spacing-lg);
+}
+
+.qb-dashboard-table th {
+  text-align: left;
+  padding: var(--qb-spacing-sm);
+  border-bottom: 2px solid var(--background-modifier-border);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qb-dashboard-table td {
+  padding: var(--qb-spacing-sm);
+  border-bottom: 1px solid var(--background-modifier-border);
+  vertical-align: middle;
+}
+
+.qb-template-name {
+  font-weight: 500;
+}
+
+.qb-template-name span:first-child {
+  display: block;
+}
+
+.qb-template-category {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.qb-template-schedule {
+  font-size: 0.9rem;
+}
+
+.qb-template-next {
+  font-size: 0.9rem;
+}
+
+.qb-template-next.qb-today {
+  color: var(--interactive-accent);
+  font-weight: 600;
+}
+
+.qb-status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.qb-status-generated {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.qb-status-pending {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.qb-status-not-scheduled {
+  background: var(--background-secondary);
+  color: var(--text-muted);
+}
+
+.qb-dashboard-help {
+  margin-bottom: var(--qb-spacing-lg);
+}
+
+.qb-dashboard-help summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.qb-dashboard-help summary:hover {
+  color: var(--text-normal);
+}
+
+.qb-syntax-help {
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  margin-top: var(--qb-spacing-sm);
+}
+
+.qb-syntax-help h4 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 0.9rem;
+}
+
+.qb-syntax-table {
+  width: 100%;
+}
+
+.qb-syntax-table td {
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  border: none;
+}
+
+.qb-syntax-table code {
+  background: var(--background-primary);
+  padding: 2px 6px;
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.85rem;
+}
+
+.qb-dashboard-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--qb-spacing-sm);
+  padding-top: var(--qb-spacing-md);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.qb-dashboard-btn {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-md);
+  background: transparent;
+  color: var(--text-normal);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.qb-dashboard-btn:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-dashboard-btn.qb-btn-primary {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: white;
+}
+
+.qb-dashboard-btn.qb-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.qb-dashboard-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

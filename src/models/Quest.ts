@@ -106,6 +106,15 @@ export interface ManualQuest extends BaseQuest {
 
     /** Milestone definitions */
     milestones: QuestMilestone[];
+
+    /** Recurrence rule for auto-generated quests */
+    recurrence?: 'daily' | 'weekdays' | 'weekends' | 'weekly' | 'monthly';
+
+    /** Template ID this quest was generated from (for recurring quests) */
+    recurringTemplateId?: string;
+
+    /** Date this recurring instance is for (YYYY-MM-DD format) */
+    instanceDate?: string;
 }
 
 /**

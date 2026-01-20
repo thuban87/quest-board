@@ -200,7 +200,7 @@
 - Encourages long-term goal setting
 
 ### Other Ideas
-- Recurring quests (daily/weekly patterns)
+- ~~Recurring quests (daily/weekly patterns)~~ ✅ **COMPLETED 2026-01-20**
 - Boss battles (multi-stage epic milestones with team mechanics)
 - Party system (shared quest boards with friends/family)
 - Quest templates (save and reuse complex quest structures)
