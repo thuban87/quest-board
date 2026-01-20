@@ -16,6 +16,9 @@ import {
 import { CreateQuestModal } from './src/modals/CreateQuestModal';
 import { ApplicationGauntletModal, InterviewArenaModal } from './src/modals/JobHuntModal';
 import { openSmartTemplateModal } from './src/modals/SmartTemplateModal';
+import { CreateAchievementModal } from './src/modals/CreateAchievementModal';
+import { AchievementHubModal } from './src/modals/AchievementHubModal';
+import { useCharacterStore } from './src/store/characterStore';
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
@@ -107,6 +110,37 @@ export default class QuestBoardPlugin extends Plugin {
             name: 'Create Quest from Template',
             callback: () => {
                 openSmartTemplateModal(this.app, this);
+            },
+        });
+
+        // Add achievement hub command
+        this.addCommand({
+            id: 'view-achievements',
+            name: 'View Achievements Hub',
+            callback: () => {
+                new AchievementHubModal({
+                    app: this.app,
+                    badgeFolder: this.settings.badgeFolder,
+                    onSave: async () => {
+                        this.settings.achievements = useCharacterStore.getState().achievements;
+                        await this.saveSettings();
+                    }
+                }).open();
+            },
+        });
+
+        // Add create achievement command
+        this.addCommand({
+            id: 'create-achievement',
+            name: 'Create Custom Achievement',
+            callback: () => {
+                new CreateAchievementModal(this.app, (achievement) => {
+                    const { achievements } = useCharacterStore.getState();
+                    const updated = [...achievements, achievement];
+                    useCharacterStore.setState({ achievements: updated });
+                    this.settings.achievements = updated;
+                    this.saveSettings();
+                }).open();
             },
         });
 

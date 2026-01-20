@@ -6,7 +6,7 @@
  * Tab navigation between Quests and Character Sheet.
  */
 
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { App as ObsidianApp } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { QuestStatus } from '../models/QuestStatus';
@@ -16,8 +16,10 @@ import { useCharacterStore } from '../store/characterStore';
 import { loadAllQuests, watchQuestFolder, saveManualQuest, saveAIQuest } from '../services/QuestService';
 import { readTasksWithSections, readTasksFromMultipleFiles, getTaskCompletion, TaskCompletion, TaskSection, toggleTaskInFile } from '../services/TaskFileService';
 import { getXPProgress, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
+import { AchievementService } from '../services/AchievementService';
 import { QuestCard } from './QuestCard';
 import { CharacterSheet } from './CharacterSheet';
+import { AchievementsSidebar } from './AchievementsSidebar';
 import { CLASS_INFO, getTrainingLevelDisplay } from '../models/Character';
 import { useXPAward } from '../hooks/useXPAward';
 import { useTaskSectionsStore } from '../store/taskSectionsStore';
@@ -36,7 +38,7 @@ interface SidebarQuestsProps {
     app: ObsidianApp;
 }
 
-type SidebarView = 'quests' | 'character';
+type SidebarView = 'quests' | 'character' | 'achievements';
 
 /**
  * Sections to show (no Completed)
@@ -91,6 +93,25 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         [QuestStatus.COMPLETED]: true,
     });
 
+    // Collapsed state for individual quests
+    const [collapsedQuests, setCollapsedQuests] = useState<Set<string>>(new Set());
+
+    // Lock to prevent file watcher from reloading during save operations
+    const saveLockRef = useRef(false);
+
+    // Toggle quest collapse
+    const toggleQuestCollapse = useCallback((questId: string) => {
+        setCollapsedQuests(prev => {
+            const next = new Set(prev);
+            if (next.has(questId)) {
+                next.delete(questId);
+            } else {
+                next.add(questId);
+            }
+            return next;
+        });
+    }, []);
+
     // Task sections and progress from shared store
     const sectionsMap = useTaskSectionsStore((state) => state.sectionsMap);
     const taskProgressMap = useTaskSectionsStore((state) => state.progressMap);
@@ -108,25 +129,32 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         await plugin.saveSettings();
     }, [plugin]);
 
-    // XP Award hook
+    // XP Award hook  
     useXPAward({
         app,
         vault: app.vault,
+        badgeFolder: plugin.settings.badgeFolder,
         onSaveCharacter: handleSaveCharacter,
     });
 
-    // Load character on mount
+    // Load character on mount (run once)
+    const initializedRef = useRef(false);
     useEffect(() => {
+        if (initializedRef.current) return;
+        initializedRef.current = true;
+
         if (plugin.settings.character) {
             setCharacter(plugin.settings.character);
         }
-        if (plugin.settings.inventory || plugin.settings.achievements) {
-            setInventoryAndAchievements(
-                plugin.settings.inventory || [],
-                plugin.settings.achievements || []
-            );
-        }
-    }, [plugin.settings, setCharacter, setInventoryAndAchievements]);
+        // Initialize achievements with defaults (merges saved state with default achievements)
+        const achievementService = new AchievementService(app.vault, plugin.settings.badgeFolder);
+        const savedAchievements = plugin.settings.achievements || [];
+        const initializedAchievements = achievementService.initializeAchievements(savedAchievements);
+        setInventoryAndAchievements(
+            plugin.settings.inventory || [],
+            initializedAchievements
+        );
+    }, []);
 
     // Load quests on mount
     useEffect(() => {
@@ -158,6 +186,12 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         loadQuests();
 
         const unsubscribe = watchQuestFolder(app.vault, plugin.settings.storageFolder, async (result) => {
+            // Skip reload if we're in the middle of saving (prevents race condition)
+            if (saveLockRef.current) {
+                console.log('[Quest Watch] Skipping reload - save in progress');
+                return;
+            }
+
             setQuests(result.quests);
 
             const progressMap: Record<string, TaskCompletion> = {};
@@ -205,12 +239,23 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                 : quest.completedDate,
         };
 
+        // Update store first (optimistic update)
         upsertQuest(updatedQuest);
 
-        if (isAIGeneratedQuest(updatedQuest)) {
-            await saveAIQuest(app.vault, plugin.settings.storageFolder, updatedQuest);
-        } else {
-            await saveManualQuest(app.vault, plugin.settings.storageFolder, updatedQuest);
+        // Set lock to prevent file watcher from overwriting during save
+        saveLockRef.current = true;
+
+        try {
+            if (isAIGeneratedQuest(updatedQuest)) {
+                await saveAIQuest(app.vault, plugin.settings.storageFolder, updatedQuest);
+            } else {
+                await saveManualQuest(app.vault, plugin.settings.storageFolder, updatedQuest);
+            }
+        } finally {
+            // Clear lock after a delay to let file watcher debounce pass
+            setTimeout(() => {
+                saveLockRef.current = false;
+            }, 1500);
         }
     }, [app.vault, plugin.settings.storageFolder, upsertQuest]);
 
@@ -345,6 +390,8 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                                                                     taskProgress={taskProgressMap[quest.questId]}
                                                                     sections={sectionsMap[quest.questId]}
                                                                     visibleTaskCount={isManualQuest(quest) ? quest.visibleTasks : 4}
+                                                                    isCollapsed={collapsedQuests.has(quest.questId)}
+                                                                    onToggleCollapse={() => toggleQuestCollapse(quest.questId)}
                                                                 />
                                                             </DraggableSidebarCard>
                                                         ))
@@ -357,10 +404,11 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                             })}
                         </div>
                     </DndContext>
-                ) : (
+                ) : currentView === 'character' ? (
                     /* Full Character Sheet */
                     <CharacterSheet
                         onBack={() => setCurrentView('quests')}
+                        onViewAchievements={() => setCurrentView('achievements')}
                         spriteFolder={plugin.settings.spriteFolder}
                         spriteResourcePath={(() => {
                             const spritePath = `${plugin.settings.spriteFolder}/south.png`;
@@ -370,6 +418,13 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                             }
                             return undefined;
                         })()}
+                    />
+                ) : (
+                    /* Achievements View */
+                    <AchievementsSidebar
+                        app={app}
+                        badgeFolder={plugin.settings.badgeFolder}
+                        onBack={() => setCurrentView('character')}
                     />
                 )}
             </div>
