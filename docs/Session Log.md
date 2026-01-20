@@ -576,6 +576,106 @@ Step 18 is complete. The Quest Board now has:
 
 ---
 
+## 2026-01-20 - Steps 22, 23, 26: Training Mode & Level-Up System
+
+**Focus:** XP Progress Bar, Level-Up Celebration, Training Mode fixes
+
+**Completed:**
+
+### Step 26: Training Mode ✅
+- ✅ Expanded `TRAINING_XP_THRESHOLDS` from 4 levels (100 XP each) to 10 levels (75 XP each)
+- ✅ Added `MAX_TRAINING_LEVEL = 10` constant
+- ✅ Updated `calculateTrainingLevel()` to use new thresholds
+- ✅ Updated `getTrainingLevelDisplay()` for Roman numerals I-X
+- ✅ Added `canGraduate()` function for graduation check
+- ✅ Fixed `characterStore.setCharacter()` to recalculate training level on load
+- ✅ Updated training mode notices to say "Level X" instead of "Level IV"
+
+### Step 23: Level-Up Celebration ✅
+- ✅ Created `LevelUpModal.ts` with class-themed level-up messages
+- ✅ Added graduation celebration when reaching Training Level X
+- ✅ Integrated modal into `useXPAward` hook with level-up detection
+- ✅ Added confetti animation that spawns 50 colorful pieces on level-up
+
+### Step 22: XP Progress Bar ✅
+- ✅ Added CSS transitions (0.5s ease-out) for all XP bar fills
+- ✅ Added proper CSS for header XP bars (sidebar and fullpage)
+
+### Major Bug Fixes (XP System)
+- ✅ Fixed self-linked quests not awarding XP (`vault.cachedRead` → `vault.read`)
+- ✅ Fixed double XP awarding (removed duplicate `useXPAward` from `FullKanban.tsx`)
+- ✅ Fixed snapshot race conditions with processing lock
+- ✅ Fixed collapsed vs expanded XP display discrepancy
+- ✅ Fixed header level display showing "Level 1" instead of training level
+- ✅ Fixed header XP display to show x/y format in training mode
+- ✅ Fixed `visibleTasks` frontmatter setting not applying to QuestCard
+- ✅ Added Kanban column scrolling CSS
+
+**Files Modified:**
+- `src/services/XPSystem.ts` - Training thresholds, MAX_TRAINING_LEVEL, canGraduate()
+- `src/models/Character.ts` - getTrainingLevelDisplay() for I-X
+- `src/modals/LevelUpModal.ts` - New file with celebration modal + confetti
+- `src/hooks/useXPAward.ts` - Modal integration, bug fixes, removed debug logs
+- `src/store/characterStore.ts` - Level recalculation on load, graduation logic
+- `src/services/TaskFileService.ts` - Changed cachedRead to read()
+- `src/components/SidebarQuests.tsx` - Training level display, visibleTaskCount prop
+- `src/components/FullKanban.tsx` - Training level display, removed duplicate useXPAward, visibleTaskCount prop
+- `src/components/CharacterSheet.tsx` - Training XP calculation fixes, level X notice
+- `src/components/QuestCard.tsx` - visibleTaskCount prop wiring
+- `styles.css` - XP bar CSS with transitions, column scrolling, confetti animation
+
+**Technical Discoveries:**
+- `vault.cachedRead()` returns stale content for self-linked quest files - use `vault.read()` instead
+- Multiple components calling `useXPAward` creates duplicate file watchers
+- Obsidian's debounce with `immediate=true` fires both immediately AND after delay
+
+**Testing Notes:**
+- XP bar animates smoothly on task completion
+- Level-up modal appears with confetti on training level advancement
+- Training level correctly displays as Roman numerals (I-X)
+- Self-linked and external quests both award XP correctly
+- Kanban columns scroll when content overflows
+- visibleTasks frontmatter setting now respected
+
+**Bugs/Issues:**
+- None outstanding
+
+**Recommended Commit Message:**
+```
+feat(phase-2): Complete Steps 22, 23, 26 - Training Mode & Level-Up System
+
+Step 26: Training Mode
+- Expand TRAINING_XP_THRESHOLDS to 10 levels (75 XP each)
+- Add MAX_TRAINING_LEVEL constant and graduation logic
+- Support Roman numerals I-X for training levels
+- Fix level recalculation on character load
+
+Step 23: Level-Up Celebration
+- Create LevelUpModal with class-themed messages
+- Add graduation celebration for Training Level X
+- Add confetti animation (50 colorful pieces)
+
+Step 22: XP Progress Bar
+- Add 0.5s ease-out CSS transitions for XP bars
+- Add proper header XP bar styling
+
+Bug fixes:
+- Fix self-linked quests not awarding XP (cachedRead→read)
+- Fix double XP awarding (duplicate useXPAward hook)
+- Fix collapsed vs expanded XP display discrepancy
+- Fix header level/XP display for training mode
+- Fix visibleTasks frontmatter not applying
+- Add Kanban column scrolling CSS
+```
+
+**Next Session Prompt:**
+> Steps 22, 23, 26 complete. Phase 2 training mode and level-up features are done. Consider Step 24 (Weekly Streak Tracker), Step 27 (Quest Visibility Controls), or Step 28 (Achievement System) next.
+
+**Hours Worked:** ~2 hours
+**Phase:** 2
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD
@@ -602,4 +702,4 @@ Step 18 is complete. The Quest Board now has:
 
 ---
 
-**Last Updated:** 2026-01-19
+**Last Updated:** 2026-01-20

@@ -44,9 +44,14 @@ export const XP_THRESHOLDS: number[] = [
 ];
 
 /**
- * Training mode XP thresholds (100 XP per level, 4 levels max)
+ * Training mode XP thresholds (75 XP per level, 10 levels max)
  */
-export const TRAINING_XP_THRESHOLDS = [0, 100, 200, 300];
+export const TRAINING_XP_THRESHOLDS = [0, 75, 150, 225, 300, 375, 450, 525, 600, 675];
+
+/**
+ * Max training level before graduation
+ */
+export const MAX_TRAINING_LEVEL = 10;
 
 /**
  * Level-up result
@@ -78,10 +83,17 @@ export function calculateLevel(totalXP: number): number {
 export function calculateTrainingLevel(trainingXP: number): number {
     for (let level = TRAINING_XP_THRESHOLDS.length - 1; level >= 0; level--) {
         if (trainingXP >= TRAINING_XP_THRESHOLDS[level]) {
-            return Math.min(level + 1, 4); // Max level IV
+            return Math.min(level + 1, MAX_TRAINING_LEVEL);
         }
     }
     return 1;
+}
+
+/**
+ * Check if character is ready to graduate from training
+ */
+export function canGraduate(trainingLevel: number): boolean {
+    return trainingLevel >= MAX_TRAINING_LEVEL;
 }
 
 /**

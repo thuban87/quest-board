@@ -64,11 +64,11 @@
 | 19 | **Quest Creation Modal** ✅ | Modal to create quest files with frontmatter: name, category (dropdown), priority, linkedTaskFile (Browse), XP values, Description/Objectives/Rewards sections | `CreateQuestModal.ts`, FuzzySuggestModal |
 | 20 | **Drag-and-Drop** ✅ | Enable dragging cards between columns | @dnd-kit/core, DroppableColumn, DraggableCard |
 | 21 | **Character Sheet Layout** ✅ | Gear slots, sprite folder setting, vault.getResourcePath() | spriteFolder setting, emoji fallback |
-| 22 | **XP Progress Bar** | Animated fill bar showing XP toward next level | Satisfying fill animation |
-| 23 | **Level-Up Celebration** | Confetti, modal, XP gain animation on level-up | Class-themed messages |
+| 22 | **XP Progress Bar** ✅ | Animated fill bar showing XP toward next level | 0.5s ease-out CSS transition |
+| 23 | **Level-Up Celebration** ✅ | Confetti, modal, XP gain animation on level-up | LevelUpModal with confetti animation |
 | 24 | **Weekly Streak Tracker** | Count consecutive days with quest completions | Display prominently |
 | 25 | **Power-Ups Display** | Show active class perk + other bonuses from settings | "Task Slayer: +5% XP" |
-| 26 | **Training Mode** | Roman numeral levels (I-IV), separate XP pool, graduation to Level 1 | Test mechanics safely |
+| 26 | **Training Mode** ✅ | Roman numeral levels (I-X), separate XP pool, 75 XP per level, graduation to Level 1 | 10 training levels, LevelUpModal graduation |
 | 27 | **Quest Visibility Controls** | Show next 3-4 tasks, hide future tasks with hints | "Choose your adventure" feel |
 | 28 | **Achievement System** | Track and display achievements (placeholder badges) | First Quest, Level 10, etc. |
 | 29 | **Gear Slot UI** | Display empty gear slots on character sheet | Outlines for weapon, armor, accessories |
@@ -81,11 +81,11 @@
 
 **Test Checklist:**
 - [ ] Drag quest from Available to Completed
-- [ ] XP bar animates smoothly
-- [ ] Level-up celebration appears with class-themed message
+- [x] XP bar animates smoothly (0.5s CSS transition)
+- [x] Level-up celebration appears with class-themed message and confetti
 - [ ] Character Sheet shows accurate stats with better placeholder visual
 - [ ] Achievements unlock correctly (placeholder badges)
-- [ ] Training mode: Roman numerals, separate XP, graduation works
+- [x] Training mode: Roman numerals I-X, separate XP (75/level), graduation works
 - [ ] Quest visibility: Next 3-4 tasks shown, future hidden
 - [ ] Gear slots displayed (empty outlines)
 - [ ] Class perk displayed in power-ups section

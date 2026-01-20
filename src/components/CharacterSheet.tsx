@@ -9,7 +9,7 @@ import { useCharacterStore } from '../store/characterStore';
 import { useQuestStore } from '../store/questStore';
 import { CLASS_INFO, getTrainingLevelDisplay } from '../models/Character';
 import { QuestStatus } from '../models/QuestStatus';
-import { getXPProgress, getXPForNextLevel, XP_THRESHOLDS } from '../services/XPSystem';
+import { getXPProgress, getXPForNextLevel, XP_THRESHOLDS, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 
 interface CharacterSheetProps {
     onBack: () => void;
@@ -38,13 +38,17 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, spriteFo
 
     const currentXP = isTraining ? character.trainingXP : character.totalXP;
     const currentLevel = isTraining ? character.trainingLevel : character.level;
-    const xpProgress = isTraining
-        ? (character.trainingXP % 100) / 100
-        : getXPProgress(character.totalXP);
-    const nextLevelXP = isTraining ? 100 : getXPForNextLevel(character.level);
+
+    // Calculate XP progress for current level
     const currentThreshold = isTraining
-        ? (character.trainingLevel - 1) * 100
+        ? (TRAINING_XP_THRESHOLDS[character.trainingLevel - 1] || 0)
         : (XP_THRESHOLDS[character.level - 1] || 0);
+    const nextLevelXP = isTraining
+        ? (TRAINING_XP_THRESHOLDS[character.trainingLevel] || TRAINING_XP_THRESHOLDS[9])
+        : getXPForNextLevel(character.level);
+    const xpInLevel = currentXP - currentThreshold;
+    const xpNeeded = nextLevelXP - currentThreshold;
+    const xpProgress = xpNeeded > 0 ? Math.min(1, xpInLevel / xpNeeded) : 1;
 
     const completedQuests = quests
         ? Array.from(quests.values()).filter(q => q.status === QuestStatus.COMPLETED).length
@@ -160,7 +164,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, spriteFo
             {isTraining && (
                 <div className="qb-training-notice">
                     <p>🎓 You are in <strong>Training Mode</strong></p>
-                    <p>Complete quests to reach Training Level IV, then graduate to the real game!</p>
+                    <p>Complete quests to reach Training Level X, then graduate to the real game!</p>
                 </div>
             )}
         </div>
