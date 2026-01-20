@@ -20,6 +20,7 @@ const QUEST_FOLDERS = {
     training: 'quests/training',
     side: 'quests/side',
     aiGenerated: 'quests/ai-generated',
+    recurring: 'quests/recurring',
 };
 
 /**
@@ -142,6 +143,17 @@ function parseQuestFrontmatter(content: string, filePath: string): Partial<Manua
                 break;
             case 'schemaVersion':
                 quest.schemaVersion = parseInt(value) || QUEST_SCHEMA_VERSION;
+                break;
+            case 'recurrence':
+                if (['daily', 'weekdays', 'weekends', 'weekly', 'monthly'].includes(value)) {
+                    quest.recurrence = value as ManualQuest['recurrence'];
+                }
+                break;
+            case 'recurringTemplateId':
+                quest.recurringTemplateId = value;
+                break;
+            case 'instanceDate':
+                quest.instanceDate = value;
                 break;
         }
     }

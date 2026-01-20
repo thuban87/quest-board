@@ -6,40 +6,46 @@ Simple task list for Quest Board development. Copy to your quest tracker.
 
 ## Phase 2: Polish & Training Mode
 
+### ✅ Completed
+- [x] XP Wiring & Task Display - Task completion → XP awards, class bonuses
+- [x] UI Redesign - Full-page Kanban + Focused Sidebar views
+- [x] Section Parsing & Task Display - `##`/`###` as Mini Objectives, collapsible sections
+- [x] Quest Creation Modal - FuzzySuggestModal for file browsing
+- [x] Drag-and-Drop - @dnd-kit/core, DroppableColumn, DraggableCard
+- [x] Character Sheet Layout - Gear slots, sprite folder setting
+- [x] XP Progress Bar - Animated fill bar (0.5s CSS transition)
+- [x] Level-Up Celebration - Confetti modal with class-themed message
+- [x] Training Mode - Roman numerals I-X, 75 XP/level, graduation
+- [x] Smart Template System - 12 domain-specific quest templates
+- [x] Multi-File Task Linking - Multiple task files per quest
+- [x] Quest-Level Collapse - ▼/▶ toggle on quest cards
+- [x] Achievement System - 32 defaults, hub modal, unlock popup, triggers
+
 ### Remaining
 - [ ] Weekly Streak Tracker - Count consecutive days with completions
 - [ ] Power-Ups Display - Show active class perk + bonuses
 - [ ] Quest Visibility Controls - Show next 3-4 tasks, hide future
-- [ ] Achievement System - Hub modal, unlock popup, badge display
 - [ ] Gear Slot UI - Display empty gear slots on character sheet
 - [ ] Sprite Renderer Service - Version-based caching
 - [ ] React UI Polish - Smooth animations, transitions
 - [ ] Theme Compatibility - Dark/light mode testing
 - [ ] Filter/Search - Filter quests by category/priority
 
-### Just Completed (This Session)
-- [x] Smart Template System
-- [x] Multi-File Task Linking
-- [x] Domain Quest Templates (12)
-
 ---
 
 ## Phase 3: AI & Pixel Art
 
-### Priority
-- [ ] API Key in Settings - Gemini API key storage
-- [ ] Sprite Generation - ~100-120 pixel art sprites
+### Sprite System (Revised Plan)
+- [ ] Paladin Class Sprites Only - 5 tiers × 6 gear slots = ~30 sprites
+- [ ] Shared/Universal Sprites - Body base, skin tones, hair, accessories (~21)
+- [ ] Icon Pack Integration - Use existing icon packs for items, reduce generation
 - [ ] Sprite Layering System - Canvas-based assembly
-- [ ] Replace Placeholder Visuals - Real pixel art everywhere
 - [ ] Level Tier Transitions - Animate sprite changes
 
-### Secondary
-- [ ] Gear Visual System - Equipped gear on sprite
-- [ ] Dual-Class Unlock (Level 25)
-- [ ] Dual-Class Visual Blending
-- [ ] Class Change System - XP cost formula
+**Note:** Original estimate was 100-120 sprites. Revised to ~50 for Paladin only + icons as needed.
 
 ### AI Features
+- [ ] API Key in Settings - Gemini API key storage
 - [ ] AI Quest Generation (Gemini)
 - [ ] Quest Generation Preview
 - [ ] Progressive Quest Reveal
@@ -65,18 +71,6 @@ Simple task list for Quest Board development. Copy to your quest tracker.
 - [ ] Advanced Settings
 - [ ] Category Management
 - [ ] Import/Export
-
----
-
-## Achievement System (Next Priority)
-
-- [ ] Level milestones: 10, 13, 16, 18, 21, 25, 30, 35, 38, 40
-- [ ] Application counts: 1, 5, 10, 20, 35, 50, 75, 100
-- [ ] Interview counts: 1, 3, 5, 10, 15, 20, 25, 30
-- [ ] Streak achievements: 3, 7, 14, 30, 60, 90 days
-- [ ] Badge storage: `Life/Quest Board/assets/badges/`
-- [ ] Achievement Hub Modal
-- [ ] Achievement Unlock Popup
 
 ---
 

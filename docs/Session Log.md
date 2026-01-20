@@ -761,6 +761,87 @@ Bug fixes:
 
 ---
 
+## 2026-01-20 - Recurring Quests Feature
+
+**Focus:** Implement recurring quests system with auto-generation and dashboard
+
+### Files Created
+
+**Services (`src/services/`):**
+- `RecurringQuestService.ts` (~400 lines)
+  - Flexible recurrence parsing (daily/weekdays/weekends/weekly:sunday/monday,wednesday)
+  - Template scanning from `System/Templates/Quest Board/Recurring Quests/`
+  - Quest generation with placeholder replacement ({{date}}, {{date_slug}}, {{output_path}})
+  - Archive completed quests to monthly folders
+  - Schedule interpretation for human-readable descriptions
+  - `getTemplateStatuses()` API for dashboard
+
+**Modals (`src/modals/`):**
+- `RecurringQuestsDashboardModal.ts` (~175 lines)
+  - Table view of all recurring templates
+  - Shows schedule, next run date, today's status
+  - Syntax help section with all recurrence values
+  - "Process Now" button
+
+**Documentation (`docs/`):**
+- `Recurring Quests System.md` - Technical reference for the feature
+
+**Examples (`examples/recurring-templates/`):**
+- `Daily Wellness.md` - Example daily template
+- `Weekly Review.md` - Example weekly template
+
+### Files Modified
+
+- `main.ts` - Added RecurringQuestService initialization, 1am scheduled job, dashboard command
+- `Quest.ts` - Added `recurrence`, `recurringTemplateId`, `instanceDate` fields to ManualQuest
+- `QuestService.ts` - Added `recurring` folder, parse new frontmatter fields
+- `services/index.ts` - Export RecurringQuestService
+- `styles.css` - Added ~200 lines for dashboard styling
+- `QuestCard.tsx` - Fixed task indentation (handles tabs, 2/4-space indent)
+- `TaskFileService.ts` - Improved indent calculation
+
+### Technical Decisions
+
+1. **Recurrence in template frontmatter** - Simple, user-editable, no separate config file
+2. **1am processing time** - After midnight ensures yesterday's quests are ready to archive
+3. **Self-linked tasks** - Quest file contains its own tasks, no external file dependency
+4. **Monthly archive folders** - Organized by YYYY-MM for easy cleanup
+
+### Testing Performed
+
+- ✅ Created template with `recurrence: daily`
+- ✅ Template appears in dashboard with correct schedule
+- ✅ "Process Now" generates quest file
+- ✅ Duplicate detection prevents multiple quests per day
+- ✅ Task indentation displays correctly (tested with 2-space, 4-space, tabs)
+
+### Bugs Fixed
+
+- **Task indentation not showing** - Changed from `marginLeft` to `paddingLeft`, increased multiplier
+- **Tab indentation not counted** - Added explicit tab counting in `parseTaskLine()`
+
+**Hours Worked:** ~2 hours
+**Phase:** Future Enhancement (Recurring Quests)
+
+**Recommended Commit Message:**
+```
+feat(recurring): add recurring quests auto-generation system
+
+- RecurringQuestService with flexible recurrence parsing
+  (daily, weekdays, weekends, weekly:day, specific days)
+- RecurringQuestsDashboardModal for template overview
+- 1am scheduled job for archive + generation
+- Templates in System/Templates/Quest Board/Recurring Quests/
+- Fix task indentation display (tabs, 2/4-space)
+- Technical docs at docs/Recurring Quests System.md
+```
+
+**Next Session Prompt:**
+> Continue with Phase 2 incomplete items or test recurring quests more thoroughly.
+> Consider: Weekly Streak Tracker (P24), Power-Ups Display (P25), Filter/Search (P33)
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD

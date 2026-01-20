@@ -353,4 +353,4 @@ Organized prompts for generating character sprites. Start with Phase A (shared a
 
 ---
 
-**Last Updated:** 2026-01-19
+**Last Updated:** 2026-01-20

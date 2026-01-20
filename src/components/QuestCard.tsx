@@ -103,8 +103,8 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
     const renderTask = (task: Task) => (
         <div
             key={task.lineNumber}
-            className={`qb-task-item ${task.completed ? 'completed' : ''}`}
-            style={{ marginLeft: task.indentLevel * 16 }}
+            className={`qb-task-item ${task.completed ? 'completed' : ''} ${task.indentLevel > 0 ? 'qb-task-indented' : ''}`}
+            style={{ paddingLeft: task.indentLevel * 20 }}
             onClick={() => onToggleTask(quest.questId, task.lineNumber)}
         >
             <span className="qb-task-checkbox">

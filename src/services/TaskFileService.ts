@@ -77,11 +77,17 @@ function parseTaskLine(line: string, lineNumber: number): Task | null {
 
     const [, indent, checkbox, text] = match;
 
+    // Calculate indent level - handle tabs, 2-space, and 4-space indentation
+    // Tabs count as 1 level each, spaces divided by 2 (handles both 2 and 4 space)
+    const tabCount = (indent.match(/\t/g) || []).length;
+    const spaceCount = indent.replace(/\t/g, '').length;
+    const calculatedIndent = tabCount + Math.floor(spaceCount / 2);
+
     return {
         lineNumber,
         text: text.trim(),
         completed: checkbox.toLowerCase() === 'x',
-        indentLevel: Math.floor(indent.length / 2), // Assume 2-space indentation
+        indentLevel: calculatedIndent,
     };
 }
 
