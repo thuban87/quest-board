@@ -6,14 +6,16 @@
  */
 
 import { useEffect, useRef, useCallback } from 'react';
-import { Vault, Notice, debounce } from 'obsidian';
+import { App, Vault, Notice, debounce } from 'obsidian';
 import { Quest, isManualQuest } from '../models/Quest';
 import { useCharacterStore } from '../store/characterStore';
 import { useQuestStore } from '../store/questStore';
 import { readTasksFromFile, getTaskCompletion, Task, TaskCompletion } from '../services/TaskFileService';
 import { calculateXPWithBonus, checkLevelUp, getLevelUpMessage } from '../services/XPSystem';
+import { LevelUpModal } from '../modals/LevelUpModal';
 
 interface UseXPAwardOptions {
+    app: App;
     vault: Vault;
     onSaveCharacter: () => Promise<void>;
 }
@@ -28,13 +30,14 @@ interface TaskSnapshot {
 /**
  * Hook to watch task files and award XP on completion
  */
-export function useXPAward({ vault, onSaveCharacter }: UseXPAwardOptions) {
+export function useXPAward({ app, vault, onSaveCharacter }: UseXPAwardOptions) {
     // Store previous task snapshots
     const taskSnapshotsRef = useRef<Map<string, TaskSnapshot>>(new Map());
     const fileWatchersRef = useRef<Map<string, () => void>>(new Map());
 
     const character = useCharacterStore((state) => state.character);
     const addXP = useCharacterStore((state) => state.addXP);
+    const graduate = useCharacterStore((state) => state.graduate);
     const quests = useQuestStore((state) => state.quests);
 
     // Award XP for completed tasks
@@ -44,7 +47,7 @@ export function useXPAward({ vault, onSaveCharacter }: UseXPAwardOptions) {
         newTasks: Task[]
     ) => {
         if (!character) return;
-        if (!isManualQuest(quest)) return; // Only manual quests have xpPerTask
+        if (!isManualQuest(quest)) return;
 
         const newCompletion = getTaskCompletion(newTasks);
         const oldCompleted = oldSnapshot?.completion.completed || 0;
@@ -73,8 +76,21 @@ export function useXPAward({ vault, onSaveCharacter }: UseXPAwardOptions) {
         const newXP = oldXP + totalXP;
         const levelResult = checkLevelUp(oldXP, newXP, character.isTrainingMode);
         if (levelResult.didLevelUp) {
-            const message = getLevelUpMessage(character.class, levelResult.newLevel, levelResult.tierChanged);
-            new Notice(message, 5000);
+            // Show level-up modal
+            const modal = new LevelUpModal(
+                app,
+                character.class,
+                levelResult.newLevel,
+                levelResult.tierChanged,
+                character.isTrainingMode,
+                () => {
+                    // Graduation callback
+                    graduate();
+                    onSaveCharacter();
+                    new Notice('🎓 Congratulations! You are now Level 1!', 5000);
+                }
+            );
+            modal.open();
         }
 
         // Check for quest completion
@@ -87,27 +103,41 @@ export function useXPAward({ vault, onSaveCharacter }: UseXPAwardOptions) {
 
         // Persist character
         await onSaveCharacter();
-    }, [character, addXP, onSaveCharacter]);
+    }, [character, addXP, graduate, onSaveCharacter, app]);
+
+    // Track which quests are currently being processed
+    const processingRef = useRef<Set<string>>(new Set());
 
     // Check a single task file for changes
     const checkTaskFile = useCallback(async (quest: Quest) => {
         if (!isManualQuest(quest) || !quest.linkedTaskFile) return;
 
-        const result = await readTasksFromFile(vault, quest.linkedTaskFile);
-        if (!result.success) return;
+        // Prevent concurrent processing of the same quest
+        if (processingRef.current.has(quest.questId)) {
+            console.log('[XP Debug] Already processing quest:', quest.questId);
+            return;
+        }
+        processingRef.current.add(quest.questId);
 
-        const oldSnapshot = taskSnapshotsRef.current.get(quest.questId);
+        try {
+            const result = await readTasksFromFile(vault, quest.linkedTaskFile);
+            if (!result.success) return;
 
-        // Award XP if tasks changed
-        await awardXPForTasks(quest, oldSnapshot, result.tasks);
+            const oldSnapshot = taskSnapshotsRef.current.get(quest.questId);
 
-        // Update snapshot
-        taskSnapshotsRef.current.set(quest.questId, {
-            questId: quest.questId,
-            filePath: quest.linkedTaskFile,
-            tasks: result.tasks,
-            completion: getTaskCompletion(result.tasks),
-        });
+            // Award XP if tasks changed
+            await awardXPForTasks(quest, oldSnapshot, result.tasks);
+
+            // Update snapshot
+            taskSnapshotsRef.current.set(quest.questId, {
+                questId: quest.questId,
+                filePath: quest.linkedTaskFile,
+                tasks: result.tasks,
+                completion: getTaskCompletion(result.tasks),
+            });
+        } finally {
+            processingRef.current.delete(quest.questId);
+        }
     }, [vault, awardXPForTasks]);
 
     // Set up file watchers for all quest task files
@@ -126,25 +156,27 @@ export function useXPAward({ vault, onSaveCharacter }: UseXPAwardOptions) {
             // Skip if already watching
             if (fileWatchersRef.current.has(filePath)) continue;
 
-            // Initialize snapshot
-            readTasksFromFile(vault, filePath).then((result) => {
-                if (result.success) {
-                    taskSnapshotsRef.current.set(quest.questId, {
-                        questId: quest.questId,
-                        filePath,
-                        tasks: result.tasks,
-                        completion: getTaskCompletion(result.tasks),
-                    });
-                }
-            });
+            // Initialize snapshot ONLY if we don't have one yet
+            if (!taskSnapshotsRef.current.has(quest.questId)) {
+                readTasksFromFile(vault, filePath).then((result) => {
+                    if (result.success && !taskSnapshotsRef.current.has(quest.questId)) {
+                        taskSnapshotsRef.current.set(quest.questId, {
+                            questId: quest.questId,
+                            filePath,
+                            tasks: result.tasks,
+                            completion: getTaskCompletion(result.tasks),
+                        });
+                    }
+                });
+            }
 
-            // Set up file watcher
+            // Set up file watcher - debounce without immediate fire
             const debouncedCheck = debounce(() => {
                 const currentQuest = useQuestStore.getState().quests.get(quest.questId);
                 if (currentQuest) {
                     checkTaskFile(currentQuest);
                 }
-            }, 500, true);
+            }, 300, false);  // false = don't fire immediately
 
             const onModify = vault.on('modify', (file) => {
                 if (file.path === filePath) {

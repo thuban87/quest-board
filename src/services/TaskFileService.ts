@@ -105,7 +105,8 @@ export async function readTasksFromFile(
     }
 
     try {
-        const content = await vault.cachedRead(file);
+        // Use read() instead of cachedRead() to get fresh content after modification
+        const content = await vault.read(file);
         const lines = content.split('\n');
         const tasks: Task[] = [];
 

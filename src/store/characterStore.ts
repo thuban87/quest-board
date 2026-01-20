@@ -8,6 +8,7 @@
 import { create } from 'zustand';
 import { Character, CharacterClass, CLASS_INFO, CharacterAppearance } from '../models';
 import { InventoryItem } from '../models/Consumable';
+import { calculateTrainingLevel } from '../services/XPSystem';
 
 interface Achievement {
     id: string;
@@ -54,6 +55,9 @@ interface CharacterActions {
 
     /** Toggle training mode */
     setTrainingMode: (isTraining: boolean) => void;
+
+    /** Graduate from training mode to Level 1 */
+    graduate: () => void;
 
     /** Add item to inventory */
     addInventoryItem: (itemId: string, quantity?: number) => void;
@@ -141,7 +145,19 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
     loading: false,
 
     // Actions
-    setCharacter: (character) => set({ character, loading: false }),
+    setCharacter: (character) => {
+        if (character) {
+            // Recalculate training level in case thresholds changed
+            const newTrainingLevel = calculateTrainingLevel(character.trainingXP);
+            if (character.trainingLevel !== newTrainingLevel) {
+                character = {
+                    ...character,
+                    trainingLevel: newTrainingLevel,
+                };
+            }
+        }
+        set({ character, loading: false });
+    },
 
     createCharacter: (name, characterClass, appearance) => {
         const classInfo = CLASS_INFO[characterClass];
@@ -196,10 +212,7 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
 
         if (isTraining) {
             const newTrainingXP = character.trainingXP + amount;
-            const newTrainingLevel = Math.min(
-                4, // Max training level IV
-                Math.floor(newTrainingXP / 100) + 1
-            );
+            const newTrainingLevel = calculateTrainingLevel(newTrainingXP);
 
             set({
                 character: {
@@ -285,6 +298,22 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 },
             });
         }
+    },
+
+    graduate: () => {
+        const { character } = get();
+        if (!character || !character.isTrainingMode) return;
+
+        set({
+            character: {
+                ...character,
+                isTrainingMode: false,
+                level: 1,
+                totalXP: 0,
+                // Keep training XP for records
+                lastModified: new Date().toISOString(),
+            },
+        });
     },
 
     addInventoryItem: (itemId, quantity = 1) => {

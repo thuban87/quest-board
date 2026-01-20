@@ -242,9 +242,9 @@ export function getLevelTier(level: number): number {
 }
 
 /**
- * Convert training level to Roman numeral
+ * Convert training level to Roman numeral (I-X)
  */
 export function getTrainingLevelDisplay(level: number): string {
-    const numerals = ['I', 'II', 'III', 'IV'];
-    return numerals[Math.min(level - 1, 3)] || 'I';
+    const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+    return numerals[Math.min(level - 1, 9)] || 'I';
 }

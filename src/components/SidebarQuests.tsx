@@ -15,10 +15,10 @@ import { useQuestStore } from '../store/questStore';
 import { useCharacterStore } from '../store/characterStore';
 import { loadAllQuests, watchQuestFolder, saveManualQuest, saveAIQuest } from '../services/QuestService';
 import { readTasksWithSections, getTaskCompletion, TaskCompletion, TaskSection, toggleTaskInFile } from '../services/TaskFileService';
-import { getXPProgress } from '../services/XPSystem';
+import { getXPProgress, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 import { QuestCard } from './QuestCard';
 import { CharacterSheet } from './CharacterSheet';
-import { CLASS_INFO } from '../models/Character';
+import { CLASS_INFO, getTrainingLevelDisplay } from '../models/Character';
 import { useXPAward } from '../hooks/useXPAward';
 import { useTaskSectionsStore } from '../store/taskSectionsStore';
 import {
@@ -110,6 +110,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
 
     // XP Award hook
     useXPAward({
+        app,
         vault: app.vault,
         onSaveCharacter: handleSaveCharacter,
     });
@@ -251,9 +252,18 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
     }
 
     const classInfo = CLASS_INFO[character.class];
-    const xpProgress = character.isTrainingMode
-        ? (character.trainingXP % 100) / 100
-        : getXPProgress(character.totalXP);
+
+    // Calculate XP progress
+    let xpProgress: number;
+    if (character.isTrainingMode) {
+        const currentThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel - 1] || 0;
+        const nextThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel] || TRAINING_XP_THRESHOLDS[9];
+        const xpInLevel = character.trainingXP - currentThreshold;
+        const xpNeeded = nextThreshold - currentThreshold;
+        xpProgress = xpNeeded > 0 ? Math.min(1, xpInLevel / xpNeeded) : 1;
+    } else {
+        xpProgress = getXPProgress(character.totalXP);
+    }
 
     if (loading) {
         return <div className="qb-sidebar-loading">Loading...</div>;
@@ -278,7 +288,12 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
 
                 {/* XP Bar in header */}
                 <div className="qb-sb-header-xp">
-                    <span className="qb-sb-level">Lvl {character.level}</span>
+                    <span className="qb-sb-level">
+                        {character.isTrainingMode
+                            ? `Training ${getTrainingLevelDisplay(character.trainingLevel)}`
+                            : `Lvl ${character.level}`
+                        }
+                    </span>
                     <div className="qb-sb-xp-bar">
                         <div
                             className="qb-sb-xp-fill"
@@ -329,6 +344,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                                                                     onToggleTask={handleToggleTask}
                                                                     taskProgress={taskProgressMap[quest.questId]}
                                                                     sections={sectionsMap[quest.questId]}
+                                                                    visibleTaskCount={isManualQuest(quest) ? quest.visibleTasks : 4}
                                                                 />
                                                             </DraggableSidebarCard>
                                                         ))
