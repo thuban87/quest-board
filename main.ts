@@ -14,6 +14,7 @@ import {
     QuestSidebarView
 } from './src/views';
 import { CreateQuestModal } from './src/modals/CreateQuestModal';
+import { ApplicationGauntletModal, InterviewArenaModal } from './src/modals/JobHuntModal';
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
@@ -78,6 +79,24 @@ export default class QuestBoardPlugin extends Plugin {
                     // Refresh views after quest creation
                     this.app.workspace.trigger('quest-board:refresh');
                 }).open();
+            },
+        });
+
+        // Add command for Application Gauntlet
+        this.addCommand({
+            id: 'create-application-gauntlet',
+            name: 'New Application Gauntlet',
+            callback: () => {
+                new ApplicationGauntletModal(this.app).open();
+            },
+        });
+
+        // Add command for Interview Arena
+        this.addCommand({
+            id: 'create-interview-arena',
+            name: 'New Interview Arena',
+            callback: () => {
+                new InterviewArenaModal(this.app).open();
             },
         });
 

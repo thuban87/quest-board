@@ -1980,6 +1980,23 @@
   flex-shrink: 0;
 }
 
+.qb-fp-toggle-all {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--qb-radius-sm);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+.qb-fp-toggle-all:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
 .qb-fp-column-header:hover {
   background: var(--background-modifier-hover);
 }

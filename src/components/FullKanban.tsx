@@ -113,6 +113,35 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         });
     };
 
+    // Toggle all cards in a column (collapse or expand all)
+    const toggleAllCardsInColumn = (status: QuestStatus, collapse: boolean) => {
+        const quests = useQuestStore.getState().quests;
+        const questIds = Array.from(quests.values())
+            .filter(q => q.status === status)
+            .map(q => q.questId);
+
+        setCollapsedCards(prev => {
+            const next = new Set(prev);
+            questIds.forEach(id => {
+                if (collapse) {
+                    next.add(id);
+                } else {
+                    next.delete(id);
+                }
+            });
+            return next;
+        });
+    };
+
+    // Check if all cards in a column are collapsed
+    const areAllCardsCollapsed = (status: QuestStatus): boolean => {
+        const quests = useQuestStore.getState().quests;
+        const questIds = Array.from(quests.values())
+            .filter(q => q.status === status)
+            .map(q => q.questId);
+        return questIds.length > 0 && questIds.every(id => collapsedCards.has(id));
+    };
+
     // Save character callback
     const handleSaveCharacter = useCallback(async () => {
         const currentCharacter = useCharacterStore.getState().character;
@@ -348,6 +377,18 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                                             <span className="qb-fp-column-emoji">{emoji}</span>
                                             <span className="qb-fp-column-title">{title}</span>
                                             <span className="qb-fp-column-count">{quests.length}</span>
+                                            {quests.length > 0 && (
+                                                <button
+                                                    className="qb-fp-toggle-all"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleAllCardsInColumn(status, !areAllCardsCollapsed(status));
+                                                    }}
+                                                    title={areAllCardsCollapsed(status) ? 'Expand all cards' : 'Collapse all cards'}
+                                                >
+                                                    {areAllCardsCollapsed(status) ? '▼' : '▲'}
+                                                </button>
+                                            )}
                                         </>
                                     )}
                                 </div>
