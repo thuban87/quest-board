@@ -254,6 +254,57 @@ export function getVisibleTasks(tasks: Task[], visibleCount: number): Task[] {
 }
 
 /**
+ * Read tasks from multiple files (aggregates linkedTaskFile + linkedTaskFiles)
+ * Returns combined sections and tasks from all files
+ */
+export async function readTasksFromMultipleFiles(
+    vault: Vault,
+    linkedTaskFile: string,
+    linkedTaskFiles?: string[]
+): Promise<{ success: boolean; sections: TaskSection[]; allTasks: Task[]; error?: string }> {
+    // Build list of all files to read
+    const filePaths: string[] = [linkedTaskFile];
+    if (linkedTaskFiles && linkedTaskFiles.length > 0) {
+        filePaths.push(...linkedTaskFiles);
+    }
+
+    // If only one file, use existing function
+    if (filePaths.length === 1) {
+        return readTasksWithSections(vault, filePaths[0]);
+    }
+
+    // Read from all files and aggregate
+    const allSections: TaskSection[] = [];
+    const allTasks: Task[] = [];
+    const errors: string[] = [];
+
+    for (const filePath of filePaths) {
+        const result = await readTasksWithSections(vault, filePath);
+        if (result.success) {
+            // Add file name prefix to section headers for clarity
+            const fileName = filePath.split('/').pop()?.replace('.md', '') || filePath;
+            const prefixedSections = result.sections.map(section => ({
+                ...section,
+                headerText: result.sections.length > 1 || filePaths.length > 1
+                    ? `${section.headerText}`
+                    : section.headerText,
+            }));
+            allSections.push(...prefixedSections);
+            allTasks.push(...result.allTasks);
+        } else {
+            errors.push(result.error || `Failed to read: ${filePath}`);
+        }
+    }
+
+    return {
+        success: errors.length === 0,
+        sections: allSections,
+        allTasks,
+        error: errors.length > 0 ? errors.join('; ') : undefined,
+    };
+}
+
+/**
  * Count newly completed tasks between two task snapshots
  */
 export function countNewlyCompleted(

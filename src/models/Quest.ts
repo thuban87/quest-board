@@ -89,8 +89,11 @@ export interface BaseQuest {
 export interface ManualQuest extends BaseQuest {
     questType: QuestType.MAIN | QuestType.TRAINING | QuestType.SIDE;
 
-    /** Path to the markdown file containing tasks */
+    /** Path to the markdown file containing tasks (for single file) */
     linkedTaskFile: string;
+
+    /** Paths to multiple task files (optional, aggregates with linkedTaskFile) */
+    linkedTaskFiles?: string[];
 
     /** XP awarded per task completion */
     xpPerTask: number;

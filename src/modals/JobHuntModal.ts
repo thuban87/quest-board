@@ -132,11 +132,25 @@ export class ApplicationGauntletModal extends Modal {
         const fileName = `Application - ${this.details.company} - ${this.details.position}.md`;
         const outputPath = `${OUTPUT_PATHS.side}/${fileName}`;
 
+        // Build variables
+        const variables: Record<string, string> = {
+            company: this.details.company,
+            position: this.details.position || '',
+            company_slug: this.templateService.toSlug(this.details.company),
+            position_slug: this.templateService.toSlug(this.details.position || ''),
+            job_link: this.details.job_link,
+            company_linkedin: this.details.company_linkedin,
+            salary_range: this.details.salary_range,
+            work_type: this.details.work_type,
+            date: this.templateService.getCurrentDate(),
+            output_path: outputPath,
+        };
+
         // Create quest
-        const success = await this.templateService.createQuestFromTemplate(
+        const success = await this.templateService.createFromTemplate(
             TEMPLATE_PATHS.application,
             outputPath,
-            this.details
+            variables
         );
 
         if (success) {
@@ -239,11 +253,23 @@ export class InterviewArenaModal extends Modal {
         const fileName = `Interview - ${this.details.company}.md`;
         const outputPath = `${OUTPUT_PATHS.main}/${fileName}`;
 
+        // Build variables
+        const variables: Record<string, string> = {
+            company: this.details.company,
+            company_slug: this.templateService.toSlug(this.details.company),
+            job_link: this.details.job_link,
+            company_linkedin: this.details.company_linkedin,
+            salary_range: this.details.salary_range,
+            work_type: this.details.work_type,
+            date: this.templateService.getCurrentDate(),
+            output_path: outputPath,
+        };
+
         // Create quest
-        const success = await this.templateService.createQuestFromTemplate(
+        const success = await this.templateService.createFromTemplate(
             TEMPLATE_PATHS.interview,
             outputPath,
-            this.details
+            variables
         );
 
         if (success) {

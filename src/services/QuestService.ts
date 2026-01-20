@@ -36,20 +36,57 @@ export interface QuestLoadResult {
  * Expects YAML frontmatter between --- markers
  */
 function parseQuestFrontmatter(content: string, filePath: string): Partial<ManualQuest> | null {
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    // Handle both Unix (\n) and Windows (\r\n) line endings
+    const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
     if (!frontmatterMatch) return null;
 
     const frontmatter = frontmatterMatch[1];
     const quest: Partial<ManualQuest> = {};
 
-    // Parse YAML-like frontmatter (simple key: value pairs)
-    const lines = frontmatter.split('\n');
-    for (const line of lines) {
+    // Parse YAML-like frontmatter (handles key: value and YAML arrays)
+    const lines = frontmatter.split(/\r?\n/);
+    let currentArrayKey: string | null = null;
+    let currentArray: string[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Check if this is an array item (starts with "  - " or "- ")
+        const arrayItemMatch = line.match(/^\s*-\s+(.+)$/);
+        if (arrayItemMatch && currentArrayKey) {
+            let itemValue = arrayItemMatch[1].trim();
+            // Remove quotes if present
+            if ((itemValue.startsWith('"') && itemValue.endsWith('"')) ||
+                (itemValue.startsWith("'") && itemValue.endsWith("'"))) {
+                itemValue = itemValue.slice(1, -1);
+            }
+            currentArray.push(itemValue);
+            continue;
+        }
+
+        // If we were building an array and hit a non-array line, save it
+        if (currentArrayKey && currentArray.length > 0) {
+            if (currentArrayKey === 'tags') {
+                quest.tags = currentArray;
+            } else if (currentArrayKey === 'linkedTaskFiles') {
+                quest.linkedTaskFiles = currentArray;
+            }
+            currentArrayKey = null;
+            currentArray = [];
+        }
+
         const colonIndex = line.indexOf(':');
         if (colonIndex === -1) continue;
 
         const key = line.substring(0, colonIndex).trim();
         let value = line.substring(colonIndex + 1).trim();
+
+        // Check if this is the start of an array (empty value after colon)
+        if (value === '' && (key === 'tags' || key === 'linkedTaskFiles')) {
+            currentArrayKey = key;
+            currentArray = [];
+            continue;
+        }
 
         // Remove quotes if present
         if ((value.startsWith('"') && value.endsWith('"')) ||
@@ -92,8 +129,10 @@ function parseQuestFrontmatter(content: string, filePath: string): Partial<Manua
                 quest.visibleTasks = parseInt(value) || 4;
                 break;
             case 'tags':
-                // Parse comma-separated tags
-                quest.tags = value.split(',').map(t => t.trim()).filter(t => t);
+                // Parse comma-separated tags (inline format)
+                if (value) {
+                    quest.tags = value.split(',').map(t => t.trim()).filter(t => t);
+                }
                 break;
             case 'createdDate':
                 quest.createdDate = value;
@@ -104,6 +143,15 @@ function parseQuestFrontmatter(content: string, filePath: string): Partial<Manua
             case 'schemaVersion':
                 quest.schemaVersion = parseInt(value) || QUEST_SCHEMA_VERSION;
                 break;
+        }
+    }
+
+    // Handle array at end of frontmatter
+    if (currentArrayKey && currentArray.length > 0) {
+        if (currentArrayKey === 'tags') {
+            quest.tags = currentArray;
+        } else if (currentArrayKey === 'linkedTaskFiles') {
+            quest.linkedTaskFiles = currentArray;
         }
     }
 
