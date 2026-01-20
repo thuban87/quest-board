@@ -461,7 +461,7 @@ export function watchQuestFolder(
     vault: Vault,
     baseFolder: string,
     callback: (result: QuestLoadResult) => void,
-    debounceMs: number = 300
+    debounceMs: number = 1000  // Increased to prevent race condition with saves
 ): () => void {
     const debouncedReload = debounce(async () => {
         const result = await loadAllQuests(vault, baseFolder);

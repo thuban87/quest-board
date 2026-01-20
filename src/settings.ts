@@ -5,20 +5,14 @@
  * API keys and sensitive data stored here via loadData/saveData.
  */
 
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, PluginSettingTab, Setting, TFolder } from 'obsidian';
 import type QuestBoardPlugin from '../main';
 import type { Character } from './models/Character';
 import type { InventoryItem } from './models/Consumable';
+import { Achievement } from './models/Achievement';
 
-/**
- * Achievement data structure
- */
-export interface Achievement {
-    id: string;
-    name: string;
-    description: string;
-    dateUnlocked: string;
-}
+// Re-export for convenience
+export type { Achievement };
 
 /**
  * UI state that persists across reloads
@@ -42,6 +36,7 @@ export interface QuestBoardSettings {
     // Storage configuration
     storageFolder: string;
     spriteFolder: string;  // Path to sprite folder (e.g., 'Quest Board/assets/sprites/paladin')
+    badgeFolder: string;   // Path to achievement badge images
 
     // Game settings
     weeklyGoal: number;
@@ -65,6 +60,7 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     geminiApiKey: '',
     storageFolder: 'Life/Quest Board',
     spriteFolder: 'Life/Quest Board/assets/sprites/paladin',
+    badgeFolder: 'Life/Quest Board/assets/badges',
     weeklyGoal: 8,
     enableTrainingMode: true,
     character: null,

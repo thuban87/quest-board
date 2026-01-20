@@ -13,6 +13,7 @@ import { getXPProgress, getXPForNextLevel, XP_THRESHOLDS, TRAINING_XP_THRESHOLDS
 
 interface CharacterSheetProps {
     onBack: () => void;
+    onViewAchievements?: () => void;
     spriteFolder?: string;
     spriteResourcePath?: string;  // Pre-computed resource path from vault
 }
@@ -26,7 +27,7 @@ const GEAR_SLOTS = [
     { id: 'shield', label: 'Shield', emoji: '🛡️' },
 ];
 
-export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, spriteFolder, spriteResourcePath }) => {
+export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAchievements, spriteFolder, spriteResourcePath }) => {
     const character = useCharacterStore((state) => state.character);
     const achievements = useCharacterStore((state) => state.achievements);
     const quests = useQuestStore((state) => state.quests);
@@ -150,8 +151,13 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, spriteFo
                         <span className="qb-stat-value">{totalQuests - completedQuests}</span>
                         <span className="qb-stat-label">Active Quests</span>
                     </div>
-                    <div className="qb-stat-item">
-                        <span className="qb-stat-value">{achievements.length}</span>
+                    <div
+                        className={`qb-stat-item ${onViewAchievements ? 'clickable' : ''}`}
+                        onClick={onViewAchievements}
+                        style={{ cursor: onViewAchievements ? 'pointer' : 'default' }}
+                        title="View Achievements"
+                    >
+                        <span className="qb-stat-value">🏆 {achievements.filter(a => a.unlockedAt).length}</span>
                         <span className="qb-stat-label">Achievements</span>
                     </div>
                     <div className="qb-stat-item">

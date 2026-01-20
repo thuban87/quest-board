@@ -23,6 +23,10 @@ interface QuestCardProps {
     /** Flat tasks array (legacy fallback) */
     tasks?: Task[];
     visibleTaskCount?: number;
+    /** Quest-level collapse state */
+    isCollapsed?: boolean;
+    /** Callback to toggle quest collapse */
+    onToggleCollapse?: () => void;
 }
 
 /**
@@ -62,6 +66,8 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
     sections,
     tasks,
     visibleTaskCount = 4,
+    isCollapsed = false,
+    onToggleCollapse,
 }) => {
     const character = useCharacterStore((state) => state.character);
 
@@ -191,6 +197,15 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
         >
             {/* Header */}
             <div className="qb-card-header">
+                {onToggleCollapse && (
+                    <button
+                        className="qb-card-collapse-toggle"
+                        onClick={(e) => { e.stopPropagation(); onToggleCollapse(); }}
+                        title={isCollapsed ? 'Expand quest' : 'Collapse quest'}
+                    >
+                        {isCollapsed ? '▶' : '▼'}
+                    </button>
+                )}
                 <span className="qb-card-title">{quest.questName}</span>
                 <span
                     className="qb-card-priority"
@@ -201,57 +216,62 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
                 </span>
             </div>
 
-            {/* Category */}
-            <div className="qb-card-category">
-                {quest.category}
-                {hasClassBonus && (
-                    <span className="qb-class-bonus-badge" title="Class bonus applies!">
-                        +{CLASS_INFO[character!.class].bonusPercent}%
-                    </span>
-                )}
-            </div>
-
-            {/* Sections or Tasks */}
-            {renderSections()}
-
-            {/* Progress */}
-            {taskProgress && taskProgress.total > 0 && (
-                <div className="qb-card-progress">
-                    <div className="qb-progress-bar">
-                        <div
-                            className="qb-progress-fill"
-                            style={{
-                                width: `${(taskProgress.completed / taskProgress.total) * 100}%`,
-                                backgroundColor: hasClassBonus
-                                    ? CLASS_INFO[character!.class].primaryColor
-                                    : 'var(--interactive-accent)'
-                            }}
-                        />
+            {/* Collapsible Body */}
+            {!isCollapsed && (
+                <>
+                    {/* Category */}
+                    <div className="qb-card-category">
+                        {quest.category}
+                        {hasClassBonus && (
+                            <span className="qb-class-bonus-badge" title="Class bonus applies!">
+                                +{CLASS_INFO[character!.class].bonusPercent}%
+                            </span>
+                        )}
                     </div>
-                    <span className="qb-progress-text">
-                        {taskProgress.completed}/{taskProgress.total} tasks
-                    </span>
-                </div>
+
+                    {/* Sections or Tasks */}
+                    {renderSections()}
+
+                    {/* Progress */}
+                    {taskProgress && taskProgress.total > 0 && (
+                        <div className="qb-card-progress">
+                            <div className="qb-progress-bar">
+                                <div
+                                    className="qb-progress-fill"
+                                    style={{
+                                        width: `${(taskProgress.completed / taskProgress.total) * 100}%`,
+                                        backgroundColor: hasClassBonus
+                                            ? CLASS_INFO[character!.class].primaryColor
+                                            : 'var(--interactive-accent)'
+                                    }}
+                                />
+                            </div>
+                            <span className="qb-progress-text">
+                                {taskProgress.completed}/{taskProgress.total} tasks
+                            </span>
+                        </div>
+                    )}
+
+                    {/* XP Reward */}
+                    <div className="qb-card-xp">
+                        ⭐ {baseXP} XP
+                        {hasClassBonus && <span className="qb-bonus-indicator">+bonus</span>}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="qb-card-actions">
+                        {availableMoves.map((targetStatus) => (
+                            <button
+                                key={targetStatus}
+                                className={`qb-card-btn ${targetStatus === QuestStatus.COMPLETED ? 'qb-btn-complete' : ''}`}
+                                onClick={() => onMove(quest.questId, targetStatus)}
+                            >
+                                {MOVE_LABELS[targetStatus]}
+                            </button>
+                        ))}
+                    </div>
+                </>
             )}
-
-            {/* XP Reward */}
-            <div className="qb-card-xp">
-                ⭐ {baseXP} XP
-                {hasClassBonus && <span className="qb-bonus-indicator">+bonus</span>}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="qb-card-actions">
-                {availableMoves.map((targetStatus) => (
-                    <button
-                        key={targetStatus}
-                        className={`qb-card-btn ${targetStatus === QuestStatus.COMPLETED ? 'qb-btn-complete' : ''}`}
-                        onClick={() => onMove(quest.questId, targetStatus)}
-                    >
-                        {MOVE_LABELS[targetStatus]}
-                    </button>
-                ))}
-            </div>
         </div>
     );
 };

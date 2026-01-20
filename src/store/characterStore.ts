@@ -8,14 +8,8 @@
 import { create } from 'zustand';
 import { Character, CharacterClass, CLASS_INFO, CharacterAppearance } from '../models';
 import { InventoryItem } from '../models/Consumable';
+import { Achievement } from '../models/Achievement';
 import { calculateTrainingLevel } from '../services/XPSystem';
-
-interface Achievement {
-    id: string;
-    name: string;
-    description: string;
-    dateUnlocked: string;
-}
 
 interface CharacterState {
     /** Current character (null if not created) */
@@ -66,7 +60,7 @@ interface CharacterActions {
     removeInventoryItem: (itemId: string, quantity?: number) => void;
 
     /** Unlock achievement */
-    unlockAchievement: (achievement: Omit<Achievement, 'dateUnlocked'>) => void;
+    unlockAchievement: (achievement: Partial<Achievement> & { id: string }) => void;
 
     /** Set loading state */
     setLoading: (loading: boolean) => void;
@@ -359,14 +353,25 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
 
     unlockAchievement: (achievement) => {
         const { achievements } = get();
-        if (achievements.some((a) => a.id === achievement.id)) return;
-
-        set({
-            achievements: [
-                ...achievements,
-                { ...achievement, dateUnlocked: new Date().toISOString() },
-            ],
-        });
+        // Check if already exists
+        const existingIndex = achievements.findIndex(a => a.id === achievement.id);
+        if (existingIndex >= 0) {
+            // Update existing achievement with unlock
+            const updated = [...achievements];
+            updated[existingIndex] = {
+                ...updated[existingIndex],
+                unlockedAt: new Date().toISOString()
+            };
+            set({ achievements: updated });
+        } else {
+            // Add new achievement
+            set({
+                achievements: [
+                    ...achievements,
+                    { ...achievement, unlockedAt: new Date().toISOString() } as Achievement,
+                ],
+            });
+        }
     },
 
     setLoading: (loading) => set({ loading }),

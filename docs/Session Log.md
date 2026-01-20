@@ -702,6 +702,55 @@ Bug fixes:
 
 ---
 
+## 2026-01-20 - Achievement System & Quest-Level Collapse
+
+**Focus:** Gamified achievement system with tracking, popups, and hub modal + quest card collapse toggle
+
+**Completed:**
+- ✅ Quest-level collapse toggle in sidebar cards (▼/▶ button)
+- ✅ Achievement data model (`src/models/Achievement.ts`) with triggers
+- ✅ 32 default achievements: Levels (10), Applications (8), Interviews (8), Streaks (6)
+- ✅ AchievementService with check/unlock logic for level, quest_count, category_count, streak
+- ✅ AchievementsSidebar component (view all, unlocked/locked sections, progress bars)
+- ✅ AchievementUnlockModal with confetti animation and XP bonus
+- ✅ CreateAchievementModal for user-created achievements
+- ✅ AchievementHubModal with view/edit/delete for all achievements
+- ✅ Level-up trigger in useXPAward hook
+- ✅ Quest completion + category_count trigger integration
+- ✅ Commands: "View Achievements Hub", "Create Custom Achievement"
+- ✅ badgeFolder setting for custom badge images
+- ✅ Fixed save lock race condition (quest revert bug)
+
+**Blockers Resolved:**
+- Quest drag/drop reverting immediately after save (race condition with file watcher)
+- Category_count achievements not tracking (missing checkCategoryCountAchievements call)
+
+**Decisions Made:**
+- Achievements use emojis by default, optional PNG badges via naming convention
+- category_count tracks quest completions by category, not individual tasks
+- Save lock mechanism with 1.5s delay prevents file watcher race condition
+- Sidebar has 3 views: quests | character | achievements
+
+**Testing Notes:**
+- Quest drag/drop and quick action buttons work after save lock fix
+- Level-up triggers achievement unlock popup
+- Custom achievements can be edited with full trigger options
+- Achievements persist across reloads
+
+**Next Steps:**
+- Streak tracking (needs daily check system)
+- Badge folder autocomplete in settings UI
+- Consider achievement categories for filtering
+
+**Hours Worked:** ~2 hours
+**Phase:** 2
+
+**Suggested Commit:** `feat(achievements): add full achievement system with hub, triggers, and unlock animations`
+
+**Next Session Prompt:** "Continue with Achievement System polish or move to next Phase 2 feature"
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD

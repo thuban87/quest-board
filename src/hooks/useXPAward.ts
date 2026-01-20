@@ -12,11 +12,14 @@ import { useCharacterStore } from '../store/characterStore';
 import { useQuestStore } from '../store/questStore';
 import { readTasksFromFile, getTaskCompletion, Task, TaskCompletion } from '../services/TaskFileService';
 import { calculateXPWithBonus, checkLevelUp, getLevelUpMessage } from '../services/XPSystem';
+import { AchievementService } from '../services/AchievementService';
+import { showAchievementUnlock } from '../modals/AchievementUnlockModal';
 import { LevelUpModal } from '../modals/LevelUpModal';
 
 interface UseXPAwardOptions {
     app: App;
     vault: Vault;
+    badgeFolder?: string;
     onSaveCharacter: () => Promise<void>;
 }
 
@@ -30,12 +33,13 @@ interface TaskSnapshot {
 /**
  * Hook to watch task files and award XP on completion
  */
-export function useXPAward({ app, vault, onSaveCharacter }: UseXPAwardOptions) {
+export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/badges', onSaveCharacter }: UseXPAwardOptions) {
     // Store previous task snapshots
     const taskSnapshotsRef = useRef<Map<string, TaskSnapshot>>(new Map());
     const fileWatchersRef = useRef<Map<string, () => void>>(new Map());
 
     const character = useCharacterStore((state) => state.character);
+    const achievements = useCharacterStore((state) => state.achievements);
     const addXP = useCharacterStore((state) => state.addXP);
     const graduate = useCharacterStore((state) => state.graduate);
     const quests = useQuestStore((state) => state.quests);
@@ -91,6 +95,23 @@ export function useXPAward({ app, vault, onSaveCharacter }: UseXPAwardOptions) {
                 }
             );
             modal.open();
+
+            // Check for level achievements (after level-up)
+            if (!character.isTrainingMode) {
+                const achievementService = new AchievementService(vault, badgeFolder);
+                const levelCheck = achievementService.checkLevelAchievements(achievements, levelResult.newLevel);
+
+                // Show unlock popups for each new achievement (with delay)
+                levelCheck.newlyUnlocked.forEach((achievement, index) => {
+                    setTimeout(() => {
+                        showAchievementUnlock(app, achievement, badgeFolder);
+                        // Award achievement bonus XP
+                        if (achievement.xpBonus > 0) {
+                            addXP(achievement.xpBonus);
+                        }
+                    }, 1500 + (index * 1000)); // Stagger popups
+                });
+            }
         }
 
         // Check for quest completion
@@ -99,11 +120,42 @@ export function useXPAward({ app, vault, onSaveCharacter }: UseXPAwardOptions) {
             const completionBonus = calculateXPWithBonus(quest.completionBonus, quest.category, character);
             addXP(completionBonus);
             new Notice(`🎉 Quest Complete! +${completionBonus} bonus XP!`, 4000);
+
+            // Check for quest count achievements
+            const achievementService = new AchievementService(vault, badgeFolder);
+            const questCountCheck = achievementService.checkQuestCountAchievements(achievements, 1); // TODO: track total quest count
+
+            // Check for category-specific achievements (category_count type)
+            const categoryCountCheck = achievementService.checkCategoryCountAchievements(
+                achievements,
+                quest.category,
+                1 // TODO: track category counts properly
+            );
+
+            // Show unlock popups for quest count achievements
+            questCountCheck.newlyUnlocked.forEach((achievement, index) => {
+                setTimeout(() => {
+                    showAchievementUnlock(app, achievement, badgeFolder);
+                    if (achievement.xpBonus > 0) {
+                        addXP(achievement.xpBonus);
+                    }
+                }, 2000 + (index * 1000));
+            });
+
+            // Show unlock popups for category achievements
+            categoryCountCheck.newlyUnlocked.forEach((achievement, index) => {
+                setTimeout(() => {
+                    showAchievementUnlock(app, achievement, badgeFolder);
+                    if (achievement.xpBonus > 0) {
+                        addXP(achievement.xpBonus);
+                    }
+                }, 3000 + questCountCheck.newlyUnlocked.length * 1000 + (index * 1000));
+            });
         }
 
         // Persist character
         await onSaveCharacter();
-    }, [character, addXP, graduate, onSaveCharacter, app]);
+    }, [character, achievements, addXP, graduate, onSaveCharacter, app, vault, badgeFolder]);
 
     // Track which quests are currently being processed
     const processingRef = useRef<Set<string>>(new Set());
