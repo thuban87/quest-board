@@ -43,6 +43,9 @@ interface QuestActions {
 
     /** Clear all quests */
     clear: () => void;
+
+    /** Get quests by status (imperative, for use in callbacks) */
+    getQuestsByStatus: (status: QuestStatus) => Quest[];
 }
 
 type QuestStore = QuestState & QuestActions;
@@ -108,6 +111,11 @@ export const useQuestStore = create<QuestStore>((set, get) => ({
         error: null,
         lastLoaded: null,
     }),
+
+    getQuestsByStatus: (status) => {
+        const quests = get().quests;
+        return quests ? Array.from(quests.values()).filter(q => q.status === status) : [];
+    },
 }));
 
 // ============================================

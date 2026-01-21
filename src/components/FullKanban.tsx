@@ -11,67 +11,26 @@ import { App as ObsidianApp } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { QuestStatus } from '../models/QuestStatus';
 import { Quest, isManualQuest } from '../models/Quest';
+import { KANBAN_STATUSES } from '../config/questStatusConfig';
 import { useQuestStore } from '../store/questStore';
 import { useCharacterStore } from '../store/characterStore';
-import { getXPProgress, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
+import { getXPProgressForCharacter, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 import { QuestCard } from './QuestCard';
 import { CLASS_INFO, getTrainingLevelDisplay } from '../models/Character';
 import { useXPAward } from '../hooks/useXPAward';
 import { useTaskSectionsStore } from '../store/taskSectionsStore';
 import { useQuestLoader } from '../hooks/useQuestLoader';
 import { useQuestActions } from '../hooks/useQuestActions';
-import {
-    DndContext,
-    DragEndEvent,
-    DragOverlay,
-    closestCenter,
-    PointerSensor,
-    useSensor,
-    useSensors,
-} from '@dnd-kit/core';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useSaveCharacter } from '../hooks/useSaveCharacter';
+import { useDndQuests } from '../hooks/useDndQuests';
+import { useCollapsedItems } from '../hooks/useCollapsedItems';
+import { Droppable, DraggableCard } from './DnDWrappers';
+import { DndContext, closestCenter } from '@dnd-kit/core';
 
 interface FullKanbanProps {
     plugin: QuestBoardPlugin;
     app: ObsidianApp;
 }
-
-/**
- * Column configuration with RPG theming
- */
-const COLUMNS: { status: QuestStatus; title: string; emoji: string; themeClass: string }[] = [
-    { status: QuestStatus.AVAILABLE, title: 'Available', emoji: '📋', themeClass: 'qb-col-available' },
-    { status: QuestStatus.ACTIVE, title: 'Active', emoji: '⚡', themeClass: 'qb-col-active' },
-    { status: QuestStatus.IN_PROGRESS, title: 'In Progress', emoji: '🔨', themeClass: 'qb-col-progress' },
-    { status: QuestStatus.COMPLETED, title: 'Completed', emoji: '✅', themeClass: 'qb-col-completed' },
-];
-
-/**
- * Droppable column wrapper
- */
-const DroppableColumn: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
-    const { setNodeRef, isOver } = useDroppable({ id });
-    return (
-        <div ref={setNodeRef} style={{ opacity: isOver ? 0.8 : 1 }}>
-            {children}
-        </div>
-    );
-};
-
-/**
- * Draggable card wrapper
- */
-const DraggableCard: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
-    const style = transform
-        ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.5 : 1 }
-        : undefined;
-    return (
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-            {children}
-        </div>
-    );
-};
 
 export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     const loading = useQuestStore((state) => state.loading);
@@ -82,16 +41,8 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     const sectionsMap = useTaskSectionsStore((state) => state.sectionsMap);
     const taskProgressMap = useTaskSectionsStore((state) => state.progressMap);
 
-    // Save character callback (defined early so it can be passed to hooks)
-    const handleSaveCharacter = useCallback(async () => {
-        const currentCharacter = useCharacterStore.getState().character;
-        const currentInventory = useCharacterStore.getState().inventory;
-        const currentAchievements = useCharacterStore.getState().achievements;
-        plugin.settings.character = currentCharacter;
-        plugin.settings.inventory = currentInventory;
-        plugin.settings.achievements = currentAchievements;
-        await plugin.saveSettings();
-    }, [plugin]);
+    // Save character callback (uses consolidated hook)
+    const handleSaveCharacter = useSaveCharacter(plugin);
 
     // === SHARED HOOKS ===
     // Quest loading and file watching (replaces duplicated loadQuests/watchQuestFolder logic)
@@ -118,54 +69,35 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         [QuestStatus.COMPLETED]: false,
     });
 
-    // Collapsed cards state (by quest ID)
-    const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
+    // Collapsed cards state (uses consolidated hook)
+    const {
+        isCollapsed: isCardCollapsed,
+        toggle: toggleCard,
+        collapse: collapseCards,
+        expand: expandCards
+    } = useCollapsedItems();
 
     // Toggle column collapse
     const toggleColumn = (status: QuestStatus) => {
         setCollapsedColumns(prev => ({ ...prev, [status]: !prev[status] }));
     };
 
-    // Toggle card collapse
-    const toggleCard = (questId: string) => {
-        setCollapsedCards(prev => {
-            const next = new Set(prev);
-            if (next.has(questId)) {
-                next.delete(questId);
-            } else {
-                next.add(questId);
-            }
-            return next;
-        });
-    };
-
     // Toggle all cards in a column (collapse or expand all)
     const toggleAllCardsInColumn = (status: QuestStatus, collapse: boolean) => {
-        const quests = useQuestStore.getState().quests;
-        const questIds = Array.from(quests.values())
-            .filter(q => q.status === status)
+        const questIds = useQuestStore.getState().getQuestsByStatus(status)
             .map(q => q.questId);
-
-        setCollapsedCards(prev => {
-            const next = new Set(prev);
-            questIds.forEach(id => {
-                if (collapse) {
-                    next.add(id);
-                } else {
-                    next.delete(id);
-                }
-            });
-            return next;
-        });
+        if (collapse) {
+            collapseCards(questIds);
+        } else {
+            expandCards(questIds);
+        }
     };
 
     // Check if all cards in a column are collapsed
     const areAllCardsCollapsed = (status: QuestStatus): boolean => {
-        const quests = useQuestStore.getState().quests;
-        const questIds = Array.from(quests.values())
-            .filter(q => q.status === status)
+        const questIds = useQuestStore.getState().getQuestsByStatus(status)
             .map(q => q.questId);
-        return questIds.length > 0 && questIds.every(id => collapsedCards.has(id));
+        return questIds.length > 0 && questIds.every(id => isCardCollapsed(id));
     };
 
     // NOTE: XP Award hook is handled by SidebarQuests to avoid duplicate watchers
@@ -177,34 +109,12 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         }
     }, [plugin.settings.character, setCharacter]);
 
-    // Get quests by status
-    const getQuestsForColumn = (status: QuestStatus): Quest[] => {
-        const quests = useQuestStore.getState().quests;
-        return quests ? Array.from(quests.values()).filter(q => q.status === status) : [];
-    };
+    // Get quests by status (uses consolidated store method)
+    const getQuestsForColumn = (status: QuestStatus): Quest[] =>
+        useQuestStore.getState().getQuestsByStatus(status);
 
-    // DnD sensors - require slight movement before dragging starts
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        })
-    );
-
-    // Handle drag end - move quest to new column
-    const handleDragEnd = useCallback((event: DragEndEvent) => {
-        const { active, over } = event;
-        if (!over) return;
-
-        const questId = active.id as string;
-        const newStatus = over.id as QuestStatus;
-
-        // Check if valid status
-        if (!Object.values(QuestStatus).includes(newStatus)) return;
-
-        handleMoveQuest(questId, newStatus);
-    }, [handleMoveQuest]);
+    // DnD sensors and drag handler (uses consolidated hook)
+    const { sensors, handleDragEnd } = useDndQuests({ onMoveQuest: handleMoveQuest });
 
     if (!character) {
         return (
@@ -217,17 +127,8 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
 
     const classInfo = CLASS_INFO[character.class];
 
-    // Calculate XP progress
-    let xpProgress: number;
-    if (character.isTrainingMode) {
-        const currentThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel - 1] || 0;
-        const nextThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel] || TRAINING_XP_THRESHOLDS[9];
-        const xpInLevel = character.trainingXP - currentThreshold;
-        const xpNeeded = nextThreshold - currentThreshold;
-        xpProgress = xpNeeded > 0 ? Math.min(1, xpInLevel / xpNeeded) : 1;
-    } else {
-        xpProgress = getXPProgress(character.totalXP);
-    }
+    // Calculate XP progress (uses consolidated utility)
+    const xpProgress = getXPProgressForCharacter(character);
 
     if (loading) {
         return (
@@ -278,7 +179,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
             {/* Columns */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <div className="qb-fullpage-columns">
-                    {COLUMNS.map(({ status, title, emoji, themeClass }) => {
+                    {KANBAN_STATUSES.map(({ status, title, emoji, themeClass }) => {
                         const quests = getQuestsForColumn(status);
                         const isCollapsed = collapsedColumns[status];
 
@@ -324,7 +225,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
 
                                 {/* Column Content - hidden when collapsed */}
                                 {!isCollapsed && (
-                                    <DroppableColumn id={status}>
+                                    <Droppable id={status}>
                                         <div className="qb-fp-column-content">
                                             {quests.length === 0 ? (
                                                 <div className="qb-fp-column-empty">
@@ -332,7 +233,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                                                 </div>
                                             ) : (
                                                 quests.map((quest) => {
-                                                    const isCardCollapsed = collapsedCards.has(quest.questId);
+                                                    const isCardCollapsedState = isCardCollapsed(quest.questId);
 
                                                     return (
                                                         <DraggableCard key={quest.questId} id={quest.questId}>
@@ -341,12 +242,12 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                                                                 <div
                                                                     className="qb-fp-card-toggle"
                                                                     onClick={() => toggleCard(quest.questId)}
-                                                                    title={isCardCollapsed ? 'Expand' : 'Collapse'}
+                                                                    title={isCardCollapsedState ? 'Expand' : 'Collapse'}
                                                                 >
-                                                                    {isCardCollapsed ? '▶' : '▼'}
+                                                                    {isCardCollapsedState ? '▶' : '▼'}
                                                                 </div>
 
-                                                                {isCardCollapsed ? (
+                                                                {isCardCollapsedState ? (
                                                                     /* Collapsed card: just name and XP */
                                                                     <div
                                                                         className="qb-fp-card-collapsed"
@@ -376,7 +277,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                                                 })
                                             )}
                                         </div>
-                                    </DroppableColumn>
+                                    </Droppable>
                                 )}
                             </div>
                         );

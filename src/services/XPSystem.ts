@@ -139,6 +139,21 @@ export function getXPProgress(totalXP: number): number {
 }
 
 /**
+ * Get XP progress for a character (handles both training mode and regular mode)
+ * Consolidates duplicated calculation logic from components.
+ */
+export function getXPProgressForCharacter(character: Character): number {
+    if (character.isTrainingMode) {
+        const currentThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel - 1] || 0;
+        const nextThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel] || TRAINING_XP_THRESHOLDS[9];
+        const xpInLevel = character.trainingXP - currentThreshold;
+        const xpNeeded = nextThreshold - currentThreshold;
+        return xpNeeded > 0 ? Math.min(1, xpInLevel / xpNeeded) : 1;
+    }
+    return getXPProgress(character.totalXP);
+}
+
+/**
  * Check if a category matches a class's bonus categories
  */
 export function categoryMatchesClass(
