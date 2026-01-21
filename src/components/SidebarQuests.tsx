@@ -411,10 +411,20 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                         onViewAchievements={() => setCurrentView('achievements')}
                         spriteFolder={plugin.settings.spriteFolder}
                         spriteResourcePath={(() => {
-                            const spritePath = `${plugin.settings.spriteFolder}/south.png`;
+                            // Get character's current tier based on level
+                            const { getLevelTier } = require('../models/Character');
+                            const tier = character.isTrainingMode ? 1 : getLevelTier(character.level);
+                            // Use animated.gif from the tier folder
+                            const spritePath = `${plugin.settings.spriteFolder}/tier${tier}/animated.gif`;
                             const file = app.vault.getAbstractFileByPath(spritePath);
                             if (file) {
                                 return app.vault.getResourcePath(file as any);
+                            }
+                            // Fallback to south.png if no gif
+                            const fallbackPath = `${plugin.settings.spriteFolder}/tier${tier}/south.png`;
+                            const fallbackFile = app.vault.getAbstractFileByPath(fallbackPath);
+                            if (fallbackFile) {
+                                return app.vault.getResourcePath(fallbackFile as any);
                             }
                             return undefined;
                         })()}

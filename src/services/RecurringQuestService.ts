@@ -103,19 +103,26 @@ export class RecurringQuestService {
     }
 
     /**
-     * Get today's date in YYYY-MM-DD format
+     * Get today's date in YYYY-MM-DD format (LOCAL TIME)
      */
     getTodayDate(): string {
-        return new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     /**
-     * Get yesterday's date in YYYY-MM-DD format
+     * Get yesterday's date in YYYY-MM-DD format (LOCAL TIME)
      */
     private getYesterdayDate(): string {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        return yesterday.toISOString().split('T')[0];
+        const year = yesterday.getFullYear();
+        const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+        const day = String(yesterday.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     /**
@@ -235,7 +242,7 @@ export class RecurringQuestService {
             if (today.getDate() !== 1) {
                 next.setMonth(next.getMonth() + 1);
             }
-            return next.toISOString().split('T')[0];
+            return this.formatLocalDate(next);
         }
 
         const scheduledDays = this.parseRecurrenceDays(recurrence);
@@ -247,11 +254,21 @@ export class RecurringQuestService {
             if (scheduledDays.includes(checkDay)) {
                 const next = new Date(today);
                 next.setDate(today.getDate() + offset);
-                return next.toISOString().split('T')[0];
+                return this.formatLocalDate(next);
             }
         }
 
         return null;
+    }
+
+    /**
+     * Format a date as YYYY-MM-DD in local time
+     */
+    private formatLocalDate(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     /**

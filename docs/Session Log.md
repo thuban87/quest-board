@@ -842,6 +842,62 @@ feat(recurring): add recurring quests auto-generation system
 
 ---
 
+## 2026-01-20 - XP Progression & Dynamic Sprite System
+
+**Focus:** Revamp XP thresholds and implement tier-based sprite switching
+
+### Files Modified
+
+**XP Progression:**
+- `src/services/XPSystem.ts` - New 40-level progression with tiered XP requirements:
+  - Levels 1-10: 1,200 XP each
+  - Levels 11-20: 1,500 XP each
+  - Levels 21-30: 1,800 XP each
+  - Levels 31-40: 2,000 XP each
+  - Training mode: 100 XP per level (was 75)
+  - Added `MAX_LEVEL = 40` constant
+  - Updated tier celebration messages for 5 tiers
+
+**Visual Tier System:**
+- `src/models/Character.ts` - `getLevelTier()` now returns 1-5:
+  - Tier 1: Levels 1-8 (Acolyte)
+  - Tier 2: Levels 9-16 (Squire)
+  - Tier 3: Levels 17-24 (Knight)
+  - Tier 4: Levels 25-32 (Champion)
+  - Tier 5: Levels 33-40 (Divine Avatar)
+
+**Dynamic Sprite Switching:**
+- `src/components/SidebarQuests.tsx` - Sprite path now uses tier subfolder:
+  - Path: `{spriteFolder}/tier{N}/animated.gif`
+  - Fallback: `{spriteFolder}/tier{N}/south.png`
+  - Auto-switches when level crosses tier boundary
+
+**Recurring Quests Fix:**
+- `src/services/RecurringQuestService.ts` - Fixed date functions to use local time instead of UTC
+
+### Folder Structure for Sprites
+
+```
+Life/Quest Board/assets/sprites/paladin/
+├── tier1/animated.gif    # Levels 1-8
+├── tier2/animated.gif    # Levels 9-16
+├── tier3/animated.gif    # Levels 17-24
+├── tier4/animated.gif    # Levels 25-32
+└── tier5/animated.gif    # Levels 33-40
+```
+
+### Testing Performed
+
+- ✅ XP thresholds calculate correctly
+- ✅ getLevelTier returns correct tier for each level range
+- ✅ Sprite path includes tier subfolder
+- ✅ GIF displays animated in character sheet
+
+**Hours Worked:** ~1.5 hours
+**Phase:** Phase 2 (Sprite Renderer Service/P30) + XP Rebalance
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD

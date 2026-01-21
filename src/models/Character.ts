@@ -231,13 +231,18 @@ export function createCharacter(
 }
 
 /**
- * Get the level tier (1-5) for visual progression
+ * Get the level tier (1-5) for visual/sprite progression
+ * Tier 1: Levels 1-8   (Acolyte)
+ * Tier 2: Levels 9-16  (Squire)
+ * Tier 3: Levels 17-24 (Knight)
+ * Tier 4: Levels 25-32 (Champion)
+ * Tier 5: Levels 33-40 (Divine Avatar)
  */
 export function getLevelTier(level: number): number {
-    if (level <= 5) return 1;
-    if (level <= 12) return 2;
-    if (level <= 17) return 3;
-    if (level <= 24) return 4;
+    if (level <= 8) return 1;
+    if (level <= 16) return 2;
+    if (level <= 24) return 3;
+    if (level <= 32) return 4;
     return 5;
 }
 
