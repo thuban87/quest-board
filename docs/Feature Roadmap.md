@@ -201,7 +201,7 @@
 
 ### Other Ideas
 - ~~Recurring quests (daily/weekly patterns)~~ ✅ **COMPLETED 2026-01-20**
-- Boss battles (multi-stage epic milestones with team mechanics)
+- ~~Boss battles (multi-stage epic milestones with team mechanics)~~ → See RPG Game Mechanics below
 - Party system (shared quest boards with friends/family)
 - Quest templates (save and reuse complex quest structures)
 - Advanced AI (Claude API for generating longer, more complex quests)
@@ -209,6 +209,66 @@
 - Analytics dashboard (historical trends, completion rates, XP over time)
 - Equipment upgrade system (improve gear through quests)
 - Quest voting system (community-created quests)
+
+### RPG Game Mechanics (Combat System)
+
+**Vision:** Turn productivity into an actual game with visual combat, monsters, and boss battles.
+
+#### Core Combat Concept
+- **Battle Arena**: Full-page or sidebar view that appears during combat encounters
+- **Turn-based system**: Player and enemies take turns attacking
+- **Task-as-power mechanic**: Completing tasks between turns multiplies your attack power
+  - Base attack = character stats (from level, class, gear)
+  - Task multiplier = `1 + (tasksCompleted * 0.25)` or similar formula
+  - Example: Complete 3 tasks → your next attack does 175% damage
+
+#### Monster Encounters
+- **Random encounters**: Trigger when starting certain quests or at intervals
+- **Enemy groups**: "3 Goblins" with combined HP pool
+- **Difficulty scaling**: Based on player level and quest category
+- **Rewards**: XP, gold, gear drops on victory
+
+#### Boss Fights
+- **Quest-based bosses**: Designate a quest as a "Boss Fight" when it meets criteria:
+  - Minimum 10 tasks
+  - At least 2 nested/sub-tasks
+  - Optional: specific category or priority
+- **Boss assignment**: Quest complexity maps to boss tier/type
+- **Extended combat**: Boss has more HP, special attacks, multiple phases
+- **Same multiplier mechanic**: Complete quest tasks → stronger attacks against boss
+
+#### Character Stats (New)
+- **HP**: Health points, based on level + class
+- **Attack**: Base damage, modified by gear + class
+- **Defense**: Damage reduction
+- **Speed**: Turn order in combat
+
+#### Gear System Integration
+- Equipment earned from quests provides stat bonuses
+- Gear slots: Weapon (attack), Armor (defense), Accessory (special)
+- Visual: Equipped gear shows on character sprite
+
+#### Implementation Architecture
+```
+BattleService.ts       - Combat logic, damage formulas, turn management
+EnemyService.ts        - Monster definitions, spawn logic, difficulty scaling
+BattleView.tsx         - Full-page combat arena with sprites and animations
+BattleState (Zustand)  - HP, turn state, active buffs, task multiplier
+enemies.json           - Monster stats, boss definitions, loot tables
+```
+
+#### UI Components
+- Health bars (player + enemy)
+- Attack/Defend/Item action buttons
+- Task completion indicator ("Complete a task to power up!")
+- Animated sprite combat (attack animations, damage numbers)
+- Victory/Defeat screens with rewards
+
+#### Why This Works
+- **Productivity tied to progress**: Can't just grind combat, must complete real tasks
+- **Immediate gratification**: See task completion translate to damage instantly
+- **Optional depth**: Can fight without tasks (slower) or power up with them
+- **Portfolio showcase**: Unique game mechanic that demonstrates full-stack skills
 
 ---
 
