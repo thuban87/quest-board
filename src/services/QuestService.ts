@@ -24,12 +24,43 @@ const QUEST_FOLDERS = {
 };
 
 /**
+ * Sanitize a quest ID for safe use in file paths.
+ * Strips or replaces dangerous characters to prevent path traversal.
+ */
+export function sanitizeQuestId(questId: string): string {
+    // Remove any path traversal attempts
+    let safe = questId.replace(/\.\./g, '');
+    // Remove leading/trailing slashes and backslashes
+    safe = safe.replace(/^[/\\]+|[/\\]+$/g, '');
+    // Replace any remaining slashes/backslashes with dashes
+    safe = safe.replace(/[/\\]/g, '-');
+    // Only allow alphanumeric, dashes, underscores, and spaces
+    safe = safe.replace(/[^a-zA-Z0-9\-_ ]/g, '');
+    // Trim and ensure not empty
+    safe = safe.trim();
+    if (!safe) {
+        safe = 'quest-' + Date.now();
+    }
+    return safe;
+}
+
+/**
  * Load result
  */
 export interface QuestLoadResult {
     quests: Quest[];
     errors: string[];
     loadedAt: number;
+}
+
+/**
+ * Single quest load result for granular updates
+ */
+export interface SingleQuestResult {
+    quest: Quest | null;
+    questId: string | null;
+    filePath: string;
+    error?: string;
 }
 
 /**
@@ -317,6 +348,40 @@ export async function loadAllQuests(
 }
 
 /**
+ * Load a single quest from a file path.
+ * Used for granular updates instead of reloading all quests.
+ */
+export async function loadSingleQuest(
+    vault: Vault,
+    filePath: string
+): Promise<SingleQuestResult> {
+    const file = vault.getAbstractFileByPath(filePath);
+
+    if (!file || !(file instanceof TFile)) {
+        return {
+            quest: null,
+            questId: null,
+            filePath,
+            error: 'File not found',
+        };
+    }
+
+    let quest: Quest | null = null;
+
+    if (file.extension === 'md') {
+        quest = await loadMarkdownQuest(vault, file);
+    } else if (file.extension === 'json') {
+        quest = await loadJsonQuest(vault, file);
+    }
+
+    return {
+        quest,
+        questId: quest?.questId || null,
+        filePath,
+    };
+}
+
+/**
  * Ensure quest folder structure exists
  */
 export async function ensureQuestFolders(
@@ -373,14 +438,16 @@ export async function saveManualQuest(
     quest: ManualQuest
 ): Promise<boolean> {
     try {
+        const safeQuestId = sanitizeQuestId(quest.questId);
         const subFolder = QUEST_FOLDERS[quest.questType as keyof typeof QUEST_FOLDERS] || QUEST_FOLDERS.main;
         const folderPath = `${baseFolder}/${subFolder}`;
-        const filePath = `${folderPath}/${quest.questId}.md`;
+        const filePath = `${folderPath}/${safeQuestId}.md`;
 
         console.log('[QuestService] saveManualQuest:', {
             filePath,
             status: quest.status,
             questId: quest.questId,
+            safeQuestId,
         });
 
         await ensureFolderExists(vault, folderPath);
@@ -413,8 +480,9 @@ export async function saveAIQuest(
     quest: AIGeneratedQuest
 ): Promise<boolean> {
     try {
+        const safeQuestId = sanitizeQuestId(quest.questId);
         const folderPath = `${baseFolder}/${QUEST_FOLDERS.aiGenerated}`;
-        const filePath = `${folderPath}/${quest.questId}.json`;
+        const filePath = `${folderPath}/${safeQuestId}.json`;
 
         await ensureFolderExists(vault, folderPath);
 
@@ -521,3 +589,97 @@ export function watchQuestFolder(
         vault.offref(onRename);
     };
 }
+
+/**
+ * Event types for granular watcher
+ */
+export type QuestFileEvent =
+    | { type: 'modify'; filePath: string }
+    | { type: 'create'; filePath: string }
+    | { type: 'delete'; filePath: string; questId?: string }
+    | { type: 'rename'; filePath: string; oldPath: string };
+
+/**
+ * Granular folder watcher - provides per-file callbacks instead of full reload.
+ * More efficient than watchQuestFolder for large quest counts.
+ */
+export function watchQuestFolderGranular(
+    vault: Vault,
+    baseFolder: string,
+    callbacks: {
+        onQuestModified: (filePath: string, quest: Quest | null) => void;
+        onQuestCreated: (filePath: string, quest: Quest) => void;
+        onQuestDeleted: (filePath: string) => void;
+        onQuestRenamed: (newPath: string, oldPath: string, quest: Quest | null) => void;
+        /** Called if granular handling fails and full reload is needed */
+        onFullReloadNeeded?: () => void;
+    },
+    debounceMs: number = 300
+): () => void {
+    // Track pending events for debouncing per-file
+    const pendingModifies = new Map<string, ReturnType<typeof setTimeout>>();
+
+    const handleModify = async (filePath: string) => {
+        const result = await loadSingleQuest(vault, filePath);
+        callbacks.onQuestModified(filePath, result.quest);
+    };
+
+    const onCreate = vault.on('create', async (file) => {
+        if (file.path.startsWith(baseFolder) && file instanceof TFile) {
+            // Small delay to ensure file is fully written
+            setTimeout(async () => {
+                const result = await loadSingleQuest(vault, file.path);
+                if (result.quest) {
+                    callbacks.onQuestCreated(file.path, result.quest);
+                }
+            }, 100);
+        }
+    });
+
+    const onModify = vault.on('modify', (file) => {
+        if (file.path.startsWith(baseFolder) && file instanceof TFile) {
+            // Debounce per-file to handle rapid edits
+            const existing = pendingModifies.get(file.path);
+            if (existing) {
+                clearTimeout(existing);
+            }
+
+            pendingModifies.set(
+                file.path,
+                setTimeout(() => {
+                    pendingModifies.delete(file.path);
+                    handleModify(file.path);
+                }, debounceMs)
+            );
+        }
+    });
+
+    const onDelete = vault.on('delete', (file) => {
+        if (file.path.startsWith(baseFolder)) {
+            callbacks.onQuestDeleted(file.path);
+        }
+    });
+
+    const onRename = vault.on('rename', async (file, oldPath) => {
+        if (file.path.startsWith(baseFolder) || oldPath.startsWith(baseFolder)) {
+            if (file instanceof TFile) {
+                const result = await loadSingleQuest(vault, file.path);
+                callbacks.onQuestRenamed(file.path, oldPath, result.quest);
+            } else {
+                callbacks.onQuestRenamed(file.path, oldPath, null);
+            }
+        }
+    });
+
+    // Return unsubscribe function
+    return () => {
+        vault.offref(onCreate);
+        vault.offref(onModify);
+        vault.offref(onDelete);
+        vault.offref(onRename);
+        // Clear pending timeouts
+        pendingModifies.forEach(timeout => clearTimeout(timeout));
+        pendingModifies.clear();
+    };
+}
+

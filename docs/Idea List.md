@@ -1,6 +1,11 @@
 # Quest Board - Idea List
 
 Ideas and features that didn't make the MVP cut. These can be evaluated for future releases.
+---
+
+## Personal Ideas
+- [ ] Need to adjust renaming of linked files so that quests don't lose tracking when I rename or move a list file.
+- [ ] 
 
 ---
 

@@ -15,8 +15,8 @@ interface UseQuestActionsOptions {
     vault: Vault;
     storageFolder: string;
     streakMode?: 'quest' | 'task';
-    /** Save lock ref from useQuestLoader - prevents file watcher race condition */
-    saveLockRef?: MutableRefObject<boolean>;
+    /** Pending saves Set from useQuestLoader - tracks quest IDs being saved */
+    pendingSavesRef?: MutableRefObject<Set<string>>;
     /** Callback to save character to plugin settings after streak update */
     onSaveCharacter?: () => Promise<void>;
 }
@@ -35,15 +35,16 @@ export function useQuestActions({
     vault,
     storageFolder,
     streakMode = 'quest',
-    saveLockRef,
+    pendingSavesRef,
     onSaveCharacter,
 }: UseQuestActionsOptions): UseQuestActionsResult {
 
     const handleMoveQuest = useCallback(
         async (questId: string, newStatus: QuestStatus) => {
-            // Set save lock to prevent file watcher from reverting during save
-            if (saveLockRef) {
-                saveLockRef.current = true;
+            // Add to pending saves BEFORE the save operation
+            if (pendingSavesRef) {
+                pendingSavesRef.current.add(questId);
+                console.log('[useQuestActions] Added to pending saves:', questId);
             }
 
             try {
@@ -60,20 +61,25 @@ export function useQuestActions({
 
                 return result;
             } finally {
-                // Clear lock after a delay to let file watcher debounce pass
-                if (saveLockRef) {
+                // Remove from pending saves AFTER the save completes
+                // Use a small delay to ensure file watcher debounce has passed
+                if (pendingSavesRef) {
                     setTimeout(() => {
-                        saveLockRef.current = false;
-                    }, 1500);
+                        pendingSavesRef.current.delete(questId);
+                        console.log('[useQuestActions] Removed from pending saves:', questId);
+                    }, 500); // 500ms delay - less than old 1500ms, but still gives debounce time
                 }
             }
         },
-        [vault, storageFolder, streakMode, saveLockRef, onSaveCharacter]
+        [vault, storageFolder, streakMode, pendingSavesRef, onSaveCharacter]
     );
 
     const handleToggleTask = useCallback(
-        (questId: string, lineNumber: number) => {
-            return toggleTask(vault, questId, lineNumber);
+        async (questId: string, lineNumber: number) => {
+            // NOTE: toggleTask saves LINKED files, not quest files.
+            // We don't add to pendingSaves here because the file watcher
+            // needs to reload to pick up the task completion changes.
+            return await toggleTask(vault, questId, lineNumber);
         },
         [vault]
     );

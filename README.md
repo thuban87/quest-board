@@ -1,5 +1,14 @@
 # Quest Board
 
+> [!CAUTION]
+> **⚠️ DEVELOPMENT IN PROGRESS - NOT READY FOR PUBLIC USE**
+>
+> This plugin is under active development and is not yet stable. APIs, data formats, and features may change without notice. **Use at your own risk.** If you choose to use this plugin, back up your data regularly and be prepared for breaking changes.
+>
+> This repository is public for portfolio/learning purposes. Contributions and feedback are welcome, but please understand the plugin is not production-ready.
+
+---
+
 **An RPG-style gamified task/quest tracker for Obsidian.**
 
 Transform any workflow (job hunting, chores, projects, fitness) into epic quests. Gain XP, level up, unlock achievements, and track progress through an intuitive kanban board. Built for ADHD brains that need dopamine hits.
