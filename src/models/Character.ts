@@ -21,6 +21,35 @@ export type CharacterClass =
     | 'bard';
 
 /**
+ * Stat types (D&D-inspired)
+ */
+export type StatType = 'strength' | 'intelligence' | 'wisdom' | 'constitution' | 'dexterity' | 'charisma';
+
+/**
+ * Character stats structure
+ */
+export interface CharacterStats {
+    strength: number;
+    intelligence: number;
+    wisdom: number;
+    constitution: number;
+    dexterity: number;
+    charisma: number;
+}
+
+/**
+ * Default starting stats (base 10 for all)
+ */
+export const DEFAULT_STATS: CharacterStats = {
+    strength: 10,
+    intelligence: 10,
+    wisdom: 10,
+    constitution: 10,
+    dexterity: 10,
+    charisma: 10,
+};
+
+/**
  * Class metadata for display and XP bonuses
  */
 export interface ClassInfo {
@@ -33,6 +62,10 @@ export interface ClassInfo {
     perkDescription: string;
     emoji: string;
     primaryColor: string;
+    /** Primary stats for this class (get +2 per level) */
+    primaryStats: [StatType, StatType];
+    /** Class-specific category to stat mapping */
+    categoryStatMap: Record<string, StatType>;
 }
 
 /**
@@ -49,6 +82,16 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
         perkDescription: 'Completion streaks grant additional 5% XP',
         emoji: '⚔️',
         primaryColor: '#dc3545',
+        primaryStats: ['strength', 'constitution'],
+        categoryStatMap: {
+            fitness: 'strength', exercise: 'strength',
+            health: 'constitution', wellness: 'constitution',
+            coding: 'intelligence', dev: 'intelligence',
+            study: 'intelligence', research: 'intelligence',
+            social: 'charisma', networking: 'charisma',
+            creative: 'dexterity', efficiency: 'dexterity',
+            planning: 'wisdom', admin: 'wisdom',
+        },
     },
     paladin: {
         id: 'paladin',
@@ -60,6 +103,16 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
         perkDescription: 'One missed day per week doesn\'t break your streak',
         emoji: '🛡️',
         primaryColor: '#ffc107',
+        primaryStats: ['strength', 'wisdom'],
+        categoryStatMap: {
+            fitness: 'strength', exercise: 'strength',
+            health: 'strength', wellness: 'strength', // Discipline
+            coding: 'intelligence', dev: 'intelligence',
+            study: 'wisdom', research: 'wisdom',
+            social: 'wisdom', networking: 'wisdom', // Leadership
+            creative: 'dexterity', efficiency: 'dexterity',
+            planning: 'wisdom', admin: 'wisdom',
+        },
     },
     technomancer: {
         id: 'technomancer',
@@ -71,6 +124,16 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
         perkDescription: 'Multi-day project quests grant 25% bonus XP',
         emoji: '💻',
         primaryColor: '#28a745',
+        primaryStats: ['intelligence', 'dexterity'],
+        categoryStatMap: {
+            fitness: 'constitution', exercise: 'constitution',
+            health: 'constitution', wellness: 'wisdom',
+            coding: 'intelligence', dev: 'intelligence',
+            study: 'intelligence', research: 'intelligence',
+            social: 'charisma', networking: 'charisma',
+            creative: 'dexterity', efficiency: 'dexterity',
+            planning: 'wisdom', admin: 'wisdom',
+        },
     },
     scholar: {
         id: 'scholar',
@@ -82,6 +145,16 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
         perkDescription: 'Reading/studying for 30+ minutes grants bonus XP',
         emoji: '📚',
         primaryColor: '#6f42c1',
+        primaryStats: ['intelligence', 'wisdom'],
+        categoryStatMap: {
+            fitness: 'constitution', exercise: 'constitution',
+            health: 'wisdom', wellness: 'wisdom',
+            coding: 'intelligence', dev: 'intelligence',
+            study: 'intelligence', research: 'intelligence',
+            social: 'charisma', networking: 'charisma',
+            creative: 'dexterity', efficiency: 'dexterity',
+            planning: 'wisdom', admin: 'wisdom',
+        },
     },
     rogue: {
         id: 'rogue',
@@ -93,6 +166,16 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
         perkDescription: 'Complete quests faster than estimated for 20% bonus XP',
         emoji: '🗡️',
         primaryColor: '#343a40',
+        primaryStats: ['dexterity', 'charisma'],
+        categoryStatMap: {
+            fitness: 'dexterity', exercise: 'dexterity',
+            health: 'constitution', wellness: 'constitution',
+            coding: 'intelligence', dev: 'intelligence',
+            study: 'intelligence', research: 'intelligence',
+            social: 'charisma', networking: 'charisma',
+            creative: 'dexterity', efficiency: 'dexterity',
+            planning: 'intelligence', admin: 'intelligence',
+        },
     },
     cleric: {
         id: 'cleric',
@@ -104,6 +187,16 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
         perkDescription: 'Wellness streaks grant stacking bonus (+5% per day)',
         emoji: '✨',
         primaryColor: '#17a2b8',
+        primaryStats: ['wisdom', 'constitution'],
+        categoryStatMap: {
+            fitness: 'constitution', exercise: 'constitution',
+            health: 'wisdom', wellness: 'wisdom', // Holistic care
+            coding: 'intelligence', dev: 'intelligence',
+            study: 'wisdom', research: 'wisdom',
+            social: 'charisma', networking: 'charisma',
+            creative: 'dexterity', efficiency: 'dexterity',
+            planning: 'wisdom', admin: 'wisdom',
+        },
     },
     bard: {
         id: 'bard',
@@ -115,6 +208,16 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
         perkDescription: 'Social battery recharges faster after social quests',
         emoji: '🎵',
         primaryColor: '#e83e8c',
+        primaryStats: ['charisma', 'dexterity'],
+        categoryStatMap: {
+            fitness: 'dexterity', exercise: 'dexterity',
+            health: 'constitution', wellness: 'constitution',
+            coding: 'intelligence', dev: 'intelligence',
+            study: 'wisdom', research: 'wisdom',
+            social: 'charisma', networking: 'charisma',
+            creative: 'dexterity', efficiency: 'dexterity',
+            planning: 'charisma', admin: 'charisma',
+        },
     },
 };
 
@@ -166,7 +269,7 @@ export interface Character {
     /** Secondary class (unlocked at level 25) */
     secondaryClass: CharacterClass | null;
 
-    /** Current level (1-30) */
+    /** Current level (1-40) */
     level: number;
 
     /** Total XP earned */
@@ -184,17 +287,41 @@ export interface Character {
     /** Training mode XP (separate pool) */
     trainingXP: number;
 
-    /** Training mode level (I-IV = 1-4) */
+    /** Training mode level (I-X = 1-10) */
     trainingLevel: number;
 
     /** Whether in training mode */
     isTrainingMode: boolean;
+
+    /** Base stats (from level + class) */
+    baseStats: CharacterStats;
+
+    /** Bonus stats from quests (capped at level × 2 per stat) */
+    statBonuses: CharacterStats;
+
+    /** XP accumulator for stat gains (100 XP in category = +1 stat) */
+    categoryXPAccumulator: Record<string, number>;
 
     /** ISO 8601 date string */
     createdDate: string;
 
     /** ISO 8601 date string */
     lastModified: string;
+}
+
+/**
+ * Get starting stats for a class (base 10, +2 to primary stats)
+ */
+export function getStartingStatsForClass(characterClass: CharacterClass): CharacterStats {
+    const classInfo = CLASS_INFO[characterClass];
+    const stats = { ...DEFAULT_STATS };
+
+    // Add +2 to each primary stat
+    for (const primaryStat of classInfo.primaryStats) {
+        stats[primaryStat] += 2;
+    }
+
+    return stats;
 }
 
 /**
@@ -225,6 +352,9 @@ export function createCharacter(
         trainingXP: 0,
         trainingLevel: 1,
         isTrainingMode: true, // Start in training mode
+        baseStats: getStartingStatsForClass(characterClass),
+        statBonuses: { ...DEFAULT_STATS, strength: 0, intelligence: 0, wisdom: 0, constitution: 0, dexterity: 0, charisma: 0 },
+        categoryXPAccumulator: {},
         createdDate: now,
         lastModified: now,
     };

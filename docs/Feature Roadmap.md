@@ -237,11 +237,12 @@
 - **Extended combat**: Boss has more HP, special attacks, multiple phases
 - **Same multiplier mechanic**: Complete quest tasks → stronger attacks against boss
 
-#### Character Stats (New)
-- **HP**: Health points, based on level + class
-- **Attack**: Base damage, modified by gear + class
-- **Defense**: Damage reduction
-- **Speed**: Turn order in combat
+#### Character Stats ✅ (Completed 2026-01-20)
+- **Primary Stats (STR/INT/WIS/CON/DEX/CHA)**: Base from level + class-specific bonuses
+- **Derived Stats (HP/Mana/Attack/Defense/Speed/Crit)**: Calculated from primary stats
+- **XP-based growth**: 100 XP per category = +1 to mapped stat
+- **Level cap**: Max bonus = Level × 2 per stat
+- **Custom mapping UI**: Settings page for user-defined category→stat mappings
 
 #### Gear System Integration
 - Equipment earned from quests provides stat bonuses

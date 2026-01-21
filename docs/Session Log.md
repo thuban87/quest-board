@@ -898,6 +898,59 @@ Life/Quest Board/assets/sprites/paladin/
 
 ---
 
+## 2026-01-20 - Character Stats System Implementation
+
+**Focus:** D&D-style stats system with class-specific bonuses and XP-based stat growth
+
+**Completed:**
+- ✅ Added 6 primary stats (STR, INT, WIS, CON, DEX, CHA) to Character model
+- ✅ Created `StatsService.ts` with derived stats (HP, Mana, Attack, Defense, Speed, Crit)
+- ✅ Implemented class-specific category→stat mapping for all 7 classes
+- ✅ Added XP-based stat growth (100 XP per category = +1 stat)
+- ✅ Implemented stat cap (Level × 2 per stat) to prevent inflation
+- ✅ Added level-up stat gains (+2 primary, +1 others)
+- ✅ Updated Character Sheet UI with Attributes and Combat Stats panels
+- ✅ Added Settings UI for custom category→stat mappings
+- ✅ Added `knownCategories` auto-populate for category autocomplete
+- ✅ Fixed race condition bug in stat processing (was overwriting XP)
+- ✅ Fixed statBonuses initialization bug (was defaulting to 10 instead of 0)
+- ✅ Fixed duplicate XP_THRESHOLDS in characterStore (was using old Level 2 = 200 XP)
+- ✅ Added "Reset Stats Only" debug button in Settings
+- ✅ Silenced PathValidator warnings for deleted files
+
+**Bugs Fixed:**
+- XP bar not updating after completing tasks (race condition)
+- All stats getting +10 bonus on first stat gain (wrong fallback)
+- Character leveling up at old 200 XP threshold instead of 1200 XP
+
+**Testing Notes:**
+- Custom category mapping (fitness → INT) works correctly
+- Stat tooltips show base + bonus with cap info
+- Debug logging added for stat processing troubleshooting
+
+**Next Session Prompt:**
+"Continue with Quest Board - review stats system in practice, implement weekly streak tracker (P24), or start work on power-ups display (P25). Debug logging for stats can be removed once stable."
+
+**Suggested Commit:**
+```
+feat(stats): implement D&D-style character stats system
+
+- Add 6 primary stats (STR/INT/WIS/CON/DEX/CHA) to Character model
+- Create StatsService with derived stats (HP, Mana, Attack, etc.)
+- Implement class-specific category-to-stat mapping
+- Add XP-based stat growth (100 XP = +1 stat) with level cap
+- Add level-up stat gains (+2 primary, +1 others)
+- Add Attributes and Combat Stats panels to Character Sheet
+- Add custom category mapping UI in Settings with autocomplete
+- Fix XP threshold duplication bug (characterStore vs XPSystem)
+- Add Reset Stats debug button
+```
+
+**Hours Worked:** ~2 hours
+**Phase:** Phase 2 (Stats System - New Feature)
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD

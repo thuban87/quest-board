@@ -51,6 +51,12 @@ export interface QuestBoardSettings {
 
     // UI state (persisted)
     uiState: UIState;
+
+    // Custom category-to-stat mappings (e.g., { 'gardening': 'constitution' })
+    categoryStatMappings: Record<string, string>;
+
+    // Known categories (auto-populated from completed quests for autocomplete)
+    knownCategories: string[];
 }
 
 /**
@@ -70,6 +76,8 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
         activeTab: 'board',
         filters: {},
     },
+    categoryStatMappings: {},
+    knownCategories: [],
 };
 
 /**
@@ -177,8 +185,118 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 .setDesc(`${this.plugin.settings.character.class} (Level ${this.plugin.settings.character.level})`);
         }
 
+        // Stat Mapping Section
+        containerEl.createEl('h3', { text: 'Custom Stat Mappings' });
+        containerEl.createEl('p', {
+            text: 'Map your custom quest categories to stats. Format: category → stat (e.g., "gardening" → "constitution")',
+            cls: 'setting-item-description'
+        });
+
+        const statOptions = ['strength', 'intelligence', 'wisdom', 'constitution', 'dexterity', 'charisma'];
+        const mappings = this.plugin.settings.categoryStatMappings || {};
+
+        // Show existing mappings
+        Object.entries(mappings).forEach(([category, stat]) => {
+            new Setting(containerEl)
+                .setName(category)
+                .setDesc(`Currently mapped to: ${stat}`)
+                .addDropdown(dropdown => dropdown
+                    .addOptions(Object.fromEntries(statOptions.map(s => [s, s.toUpperCase()])))
+                    .setValue(stat)
+                    .onChange(async (value) => {
+                        this.plugin.settings.categoryStatMappings[category] = value;
+                        await this.plugin.saveSettings();
+                    }))
+                .addButton(button => button
+                    .setButtonText('Remove')
+                    .onClick(async () => {
+                        delete this.plugin.settings.categoryStatMappings[category];
+                        await this.plugin.saveSettings();
+                        this.display(); // Refresh
+                    }));
+        });
+
+        // Add new mapping - dropdown for known categories or text for new
+        const knownCategories = this.plugin.settings.knownCategories || [];
+        let newCategory = '';
+        let newStat = 'strength';
+
+        // If we have known categories, show dropdown + option to add new
+        if (knownCategories.length > 0) {
+            new Setting(containerEl)
+                .setName('Map Existing Category')
+                .setDesc('Select from categories you\'ve used in quests')
+                .addDropdown(dropdown => {
+                    dropdown.addOption('', '-- Select category --');
+                    knownCategories
+                        .filter(c => !mappings[c]) // Exclude already mapped
+                        .forEach(cat => dropdown.addOption(cat, cat));
+                    dropdown.onChange(value => { newCategory = value.toLowerCase().trim(); });
+                })
+                .addDropdown(dropdown => dropdown
+                    .addOptions(Object.fromEntries(statOptions.map(s => [s, s.toUpperCase()])))
+                    .setValue('strength')
+                    .onChange(value => { newStat = value; }))
+                .addButton(button => button
+                    .setButtonText('Add')
+                    .onClick(async () => {
+                        if (newCategory) {
+                            this.plugin.settings.categoryStatMappings[newCategory] = newStat;
+                            await this.plugin.saveSettings();
+                            this.display();
+                        }
+                    }));
+        }
+
+        // Always allow adding a completely new category by typing
+        new Setting(containerEl)
+            .setName('Add New Category')
+            .setDesc('Type a new category name to map')
+            .addText(text => text
+                .setPlaceholder('e.g., gardening')
+                .onChange(value => { newCategory = value.toLowerCase().trim(); }))
+            .addDropdown(dropdown => dropdown
+                .addOptions(Object.fromEntries(statOptions.map(s => [s, s.toUpperCase()])))
+                .setValue('strength')
+                .onChange(value => { newStat = value; }))
+            .addButton(button => button
+                .setButtonText('Add')
+                .onClick(async () => {
+                    if (newCategory) {
+                        this.plugin.settings.categoryStatMappings[newCategory] = newStat;
+                        // Also add to known categories if not already there
+                        if (!this.plugin.settings.knownCategories.includes(newCategory)) {
+                            this.plugin.settings.knownCategories.push(newCategory);
+                        }
+                        await this.plugin.saveSettings();
+                        this.display();
+                    }
+                }));
+
         // Debug Section (only in development)
         containerEl.createEl('h3', { text: 'Debug' });
+
+        // Reset Stats Only - surgical fix for corrupted stat data
+        new Setting(containerEl)
+            .setName('Reset Stats Only')
+            .setDesc('Reset statBonuses and category XP accumulators to zero (keeps XP, level, achievements)')
+            .addButton(button => button
+                .setButtonText('Reset Stats')
+                .onClick(async () => {
+                    if (this.plugin.settings.character) {
+                        this.plugin.settings.character.statBonuses = {
+                            strength: 0,
+                            intelligence: 0,
+                            wisdom: 0,
+                            constitution: 0,
+                            dexterity: 0,
+                            charisma: 0,
+                        };
+                        this.plugin.settings.character.categoryXPAccumulator = {};
+                        await this.plugin.saveSettings();
+                        alert('Stats reset! Reload Obsidian to see changes.');
+                    }
+                }));
 
         new Setting(containerEl)
             .setName('Reset All Data')
