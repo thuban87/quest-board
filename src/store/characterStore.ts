@@ -146,6 +146,10 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 charisma: 0,
             },
             categoryXPAccumulator: {},
+            currentStreak: 0,
+            highestStreak: 0,
+            lastQuestCompletionDate: null,
+            shieldUsedThisWeek: false,
             createdDate: now,
             lastModified: now,
         };

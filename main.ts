@@ -21,6 +21,7 @@ import { AchievementHubModal } from './src/modals/AchievementHubModal';
 import { useCharacterStore } from './src/store/characterStore';
 import { RecurringQuestService } from './src/services/RecurringQuestService';
 import { RecurringQuestsDashboardModal } from './src/modals/RecurringQuestsDashboardModal';
+import { checkStreakOnLoad } from './src/services/StreakService';
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
@@ -32,6 +33,22 @@ export default class QuestBoardPlugin extends Plugin {
 
         // Load settings
         await this.loadSettings();
+
+        // Check and update streak on load (reset if missed days, reset shield weekly)
+        if (this.settings.character) {
+            const isPaladin = this.settings.character.class === 'paladin';
+            const streakResult = checkStreakOnLoad(this.settings.character, isPaladin);
+
+            if (streakResult.changed) {
+                console.log('[QuestBoard] Streak check on load:', {
+                    streakWasReset: streakResult.streakWasReset,
+                    shieldWasReset: streakResult.shieldWasReset,
+                    currentStreak: streakResult.character.currentStreak,
+                });
+                this.settings.character = streakResult.character;
+                await this.saveSettings();
+            }
+        }
 
         // Initialize recurring quest service
         this.recurringQuestService = new RecurringQuestService(this.app.vault);

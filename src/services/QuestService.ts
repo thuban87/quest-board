@@ -377,6 +377,12 @@ export async function saveManualQuest(
         const folderPath = `${baseFolder}/${subFolder}`;
         const filePath = `${folderPath}/${quest.questId}.md`;
 
+        console.log('[QuestService] saveManualQuest:', {
+            filePath,
+            status: quest.status,
+            questId: quest.questId,
+        });
+
         await ensureFolderExists(vault, folderPath);
 
         const frontmatter = generateQuestFrontmatter(quest);
@@ -385,8 +391,10 @@ export async function saveManualQuest(
         const existingFile = vault.getAbstractFileByPath(filePath);
         if (existingFile instanceof TFile) {
             await vault.modify(existingFile, content);
+            console.log('[QuestService] Modified existing file');
         } else {
             await vault.create(filePath, content);
+            console.log('[QuestService] Created new file');
         }
 
         return true;

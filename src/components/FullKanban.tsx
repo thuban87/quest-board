@@ -10,16 +10,16 @@ import React, { useEffect, useCallback, useState } from 'react';
 import { App as ObsidianApp } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { QuestStatus } from '../models/QuestStatus';
-import { Quest, isAIGeneratedQuest, isManualQuest } from '../models/Quest';
+import { Quest, isManualQuest } from '../models/Quest';
 import { useQuestStore } from '../store/questStore';
 import { useCharacterStore } from '../store/characterStore';
-import { loadAllQuests, watchQuestFolder, saveManualQuest, saveAIQuest } from '../services/QuestService';
-import { readTasksWithSections, readTasksFromMultipleFiles, getTaskCompletion, TaskCompletion, TaskSection, toggleTaskInFile } from '../services/TaskFileService';
 import { getXPProgress, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 import { QuestCard } from './QuestCard';
 import { CLASS_INFO, getTrainingLevelDisplay } from '../models/Character';
 import { useXPAward } from '../hooks/useXPAward';
 import { useTaskSectionsStore } from '../store/taskSectionsStore';
+import { useQuestLoader } from '../hooks/useQuestLoader';
+import { useQuestActions } from '../hooks/useQuestActions';
 import {
     DndContext,
     DragEndEvent,
@@ -74,15 +74,41 @@ const DraggableCard: React.FC<{ id: string; children: React.ReactNode }> = ({ id
 };
 
 export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
-    const { setQuests, upsertQuest, loading, setLoading, setError } = useQuestStore();
+    const loading = useQuestStore((state) => state.loading);
     const character = useCharacterStore((state) => state.character);
     const setCharacter = useCharacterStore((state) => state.setCharacter);
 
     // Task sections and progress from shared store
     const sectionsMap = useTaskSectionsStore((state) => state.sectionsMap);
     const taskProgressMap = useTaskSectionsStore((state) => state.progressMap);
-    const setSections = useTaskSectionsStore((state) => state.setSections);
-    const setAllSections = useTaskSectionsStore((state) => state.setAllSections);
+
+    // Save character callback (defined early so it can be passed to hooks)
+    const handleSaveCharacter = useCallback(async () => {
+        const currentCharacter = useCharacterStore.getState().character;
+        const currentInventory = useCharacterStore.getState().inventory;
+        const currentAchievements = useCharacterStore.getState().achievements;
+        plugin.settings.character = currentCharacter;
+        plugin.settings.inventory = currentInventory;
+        plugin.settings.achievements = currentAchievements;
+        await plugin.saveSettings();
+    }, [plugin]);
+
+    // === SHARED HOOKS ===
+    // Quest loading and file watching (replaces duplicated loadQuests/watchQuestFolder logic)
+    const { saveLockRef } = useQuestLoader({
+        vault: app.vault,
+        storageFolder: plugin.settings.storageFolder,
+        useSaveLock: true,
+    });
+
+    // Quest actions (replaces duplicated handleMoveQuest/handleToggleTask logic)
+    const { moveQuest: handleMoveQuest, toggleTask: handleToggleTask } = useQuestActions({
+        vault: app.vault,
+        storageFolder: plugin.settings.storageFolder,
+        streakMode: plugin.settings.streakMode,
+        saveLockRef,  // Pass lock to prevent file watcher race condition
+        onSaveCharacter: handleSaveCharacter,  // Save character after streak updates
+    });
 
     // Collapsed columns state
     const [collapsedColumns, setCollapsedColumns] = useState<Record<QuestStatus, boolean>>({
@@ -142,17 +168,6 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         return questIds.length > 0 && questIds.every(id => collapsedCards.has(id));
     };
 
-    // Save character callback
-    const handleSaveCharacter = useCallback(async () => {
-        const currentCharacter = useCharacterStore.getState().character;
-        const currentInventory = useCharacterStore.getState().inventory;
-        const currentAchievements = useCharacterStore.getState().achievements;
-        plugin.settings.character = currentCharacter;
-        plugin.settings.inventory = currentInventory;
-        plugin.settings.achievements = currentAchievements;
-        await plugin.saveSettings();
-    }, [plugin]);
-
     // NOTE: XP Award hook is handled by SidebarQuests to avoid duplicate watchers
 
     // Load character on mount
@@ -161,92 +176,6 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
             setCharacter(plugin.settings.character);
         }
     }, [plugin.settings.character, setCharacter]);
-
-    // Load quests and tasks on mount
-    useEffect(() => {
-        const loadQuests = async () => {
-            setLoading(true);
-            try {
-                const result = await loadAllQuests(app.vault, plugin.settings.storageFolder);
-                setQuests(result.quests);
-
-                const progressMap: Record<string, TaskCompletion> = {};
-                const allSectionsMap: Record<string, TaskSection[]> = {};
-
-                for (const quest of result.quests) {
-                    if (isManualQuest(quest) && quest.linkedTaskFile) {
-                        const taskResult = await readTasksFromMultipleFiles(app.vault, quest.linkedTaskFile, quest.linkedTaskFiles);
-                        if (taskResult.success) {
-                            progressMap[quest.questId] = getTaskCompletion(taskResult.allTasks);
-                            allSectionsMap[quest.questId] = taskResult.sections;
-                        }
-                    }
-                }
-                setAllSections(allSectionsMap, progressMap);
-            } catch (error) {
-                setError(`Failed to load quests: ${error}`);
-            }
-            setLoading(false);
-        };
-
-        loadQuests();
-
-        const unsubscribe = watchQuestFolder(app.vault, plugin.settings.storageFolder, async (result) => {
-            setQuests(result.quests);
-
-            const progressMap: Record<string, TaskCompletion> = {};
-            const allSectionsMap: Record<string, TaskSection[]> = {};
-
-            for (const quest of result.quests) {
-                if (isManualQuest(quest) && quest.linkedTaskFile) {
-                    const taskResult = await readTasksFromMultipleFiles(app.vault, quest.linkedTaskFile, quest.linkedTaskFiles);
-                    if (taskResult.success) {
-                        progressMap[quest.questId] = getTaskCompletion(taskResult.allTasks);
-                        allSectionsMap[quest.questId] = taskResult.sections;
-                    }
-                }
-            }
-            setAllSections(allSectionsMap, progressMap);
-        });
-
-        return () => unsubscribe();
-    }, [app.vault, plugin.settings.storageFolder, setQuests, setLoading, setError]);
-
-    // Handle task toggle
-    const handleToggleTask = useCallback(async (questId: string, lineNumber: number) => {
-        const quest = useQuestStore.getState().quests.get(questId);
-        if (!quest || !isManualQuest(quest) || !quest.linkedTaskFile) return;
-
-        const success = await toggleTaskInFile(app.vault, quest.linkedTaskFile, lineNumber);
-        if (!success) return;
-
-        const taskResult = await readTasksFromMultipleFiles(app.vault, quest.linkedTaskFile, quest.linkedTaskFiles);
-        if (taskResult.success) {
-            setSections(questId, taskResult.sections, getTaskCompletion(taskResult.allTasks));
-        }
-    }, [app.vault, setSections]);
-
-    // Handle quest move
-    const handleMoveQuest = useCallback(async (questId: string, newStatus: QuestStatus) => {
-        const quest = useQuestStore.getState().quests.get(questId);
-        if (!quest) return;
-
-        const updatedQuest: Quest = {
-            ...quest,
-            status: newStatus,
-            completedDate: newStatus === QuestStatus.COMPLETED
-                ? new Date().toISOString()
-                : quest.completedDate,
-        };
-
-        upsertQuest(updatedQuest);
-
-        if (isAIGeneratedQuest(updatedQuest)) {
-            await saveAIQuest(app.vault, plugin.settings.storageFolder, updatedQuest);
-        } else {
-            await saveManualQuest(app.vault, plugin.settings.storageFolder, updatedQuest);
-        }
-    }, [app.vault, plugin.settings.storageFolder, upsertQuest]);
 
     // Get quests by status
     const getQuestsForColumn = (status: QuestStatus): Quest[] => {

@@ -302,6 +302,18 @@ export interface Character {
     /** XP accumulator for stat gains (100 XP in category = +1 stat) */
     categoryXPAccumulator: Record<string, number>;
 
+    /** Current streak (consecutive days with quest completions) */
+    currentStreak: number;
+
+    /** Highest streak ever achieved */
+    highestStreak: number;
+
+    /** Last date a quest was completed (ISO date string, date only) */
+    lastQuestCompletionDate: string | null;
+
+    /** Paladin shield used this week (resets Monday) */
+    shieldUsedThisWeek: boolean;
+
     /** ISO 8601 date string */
     createdDate: string;
 
@@ -355,6 +367,10 @@ export function createCharacter(
         baseStats: getStartingStatsForClass(characterClass),
         statBonuses: { ...DEFAULT_STATS, strength: 0, intelligence: 0, wisdom: 0, constitution: 0, dexterity: 0, charisma: 0 },
         categoryXPAccumulator: {},
+        currentStreak: 0,
+        highestStreak: 0,
+        lastQuestCompletionDate: null,
+        shieldUsedThisWeek: false,
         createdDate: now,
         lastModified: now,
     };

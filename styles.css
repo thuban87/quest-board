@@ -2827,3 +2827,58 @@
   font-weight: 600;
   color: var(--text-normal);
 }
+
+/* ===========================================
+   Streak Display Section
+   =========================================== */
+.qb-sheet-streak {
+  margin-top: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: linear-gradient(135deg, var(--background-secondary), var(--background-secondary-alt));
+  border-radius: var(--qb-radius-md);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.qb-sheet-streak h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+  color: var(--text-normal);
+}
+
+.qb-streak-info {
+  display: flex;
+  gap: var(--qb-spacing-lg);
+  margin-bottom: var(--qb-spacing-md);
+}
+
+.qb-streak-current,
+.qb-streak-best {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+}
+
+.qb-streak-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qb-streak-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+
+.qb-streak-current .qb-streak-value {
+  color: #ff6b35;
+}
+
+.qb-streak-message {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}

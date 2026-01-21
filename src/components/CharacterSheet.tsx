@@ -11,6 +11,7 @@ import { CLASS_INFO, getTrainingLevelDisplay, StatType } from '../models/Charact
 import { QuestStatus } from '../models/QuestStatus';
 import { getXPProgress, getXPForNextLevel, XP_THRESHOLDS, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 import { getTotalStats, calculateDerivedStats, STAT_ABBREVIATIONS, STAT_NAMES, getStatCap } from '../services/StatsService';
+import { getStreakDisplay, getStreakMessage } from '../services/StreakService';
 
 interface CharacterSheetProps {
     onBack: () => void;
@@ -118,6 +119,22 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                     Total XP: {character.totalXP}
                     {isTraining && ` (Training: ${character.trainingXP})`}
                 </p>
+            </div>
+
+            {/* Streak Display */}
+            <div className="qb-sheet-streak">
+                <h3>🔥 Activity Streak</h3>
+                <div className="qb-streak-info">
+                    <div className="qb-streak-current">
+                        <span className="qb-streak-label">Current</span>
+                        <span className="qb-streak-value">{getStreakDisplay(character.currentStreak || 0)}</span>
+                    </div>
+                    <div className="qb-streak-best">
+                        <span className="qb-streak-label">Best</span>
+                        <span className="qb-streak-value">{character.highestStreak || 0} days</span>
+                    </div>
+                </div>
+                <p className="qb-streak-message">{getStreakMessage(character.currentStreak || 0)}</p>
             </div>
 
             <div className="qb-sheet-gear">

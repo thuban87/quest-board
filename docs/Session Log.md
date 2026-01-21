@@ -951,6 +951,48 @@ feat(stats): implement D&D-style character stats system
 
 ---
 
+## 2026-01-21 - Weekly Streak Tracker (P24) & Quest Logic Consolidation
+
+**Focus:** Implement weekly streak tracking and consolidate duplicated quest logic
+
+**Completed:**
+- ✅ Created `StreakService.ts` with streak tracking logic
+- ✅ Added streak fields to Character interface (`currentStreak`, `highestStreak`, `lastQuestCompletionDate`, `shieldUsedThisWeek`)
+- ✅ Implemented Paladin shield protection (1 miss per week forgiven)
+- ✅ Added streak display to Character Sheet
+- ✅ Added streak mode setting (quest vs task completion tracking)
+- ✅ Fixed timezone issues (using local time, not UTC)
+- ✅ Created `useQuestLoader` hook to centralize quest loading/watching
+- ✅ Created `useQuestActions` hook to centralize quest actions
+- ✅ Created `QuestActionsService.ts` for centralized business logic
+- ✅ Refactored SidebarQuests and FullKanban to use shared hooks
+- ✅ Added save lock mechanism to prevent file watcher race condition
+- ✅ Added `checkStreakOnLoad` to plugin initialization (main.ts)
+- ✅ Updated Reset Stats button to also reset streak
+
+**Bugs Fixed:**
+- Quest status reverting after drag-drop (save lock timing)
+- Streak not persisting after reload (character save callback)
+- Timezone issues causing incorrect day comparisons
+
+**Testing Notes:**
+- Streak increments correctly on quest completion
+- Streak persists across Obsidian reloads
+- Reset Stats button clears streak properly
+- Both Sidebar and Kanban views work correctly
+
+**Known Issues (Not Critical):**
+- Obsidian editor may show cached file content until reload (display only, file saves correctly)
+
+**Next Steps:**
+- P25: Power-Ups Display
+- Remove debug logging when stable
+
+**Hours Worked:** ~2 hours
+**Phase:** Phase 2 (Streak Tracker)
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD
