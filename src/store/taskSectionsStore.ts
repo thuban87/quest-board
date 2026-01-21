@@ -17,8 +17,14 @@ interface TaskSectionsState {
 }
 
 interface TaskSectionsActions {
-    /** Set all sections and progress */
+    /** Set sections and progress for a single quest */
     setSections: (questId: string, sections: TaskSection[], progress: TaskCompletion) => void;
+
+    /** Alias for setSections - used by granular loader */
+    updateQuestSections: (questId: string, sections: TaskSection[], progress: TaskCompletion) => void;
+
+    /** Remove sections and progress for a quest */
+    removeQuestSections: (questId: string) => void;
 
     /** Set multiple quests' sections at once */
     setAllSections: (
@@ -43,9 +49,27 @@ export const useTaskSectionsStore = create<TaskSectionsStore>((set, get) => ({
         });
     },
 
+    // Alias for setSections
+    updateQuestSections: (questId, sections, progress) => {
+        set({
+            sectionsMap: { ...get().sectionsMap, [questId]: sections },
+            progressMap: { ...get().progressMap, [questId]: progress },
+        });
+    },
+
+    removeQuestSections: (questId) => {
+        const { sectionsMap, progressMap } = get();
+        const newSectionsMap = { ...sectionsMap };
+        const newProgressMap = { ...progressMap };
+        delete newSectionsMap[questId];
+        delete newProgressMap[questId];
+        set({ sectionsMap: newSectionsMap, progressMap: newProgressMap });
+    },
+
     setAllSections: (sectionsMap, progressMap) => {
         set({ sectionsMap, progressMap });
     },
 
     clear: () => set({ sectionsMap: {}, progressMap: {} }),
 }));
+

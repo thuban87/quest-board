@@ -1084,6 +1084,186 @@ When working on features related to:
 
 ---
 
+## 2026-01-21 - Technical Debt: Race Condition Fix & Granular Reloading
+
+**Focus:** Addressing technical debt from Gemini audit, specifically the file watcher race condition and "reload everything" performance issue
+
+### Summary of Changes
+
+This session fixed critical technical debt issues that were causing race conditions and inefficient quest reloading. The main issues addressed:
+
+1. **Race Condition (#2)** - File watcher was reloading quests during save operations, causing stale data
+2. **Linked File Sync Bug** - Task files outside the quest folder weren't triggering reloads
+3. **"Reload Everything" Time Bomb (#1)** - Every file change reloaded ALL quests instead of just the affected one
+4. **XP Award Missing in Kanban** - `useXPAward` hook was imported but never called in FullKanban
+
+### Detailed Changes
+
+#### 1. Race Condition Fix (Set-based Save Tracking)
+
+**Problem:** The original `saveLockRef` was a boolean that blocked ALL reloads when ANY save was in progress. This was too coarse and could still race.
+
+**Solution:** Changed to a `Set<string>` called `pendingSavesRef` that tracks individual quest IDs being saved.
+
+**Files Changed:**
+- `src/hooks/useQuestLoader.ts` - Changed `saveLockRef: boolean` → `pendingSavesRef: Set<string>`
+- `src/hooks/useQuestActions.ts` - Updated to add/remove quest IDs during save lifecycle
+
+**How it works:**
+```typescript
+// Before save
+pendingSavesRef.current.add(questId);
+// After save (with 500ms delay for debounce)
+setTimeout(() => pendingSavesRef.current.delete(questId), 500);
+```
+
+#### 2. Linked File Sync Fix
+
+**Problem:** The `watchQuestFolder` only monitored files within the quest storage folder. Linked task files (stored elsewhere like daily notes or project folders) weren't triggering reloads when modified.
+
+**Solution:** Added a secondary file watcher that monitors all linked task files.
+
+**Files Changed:**
+- `src/hooks/useQuestLoader.ts` - Added `linkedFileToQuestRef` Map and vault.on('modify') listener
+
+**How it works:**
+```typescript
+// Map of linked file path → quest ID
+const linkedFileToQuestRef = useRef<Map<string, string>>(new Map());
+
+// When linked file changes, reload only that quest's sections
+const onLinkedFileModify = vault.on('modify', async (file) => {
+    const questId = linkedFileToQuestRef.current.get(file.path);
+    if (questId) {
+        await loadSectionsForQuest(quest);
+    }
+});
+```
+
+**Bug Found During Testing:** Initially, `linkedFilePaths` was only populated inside the watcher callback, not on initial load. This meant linked files weren't tracked until a quest folder change occurred. Fixed by populating the map during initial load.
+
+#### 3. Granular Quest Reloading
+
+**Problem:** Every file change in the quest folder triggered a full reload of ALL quests (13+ currently). This would become a performance issue as quest count grows.
+
+**Solution:** Created a new granular watcher that loads only the affected quest when a file changes.
+
+**New Functions/Types in `src/services/QuestService.ts`:**
+- `SingleQuestResult` interface - Return type for single quest loads
+- `loadSingleQuest(vault, filePath)` - Loads a single quest from a file path
+- `watchQuestFolderGranular(vault, baseFolder, callbacks)` - Per-file callbacks instead of full reload
+
+**New Methods in `src/store/taskSectionsStore.ts`:**
+- `updateQuestSections(questId, sections, progress)` - Update single quest's sections
+- `removeQuestSections(questId)` - Remove single quest's sections
+
+**Rewrote `src/hooks/useQuestLoader.ts`:**
+- Uses `watchQuestFolderGranular` instead of `watchQuestFolder`
+- Uses `upsertQuest` for individual quest updates
+- Maintains `linkedFileToQuestRef` map for efficient linked file updates
+
+**Callback Structure:**
+```typescript
+watchQuestFolderGranular(vault, storageFolder, {
+    onQuestModified: (filePath, quest) => upsertQuest(quest),
+    onQuestCreated: (filePath, quest) => upsertQuest(quest),
+    onQuestDeleted: (filePath) => removeQuest(basename),
+    onQuestRenamed: (newPath, oldPath, quest) => { ... },
+});
+```
+
+#### 4. Extra Full Reload Fix
+
+**Problem:** After implementing granular reload, there was still an unexpected full reload being triggered after each granular update.
+
+**Root Cause:** `loadQuestsAndSections` was in the `useEffect` dependency array. When React detected a change in the callback identity, it re-ran the effect.
+
+**Solution:** Removed `loadQuestsAndSections` from the dependency array with a comment explaining why:
+```typescript
+}, [vault, storageFolder, useSaveLock, upsertQuest, removeQuest, ...]);
+// Note: loadQuestsAndSections intentionally excluded - only used for initial load
+```
+
+#### 5. XP Award Fix in FullKanban
+
+**Problem:** XP wasn't being awarded when checking off tasks from the Kanban view.
+
+**Root Cause:** `useXPAward` was imported (line 20) but never actually called in `FullKanban.tsx`. XP only worked when the Sidebar view was open.
+
+**Solution:** Added the hook call to FullKanban matching the same pattern used in SidebarQuests:
+```typescript
+useXPAward({
+    app,
+    vault: app.vault,
+    badgeFolder: plugin.settings.badgeFolder,
+    customStatMappings: plugin.settings.categoryStatMappings,
+    onCategoryUsed: async (category) => { ... },
+    onSaveCharacter: handleSaveCharacter,
+});
+```
+
+### Files Changed Summary
+
+| File | Change Type | Description |
+|------|-------------|-------------|
+| `src/hooks/useQuestLoader.ts` | **Rewritten** | Granular updates, linked file tracking, Set-based save lock |
+| `src/hooks/useQuestActions.ts` | Modified | Updated to use Set-based pending saves, removed from toggleTask |
+| `src/services/QuestService.ts` | Modified | Added `loadSingleQuest`, `watchQuestFolderGranular`, `SingleQuestResult` |
+| `src/store/taskSectionsStore.ts` | Modified | Added `updateQuestSections`, `removeQuestSections` methods |
+| `src/components/FullKanban.tsx` | Modified | Added missing `useXPAward` hook call |
+
+### Testing Results
+
+| Test Case | Result |
+|-----------|--------|
+| Initial load shows quest count | ✅ Works |
+| Kanban → linked file sync | ✅ Works |
+| Linked file → Kanban sync | ✅ Works |
+| Quest move between columns | ✅ Works (with save lock) |
+| Rapid task toggling | ✅ No race condition |
+| XP awarded from Kanban | ✅ Works (was broken before) |
+| Granular updates (no full reload spam) | ✅ Works |
+
+### Important for Future Sessions
+
+**If working on file watching or quest updates:**
+- `useQuestLoader.ts` now does ALL the watching (quest folder + linked files)
+- `watchQuestFolderGranular` provides per-file callbacks, not full reload
+- `pendingSavesRef` tracks in-flight saves - check before reloading
+- `linkedFileToQuestRef` maps linked file paths to quest IDs
+
+**If working on toggle/check task:**
+- `toggleTask` in `useQuestActions.ts` does NOT add to pending saves
+- This is intentional - it saves LINKED files, not quest files
+- The file watcher needs to reload to pick up task changes
+
+**If XP isn't working:**
+- Check that `useXPAward` is actually CALLED in the component, not just imported
+- Both `SidebarQuests` and `FullKanban` should call it
+
+### Suggested Commit Message
+
+```
+fix: Race condition fix + granular quest reloading
+
+- Replace boolean saveLockRef with Set<string> pendingSavesRef for per-quest save tracking
+- Add secondary file watcher for linked task files (outside quest folder)
+- Implement granular quest reloading (only reload affected quest, not all)
+- Add loadSingleQuest and watchQuestFolderGranular to QuestService
+- Add updateQuestSections/removeQuestSections to taskSectionsStore
+- Fix XP award in FullKanban (hook was imported but never called)
+- Fix extra full reload triggered by useEffect dependency
+
+Technical debt items addressed:
+- #1: "Reload Everything" Time Bomb
+- #2: Race Condition Hack
+```
+
+**Hours Worked:** ~1.5 hours
+**Phase:** Architecture refactor / Technical debt
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD
@@ -1110,4 +1290,4 @@ When working on features related to:
 
 ---
 
-**Last Updated:** 2026-01-21
+**Last Updated:** 2026-01-21 (Technical Debt Session)

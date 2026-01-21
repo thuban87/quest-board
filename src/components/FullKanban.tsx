@@ -46,7 +46,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
 
     // === SHARED HOOKS ===
     // Quest loading and file watching (replaces duplicated loadQuests/watchQuestFolder logic)
-    const { saveLockRef } = useQuestLoader({
+    const { pendingSavesRef } = useQuestLoader({
         vault: app.vault,
         storageFolder: plugin.settings.storageFolder,
         useSaveLock: true,
@@ -57,8 +57,27 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         vault: app.vault,
         storageFolder: plugin.settings.storageFolder,
         streakMode: plugin.settings.streakMode,
-        saveLockRef,  // Pass lock to prevent file watcher race condition
+        pendingSavesRef,  // Pass pending saves ref to prevent file watcher race condition
         onSaveCharacter: handleSaveCharacter,  // Save character after streak updates
+    });
+
+    // XP Award hook - watches task files and awards XP when tasks are completed
+    useXPAward({
+        app,
+        vault: app.vault,
+        badgeFolder: plugin.settings.badgeFolder,
+        customStatMappings: plugin.settings.categoryStatMappings,
+        onCategoryUsed: async (category) => {
+            // Auto-populate knownCategories for settings autocomplete
+            if (!plugin.settings.knownCategories) {
+                plugin.settings.knownCategories = [];
+            }
+            if (!plugin.settings.knownCategories.includes(category)) {
+                plugin.settings.knownCategories.push(category);
+                await plugin.saveSettings();
+            }
+        },
+        onSaveCharacter: handleSaveCharacter,
     });
 
     // Collapsed columns state

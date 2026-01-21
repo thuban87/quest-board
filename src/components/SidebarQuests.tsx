@@ -27,6 +27,7 @@ import { useQuestActions } from '../hooks/useQuestActions';
 import { useSaveCharacter } from '../hooks/useSaveCharacter';
 import { useDndQuests } from '../hooks/useDndQuests';
 import { useCollapsedItems } from '../hooks/useCollapsedItems';
+import { useCharacterSprite } from '../hooks/useCharacterSprite';
 import { Droppable, DraggableCard } from './DnDWrappers';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 
@@ -64,9 +65,16 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
     // Save character callback (uses consolidated hook)
     const handleSaveCharacter = useSaveCharacter(plugin);
 
+    // Character sprite resource path (uses consolidated hook)
+    const spriteResourcePath = useCharacterSprite({
+        character,
+        spriteFolder: plugin.settings.spriteFolder,
+        vault: app.vault,
+    });
+
     // === SHARED HOOKS ===
     // Quest loading and file watching (replaces duplicated loadQuests/watchQuestFolder logic)
-    const { saveLockRef } = useQuestLoader({
+    const { pendingSavesRef } = useQuestLoader({
         vault: app.vault,
         storageFolder: plugin.settings.storageFolder,
         useSaveLock: true,
@@ -77,7 +85,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         vault: app.vault,
         storageFolder: plugin.settings.storageFolder,
         streakMode: plugin.settings.streakMode,
-        saveLockRef,  // Pass lock to prevent file watcher race condition
+        pendingSavesRef,  // Pass pending saves ref to prevent file watcher race condition
         onSaveCharacter: handleSaveCharacter,  // Save character after streak updates
     });
 
@@ -246,24 +254,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                         onBack={() => setCurrentView('quests')}
                         onViewAchievements={() => setCurrentView('achievements')}
                         spriteFolder={plugin.settings.spriteFolder}
-                        spriteResourcePath={(() => {
-                            // Get character's current tier based on level
-                            const { getLevelTier } = require('../models/Character');
-                            const tier = character.isTrainingMode ? 1 : getLevelTier(character.level);
-                            // Use animated.gif from the tier folder
-                            const spritePath = `${plugin.settings.spriteFolder}/tier${tier}/animated.gif`;
-                            const file = app.vault.getAbstractFileByPath(spritePath);
-                            if (file) {
-                                return app.vault.getResourcePath(file as any);
-                            }
-                            // Fallback to south.png if no gif
-                            const fallbackPath = `${plugin.settings.spriteFolder}/tier${tier}/south.png`;
-                            const fallbackFile = app.vault.getAbstractFileByPath(fallbackPath);
-                            if (fallbackFile) {
-                                return app.vault.getResourcePath(fallbackFile as any);
-                            }
-                            return undefined;
-                        })()}
+                        spriteResourcePath={spriteResourcePath}
                     />
                 ) : (
                     /* Achievements View */

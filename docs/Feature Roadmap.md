@@ -189,6 +189,17 @@
 - Keyboard navigation → Ensure all actions accessible without mouse
 - Screen readers → Test with NVDA/JAWS
 
+### ✅ Completed Technical Debt (2026-01-21)
+
+| Issue | Solution | Status |
+|-------|----------|--------|
+| **#1: "Reload Everything" Time Bomb** | Implemented `watchQuestFolderGranular` with per-file callbacks. Uses `loadSingleQuest` + `upsertQuest` for granular updates. | ✅ Fixed |
+| **#2: Race Condition Hack** | Replaced boolean `saveLockRef` with `Set<string>` `pendingSavesRef` for per-quest save tracking. | ✅ Fixed |
+| **#4: View Logic Leak (Sprite Paths)** | Extracted to `useCharacterSprite.ts` hook | ✅ Fixed |
+| **#5: Quest ID Sanitization** | Added `sanitizeQuestId()` in `QuestService.ts` | ✅ Fixed |
+| **Linked File Sync Bug** | Added secondary file watcher for linked task files via `linkedFileToQuestRef` Map | ✅ Fixed |
+| **XP Award Missing in Kanban** | Added missing `useXPAward` hook call to `FullKanban.tsx` | ✅ Fixed |
+
 ---
 
 ## Future Enhancements (Post-Phase 3)
