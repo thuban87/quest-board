@@ -68,11 +68,11 @@
 | 23 | **Level-Up Celebration** ✅ | Confetti, modal, XP gain animation on level-up | LevelUpModal with confetti animation |
 | 24 | **Weekly Streak Tracker** | Count consecutive days with quest completions | Display prominently |
 | 25 | **Power-Ups Display** | Show active class perk + other bonuses from settings | "Task Slayer: +5% XP" |
-| 26 | **Training Mode** ✅ | Roman numeral levels (I-X), separate XP pool, 75 XP per level, graduation to Level 1 | 10 training levels, LevelUpModal graduation |
+| 26 | **Training Mode** ✅ | Roman numeral levels (I-X), separate XP pool, 100 XP per level, graduation to Level 1 | 10 training levels, LevelUpModal graduation |
 | 27 | **Quest Visibility Controls** | Show next 3-4 tasks, hide future tasks with hints | "Choose your adventure" feel |
 | 28 | **Achievement System** ✅ | Track and display achievements, unlock popups, hub modal | 32 defaults, AchievementHubModal, level/category triggers, confetti |
 | 29 | **Gear Slot UI** | Display empty gear slots on character sheet | Outlines for weapon, armor, accessories |
-| 30 | **Sprite Renderer Service** | SpriteRenderer class with version-based caching (spriteVersion → dataURL) | Only recomposite when character changes |
+| 30 | **Sprite Renderer Service** ✅ | Tier-based sprite folders (tier1-5), animated GIF display, auto-switch on level up | 5 visual tiers, `getLevelTier()` |
 | 31 | **React UI Polish** | Smooth animations, transitions, hover effects, React.memo on all cards/columns | Use CSS transitions |
 | 32 | **Theme Compatibility** | Test with popular themes, ensure class-based colors readable | Dark/light mode support |
 | 33 | **Filter/Search** | Filter quests by category, priority, or search text | Add to board header |

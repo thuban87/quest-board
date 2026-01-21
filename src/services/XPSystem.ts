@@ -7,51 +7,70 @@
 import { Character, CharacterClass, CLASS_INFO, getLevelTier } from '../models/Character';
 
 /**
- * XP thresholds for each level (1-30)
- * Based on age milestones
+ * XP thresholds for each level (1-40)
+ * 
+ * Tier 1 (Levels 1-10):  1,200 XP per level
+ * Tier 2 (Levels 11-20): 1,500 XP per level
+ * Tier 3 (Levels 21-30): 1,800 XP per level
+ * Tier 4 (Levels 31-40): 2,000 XP per level
  */
 export const XP_THRESHOLDS: number[] = [
-    0,      // Level 1 (start)
-    200,    // Level 2
-    400,    // Level 3  
-    750,    // Level 4
-    1100,   // Level 5
-    1650,   // Level 6
-    2200,   // Level 7
-    2800,   // Level 8
-    3500,   // Level 9
-    4300,   // Level 10
-    5200,   // Level 11
-    6100,   // Level 12
-    6700,   // Level 13
-    7400,   // Level 14
-    8200,   // Level 15
-    9100,   // Level 16
-    10100,  // Level 17
-    11100,  // Level 18
-    12200,  // Level 19
-    13400,  // Level 20
-    14300,  // Level 21
-    15400,  // Level 22
-    16600,  // Level 23
-    17900,  // Level 24
-    19100,  // Level 25
-    20500,  // Level 26
-    22000,  // Level 27
-    23600,  // Level 28
-    25300,  // Level 29
-    27000,  // Level 30
+    0,       // Level 1 (start)
+    1200,    // Level 2
+    2400,    // Level 3
+    3600,    // Level 4
+    4800,    // Level 5
+    6000,    // Level 6
+    7200,    // Level 7
+    8400,    // Level 8
+    9600,    // Level 9
+    10800,   // Level 10
+    12300,   // Level 11 (tier 2: +1500)
+    13800,   // Level 12
+    15300,   // Level 13
+    16800,   // Level 14
+    18300,   // Level 15
+    19800,   // Level 16
+    21300,   // Level 17
+    22800,   // Level 18
+    24300,   // Level 19
+    25800,   // Level 20
+    27600,   // Level 21 (tier 3: +1800)
+    29400,   // Level 22
+    31200,   // Level 23
+    33000,   // Level 24
+    34800,   // Level 25
+    36600,   // Level 26
+    38400,   // Level 27
+    40200,   // Level 28
+    42000,   // Level 29
+    43800,   // Level 30
+    45800,   // Level 31 (tier 4: +2000)
+    47800,   // Level 32
+    49800,   // Level 33
+    51800,   // Level 34
+    53800,   // Level 35
+    55800,   // Level 36
+    57800,   // Level 37
+    59800,   // Level 38
+    61800,   // Level 39
+    63800,   // Level 40 (max)
 ];
 
 /**
- * Training mode XP thresholds (75 XP per level, 10 levels max)
+ * Training mode XP thresholds (100 XP per level, 10 levels max)
  */
-export const TRAINING_XP_THRESHOLDS = [0, 75, 150, 225, 300, 375, 450, 525, 600, 675];
+export const TRAINING_XP_THRESHOLDS = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900];
 
 /**
  * Max training level before graduation
  */
 export const MAX_TRAINING_LEVEL = 10;
+
+/**
+ * Max character level
+ */
+export const MAX_LEVEL = 40;
 
 /**
  * Level-up result
@@ -100,8 +119,8 @@ export function canGraduate(trainingLevel: number): boolean {
  * Get XP needed for next level
  */
 export function getXPForNextLevel(currentLevel: number): number {
-    if (currentLevel >= 30) return XP_THRESHOLDS[29];
-    return XP_THRESHOLDS[currentLevel] || 200;
+    if (currentLevel >= MAX_LEVEL) return XP_THRESHOLDS[MAX_LEVEL - 1];
+    return XP_THRESHOLDS[currentLevel] || 1200;
 }
 
 /**
@@ -109,7 +128,7 @@ export function getXPForNextLevel(currentLevel: number): number {
  */
 export function getXPProgress(totalXP: number): number {
     const level = calculateLevel(totalXP);
-    if (level >= 30) return 1;
+    if (level >= MAX_LEVEL) return 1;
 
     const currentThreshold = XP_THRESHOLDS[level - 1];
     const nextThreshold = XP_THRESHOLDS[level];
@@ -289,9 +308,9 @@ export function getLevelUpMessage(
 
     if (tierChanged) {
         const tierMessages: Record<number, string> = {
-            2: `${classInfo.emoji} Your power grows! You've reached a new tier of strength.`,
+            2: `${classInfo.emoji} Your power grows! You've reached Tier 2.`,
             3: `${classInfo.emoji} Impressive! Your ${classInfo.name} abilities are maturing.`,
-            4: `${classInfo.emoji} Remarkable progress! Few reach this level of mastery.`,
+            4: `${classInfo.emoji} Remarkable! Few reach this level of mastery.`,
             5: `${classInfo.emoji} LEGENDARY! You have achieved ultimate ${classInfo.name} status!`,
         };
         const tier = getLevelTier(newLevel);
