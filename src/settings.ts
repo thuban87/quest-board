@@ -57,6 +57,9 @@ export interface QuestBoardSettings {
 
     // Known categories (auto-populated from completed quests for autocomplete)
     knownCategories: string[];
+
+    // Streak mode: 'quest' requires completing a quest, 'task' requires completing a task
+    streakMode: 'quest' | 'task';
 }
 
 /**
@@ -78,6 +81,7 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     },
     categoryStatMappings: {},
     knownCategories: [],
+    streakMode: 'quest',
 };
 
 /**
@@ -163,6 +167,18 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.enableTrainingMode)
                 .onChange(async (value) => {
                     this.plugin.settings.enableTrainingMode = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Streak Mode')
+            .setDesc('What counts for maintaining your daily streak')
+            .addDropdown(dropdown => dropdown
+                .addOption('quest', 'Quest completion (complete 1 full quest per day)')
+                .addOption('task', 'Task completion (complete any task per day)')
+                .setValue(this.plugin.settings.streakMode || 'quest')
+                .onChange(async (value) => {
+                    this.plugin.settings.streakMode = value as 'quest' | 'task';
                     await this.plugin.saveSettings();
                 }));
 
@@ -279,7 +295,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         // Reset Stats Only - surgical fix for corrupted stat data
         new Setting(containerEl)
             .setName('Reset Stats Only')
-            .setDesc('Reset statBonuses and category XP accumulators to zero (keeps XP, level, achievements)')
+            .setDesc('Reset statBonuses, category XP accumulators, and streak to zero (keeps XP, level, achievements)')
             .addButton(button => button
                 .setButtonText('Reset Stats')
                 .onClick(async () => {
@@ -293,8 +309,13 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                             charisma: 0,
                         };
                         this.plugin.settings.character.categoryXPAccumulator = {};
+                        // Reset streak fields
+                        this.plugin.settings.character.currentStreak = 0;
+                        this.plugin.settings.character.highestStreak = 0;
+                        this.plugin.settings.character.lastQuestCompletionDate = null;
+                        this.plugin.settings.character.shieldUsedThisWeek = false;
                         await this.plugin.saveSettings();
-                        alert('Stats reset! Reload Obsidian to see changes.');
+                        alert('Stats and streak reset! Reload Obsidian to see changes.');
                     }
                 }));
 
