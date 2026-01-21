@@ -70,12 +70,11 @@
 | 24.5 | **SidebarQuests & FullKanban Consolidation** ✅ | Major refactor eliminating ~150 lines of duplicated code between components. Created shared hooks and configs. **New file locations:** XP progress → `XPSystem.ts:getXPProgressForCharacter()`, character saving → `useSaveCharacter.ts`, DnD wrappers → `DnDWrappers.tsx`, DnD logic → `useDndQuests.ts`, collapse state → `useCollapsedItems.ts`, status config → `questStatusConfig.ts` (SIDEBAR_STATUSES, KANBAN_STATUSES). Quest loading → `useQuestLoader.ts`, quest actions → `useQuestActions.ts`+`QuestActionsService.ts` | Architecture refactor for maintainability |
 | 25 | **Power-Ups Display** | Show active class perk + other bonuses from settings | "Task Slayer: +5% XP" |
 | 26 | **Training Mode** ✅ | Roman numeral levels (I-X), separate XP pool, 100 XP per level, graduation to Level 1 | 10 training levels, LevelUpModal graduation |
-| 27 | **Quest Visibility Controls** | Show next 3-4 tasks, hide future tasks with hints | "Choose your adventure" feel |
+| 27 | **Quest Visibility Controls** ✅ | Show next 3-4 tasks, hide future tasks with hints | "Choose your adventure" feel, `visibleTasks` setting |
 | 28 | **Achievement System** ✅ | Track and display achievements, unlock popups, hub modal | 32 defaults, AchievementHubModal, level/category triggers, confetti |
-| 29 | **Gear Slot UI** | Display empty gear slots on character sheet | Outlines for weapon, armor, accessories |
+| 29 | **Gear Slot UI** ✅ | Display empty gear slots on character sheet | Outlines for weapon, armor, accessories |
 | 30 | **Sprite Renderer Service** ✅ | Tier-based sprite folders (tier1-5), animated GIF display, auto-switch on level up | 5 visual tiers, `getLevelTier()` |
-| 31 | **React UI Polish** | Smooth animations, transitions, hover effects, React.memo on all cards/columns | Use CSS transitions |
-| 32 | **Theme Compatibility** | Test with popular themes, ensure class-based colors readable | Dark/light mode support |
+
 | 33 | **Filter/Search** | Filter quests by category, priority, or search text | Add to board header |
 
 **Deliverable:** Plugin feels polished, rewarding, visually engaging. Training mode works. Placeholder visuals improved.
@@ -87,12 +86,10 @@
 - [ ] Character Sheet shows accurate stats with better placeholder visual
 - [x] Achievements unlock correctly (32 defaults, category triggers, unlock popup with confetti)
 - [x] Training mode: Roman numerals I-X, separate XP (75/level), graduation works
-- [ ] Quest visibility: Next 3-4 tasks shown, future hidden
-- [ ] Gear slots displayed (empty outlines)
+- [x] Quest visibility: Next 3-4 tasks shown, future hidden
+- [x] Gear slots displayed (empty outlines)
 - [ ] Class perk displayed in power-ups section
 - [ ] Filter works correctly
-- [ ] UI looks good in dark and light themes
-- [ ] Class-based color theming works
 
 ---
 
@@ -107,7 +104,7 @@
 | 36 | **Sprite Asset Organization** | Bundle sprites with plugin in assets folder | 32×32 px PNG files |
 | 37 | **Sprite Layering System** | Client-side Canvas-based sprite assembly | Base + skin + hair + accessories + gear |
 | 38 | **Replace Placeholder Visuals** | Swap all placeholders with real pixel art | Character sheet, board header, everywhere |
-| 39 | **Level Tier Transitions** | Animate sprite change when crossing tier boundary | Levels 5→6, 12→13, 17→18, 24→25 |
+| 39 | **Level Tier Transitions** ✅ | Animate sprite change when crossing tier boundary | Levels 5→6, 12→13, 17→18, 24→25 |
 | 40 | **Gear Visual System** | Display equipped gear on character sprite | Weapon, armor, accessories overlay |
 | 41 | **Dual-Class Unlock** | At Level 25, unlock secondary class selection | Modal, XP bonus, visual blending |
 | 42 | **Dual-Class Visual** | Blend sprites from both classes | Secondary class element added to sprite |
@@ -129,6 +126,8 @@
 | 58 | **Advanced Settings** | Character re-customization, API key management, all other settings | Full control panel |
 | 59 | **Category Management** | Add/edit/delete custom categories with class bonuses | Dynamic system |
 | 60 | **Import/Export** | Export all quests and character data, import from backup | Safety net |
+| 61 | **React UI Polish** | Smooth animations, transitions, hover effects, React.memo on all cards/columns | Use CSS transitions |
+| 62 | **Theme Compatibility** | Test with popular themes, ensure class-based colors readable | Dark/light mode support |
 
 **Deliverable:** Full visual experience with pixel art, AI quest generation, dual-class system, ecosystem integration.
 
@@ -138,7 +137,7 @@
 - [ ] Sprite layering works correctly
 - [ ] Sprite caching prevents redundant composition
 - [ ] Character sprite updates correctly with customization changes
-- [ ] Level tier transitions animate smoothly
+- [x] Level tier transitions animate smoothly
 - [ ] Equipped gear displays on character sprite
 - [ ] Dual-class unlocks at Level 25
 - [ ] Dual-class visual blending works
@@ -166,6 +165,8 @@
 - [ ] Input sanitization prevents XSS
 - [ ] React memoization prevents unnecessary re-renders
 - [ ] File I/O cache only reloads on actual file changes
+- [ ] UI looks good in dark and light themes (61: React UI Polish)
+- [ ] Class-based color theming works (62: Theme Compatibility)
 
 ---
 

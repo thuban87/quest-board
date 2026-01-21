@@ -20,15 +20,13 @@ Simple task list for Quest Board development. Copy to your quest tracker.
 - [x] Multi-File Task Linking - Multiple task files per quest
 - [x] Quest-Level Collapse - ▼/▶ toggle on quest cards
 - [x] Achievement System - 32 defaults, hub modal, unlock popup, triggers
+- [x] Weekly Streak Tracker - Count consecutive days with completions
+- [x] Quest Visibility Controls - Show next 3-4 tasks, hide future
+- [x] Gear Slot UI - Display empty gear slots on character sheet
+- [x] Sprite Renderer Service - Version-based caching
 
 ### Remaining
-- [ ] Weekly Streak Tracker - Count consecutive days with completions
 - [ ] Power-Ups Display - Show active class perk + bonuses
-- [ ] Quest Visibility Controls - Show next 3-4 tasks, hide future
-- [ ] Gear Slot UI - Display empty gear slots on character sheet
-- [ ] Sprite Renderer Service - Version-based caching
-- [ ] React UI Polish - Smooth animations, transitions
-- [ ] Theme Compatibility - Dark/light mode testing
 - [ ] Filter/Search - Filter quests by category/priority
 
 ---
@@ -40,9 +38,13 @@ Simple task list for Quest Board development. Copy to your quest tracker.
 - [ ] Shared/Universal Sprites - Body base, skin tones, hair, accessories (~21)
 - [ ] Icon Pack Integration - Use existing icon packs for items, reduce generation
 - [ ] Sprite Layering System - Canvas-based assembly
-- [ ] Level Tier Transitions - Animate sprite changes
+- [x] Level Tier Transitions - Animate sprite changes
 
 **Note:** Original estimate was 100-120 sprites. Revised to ~50 for Paladin only + icons as needed.
+
+### Polish (Moved from Phase 2)
+- [ ] React UI Polish - Smooth animations, transitions
+- [ ] Theme Compatibility - Dark/light mode testing
 
 ### AI Features
 - [ ] API Key in Settings - Gemini API key storage
@@ -74,4 +76,4 @@ Simple task list for Quest Board development. Copy to your quest tracker.
 
 ---
 
-**Last Updated:** 2026-01-20
+**Last Updated:** 2026-01-21
