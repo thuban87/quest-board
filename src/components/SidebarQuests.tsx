@@ -11,9 +11,10 @@ import { App as ObsidianApp } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { QuestStatus } from '../models/QuestStatus';
 import { Quest, isManualQuest } from '../models/Quest';
+import { SIDEBAR_STATUSES } from '../config/questStatusConfig';
 import { useQuestStore } from '../store/questStore';
 import { useCharacterStore } from '../store/characterStore';
-import { getXPProgress, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
+import { getXPProgressForCharacter } from '../services/XPSystem';
 import { AchievementService } from '../services/AchievementService';
 import { QuestCard } from './QuestCard';
 import { CharacterSheet } from './CharacterSheet';
@@ -23,15 +24,11 @@ import { useXPAward } from '../hooks/useXPAward';
 import { useTaskSectionsStore } from '../store/taskSectionsStore';
 import { useQuestLoader } from '../hooks/useQuestLoader';
 import { useQuestActions } from '../hooks/useQuestActions';
-import {
-    DndContext,
-    DragEndEvent,
-    closestCenter,
-    PointerSensor,
-    useSensor,
-    useSensors,
-} from '@dnd-kit/core';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useSaveCharacter } from '../hooks/useSaveCharacter';
+import { useDndQuests } from '../hooks/useDndQuests';
+import { useCollapsedItems } from '../hooks/useCollapsedItems';
+import { Droppable, DraggableCard } from './DnDWrappers';
+import { DndContext, closestCenter } from '@dnd-kit/core';
 
 interface SidebarQuestsProps {
     plugin: QuestBoardPlugin;
@@ -39,42 +36,6 @@ interface SidebarQuestsProps {
 }
 
 type SidebarView = 'quests' | 'character' | 'achievements';
-
-/**
- * Sections to show (no Completed)
- */
-const SECTIONS: { status: QuestStatus; title: string; emoji: string }[] = [
-    { status: QuestStatus.AVAILABLE, title: 'Available', emoji: '📋' },
-    { status: QuestStatus.ACTIVE, title: 'Active', emoji: '⚡' },
-    { status: QuestStatus.IN_PROGRESS, title: 'In Progress', emoji: '🔨' },
-];
-
-/**
- * Droppable section wrapper for sidebar
- */
-const DroppableSection: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
-    const { setNodeRef, isOver } = useDroppable({ id });
-    return (
-        <div ref={setNodeRef} style={{ opacity: isOver ? 0.8 : 1 }}>
-            {children}
-        </div>
-    );
-};
-
-/**
- * Draggable card wrapper for sidebar
- */
-const DraggableSidebarCard: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
-    const style = transform
-        ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.5 : 1 }
-        : undefined;
-    return (
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-            {children}
-        </div>
-    );
-};
 
 export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => {
     const loading = useQuestStore((state) => state.loading);
@@ -93,36 +54,15 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         [QuestStatus.COMPLETED]: true,
     });
 
-    // Collapsed state for individual quests
-    const [collapsedQuests, setCollapsedQuests] = useState<Set<string>>(new Set());
-
-    // Toggle quest collapse
-    const toggleQuestCollapse = useCallback((questId: string) => {
-        setCollapsedQuests(prev => {
-            const next = new Set(prev);
-            if (next.has(questId)) {
-                next.delete(questId);
-            } else {
-                next.add(questId);
-            }
-            return next;
-        });
-    }, []);
+    // Collapsed state for individual quests (uses consolidated hook)
+    const { isCollapsed: isQuestCollapsed, toggle: toggleQuestCollapse } = useCollapsedItems();
 
     // Task sections and progress from shared store
     const sectionsMap = useTaskSectionsStore((state) => state.sectionsMap);
     const taskProgressMap = useTaskSectionsStore((state) => state.progressMap);
 
-    // Save character callback (defined early so it can be passed to hooks)
-    const handleSaveCharacter = useCallback(async () => {
-        const currentCharacter = useCharacterStore.getState().character;
-        const currentInventory = useCharacterStore.getState().inventory;
-        const currentAchievements = useCharacterStore.getState().achievements;
-        plugin.settings.character = currentCharacter;
-        plugin.settings.inventory = currentInventory;
-        plugin.settings.achievements = currentAchievements;
-        await plugin.saveSettings();
-    }, [plugin]);
+    // Save character callback (uses consolidated hook)
+    const handleSaveCharacter = useSaveCharacter(plugin);
 
     // === SHARED HOOKS ===
     // Quest loading and file watching (replaces duplicated loadQuests/watchQuestFolder logic)
@@ -185,28 +125,12 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         setCollapsed(prev => ({ ...prev, [status]: !prev[status] }));
     };
 
-    // Get quests by status
-    const getQuestsForSection = (status: QuestStatus): Quest[] => {
-        const quests = useQuestStore.getState().quests;
-        return quests ? Array.from(quests.values()).filter(q => q.status === status) : [];
-    };
+    // Get quests by status (uses consolidated store method)
+    const getQuestsForSection = (status: QuestStatus): Quest[] =>
+        useQuestStore.getState().getQuestsByStatus(status);
 
-    // DnD sensors
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: { distance: 8 },
-        })
-    );
-
-    // Handle drag end
-    const handleDragEnd = useCallback((event: DragEndEvent) => {
-        const { active, over } = event;
-        if (!over) return;
-        const questId = active.id as string;
-        const newStatus = over.id as QuestStatus;
-        if (!Object.values(QuestStatus).includes(newStatus)) return;
-        handleMoveQuest(questId, newStatus);
-    }, [handleMoveQuest]);
+    // DnD sensors and drag handler (uses consolidated hook)
+    const { sensors, handleDragEnd } = useDndQuests({ onMoveQuest: handleMoveQuest });
 
     if (!character) {
         return (
@@ -219,17 +143,8 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
 
     const classInfo = CLASS_INFO[character.class];
 
-    // Calculate XP progress
-    let xpProgress: number;
-    if (character.isTrainingMode) {
-        const currentThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel - 1] || 0;
-        const nextThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel] || TRAINING_XP_THRESHOLDS[9];
-        const xpInLevel = character.trainingXP - currentThreshold;
-        const xpNeeded = nextThreshold - currentThreshold;
-        xpProgress = xpNeeded > 0 ? Math.min(1, xpInLevel / xpNeeded) : 1;
-    } else {
-        xpProgress = getXPProgress(character.totalXP);
-    }
+    // Calculate XP progress (uses consolidated utility)
+    const xpProgress = getXPProgressForCharacter(character);
 
     if (loading) {
         return <div className="qb-sidebar-loading">Loading...</div>;
@@ -278,7 +193,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                     /* Quest Sections */
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                         <div className="qb-sb-content">
-                            {SECTIONS.map(({ status, title, emoji }) => {
+                            {SIDEBAR_STATUSES.map(({ status, title, emoji }) => {
                                 const quests = getQuestsForSection(status);
                                 const isCollapsed = collapsed[status];
 
@@ -297,13 +212,13 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                                         </div>
 
                                         {!isCollapsed && (
-                                            <DroppableSection id={status}>
+                                            <Droppable id={status}>
                                                 <div className="qb-sb-section-content">
                                                     {quests.length === 0 ? (
                                                         <div className="qb-sb-empty">No quests</div>
                                                     ) : (
                                                         quests.map((quest) => (
-                                                            <DraggableSidebarCard key={quest.questId} id={quest.questId}>
+                                                            <DraggableCard key={quest.questId} id={quest.questId}>
                                                                 <QuestCard
                                                                     quest={quest}
                                                                     onMove={handleMoveQuest}
@@ -311,14 +226,14 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                                                                     taskProgress={taskProgressMap[quest.questId]}
                                                                     sections={sectionsMap[quest.questId]}
                                                                     visibleTaskCount={isManualQuest(quest) ? quest.visibleTasks : 4}
-                                                                    isCollapsed={collapsedQuests.has(quest.questId)}
+                                                                    isCollapsed={isQuestCollapsed(quest.questId)}
                                                                     onToggleCollapse={() => toggleQuestCollapse(quest.questId)}
                                                                 />
-                                                            </DraggableSidebarCard>
+                                                            </DraggableCard>
                                                         ))
                                                     )}
                                                 </div>
-                                            </DroppableSection>
+                                            </Droppable>
                                         )}
                                     </div>
                                 );

@@ -993,6 +993,97 @@ feat(stats): implement D&D-style character stats system
 
 ---
 
+## 2026-01-21 (Cont.) - SidebarQuests & FullKanban Consolidation Refactor
+
+**Focus:** Major architectural refactor to eliminate ~150 lines of duplicated code between SidebarQuests.tsx and FullKanban.tsx
+
+**Problem Addressed:**
+Both `SidebarQuests` and `FullKanban` had evolved independently with significant code duplication. This created maintenance burden and was the root cause of several bugs (streak not saving, quest status reverting, etc.). A full line-by-line audit identified 10 areas of duplication.
+
+**Completed (4 Chunks):**
+
+### Chunk 1: Non-Interactive Utilities
+- ✅ Added `getXPProgressForCharacter(character)` to `XPSystem.ts` - handles both training mode and regular mode XP bar calculation
+- ✅ Created `useSaveCharacter.ts` hook - consolidates character/inventory/achievements save logic
+- ✅ Added `getQuestsByStatus(status)` method to `questStore.ts` - imperative access for callbacks
+
+**Where to find this logic now:**
+- XP bar progress: `src/services/XPSystem.ts` → `getXPProgressForCharacter()`
+- Character saving: `src/hooks/useSaveCharacter.ts`
+- Quests by status: `src/store/questStore.ts` → `getQuestsByStatus()`
+
+### Chunk 2: DnD Wrappers & Handlers
+- ✅ Created `DnDWrappers.tsx` with shared `Droppable` and `DraggableCard` components
+- ✅ Created `useDndQuests.ts` hook - shared sensors and `handleDragEnd` logic
+
+**Where to find this logic now:**
+- Drop targets / draggable cards: `src/components/DnDWrappers.tsx`
+- DnD sensors + drag end handling: `src/hooks/useDndQuests.ts`
+
+### Chunk 3: Toggle/Collapse Logic
+- ✅ Created `useCollapsedItems.ts` hook - manages collapsed state with `toggle()`, `isCollapsed()`, `collapse()`, `expand()`, `collapseAll()`, `expandAll()`
+- ✅ Wired into SidebarQuests for individual quest collapse
+- ✅ Wired into FullKanban for card collapse + bulk operations
+
+**Where to find this logic now:**
+- Collapse state management: `src/hooks/useCollapsedItems.ts`
+- **SidebarQuests**: Uses `isQuestCollapsed()` and `toggleQuestCollapse()`
+- **FullKanban**: Uses `isCardCollapsed()`, `toggleCard()`, `collapseCards()`, `expandCards()`, plus `toggleAllCardsInColumn()` and `areAllCardsCollapsed()` helpers
+
+### Chunk 4: Status Config Unification
+- ✅ Created `questStatusConfig.ts` with unified `QUEST_STATUS_CONFIG` array
+- ✅ Added `SIDEBAR_STATUSES` (3 statuses, no Completed) and `KANBAN_STATUSES` (4 statuses)
+- ✅ Updated both components to import from shared config
+
+**Where to find this logic now:**
+- Quest status definitions: `src/config/questStatusConfig.ts`
+- **SidebarQuests**: Imports `SIDEBAR_STATUSES`
+- **FullKanban**: Imports `KANBAN_STATUSES`
+
+**Summary of Removed Duplication:**
+| Area | Lines Removed |
+|------|---------------|
+| XP progress calculation | ~20 lines (10 x 2) |
+| handleSaveCharacter | ~18 lines (9 x 2) |
+| getQuestsForSection/Column | ~8 lines (4 x 2) |
+| DnD wrappers | ~48 lines (24 x 2) |
+| DnD sensors + handleDragEnd | ~40 lines (20 x 2) |
+| toggleCard/toggleQuestCollapse | ~22 lines |
+| SECTIONS/COLUMNS config | ~16 lines |
+| **Total** | **~150 lines** |
+
+**New Files Created:**
+- `src/hooks/useSaveCharacter.ts`
+- `src/hooks/useDndQuests.ts`
+- `src/hooks/useCollapsedItems.ts`
+- `src/components/DnDWrappers.tsx`
+- `src/config/questStatusConfig.ts`
+
+**Testing Notes:**
+- XP bars display correctly in both views ✅
+- Drag-and-drop works between columns/sections ✅
+- Cards expand/collapse individually ✅
+- Kanban "collapse all" column button works ✅
+- Quest status changes persist ✅
+- Streak updates and saves correctly ✅
+
+**Important for Future Sessions:**
+When working on features related to:
+- **XP display/calculation**: Check `XPSystem.ts`
+- **Quest status columns**: Check `questStatusConfig.ts`
+- **Drag-and-drop**: Check `DnDWrappers.tsx` and `useDndQuests.ts`
+- **Collapse/expand behavior**: Check `useCollapsedItems.ts`
+- **Saving character data**: Check `useSaveCharacter.ts`
+- **Quest loading/watching**: Check `useQuestLoader.ts` (from previous session)
+- **Quest actions (move/toggle)**: Check `useQuestActions.ts` and `QuestActionsService.ts` (from previous session)
+
+**DO NOT** look for these features in the component files themselves - they now use shared hooks/utilities.
+
+**Hours Worked:** ~1.5 hours
+**Phase:** Architecture refactor (supports all phases)
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD
@@ -1019,4 +1110,4 @@ feat(stats): implement D&D-style character stats system
 
 ---
 
-**Last Updated:** 2026-01-20
+**Last Updated:** 2026-01-21
