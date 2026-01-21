@@ -30,7 +30,7 @@ export function validateLinkedPath(vault: Vault, path: string): TFile | null {
     const file = vault.getAbstractFileByPath(normalizedPath);
 
     if (!file) {
-        console.warn(`[PathValidator] File not found in vault: ${path}`);
+        // File not found - this is expected for deleted/renamed files, no need to warn
         return null;
     }
 

@@ -134,6 +134,17 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         app,
         vault: app.vault,
         badgeFolder: plugin.settings.badgeFolder,
+        customStatMappings: plugin.settings.categoryStatMappings,
+        onCategoryUsed: async (category) => {
+            // Auto-populate knownCategories for settings autocomplete
+            if (!plugin.settings.knownCategories) {
+                plugin.settings.knownCategories = [];
+            }
+            if (!plugin.settings.knownCategories.includes(category)) {
+                plugin.settings.knownCategories.push(category);
+                await plugin.saveSettings();
+            }
+        },
         onSaveCharacter: handleSaveCharacter,
     });
 

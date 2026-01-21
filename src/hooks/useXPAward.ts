@@ -2,16 +2,18 @@
  * useXPAward Hook
  * 
  * Watches task files for changes and awards XP when tasks are completed.
- * Handles class bonuses, quest completion bonuses, and persistence.
+ * Handles class bonuses, quest completion bonuses, stat gains, and persistence.
  */
 
 import { useEffect, useRef, useCallback } from 'react';
 import { App, Vault, Notice, debounce } from 'obsidian';
 import { Quest, isManualQuest } from '../models/Quest';
+import { Character } from '../models/Character';
 import { useCharacterStore } from '../store/characterStore';
 import { useQuestStore } from '../store/questStore';
 import { readTasksFromFile, getTaskCompletion, Task, TaskCompletion } from '../services/TaskFileService';
 import { calculateXPWithBonus, checkLevelUp, getLevelUpMessage } from '../services/XPSystem';
+import { processXPForStats, applyLevelUpStats, STAT_NAMES } from '../services/StatsService';
 import { AchievementService } from '../services/AchievementService';
 import { showAchievementUnlock } from '../modals/AchievementUnlockModal';
 import { LevelUpModal } from '../modals/LevelUpModal';
@@ -20,6 +22,8 @@ interface UseXPAwardOptions {
     app: App;
     vault: Vault;
     badgeFolder?: string;
+    customStatMappings?: Record<string, string>;
+    onCategoryUsed?: (category: string) => void;
     onSaveCharacter: () => Promise<void>;
 }
 
@@ -33,7 +37,7 @@ interface TaskSnapshot {
 /**
  * Hook to watch task files and award XP on completion
  */
-export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/badges', onSaveCharacter }: UseXPAwardOptions) {
+export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/badges', customStatMappings, onCategoryUsed, onSaveCharacter }: UseXPAwardOptions) {
     // Store previous task snapshots
     const taskSnapshotsRef = useRef<Map<string, TaskSnapshot>>(new Map());
     const fileWatchersRef = useRef<Map<string, () => void>>(new Map());
@@ -65,9 +69,54 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
 
         // Track old level for level-up detection
         const oldXP = character.isTrainingMode ? character.trainingXP : character.totalXP;
+        const oldLevel = character.isTrainingMode ? character.trainingLevel : character.level;
 
-        // Award XP
+        // Award XP (this updates the store)
         addXP(totalXP);
+
+        // Process stat gains from XP (only if not in training mode)
+        // IMPORTANT: Get the updated character AFTER addXP to avoid overwriting XP changes
+        if (!character.isTrainingMode) {
+            const updatedCharacter = useCharacterStore.getState().character;
+            console.log('[Stats Debug] Processing stat gains:', {
+                category: quest.category,
+                xpGained: totalXP,
+                isTrainingMode: character.isTrainingMode,
+                hasUpdatedCharacter: !!updatedCharacter,
+                customMappings: customStatMappings,
+            });
+
+            if (updatedCharacter) {
+                const statResult = processXPForStats(updatedCharacter, quest.category, totalXP, customStatMappings);
+                console.log('[Stats Debug] Stat result:', {
+                    statGained: statResult.statGained,
+                    newStatValue: statResult.newStatValue,
+                    characterChanged: statResult.character !== updatedCharacter,
+                    categoryAccum: statResult.character.categoryXPAccumulator,
+                    statBonuses: statResult.character.statBonuses,
+                });
+
+                if (statResult.statGained) {
+                    // Update character with new stat bonuses (preserves XP from addXP)
+                    useCharacterStore.getState().setCharacter(statResult.character);
+                    new Notice(
+                        `💪 +1 ${STAT_NAMES[statResult.statGained]}! (now ${statResult.newStatValue})`,
+                        3000
+                    );
+                } else if (statResult.character !== updatedCharacter) {
+                    // Accumulator updated, save it
+                    console.log('[Stats Debug] Saving updated accumulator');
+                    useCharacterStore.getState().setCharacter(statResult.character);
+                }
+            }
+        } else {
+            console.log('[Stats Debug] Skipping stat processing - training mode');
+        }
+
+        // Track category for autocomplete in settings
+        if (quest.category && onCategoryUsed) {
+            onCategoryUsed(quest.category.toLowerCase().trim());
+        }
 
         // Show notification
         const bonusApplied = totalXP > baseXP;
@@ -80,6 +129,15 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
         const newXP = oldXP + totalXP;
         const levelResult = checkLevelUp(oldXP, newXP, character.isTrainingMode);
         if (levelResult.didLevelUp) {
+            // Apply level-up stat gains (non-training only)
+            if (!character.isTrainingMode) {
+                const currentChar = useCharacterStore.getState().character;
+                if (currentChar) {
+                    const updatedChar = applyLevelUpStats(currentChar);
+                    useCharacterStore.getState().setCharacter(updatedChar);
+                }
+            }
+
             // Show level-up modal
             const modal = new LevelUpModal(
                 app,

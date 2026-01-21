@@ -9,7 +9,7 @@ import { create } from 'zustand';
 import { Character, CharacterClass, CLASS_INFO, CharacterAppearance } from '../models';
 import { InventoryItem } from '../models/Consumable';
 import { Achievement } from '../models/Achievement';
-import { calculateTrainingLevel } from '../services/XPSystem';
+import { calculateTrainingLevel, calculateLevel, XP_THRESHOLDS } from '../services/XPSystem';
 
 interface CharacterState {
     /** Current character (null if not created) */
@@ -71,62 +71,7 @@ interface CharacterActions {
 
 type CharacterStore = CharacterState & CharacterActions;
 
-/**
- * XP thresholds for each level (1-30)
- * Based on age milestones
- */
-const XP_THRESHOLDS: number[] = [
-    0,      // Level 1 (start)
-    200,    // Level 2
-    400,    // Level 3  
-    750,    // Level 4
-    1100,   // Level 5
-    1650,   // Level 6
-    2200,   // Level 7
-    2800,   // Level 8
-    3500,   // Level 9
-    4300,   // Level 10
-    5200,   // Level 11
-    6100,   // Level 12
-    6700,   // Level 13
-    7400,   // Level 14
-    8200,   // Level 15
-    9100,   // Level 16
-    10100,  // Level 17
-    11100,  // Level 18
-    12200,  // Level 19
-    13400,  // Level 20
-    14300,  // Level 21
-    15400,  // Level 22
-    16600,  // Level 23
-    17900,  // Level 24
-    19100,  // Level 25
-    20500,  // Level 26
-    22000,  // Level 27
-    23600,  // Level 28
-    25300,  // Level 29
-    27000,  // Level 30
-];
-
-/**
- * Calculate level from total XP
- */
-function calculateLevel(totalXP: number): number {
-    for (let level = XP_THRESHOLDS.length - 1; level >= 0; level--) {
-        if (totalXP >= XP_THRESHOLDS[level]) {
-            return level + 1;
-        }
-    }
-    return 1;
-}
-
-/**
- * Get XP needed for next level
- */
-function getXPForNextLevel(level: number): number {
-    if (level >= 30) return XP_THRESHOLDS[29]; // Max level
-    return XP_THRESHOLDS[level] || 200;
-}
+// NOTE: XP_THRESHOLDS and calculateLevel are imported from XPSystem.ts
 
 /**
  * Character store hook
@@ -157,6 +102,20 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         const classInfo = CLASS_INFO[characterClass];
         const now = new Date().toISOString();
 
+        // Get starting stats for this class
+        const baseStats = {
+            strength: 10,
+            intelligence: 10,
+            wisdom: 10,
+            constitution: 10,
+            dexterity: 10,
+            charisma: 10,
+        };
+        // Add +2 to primary stats
+        for (const primaryStat of classInfo.primaryStats) {
+            baseStats[primaryStat] += 2;
+        }
+
         const character: Character = {
             schemaVersion: 1,
             name,
@@ -177,6 +136,16 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             trainingXP: 0,
             trainingLevel: 1,
             isTrainingMode: true,
+            baseStats,
+            statBonuses: {
+                strength: 0,
+                intelligence: 0,
+                wisdom: 0,
+                constitution: 0,
+                dexterity: 0,
+                charisma: 0,
+            },
+            categoryXPAccumulator: {},
             createdDate: now,
             lastModified: now,
         };

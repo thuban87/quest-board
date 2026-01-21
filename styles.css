@@ -2728,3 +2728,102 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ===========================================
+   Primary Stats Panel
+   =========================================== */
+.qb-sheet-primary-stats {
+  margin-top: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+}
+
+.qb-sheet-primary-stats h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.qb-primary-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-primary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--qb-spacing-sm);
+  background: var(--background-primary);
+  border-radius: var(--qb-radius-sm);
+  border: 1px solid var(--background-modifier-border);
+  cursor: help;
+}
+
+.qb-primary-stat.primary {
+  border-color: var(--interactive-accent);
+  background: rgba(var(--interactive-accent-rgb), 0.1);
+}
+
+.qb-stat-abbr {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qb-stat-total {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+
+.qb-stat-bonus {
+  font-size: 0.7rem;
+  color: var(--interactive-accent);
+  font-weight: 600;
+}
+
+/* ===========================================
+   Derived Stats Panel (Combat Stats)
+   =========================================== */
+.qb-sheet-derived-stats {
+  margin-top: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+}
+
+.qb-sheet-derived-stats h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.qb-derived-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-derived-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  background: var(--background-primary);
+  border-radius: var(--qb-radius-sm);
+}
+
+.qb-derived-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.qb-derived-value {
+  font-weight: 600;
+  color: var(--text-normal);
+}

@@ -7,9 +7,10 @@
 import React from 'react';
 import { useCharacterStore } from '../store/characterStore';
 import { useQuestStore } from '../store/questStore';
-import { CLASS_INFO, getTrainingLevelDisplay } from '../models/Character';
+import { CLASS_INFO, getTrainingLevelDisplay, StatType } from '../models/Character';
 import { QuestStatus } from '../models/QuestStatus';
 import { getXPProgress, getXPForNextLevel, XP_THRESHOLDS, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
+import { getTotalStats, calculateDerivedStats, STAT_ABBREVIATIONS, STAT_NAMES, getStatCap } from '../services/StatsService';
 
 interface CharacterSheetProps {
     onBack: () => void;
@@ -130,6 +131,71 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                         </div>
                     ))}
                 </div>
+            </div>
+
+            {/* Primary Stats */}
+            <div className="qb-sheet-primary-stats">
+                <h3>Attributes</h3>
+                <div className="qb-primary-stats-grid">
+                    {(['strength', 'intelligence', 'wisdom', 'constitution', 'dexterity', 'charisma'] as StatType[]).map((stat) => {
+                        const totalStats = getTotalStats(character);
+                        const baseValue = character.baseStats?.[stat] || 10;
+                        const bonusValue = character.statBonuses?.[stat] || 0;
+                        const totalValue = totalStats[stat];
+                        const cap = getStatCap(character.level);
+                        const isPrimary = CLASS_INFO[character.class].primaryStats.includes(stat);
+
+                        return (
+                            <div
+                                key={stat}
+                                className={`qb-primary-stat ${isPrimary ? 'primary' : ''}`}
+                                title={`${STAT_NAMES[stat]}\nBase from level: ${baseValue}\nQuest bonus: ${bonusValue} (max ${cap} at Level ${character.level})`}
+                            >
+                                <span className="qb-stat-abbr">{STAT_ABBREVIATIONS[stat]}</span>
+                                <span className="qb-stat-total">{totalValue}</span>
+                                {bonusValue > 0 && (
+                                    <span className="qb-stat-bonus">+{bonusValue}</span>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Derived Stats */}
+            <div className="qb-sheet-derived-stats">
+                <h3>Combat Stats</h3>
+                {(() => {
+                    const derived = calculateDerivedStats(character);
+                    return (
+                        <div className="qb-derived-stats-grid">
+                            <div className="qb-derived-stat">
+                                <span className="qb-derived-label">❤️ HP</span>
+                                <span className="qb-derived-value">{derived.maxHp}</span>
+                            </div>
+                            <div className="qb-derived-stat">
+                                <span className="qb-derived-label">💧 Mana</span>
+                                <span className="qb-derived-value">{derived.maxMana}</span>
+                            </div>
+                            <div className="qb-derived-stat">
+                                <span className="qb-derived-label">⚔️ Attack</span>
+                                <span className="qb-derived-value">{derived.attack}</span>
+                            </div>
+                            <div className="qb-derived-stat">
+                                <span className="qb-derived-label">🛡️ Defense</span>
+                                <span className="qb-derived-value">{derived.defense}</span>
+                            </div>
+                            <div className="qb-derived-stat">
+                                <span className="qb-derived-label">⚡ Speed</span>
+                                <span className="qb-derived-value">{derived.speed}</span>
+                            </div>
+                            <div className="qb-derived-stat">
+                                <span className="qb-derived-label">🎯 Crit</span>
+                                <span className="qb-derived-value">{derived.critChance.toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    );
+                })()}
             </div>
 
             <div className="qb-sheet-perk">
