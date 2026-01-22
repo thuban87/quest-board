@@ -3098,3 +3098,119 @@
   color: var(--interactive-accent);
   flex-shrink: 0;
 }
+
+/* ===========================================
+   Command Menu Modal
+   =========================================== */
+
+.qb-command-menu {
+  padding: var(--qb-spacing-md);
+  min-width: 520px;
+}
+
+.qb-menu-header {
+  text-align: center;
+  margin-bottom: var(--qb-spacing-lg);
+}
+
+.qb-menu-header h2 {
+  margin: 0 0 var(--qb-spacing-xs) 0;
+  font-size: 1.5rem;
+}
+
+.qb-menu-subtitle {
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.qb-menu-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-lg);
+}
+
+.qb-menu-section h3 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  padding-bottom: var(--qb-spacing-xs);
+  border-bottom: 1px solid var(--background-modifier-border);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.qb-menu-buttons {
+  display: grid;
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-buttons-1 {
+  grid-template-columns: 1fr;
+}
+
+.qb-buttons-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.qb-buttons-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.qb-buttons-2x2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Center the last button if it's alone on its row (odd child count) */
+.qb-buttons-2x2>.qb-menu-btn:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  max-width: 50%;
+  justify-self: center;
+}
+
+.qb-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.qb-menu-btn:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.qb-menu-btn:active {
+  transform: translateY(0);
+}
+
+.qb-menu-btn-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.qb-menu-btn-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.qb-menu-btn-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.qb-menu-btn-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

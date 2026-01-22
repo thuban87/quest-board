@@ -1513,6 +1513,42 @@ Views Consolidation:
 
 ---
 
+## 2026-01-22 - Command Menu & Settings Updates
+
+**Focus:** Consolidate commands into menu modal, add folder exclusion and template settings
+
+**Completed:**
+- ✅ Created `QuestBoardCommandMenu.ts` modal with 5 categorized sections:
+  - Views (Sidebar, Full Page)
+  - Create (New Quest, From Template, Application, Interview)
+  - Character (Edit Character, Achievements, New Achievement)
+  - Quests (Recurring Dashboard, Process Recurring)
+  - Utilities (Settings)
+- ✅ Added new settings fields: `excludedFolders`, `templateFolder`, `archiveFolder`, `defaultQuestTags`, `enableDailyNoteLogging`
+- ✅ Added settings UI sections: "Quest Folder Settings" and "Template Configuration"
+- ✅ Implemented folder exclusion filter in FullKanban and SidebarQuests (hides from Kanban but keeps in index)
+- ✅ Registered new command: "Open Quest Board Menu"
+- ✅ Added CSS for command menu (category grid, button hover effects, centered 3rd button)
+
+**Key Files:**
+- `src/modals/QuestBoardCommandMenu.ts` (NEW)
+- `src/settings.ts` (modified - new fields + UI sections)
+- `src/components/FullKanban.tsx` (modified - excluded folder filter)
+- `src/components/SidebarQuests.tsx` (modified - excluded folder filter)
+- `main.ts` (modified - registered command)
+- `styles.css` (modified - command menu styles)
+
+**Testing Notes:**
+- Command menu opens via "Quest Board: Open Quest Board Menu"
+- All buttons execute correct commands
+- Settings opens to Quest Board tab
+- Excluded folders correctly hide quests from Kanban
+
+**Hours Worked:** ~1 hour
+**Phase:** Phase 2 (UI Enhancements)
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD
