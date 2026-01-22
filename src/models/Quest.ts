@@ -89,6 +89,9 @@ export interface BaseQuest {
 export interface ManualQuest extends BaseQuest {
     questType: QuestType.MAIN | QuestType.TRAINING | QuestType.SIDE;
 
+    /** Custom sort order within status column (lower = higher in list) */
+    sortOrder?: number;
+
     /** Path to the markdown file containing tasks (for single file) */
     linkedTaskFile: string;
 

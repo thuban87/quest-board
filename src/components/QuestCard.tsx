@@ -7,6 +7,7 @@
  */
 
 import React, { memo, useState } from 'react';
+import { App as ObsidianApp } from 'obsidian';
 import { Quest, isManualQuest } from '../models/Quest';
 import { QuestStatus, QuestPriority } from '../models/QuestStatus';
 import { CLASS_INFO } from '../models/Character';
@@ -27,6 +28,10 @@ interface QuestCardProps {
     isCollapsed?: boolean;
     /** Callback to toggle quest collapse */
     onToggleCollapse?: () => void;
+    /** Obsidian App instance for opening files */
+    app?: ObsidianApp;
+    /** Storage folder path for locating quest files */
+    storageFolder?: string;
 }
 
 /**
@@ -68,11 +73,33 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
     visibleTaskCount = 4,
     isCollapsed = false,
     onToggleCollapse,
+    app,
+    storageFolder,
 }) => {
     const character = useCharacterStore((state) => state.character);
 
     // Track which sections are collapsed
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+
+    // Handler to open the task file
+    const handleOpenTaskFile = () => {
+        if (!app || !isManualQuest(quest)) return;
+
+        // If multiple linked files exist, open the quest file itself
+        // Otherwise, open the single linkedTaskFile directly
+        const hasMultipleFiles = quest.linkedTaskFiles && quest.linkedTaskFiles.length > 0;
+        let targetFile: string;
+
+        if (hasMultipleFiles) {
+            // Open the quest file since there are multiple linked files
+            targetFile = `${storageFolder}/quests/main/${quest.questId}.md`;
+        } else {
+            // Open the single linked task file directly
+            targetFile = quest.linkedTaskFile;
+        }
+
+        app.workspace.openLinkText(targetFile, '', true);
+    };
 
     // Calculate XP with class bonus indicator
     const baseXP = isManualQuest(quest)
@@ -252,10 +279,21 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
                         </div>
                     )}
 
-                    {/* XP Reward */}
+                    {/* XP Reward with Open File Link */}
                     <div className="qb-card-xp">
-                        ⭐ {baseXP} XP
-                        {hasClassBonus && <span className="qb-bonus-indicator">+bonus</span>}
+                        <span>
+                            ⭐ {baseXP} XP
+                            {hasClassBonus && <span className="qb-bonus-indicator">+bonus</span>}
+                        </span>
+                        {app && isManualQuest(quest) && (
+                            <button
+                                className="qb-card-file-link"
+                                onClick={(e) => { e.stopPropagation(); handleOpenTaskFile(); }}
+                                title={quest.linkedTaskFiles?.length ? 'Open quest file' : 'Open task file'}
+                            >
+                                📄
+                            </button>
+                        )}
                     </div>
 
                     {/* Action Buttons */}
