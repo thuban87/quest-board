@@ -5,11 +5,11 @@
  * Accessed from Character Sheet by clicking "Achievements" stat.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { App } from 'obsidian';
 import { Achievement, isUnlocked, getProgressPercent } from '../models/Achievement';
 import { useCharacterStore } from '../store/characterStore';
-import { AchievementService } from '../services/AchievementService';
+import { AchievementService, calculateAchievementProgress } from '../services/AchievementService';
 
 interface AchievementsSidebarProps {
     app: App;
@@ -23,6 +23,7 @@ export const AchievementsSidebar: React.FC<AchievementsSidebarProps> = ({
     onBack,
 }) => {
     const achievements = useCharacterStore((state) => state.achievements);
+    const character = useCharacterStore((state) => state.character);
     const [badgePaths, setBadgePaths] = useState<Record<string, string | null>>({});
     const achievementService = new AchievementService(app.vault, badgeFolder);
 
@@ -38,8 +39,14 @@ export const AchievementsSidebar: React.FC<AchievementsSidebarProps> = ({
         loadBadges();
     }, [achievements, app, badgeFolder]);
 
+    // Calculate progress using shared utility (single source of truth)
+    const achievementsWithProgress = useMemo(
+        () => calculateAchievementProgress(achievements, character),
+        [achievements, character]
+    );
+
     // Sort achievements: unlocked first
-    const sortedAchievements = achievementService.getSortedAchievements(achievements);
+    const sortedAchievements = achievementService.getSortedAchievements(achievementsWithProgress);
     const unlockedCount = achievementService.getUnlockedCount(achievements);
 
     return (

@@ -1454,6 +1454,65 @@ Bug Fixes:
 
 ---
 
+## 2026-01-22 - Achievement Audit & Views Consolidation
+
+**Focus:** Fix achievement persistence bugs, consolidate duplicate code, add progress tracking
+
+**Completed:**
+
+### Achievement System Audit
+- ✅ Fixed level achievement persistence (wasn't saving to store after unlock)
+- ✅ Wired up streak achievements (`checkStreakAchievements` was never called)
+- ✅ Added streak achievement check in `QuestActionsService.ts`
+
+### Achievement Progress Tracking
+- ✅ Added real-time progress for level/streak achievements
+- ✅ Progress now shows current values (e.g., "1/5" for level 5 achievement at level 1)
+
+### Views Consolidation
+- ✅ Created `calculateAchievementProgress()` in `AchievementService.ts`
+- ✅ Both `AchievementsSidebar.tsx` and `AchievementHubModal.ts` use shared function
+- ✅ Removed duplicate `updateAchievementProgress()` method from modal
+- ✅ Single source of truth for progress calculation
+
+**Files Modified:**
+- `src/services/AchievementService.ts` - Added shared `calculateAchievementProgress()` function
+- `src/services/QuestActionsService.ts` - Added streak achievement checks
+- `src/components/AchievementsSidebar.tsx` - Use shared progress function
+- `src/modals/AchievementHubModal.ts` - Use shared progress function, removed duplicate
+- `src/hooks/useXPAward.ts` - Fixed level achievement persistence
+
+**Testing Notes:**
+- Sidebar achievements show correct progress ✅
+- Hub modal shows same values ✅
+- Level/streak achievements update in real-time ✅
+
+**Recommended Commit Message:**
+```
+feat(achievements): Audit fixes + consolidate progress calculation
+
+Audit Fixes:
+- Fix level achievement persistence (save to store after unlock)
+- Wire up streak achievements (checkStreakAchievements was never called)
+- Add streak achievement check in QuestActionsService
+
+Views Consolidation:
+- Create calculateAchievementProgress() in AchievementService
+- Both AchievementsSidebar and AchievementHubModal use shared function
+- Remove duplicate updateAchievementProgress() from modal
+- Single source of truth for progress calculation
+```
+
+**Next Session Prompt:**
+> Achievement system audited and consolidated. Remaining work:
+> 1. Wire Streak Shield effect (buff granted but doesn't protect streaks)
+> 2. Consider adding more triggers (Hat Trick, Blitz, etc.)
+
+**Hours Worked:** ~1 hour
+**Phase:** Phase 2 (Power-Ups System)
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD
