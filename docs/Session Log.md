@@ -1264,6 +1264,120 @@ Technical debt items addressed:
 
 ---
 
+## 2026-01-21 - Power-Ups System Foundation + Bug Fixes
+
+**Focus:** Power-Ups System Foundation, XP Multiplier Wiring, First Blood Fix, Double XP Bug Fix
+
+**Completed:**
+
+### Power-Ups System Infrastructure
+- ✅ Added power-up types to `Character.ts`: `PowerUpEffect`, `PowerUpDuration`, `CollisionPolicy`, `ActivePowerUp`
+- ✅ Created `PowerUpService.ts` (622 lines) with 8 effect definitions and 7 trigger definitions
+- ✅ Core functions: `evaluateTriggers`, `grantPowerUp`, `expirePowerUps`, `getXPMultiplierFromPowerUps`
+- ✅ Added `setPowerUps()` action to `characterStore.ts`
+
+### Trigger Integration
+- ✅ `useXPAward.ts`: Added task_completion triggers (First Blood) and xp_award triggers (Level Up/Tier Up)
+- ✅ `QuestActionsService.ts`: Added streak_update triggers (Streak Keeper 3/7)
+
+### XP Multiplier Wiring (NEW)
+- ✅ Wired `getXPMultiplierFromPowerUps()` into `calculateXPWithBonus()` in `XPSystem.ts`
+- ✅ Power-ups like First Blood (+5% XP) now actually affect XP calculations
+- ✅ Verified working: XP awards show boosted values when buffs are active
+
+### First Blood Daily Counter Fix (NEW)
+- ✅ **Root Cause:** `tasksCompletedTodayRef` was a React ref that reset on component mount
+- ✅ **Fix:** Added `tasksCompletedToday` and `lastTaskDate` to Character model (persisted)
+- ✅ Added `incrementTasksToday()` action to characterStore
+- ✅ Updated `useXPAward.ts` to use persisted counter instead of refs
+- ✅ Now First Blood correctly triggers only once per day, survives reloads
+
+### Character Sheet UI
+- ✅ Added buff display grid to CharacterSheet
+- ✅ Class perk displays as passive buff (golden border)
+- ✅ Active power-ups show with hover tooltips
+
+### Quest File Fix (Surgical Frontmatter Updates)
+- ✅ Rewrote `saveManualQuest()` to do surgical frontmatter-only updates via `updateFrontmatterFields()`
+- ✅ Only `status` and `completedDate` fields are modified - file body remains untouched
+- ✅ Verified working: moving quests between columns preserves tasks
+
+### Double XP Award Bug Fix
+- ✅ **Root Cause:** `useXPAward` was called in BOTH `SidebarQuests.tsx` AND `FullKanban.tsx`
+- ✅ **Fix:** Removed `useXPAward` from `FullKanban.tsx`
+- ✅ Verified: Single XP notification per task
+
+### Documentation & Cleanup
+- ✅ Updated `Power-Ups System.md` with implementation status, collisionPolicy, notificationType
+- ✅ Removed unused `watchQuestFolder` function from `QuestService.ts`
+- ✅ Created `Failed session log.md` to archive previous failed session
+
+**Files Modified:**
+- `src/models/Character.ts` - Power-up types, `tasksCompletedToday`, `lastTaskDate`
+- `src/services/PowerUpService.ts` - Core power-up logic
+- `src/services/XPSystem.ts` - XP multiplier integration
+- `src/services/QuestService.ts` - Surgical frontmatter updates, removed dead code
+- `src/services/QuestActionsService.ts` - Streak triggers
+- `src/store/characterStore.ts` - `setPowerUps()`, `incrementTasksToday()` actions
+- `src/hooks/useXPAward.ts` - Triggers, persisted daily counter
+- `src/components/CharacterSheet.tsx` - Buff display UI
+- `src/components/FullKanban.tsx` - Removed duplicate useXPAward
+- `docs/Power-Ups System.md` - Updated implementation status
+- `docs/Failed session log.md` - NEW (archived failed session)
+
+**Known Remaining Issues:**
+1. **Debug logging still present** - Can be removed once power-ups are stable
+2. **Only 6 triggers implemented** - Proof of concept; more can be added later
+
+**Testing Notes:**
+- Quest column/section moves preserve tasks ✅
+- Power-up triggers fire correctly (First Blood tested) ✅
+- XP multipliers apply correctly (+5% verified) ✅
+- First Blood only triggers once per day ✅
+- Single XP notification per task ✅
+
+**Bugs/Issues Fixed This Session:**
+- Double XP/notification bug (duplicate useXPAward hooks)
+- Quest file overwriting (surgical frontmatter updates)
+- XP multipliers not applied (now wired in)
+- First Blood triggering multiple times per day (now persisted)
+
+**Recommended Commit Message:**
+```
+feat(power-ups): Complete power-ups core loop + fix First Blood trigger
+
+Power-Ups System:
+- Add PowerUpEffect, PowerUpDuration, CollisionPolicy types to Character
+- Create PowerUpService with 8 effects, 7 triggers, collision handling
+- Wire getXPMultiplierFromPowerUps into calculateXPWithBonus
+- Add buff display to CharacterSheet with hover tooltips
+
+First Blood Fix:
+- Add tasksCompletedToday/lastTaskDate to Character (persisted)
+- Add incrementTasksToday action to characterStore
+- Daily counter now survives reloads
+
+Bug Fixes:
+- Fix double XP award (remove duplicate useXPAward from FullKanban)
+- Fix quest file overwriting (surgical frontmatter-only updates)
+
+Cleanup:
+- Remove unused watchQuestFolder function
+- Update Power-Ups System.md documentation
+```
+
+**Next Session Prompt:**
+> Power-ups core loop is complete and tested. Remaining work:
+> 1. Remove debug logging from `useXPAward.ts` once stable
+> 2. Consider adding more triggers (Hat Trick, Blitz, category-based, etc.)
+> 3. Status bar indicator for active buffs (per Power-Ups System.md)
+> 4. Test edge cases: midnight rollover, multiple buffs stacking
+
+**Hours Worked:** ~3 hours
+**Phase:** Phase 2 (Power-Ups System)
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD
@@ -1290,4 +1404,4 @@ Technical debt items addressed:
 
 ---
 
-**Last Updated:** 2026-01-21 (Technical Debt Session)
+**Last Updated:** 2026-01-21 (Power-Ups System + Bug Fixes)

@@ -16,6 +16,14 @@ import { useTaskSectionsStore } from '../store/taskSectionsStore';
 import { saveManualQuest, saveAIQuest } from './QuestService';
 import { toggleTaskInFile, readTasksWithSections, getTaskCompletion } from './TaskFileService';
 import { updateStreak, getStreakDisplay, StreakUpdateResult } from './StreakService';
+import {
+    evaluateTriggers,
+    grantPowerUp,
+    expirePowerUps,
+    EFFECT_DEFINITIONS,
+    rollFromPool,
+    TriggerContext,
+} from './PowerUpService';
 
 /**
  * Result of moving a quest
@@ -94,6 +102,43 @@ export async function moveQuest(
                 new Notice(`🏆 New streak record: ${getStreakDisplay(streakResult.character.currentStreak)}`, 4000);
             } else if (streakResult.character.currentStreak > 1) {
                 new Notice(`🔥 Streak: ${getStreakDisplay(streakResult.character.currentStreak)}`, 2000);
+            }
+
+            // === STREAK UPDATE TRIGGERS ===
+            // Check for streak milestone power-ups (3-day, 7-day, etc.)
+            const previousStreak = currentChar.currentStreak;
+            const newStreak = streakResult.character.currentStreak;
+
+            if (newStreak > previousStreak) {
+                const streakContext: TriggerContext = {
+                    currentStreak: newStreak,
+                    previousStreak: previousStreak,
+                    streakJustBroken: streakResult.streakBroken,
+                };
+
+                // Evaluate streak_update triggers
+                const streakTriggers = evaluateTriggers('streak_update', streakContext);
+                if (streakTriggers.length > 0) {
+                    let streakPowerUps = expirePowerUps(useCharacterStore.getState().character?.activePowerUps ?? []);
+
+                    for (const trigger of streakTriggers) {
+                        const effectId = trigger.grantsEffect ?? (trigger.grantsTier ? rollFromPool(trigger.grantsTier) : null);
+                        if (effectId) {
+                            const result = grantPowerUp(streakPowerUps, effectId, trigger.id);
+                            if (result.granted) {
+                                streakPowerUps = result.powerUps;
+                                const effectDef = EFFECT_DEFINITIONS[effectId];
+                                // Show notification
+                                if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
+                                    new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 5000);
+                                }
+                            }
+                        }
+                    }
+
+                    // Save power-ups
+                    useCharacterStore.getState().setPowerUps(streakPowerUps);
+                }
             }
         }
     }
