@@ -2962,3 +2962,139 @@
   align-items: center;
   justify-content: center;
 }
+
+/* ===========================================
+   Status Bar
+   =========================================== */
+.quest-board-status-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  font-size: 0.85rem;
+  cursor: default;
+}
+
+.quest-board-status-bar:empty {
+  display: none;
+}
+
+/* ===========================================
+   Stat Buff Indicators
+   =========================================== */
+.qb-primary-stat.buffed {
+  background: linear-gradient(135deg, rgba(46, 213, 115, 0.15) 0%, rgba(46, 213, 115, 0.05) 100%);
+  border-color: var(--qb-technomancer-color);
+  box-shadow: 0 0 8px rgba(46, 213, 115, 0.3);
+}
+
+.qb-stat-buff {
+  font-size: 0.7rem;
+  color: var(--qb-technomancer-color);
+  font-weight: 700;
+  margin-left: 2px;
+  animation: stat-buff-pulse 2s ease-in-out infinite;
+}
+
+@keyframes stat-buff-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ===========================================
+   Status Bar Clickable
+   =========================================== */
+.quest-board-status-bar.clickable {
+  cursor: pointer;
+  transition: background var(--qb-transition-fast);
+  padding: 2px 6px;
+  border-radius: var(--qb-radius-sm);
+}
+
+.quest-board-status-bar.clickable:hover {
+  background: var(--background-modifier-hover);
+}
+
+/* ===========================================
+   Buff Tray Popup
+   =========================================== */
+.qb-buff-tray {
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  min-width: 220px;
+  max-width: 300px;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.qb-buff-tray-header {
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.qb-buff-tray-list {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qb-buff-tray-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-sm);
+  transition: background var(--qb-transition-fast);
+}
+
+.qb-buff-tray-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-buff-tray-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.qb-buff-tray-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.qb-buff-tray-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.qb-buff-tray-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qb-buff-tray-time {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--interactive-accent);
+  flex-shrink: 0;
+}

@@ -143,6 +143,44 @@ export async function moveQuest(
         }
     }
 
+    // === QUEST COMPLETION TRIGGERS ===
+    // Check for One-Shot, etc. when quest is completed
+    if (newStatus === QuestStatus.COMPLETED) {
+        const character = useCharacterStore.getState().character;
+        if (character) {
+            // Detect "One-Shot" = Available → Completed directly (not via In Progress)
+            const wasOneShot = quest.status === QuestStatus.AVAILABLE;
+
+            const questContext: TriggerContext = {
+                questCompleted: true,
+                questWasOneShot: wasOneShot,
+            };
+
+            const questTriggers = evaluateTriggers('quest_completion', questContext);
+            if (questTriggers.length > 0) {
+                let questPowerUps = expirePowerUps(character.activePowerUps ?? []);
+
+                for (const trigger of questTriggers) {
+                    const effectId = trigger.grantsEffect ?? (trigger.grantsTier ? rollFromPool(trigger.grantsTier) : null);
+                    if (effectId) {
+                        const result = grantPowerUp(questPowerUps, effectId, trigger.id);
+                        if (result.granted) {
+                            questPowerUps = result.powerUps;
+                            const effectDef = EFFECT_DEFINITIONS[effectId];
+                            if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
+                                new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 5000);
+                            }
+                        }
+                    }
+                }
+
+                useCharacterStore.getState().setPowerUps(questPowerUps);
+                // Update status bar immediately
+                import('./StatusBarService').then(({ statusBarService }) => statusBarService.update());
+            }
+        }
+    }
+
     // Save to file
     try {
         console.log('[QuestActionsService] Saving quest to file:', {
