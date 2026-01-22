@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Quest Board - Development Guidelines
 
 Instructions for AI assistants working on this project.
