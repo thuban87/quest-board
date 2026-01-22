@@ -12,6 +12,7 @@ import {
     CLASS_INFO,
     DEFAULT_STATS
 } from '../models/Character';
+import { getStatBoostFromPowerUps, expirePowerUps } from './PowerUpService';
 
 /**
  * Derived stats calculated from primary stats
@@ -40,10 +41,17 @@ export function getStatCap(level: number): number {
 }
 
 /**
- * Get total stat value (base + bonuses)
+ * Get total stat value (base + quest bonuses + power-up boosts)
  */
 export function getTotalStat(character: Character, stat: StatType): number {
-    return (character.baseStats?.[stat] || 10) + (character.statBonuses?.[stat] || 0);
+    const base = character.baseStats?.[stat] || 10;
+    const questBonus = character.statBonuses?.[stat] || 0;
+
+    // Include power-up stat boosts (from buffs like Level Up, Limit Break)
+    const activePowerUps = expirePowerUps(character.activePowerUps || []);
+    const powerUpBoost = getStatBoostFromPowerUps(activePowerUps, stat);
+
+    return base + questBonus + powerUpBoost;
 }
 
 /**

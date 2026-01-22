@@ -1378,6 +1378,82 @@ Cleanup:
 
 ---
 
+## 2026-01-22 - Power-Ups Part 2: Status Bar & Trigger Fixes
+
+**Focus:** Status bar with buff tray, stat boost effects, trigger fixes, achievement persistence
+
+**Completed:**
+
+### Status Bar with Buff Tray
+- ✅ Created extensible `StatusBarService.ts` with provider architecture
+- ✅ Created `BuffStatusProvider.ts` for power-up display
+- ✅ Created `timeFormatters.ts` utility for relative time
+- ✅ Implemented click-to-expand popup tray showing all buffs
+- ✅ Status bar shows icon + count, click opens full buff list
+
+### Stat Boost Effects
+- ✅ Wired `getStatBoostFromPowerUps()` into `getTotalStat()` in StatsService
+- ✅ Level Up (+3 all stats) and Limit Break now actually boost displayed stats
+- ✅ Added visual indicator (⬆ with green glow) for buffed stats in CharacterSheet
+
+### Trigger Fixes
+- ✅ Fixed One-Shot trigger (`quest_completion` was never evaluated)
+- ✅ Added `quest_completion` evaluation in `QuestActionsService.moveQuest()`
+- ✅ One-Shot now correctly triggers when Available → Completed
+
+### Achievement Persistence Fix
+- ✅ **Root Cause:** `checkQuestCountAchievements` mutated array but changes weren't saved
+- ✅ **Fix:** Added `useCharacterStore.setState({ achievements: [...achievements] })`
+- ✅ First Quest and all other achievements now properly persist unlock state
+
+**Files Modified:**
+- `main.ts` - Status bar initialization
+- `src/services/StatusBarService.ts` - NEW (extensible provider architecture)
+- `src/services/BuffStatusProvider.ts` - NEW (buff display with tray)
+- `src/utils/timeFormatters.ts` - NEW (time utilities)
+- `src/services/StatsService.ts` - Power-up stat boost integration
+- `src/services/QuestActionsService.ts` - One-Shot trigger evaluation
+- `src/hooks/useXPAward.ts` - Achievement persistence fix
+- `src/components/CharacterSheet.tsx` - Stat buff visual indicator
+- `styles.css` - Status bar, buff tray, stat buff styling
+
+**Testing Notes:**
+- Status bar shows buffs correctly ✅
+- Click tray popup works ✅
+- One-Shot trigger fires when completing from Available ✅
+- Stat boosts display with green glow ✅
+- First Quest achievement no longer triggers repeatedly ✅
+
+**Recommended Commit Message:**
+```
+feat(power-ups): Add status bar buff tray + fix triggers and achievements
+
+Status Bar:
+- Create extensible StatusBarService with provider architecture
+- Add BuffStatusProvider with click-to-expand popup tray
+- Status bar shows icon + count, click opens full buff list
+
+Stat Boosts:
+- Wire getStatBoostFromPowerUps into getTotalStat
+- Level Up/Limit Break buffs now boost displayed stats
+- Add visual indicator (green glow) for buffed stats
+
+Bug Fixes:
+- Fix One-Shot trigger (add quest_completion evaluation)
+- Fix First Quest achievement firing repeatedly (persist unlock state)
+```
+
+**Next Session Prompt:**
+> Power-ups Part 2 complete. User wants achievement audit:
+> 1. Audit all achievement check paths for similar persistence issues
+> 2. Add achievement progress tracking/display
+> 3. Consider wiring Streak Shield effect
+
+**Hours Worked:** ~1.5 hours
+**Phase:** Phase 2 (Power-Ups System)
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD

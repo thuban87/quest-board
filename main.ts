@@ -22,6 +22,8 @@ import { useCharacterStore } from './src/store/characterStore';
 import { RecurringQuestService } from './src/services/RecurringQuestService';
 import { RecurringQuestsDashboardModal } from './src/modals/RecurringQuestsDashboardModal';
 import { checkStreakOnLoad } from './src/services/StreakService';
+import { statusBarService } from './src/services/StatusBarService';
+import { BuffStatusProvider } from './src/services/BuffStatusProvider';
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
@@ -215,10 +217,16 @@ export default class QuestBoardPlugin extends Plugin {
         // Add settings tab
         this.addSettingTab(new QuestBoardSettingTab(this.app, this));
 
+        // Initialize status bar with buff provider
+        statusBarService.initialize(this);
+        statusBarService.registerProvider(new BuffStatusProvider());
+        statusBarService.startAutoRefresh(60000); // Update every minute
+
         console.log('Quest Board plugin loaded successfully');
     }
 
     onunload(): void {
+        statusBarService.destroy();
         console.log('Unloading Quest Board plugin');
     }
 

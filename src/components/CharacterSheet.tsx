@@ -185,21 +185,25 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                     {(['strength', 'intelligence', 'wisdom', 'constitution', 'dexterity', 'charisma'] as StatType[]).map((stat) => {
                         const totalStats = getTotalStats(character);
                         const baseValue = character.baseStats?.[stat] || 10;
-                        const bonusValue = character.statBonuses?.[stat] || 0;
+                        const questBonus = character.statBonuses?.[stat] || 0;
                         const totalValue = totalStats[stat];
+                        const powerUpBoost = totalValue - baseValue - questBonus; // What's left is from power-ups
                         const cap = getStatCap(character.level);
                         const isPrimary = CLASS_INFO[character.class].primaryStats.includes(stat);
 
                         return (
                             <div
                                 key={stat}
-                                className={`qb-primary-stat ${isPrimary ? 'primary' : ''}`}
-                                title={`${STAT_NAMES[stat]}\nBase from level: ${baseValue}\nQuest bonus: ${bonusValue} (max ${cap} at Level ${character.level})`}
+                                className={`qb-primary-stat ${isPrimary ? 'primary' : ''} ${powerUpBoost > 0 ? 'buffed' : ''}`}
+                                title={`${STAT_NAMES[stat]}\nBase from level: ${baseValue}\nQuest bonus: ${questBonus} (max ${cap} at Level ${character.level})${powerUpBoost > 0 ? `\nPower-up buff: +${powerUpBoost}` : ''}`}
                             >
                                 <span className="qb-stat-abbr">{STAT_ABBREVIATIONS[stat]}</span>
                                 <span className="qb-stat-total">{totalValue}</span>
-                                {bonusValue > 0 && (
-                                    <span className="qb-stat-bonus">+{bonusValue}</span>
+                                {questBonus > 0 && (
+                                    <span className="qb-stat-bonus">+{questBonus}</span>
+                                )}
+                                {powerUpBoost > 0 && (
+                                    <span className="qb-stat-buff">⬆{powerUpBoost}</span>
                                 )}
                             </div>
                         );

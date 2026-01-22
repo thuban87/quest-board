@@ -130,6 +130,10 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
         console.log('[PowerUp Debug] Saving power-ups:', currentPowerUps.length);
         if (currentPowerUps !== (character.activePowerUps ?? [])) {
             setPowerUps(currentPowerUps);
+            // Trigger immediate status bar update
+            import('../services/StatusBarService').then(({ statusBarService }) => {
+                statusBarService.update();
+            });
         }
 
         // Calculate XP with class bonus
@@ -311,6 +315,12 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
                     }
                 }, 3000 + questCountCheck.newlyUnlocked.length * 1000 + (index * 1000));
             });
+
+            // IMPORTANT: Save modified achievements back to store (preserves unlock state)
+            // The checkXxxAchievements methods mutate the array in-place
+            if (questCountCheck.newlyUnlocked.length > 0 || categoryCountCheck.newlyUnlocked.length > 0) {
+                useCharacterStore.setState({ achievements: [...achievements] });
+            }
         }
 
         // Persist character
