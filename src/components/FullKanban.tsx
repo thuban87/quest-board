@@ -17,7 +17,6 @@ import { useCharacterStore } from '../store/characterStore';
 import { getXPProgressForCharacter, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 import { QuestCard } from './QuestCard';
 import { CLASS_INFO, getTrainingLevelDisplay } from '../models/Character';
-import { useXPAward } from '../hooks/useXPAward';
 import { useTaskSectionsStore } from '../store/taskSectionsStore';
 import { useQuestLoader } from '../hooks/useQuestLoader';
 import { useQuestActions } from '../hooks/useQuestActions';
@@ -61,24 +60,8 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         onSaveCharacter: handleSaveCharacter,  // Save character after streak updates
     });
 
-    // XP Award hook - watches task files and awards XP when tasks are completed
-    useXPAward({
-        app,
-        vault: app.vault,
-        badgeFolder: plugin.settings.badgeFolder,
-        customStatMappings: plugin.settings.categoryStatMappings,
-        onCategoryUsed: async (category) => {
-            // Auto-populate knownCategories for settings autocomplete
-            if (!plugin.settings.knownCategories) {
-                plugin.settings.knownCategories = [];
-            }
-            if (!plugin.settings.knownCategories.includes(category)) {
-                plugin.settings.knownCategories.push(category);
-                await plugin.saveSettings();
-            }
-        },
-        onSaveCharacter: handleSaveCharacter,
-    });
+    // NOTE: XP Award hook is handled by SidebarQuests to avoid duplicate watchers.
+    // The hook watches task files for modifications - which view triggers the edit doesn't matter.
 
     // Collapsed columns state
     const [collapsedColumns, setCollapsedColumns] = useState<Record<QuestStatus, boolean>>({
@@ -118,8 +101,6 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
             .map(q => q.questId);
         return questIds.length > 0 && questIds.every(id => isCardCollapsed(id));
     };
-
-    // NOTE: XP Award hook is handled by SidebarQuests to avoid duplicate watchers
 
     // Load character on mount
     useEffect(() => {

@@ -721,4 +721,4 @@ Quest Board transforms mundane tasks into epic quests. Whether you're job huntin
 
 ---
 
-**Links:** [[Idea List]] | [[Feature Roadmap]] | [[Session Log]]
+**Links:** [[Idea List]] | [[Projects/Active/Quest Board/Feature Roadmap]] | [[Session Log]]

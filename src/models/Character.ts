@@ -254,6 +254,73 @@ export interface EquippedGear {
 }
 
 /**
+ * Power-up effect types
+ */
+export type PowerUpEffect =
+    | { type: 'xp_multiplier'; value: number }        // 1.5 = +50% XP total
+    | { type: 'xp_category_multiplier'; value: number; category: string }  // Category-specific
+    | { type: 'stat_boost'; stat: StatType; value: number }
+    | { type: 'all_stats_boost'; value: number }
+    | { type: 'crit_chance'; value: number }          // Percentage (e.g., 10 = 10%)
+    | { type: 'streak_shield' }                        // Prevents one streak reset
+    | { type: 'class_perk'; description: string };     // Passive class bonus
+
+/**
+ * Duration specification for power-ups
+ */
+export type PowerUpDuration =
+    | { type: 'hours'; value: number }
+    | { type: 'uses'; value: number }
+    | { type: 'until_midnight' }
+    | { type: 'until_used' }                          // Single use (streak shield)
+    | { type: 'passive' };                            // Never expires (class perks)
+
+/**
+ * Collision policy when triggering a power-up that's already active
+ */
+export type CollisionPolicy = 'refresh' | 'stack' | 'extend' | 'ignore';
+
+/**
+ * Notification type for when power-up triggers
+ */
+export type PowerUpNotificationType = 'toast' | 'modal' | 'silent';
+
+/**
+ * Active power-up on a character
+ */
+export interface ActivePowerUp {
+    /** Unique effect ID (e.g., "flow_state", "first_blood_boost") */
+    id: string;
+
+    /** Display name (e.g., "Flow State", "First Blood") */
+    name: string;
+
+    /** Icon for display (emoji or icon class) */
+    icon: string;
+
+    /** Description for tooltip */
+    description: string;
+
+    /** Which trigger granted this (e.g., "first_blood", "level_up") */
+    triggeredBy: string;
+
+    /** When the power-up was granted */
+    startedAt: string;
+
+    /** When it expires (null = never / passive) */
+    expiresAt: string | null;
+
+    /** The actual effect */
+    effect: PowerUpEffect;
+
+    /** For stackable effects (e.g., Momentum stacks) */
+    stacks?: number;
+
+    /** For use-limited effects (e.g., "next 3 tasks") */
+    usesRemaining?: number;
+}
+
+/**
  * Character data structure
  */
 export interface Character {
@@ -319,6 +386,15 @@ export interface Character {
 
     /** ISO 8601 date string */
     lastModified: string;
+
+    /** Tasks completed today (for First Blood trigger - resets at midnight) */
+    tasksCompletedToday: number;
+
+    /** Date of last task completion for daily reset check (YYYY-MM-DD local) */
+    lastTaskDate: string | null;
+
+    /** Active power-ups and buffs (includes class perk as passive) */
+    activePowerUps: ActivePowerUp[];
 }
 
 /**
@@ -373,6 +449,9 @@ export function createCharacter(
         shieldUsedThisWeek: false,
         createdDate: now,
         lastModified: now,
+        tasksCompletedToday: 0,
+        lastTaskDate: null,
+        activePowerUps: [],
     };
 }
 

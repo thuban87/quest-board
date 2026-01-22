@@ -6,7 +6,7 @@
  */
 
 import { create } from 'zustand';
-import { Character, CharacterClass, CLASS_INFO, CharacterAppearance } from '../models';
+import { Character, CharacterClass, CLASS_INFO, CharacterAppearance, ActivePowerUp } from '../models';
 import { InventoryItem } from '../models/Consumable';
 import { Achievement } from '../models/Achievement';
 import { calculateTrainingLevel, calculateLevel, XP_THRESHOLDS } from '../services/XPSystem';
@@ -67,6 +67,12 @@ interface CharacterActions {
 
     /** Set inventory and achievements from loaded data */
     setInventoryAndAchievements: (inventory: InventoryItem[], achievements: Achievement[]) => void;
+
+    /** Update active power-ups array */
+    setPowerUps: (powerUps: ActivePowerUp[]) => void;
+
+    /** Increment tasks completed today (for First Blood trigger, persisted) */
+    incrementTasksToday: (count: number, dateString: string) => void;
 }
 
 type CharacterStore = CharacterState & CharacterActions;
@@ -152,6 +158,9 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             shieldUsedThisWeek: false,
             createdDate: now,
             lastModified: now,
+            tasksCompletedToday: 0,
+            lastTaskDate: null,
+            activePowerUps: [],
         };
 
         set({ character });
@@ -351,6 +360,30 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
 
     setInventoryAndAchievements: (inventory, achievements) =>
         set({ inventory, achievements }),
+
+    setPowerUps: (powerUps) => {
+        const { character } = get();
+        if (character) {
+            set({ character: { ...character, activePowerUps: powerUps } });
+        }
+    },
+
+    incrementTasksToday: (count, dateString) => {
+        const { character } = get();
+        if (!character) return;
+
+        // Reset counter if new day
+        const isNewDay = character.lastTaskDate !== dateString;
+        const newCount = isNewDay ? count : (character.tasksCompletedToday ?? 0) + count;
+
+        set({
+            character: {
+                ...character,
+                tasksCompletedToday: newCount,
+                lastTaskDate: dateString,
+            },
+        });
+    },
 }));
 
 // ============================================

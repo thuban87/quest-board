@@ -5,6 +5,7 @@
  */
 
 import { Character, CharacterClass, CLASS_INFO, getLevelTier } from '../models/Character';
+import { getXPMultiplierFromPowerUps } from './PowerUpService';
 
 /**
  * XP thresholds for each level (1-40)
@@ -253,6 +254,14 @@ export function calculateXPWithBonus(
                 totalXP *= 1 + (0.05 * Math.min(options.streakDays, 7)); // Cap at 35%
             }
             break;
+    }
+
+    // Apply power-up XP multipliers (from active buffs like First Blood, Flow State, etc.)
+    if (character.activePowerUps && character.activePowerUps.length > 0) {
+        const powerUpMultiplier = getXPMultiplierFromPowerUps(character.activePowerUps, category);
+        if (powerUpMultiplier > 1.0) {
+            totalXP *= powerUpMultiplier;
+        }
     }
 
     return Math.round(totalXP);

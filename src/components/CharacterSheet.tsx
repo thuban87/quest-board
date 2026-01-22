@@ -4,7 +4,7 @@
  * Displays character sprite, stats, XP progress, and gear slots.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useCharacterStore } from '../store/characterStore';
 import { useQuestStore } from '../store/questStore';
 import { CLASS_INFO, getTrainingLevelDisplay, StatType } from '../models/Character';
@@ -12,6 +12,7 @@ import { QuestStatus } from '../models/QuestStatus';
 import { getXPProgress, getXPForNextLevel, XP_THRESHOLDS, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 import { getTotalStats, calculateDerivedStats, STAT_ABBREVIATIONS, STAT_NAMES, getStatCap } from '../services/StatsService';
 import { getStreakDisplay, getStreakMessage } from '../services/StreakService';
+import { getClassPerkAsPowerUp, getTimeRemaining, isExpiringSoon, expirePowerUps } from '../services/PowerUpService';
 
 interface CharacterSheetProps {
     onBack: () => void;
@@ -58,6 +59,13 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
         : 0;
     const totalQuests = quests ? quests.size : 0;
 
+    // Compute all active buffs: class perk + active power-ups (with expired ones cleaned)
+    const allBuffs = useMemo(() => {
+        const classPerk = getClassPerkAsPowerUp(character);
+        const activePowerUps = expirePowerUps(character.activePowerUps || []);
+        return [classPerk, ...activePowerUps];
+    }, [character]);
+
     return (
         <div className="qb-character-sheet">
             <button className="qb-back-btn" onClick={onBack}>
@@ -98,6 +106,26 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                             + {CLASS_INFO[character.secondaryClass].name}
                         </p>
                     )}
+                </div>
+
+                {/* Active Buffs Display */}
+                <div className="qb-active-buffs">
+                    {allBuffs.map((buff) => {
+                        const timeLeft = getTimeRemaining(buff);
+                        const expiring = isExpiringSoon(buff);
+                        return (
+                            <div
+                                key={buff.id}
+                                className={`qb-buff-icon ${expiring ? 'qb-buff-expiring' : ''} ${buff.expiresAt === null ? 'qb-buff-passive' : ''}`}
+                                title={`${buff.name}\n${buff.description}${timeLeft ? `\n${timeLeft}` : ''}`}
+                            >
+                                <span className="qb-buff-emoji">{buff.icon}</span>
+                                {buff.stacks && buff.stacks > 1 && (
+                                    <span className="qb-buff-stack">{buff.stacks}</span>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 

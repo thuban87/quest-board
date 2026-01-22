@@ -68,7 +68,7 @@
 | 23 | **Level-Up Celebration** ✅ | Confetti, modal, XP gain animation on level-up | LevelUpModal with confetti animation |
 | 24 | **Weekly Streak Tracker** ✅ | Count consecutive days with quest completions, Paladin shield protection, checkStreakOnLoad | `StreakService.ts`, streak fields in Character |
 | 24.5 | **SidebarQuests & FullKanban Consolidation** ✅ | Major refactor eliminating ~150 lines of duplicated code between components. Created shared hooks and configs. **New file locations:** XP progress → `XPSystem.ts:getXPProgressForCharacter()`, character saving → `useSaveCharacter.ts`, DnD wrappers → `DnDWrappers.tsx`, DnD logic → `useDndQuests.ts`, collapse state → `useCollapsedItems.ts`, status config → `questStatusConfig.ts` (SIDEBAR_STATUSES, KANBAN_STATUSES). Quest loading → `useQuestLoader.ts`, quest actions → `useQuestActions.ts`+`QuestActionsService.ts` | Architecture refactor for maintainability |
-| 25 | **Power-Ups Display** | Show active class perk + other bonuses from settings | "Task Slayer: +5% XP" |
+| 25 | **Power-Ups Display** ⚡ | Show active class perk + other bonuses. **Core loop complete:** `PowerUpService.ts`, triggers, buff display in CharacterSheet, XP multipliers wired into `calculateXPWithBonus`. **Remaining:** More triggers, status bar indicator | "Task Slayer: +5% XP" |
 | 26 | **Training Mode** ✅ | Roman numeral levels (I-X), separate XP pool, 100 XP per level, graduation to Level 1 | 10 training levels, LevelUpModal graduation |
 | 27 | **Quest Visibility Controls** ✅ | Show next 3-4 tasks, hide future tasks with hints | "Choose your adventure" feel, `visibleTasks` setting |
 | 28 | **Achievement System** ✅ | Track and display achievements, unlock popups, hub modal | 32 defaults, AchievementHubModal, level/category triggers, confetti |
@@ -340,4 +340,4 @@ enemies.json           - Monster stats, boss definitions, loot tables
 
 ---
 
-**Last Updated:** 2026-01-20
+**Last Updated:** 2026-01-21

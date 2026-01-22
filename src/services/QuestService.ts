@@ -414,9 +414,7 @@ function generateQuestFrontmatter(quest: ManualQuest): string {
         `visibleTasks: ${quest.visibleTasks}`,
     ];
 
-    if (quest.tags.length > 0) {
-        lines.push(`tags: ${quest.tags.join(', ')}`);
-    }
+    // NOTE: Tags are NOT written to frontmatter - user has another plugin for tag management
 
     lines.push(`createdDate: "${quest.createdDate}"`);
 
@@ -431,6 +429,12 @@ function generateQuestFrontmatter(quest: ManualQuest): string {
 
 /**
  * Save a manual quest to file
+ * 
+ * For EXISTING files: Does SURGICAL updates to frontmatter only.
+ * Parses the existing frontmatter, updates only changed fields in-place,
+ * and leaves the rest of the file completely untouched.
+ * 
+ * For NEW files: Creates with standard structure.
  */
 export async function saveManualQuest(
     vault: Vault,
@@ -452,14 +456,22 @@ export async function saveManualQuest(
 
         await ensureFolderExists(vault, folderPath);
 
-        const frontmatter = generateQuestFrontmatter(quest);
-        const content = `${frontmatter}\n\n# ${quest.questName}\n\n${quest.notes || ''}`;
-
         const existingFile = vault.getAbstractFileByPath(filePath);
+
         if (existingFile instanceof TFile) {
-            await vault.modify(existingFile, content);
-            console.log('[QuestService] Modified existing file');
+            // SURGICAL UPDATE: Only modify specific frontmatter fields
+            const existingContent = await vault.read(existingFile);
+            const updatedContent = updateFrontmatterFields(existingContent, {
+                status: quest.status,
+                completedDate: quest.completedDate || undefined,
+            });
+
+            await vault.modify(existingFile, updatedContent);
+            console.log('[QuestService] Surgically updated frontmatter (file body untouched)');
         } else {
+            // New file - create with full structure
+            const frontmatter = generateQuestFrontmatter(quest);
+            const content = `${frontmatter}\n\n# ${quest.questName}\n\n${quest.notes || ''}`;
             await vault.create(filePath, content);
             console.log('[QuestService] Created new file');
         }
@@ -469,6 +481,80 @@ export async function saveManualQuest(
         console.error('[QuestService] Failed to save quest:', error);
         return false;
     }
+}
+
+/**
+ * Surgically update specific frontmatter fields in a markdown file.
+ * Only touches the specified fields, leaves everything else untouched.
+ */
+function updateFrontmatterFields(
+    content: string,
+    updates: Record<string, string | number | boolean | undefined>
+): string {
+    const lines = content.split('\n');
+
+    // Find frontmatter boundaries
+    let frontmatterStart = -1;
+    let frontmatterEnd = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim() === '---') {
+            if (frontmatterStart === -1) {
+                frontmatterStart = i;
+            } else {
+                frontmatterEnd = i;
+                break;
+            }
+        }
+    }
+
+    if (frontmatterStart === -1 || frontmatterEnd === -1) {
+        console.error('[QuestService] No valid frontmatter found');
+        return content;
+    }
+
+    // Update only the specified fields within frontmatter
+    for (let i = frontmatterStart + 1; i < frontmatterEnd; i++) {
+        const line = lines[i];
+        const colonIndex = line.indexOf(':');
+        if (colonIndex === -1) continue;
+
+        const key = line.substring(0, colonIndex).trim();
+
+        if (key in updates) {
+            const newValue = updates[key];
+            if (newValue === undefined) {
+                // Skip - don't update undefined values
+                continue;
+            }
+
+            // Format the value appropriately
+            let formattedValue: string;
+            if (typeof newValue === 'string') {
+                // Check if original used quotes
+                const originalValue = line.substring(colonIndex + 1).trim();
+                if (originalValue.startsWith('"') || originalValue.startsWith("'")) {
+                    formattedValue = `"${newValue}"`;
+                } else {
+                    formattedValue = newValue;
+                }
+            } else {
+                formattedValue = String(newValue);
+            }
+
+            lines[i] = `${key}: ${formattedValue}`;
+            console.log(`[QuestService] Updated frontmatter field: ${key} = ${formattedValue}`);
+        }
+    }
+
+    // Handle adding completedDate if it doesn't exist but should
+    if (updates.completedDate && !content.includes('completedDate:')) {
+        // Insert before closing ---
+        lines.splice(frontmatterEnd, 0, `completedDate: "${updates.completedDate}"`);
+        console.log('[QuestService] Added completedDate field to frontmatter');
+    }
+
+    return lines.join('\n');
 }
 
 /**
@@ -542,55 +628,6 @@ export async function deleteQuestFile(
 }
 
 /**
- * Create a debounced folder watcher
- * Returns unsubscribe function
- */
-export function watchQuestFolder(
-    vault: Vault,
-    baseFolder: string,
-    callback: (result: QuestLoadResult) => void,
-    debounceMs: number = 1000  // Increased to prevent race condition with saves
-): () => void {
-    const debouncedReload = debounce(async () => {
-        const result = await loadAllQuests(vault, baseFolder);
-        callback(result);
-    }, debounceMs, true);
-
-    // Watch for file changes in quest folders
-    const onCreate = vault.on('create', (file) => {
-        if (file.path.startsWith(baseFolder) && file instanceof TFile) {
-            debouncedReload();
-        }
-    });
-
-    const onModify = vault.on('modify', (file) => {
-        if (file.path.startsWith(baseFolder) && file instanceof TFile) {
-            debouncedReload();
-        }
-    });
-
-    const onDelete = vault.on('delete', (file) => {
-        if (file.path.startsWith(baseFolder)) {
-            debouncedReload();
-        }
-    });
-
-    const onRename = vault.on('rename', (file, oldPath) => {
-        if (file.path.startsWith(baseFolder) || oldPath.startsWith(baseFolder)) {
-            debouncedReload();
-        }
-    });
-
-    // Return unsubscribe function
-    return () => {
-        vault.offref(onCreate);
-        vault.offref(onModify);
-        vault.offref(onDelete);
-        vault.offref(onRename);
-    };
-}
-
-/**
  * Event types for granular watcher
  */
 export type QuestFileEvent =
@@ -601,7 +638,7 @@ export type QuestFileEvent =
 
 /**
  * Granular folder watcher - provides per-file callbacks instead of full reload.
- * More efficient than watchQuestFolder for large quest counts.
+ * Efficient for large quest counts - only reloads the affected quest file.
  */
 export function watchQuestFolderGranular(
     vault: Vault,

@@ -17,6 +17,14 @@ import { processXPForStats, applyLevelUpStats, STAT_NAMES } from '../services/St
 import { AchievementService } from '../services/AchievementService';
 import { showAchievementUnlock } from '../modals/AchievementUnlockModal';
 import { LevelUpModal } from '../modals/LevelUpModal';
+import {
+    evaluateTriggers,
+    grantPowerUp,
+    expirePowerUps,
+    EFFECT_DEFINITIONS,
+    rollFromPool,
+    TriggerContext,
+} from '../services/PowerUpService';
 
 interface UseXPAwardOptions {
     app: App;
@@ -46,6 +54,8 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
     const achievements = useCharacterStore((state) => state.achievements);
     const addXP = useCharacterStore((state) => state.addXP);
     const graduate = useCharacterStore((state) => state.graduate);
+    const setPowerUps = useCharacterStore((state) => state.setPowerUps);
+    const incrementTasksToday = useCharacterStore((state) => state.incrementTasksToday);
     const quests = useQuestStore((state) => state.quests);
 
     // Award XP for completed tasks
@@ -62,6 +72,65 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
         const newlyCompleted = newCompletion.completed - oldCompleted;
 
         if (newlyCompleted <= 0) return;
+
+        // Get today's date in local timezone (YYYY-MM-DD format for reliable comparison)
+        const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+
+        // Check if this is first task of day using persisted character data
+        const isNewDay = character.lastTaskDate !== today;
+        const currentTaskCount = isNewDay ? 0 : (character.tasksCompletedToday ?? 0);
+        const isFirstTaskOfDay = currentTaskCount === 0;
+
+        // Increment the persisted counter (will be saved with character)
+        incrementTasksToday(newlyCompleted, today);
+
+        // === TASK COMPLETION TRIGGERS ===
+        // Expire old power-ups first
+        let currentPowerUps = expirePowerUps(character.activePowerUps ?? []);
+
+        // Build context for trigger evaluation
+        const taskContext: TriggerContext = {
+            isFirstTaskOfDay,
+            tasksCompletedToday: currentTaskCount + newlyCompleted,
+            taskCategory: quest.category,
+            taskXP: quest.xpPerTask * newlyCompleted,
+        };
+
+        console.log('[PowerUp Debug] Task completion trigger context:', {
+            isFirstTaskOfDay,
+            tasksCompletedToday: currentTaskCount + newlyCompleted,
+            taskCategory: quest.category,
+            existingPowerUps: character.activePowerUps?.length ?? 0,
+            lastTaskDate: character.lastTaskDate,
+            today,
+        });
+
+        // Evaluate task_completion triggers
+        const taskTriggers = evaluateTriggers('task_completion', taskContext);
+        console.log('[PowerUp Debug] Triggers that fired:', taskTriggers.map(t => t.id));
+
+        for (const trigger of taskTriggers) {
+            const effectId = trigger.grantsEffect ?? (trigger.grantsTier ? rollFromPool(trigger.grantsTier) : null);
+            console.log('[PowerUp Debug] Processing trigger:', trigger.id, 'effectId:', effectId);
+            if (effectId) {
+                const result = grantPowerUp(currentPowerUps, effectId, trigger.id);
+                console.log('[PowerUp Debug] Grant result:', { granted: !!result.granted, powerUpsCount: result.powerUps.length });
+                if (result.granted) {
+                    currentPowerUps = result.powerUps;
+                    const effectDef = EFFECT_DEFINITIONS[effectId];
+                    // Show notification
+                    if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
+                        new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 4000);
+                    }
+                }
+            }
+        }
+
+        // Save power-ups if any changed
+        console.log('[PowerUp Debug] Saving power-ups:', currentPowerUps.length);
+        if (currentPowerUps !== (character.activePowerUps ?? [])) {
+            setPowerUps(currentPowerUps);
+        }
 
         // Calculate XP with class bonus
         const baseXP = quest.xpPerTask * newlyCompleted;
@@ -136,6 +205,39 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
                     const updatedChar = applyLevelUpStats(currentChar);
                     useCharacterStore.getState().setCharacter(updatedChar);
                 }
+            }
+
+            // === XP AWARD TRIGGERS (Level Up / Tier Up) ===
+            const xpAwardContext: TriggerContext = {
+                didLevelUp: true,
+                didTierUp: levelResult.tierChanged,
+                newLevel: levelResult.newLevel,
+            };
+
+            // Evaluate xp_award triggers
+            const xpTriggers = evaluateTriggers('xp_award', xpAwardContext);
+            let lvlPowerUps = expirePowerUps(useCharacterStore.getState().character?.activePowerUps ?? []);
+
+            for (const trigger of xpTriggers) {
+                const effectId = trigger.grantsEffect ?? (trigger.grantsTier ? rollFromPool(trigger.grantsTier) : null);
+                if (effectId) {
+                    const result = grantPowerUp(lvlPowerUps, effectId, trigger.id);
+                    if (result.granted) {
+                        lvlPowerUps = result.powerUps;
+                        const effectDef = EFFECT_DEFINITIONS[effectId];
+                        // Show notification (slightly delayed so it shows after level-up modal)
+                        setTimeout(() => {
+                            if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
+                                new Notice(`${result.granted!.icon} ${result.granted!.name}: ${result.granted!.description}`, 5000);
+                            }
+                        }, 500);
+                    }
+                }
+            }
+
+            // Save power-ups if any triggered
+            if (xpTriggers.length > 0) {
+                setPowerUps(lvlPowerUps);
             }
 
             // Show level-up modal
@@ -213,7 +315,7 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
 
         // Persist character
         await onSaveCharacter();
-    }, [character, achievements, addXP, graduate, onSaveCharacter, app, vault, badgeFolder]);
+    }, [character, achievements, addXP, graduate, setPowerUps, onSaveCharacter, app, vault, badgeFolder]);
 
     // Track which quests are currently being processed
     const processingRef = useRef<Set<string>>(new Set());
