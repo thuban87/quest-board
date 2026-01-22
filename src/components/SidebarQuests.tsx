@@ -134,8 +134,30 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
     };
 
     // Get quests by status (uses consolidated store method)
-    const getQuestsForSection = (status: QuestStatus): Quest[] =>
-        useQuestStore.getState().getQuestsByStatus(status);
+    // Filter out quests from excluded folders
+    const getQuestsForSection = (status: QuestStatus): Quest[] => {
+        const quests = useQuestStore.getState().getQuestsByStatus(status);
+        const excludedFolders = plugin.settings.excludedFolders || [];
+
+        if (excludedFolders.length === 0) {
+            return quests;
+        }
+
+        return quests.filter(quest => {
+            // Check linkedTaskFile path against excluded folders
+            if (isManualQuest(quest) && quest.linkedTaskFile) {
+                for (const excluded of excludedFolders) {
+                    if (quest.linkedTaskFile.includes(`/${excluded}/`) ||
+                        quest.linkedTaskFile.includes(`\\${excluded}\\`) ||
+                        quest.linkedTaskFile.startsWith(`${excluded}/`) ||
+                        quest.linkedTaskFile.endsWith(`/${excluded}`)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        });
+    };
 
     // DnD sensors and drag handler (uses consolidated hook)
     const { sensors, handleDragEnd } = useDndQuests({ onMoveQuest: handleMoveQuest });

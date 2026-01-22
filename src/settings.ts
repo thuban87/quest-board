@@ -60,6 +60,15 @@ export interface QuestBoardSettings {
 
     // Streak mode: 'quest' requires completing a quest, 'task' requires completing a task
     streakMode: 'quest' | 'task';
+
+    // Folder exclusion - folders to exclude from Kanban view (but still indexed)
+    excludedFolders: string[];
+
+    // Template configuration
+    templateFolder: string;         // Folder containing quest templates
+    archiveFolder: string;          // Folder for archived/completed quests
+    defaultQuestTags: string[];     // Tags to add by default when creating quests
+    enableDailyNoteLogging: boolean; // Log quest completions to daily notes
 }
 
 /**
@@ -82,6 +91,11 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     categoryStatMappings: {},
     knownCategories: [],
     streakMode: 'quest',
+    excludedFolders: [],
+    templateFolder: 'Quest Board/templates',
+    archiveFolder: 'quests/archive',
+    defaultQuestTags: [],
+    enableDailyNoteLogging: true,
 };
 
 /**
@@ -142,6 +156,91 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.spriteFolder)
                 .onChange(async (value) => {
                     this.plugin.settings.spriteFolder = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        // Quest Folder Settings Section
+        containerEl.createEl('h3', { text: 'Quest Folder Settings' });
+
+        // Helper to get all folders for autocomplete
+        const getAllFolders = (): string[] => {
+            const folders: string[] = [];
+            const recurse = (folder: TFolder) => {
+                folders.push(folder.path);
+                folder.children.forEach(child => {
+                    if (child instanceof TFolder) {
+                        recurse(child);
+                    }
+                });
+            };
+            this.app.vault.getAllLoadedFiles().forEach(file => {
+                if (file instanceof TFolder && file.path !== '/') {
+                    recurse(file);
+                }
+            });
+            return [...new Set(folders)].sort();
+        };
+
+        new Setting(containerEl)
+            .setName('Excluded Folders')
+            .setDesc('Folders to hide from Kanban view (quests still indexed for XP). Comma-separated.')
+            .addText(text => text
+                .setPlaceholder('archive, completed')
+                .setValue(this.plugin.settings.excludedFolders.join(', '))
+                .onChange(async (value) => {
+                    this.plugin.settings.excludedFolders = value
+                        .split(',')
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0);
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Archive Folder')
+            .setDesc('Folder for archived/completed quests (relative to storage folder)')
+            .addText(text => text
+                .setPlaceholder('quests/archive')
+                .setValue(this.plugin.settings.archiveFolder)
+                .onChange(async (value) => {
+                    this.plugin.settings.archiveFolder = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        // Template Configuration Section
+        containerEl.createEl('h3', { text: 'Template Configuration' });
+
+        new Setting(containerEl)
+            .setName('Template Folder')
+            .setDesc('Folder containing quest templates')
+            .addText(text => text
+                .setPlaceholder('Quest Board/templates')
+                .setValue(this.plugin.settings.templateFolder)
+                .onChange(async (value) => {
+                    this.plugin.settings.templateFolder = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Default Quest Tags')
+            .setDesc('Tags to add by default when creating quests. Comma-separated.')
+            .addText(text => text
+                .setPlaceholder('quest, active')
+                .setValue(this.plugin.settings.defaultQuestTags.join(', '))
+                .onChange(async (value) => {
+                    this.plugin.settings.defaultQuestTags = value
+                        .split(',')
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0);
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Enable Daily Note Logging')
+            .setDesc('Log quest completions to your daily notes')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableDailyNoteLogging)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableDailyNoteLogging = value;
                     await this.plugin.saveSettings();
                 }));
 

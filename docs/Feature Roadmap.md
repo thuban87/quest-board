@@ -74,6 +74,7 @@
 | 28 | **Achievement System** ✅ | Track and display achievements, unlock popups, hub modal | 32 defaults, AchievementHubModal, level/category triggers, confetti |
 | 29 | **Gear Slot UI** ✅ | Display empty gear slots on character sheet | Outlines for weapon, armor, accessories |
 | 30 | **Sprite Renderer Service** ✅ | Tier-based sprite folders (tier1-5), animated GIF display, auto-switch on level up | 5 visual tiers, `getLevelTier()` |
+| 31 | **Command Menu & Settings** ✅ | Consolidated command menu modal (`QuestBoardCommandMenu.ts`), folder exclusion settings, template configuration | 5 categories, excluded folders hide from Kanban |
 
 | 33 | **Filter/Search** | Filter quests by category, priority, or search text | Add to board header |
 

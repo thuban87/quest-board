@@ -24,6 +24,7 @@ import { RecurringQuestsDashboardModal } from './src/modals/RecurringQuestsDashb
 import { checkStreakOnLoad } from './src/services/StreakService';
 import { statusBarService } from './src/services/StatusBarService';
 import { BuffStatusProvider } from './src/services/BuffStatusProvider';
+import { QuestBoardCommandMenu } from './src/modals/QuestBoardCommandMenu';
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
@@ -91,6 +92,15 @@ export default class QuestBoardPlugin extends Plugin {
         // Add ribbon icon to open focused sidebar
         this.addRibbonIcon('swords', 'Open Quest Board', () => {
             this.activateSidebarView();
+        });
+
+        // Add command for consolidated command menu
+        this.addCommand({
+            id: 'open-command-menu',
+            name: 'Open Quest Board Menu',
+            callback: () => {
+                new QuestBoardCommandMenu(this).open();
+            },
         });
 
         // Add command to open focused sidebar
