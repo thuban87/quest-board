@@ -7,6 +7,7 @@
 import { App, TFile, Vault } from 'obsidian';
 import { Achievement, isUnlocked } from '../models/Achievement';
 import { getDefaultAchievements } from '../data/achievements';
+import { Character } from '../models/Character';
 
 /**
  * Result of checking achievements
@@ -14,6 +15,44 @@ import { getDefaultAchievements } from '../data/achievements';
 export interface AchievementCheckResult {
     newlyUnlocked: Achievement[];
     totalXpBonus: number;
+}
+
+/**
+ * Calculate current progress for achievements based on character state.
+ * SINGLE SOURCE OF TRUTH - used by both sidebar and modal views.
+ * 
+ * @param achievements - Array of achievements
+ * @param character - Current character state
+ * @param totalQuestsCompleted - Optional count of total completed quests
+ * @returns New array with updated progress values
+ */
+export function calculateAchievementProgress(
+    achievements: Achievement[],
+    character: Character | null,
+    totalQuestsCompleted?: number
+): Achievement[] {
+    if (!character) return achievements;
+
+    return achievements.map(a => {
+        if (isUnlocked(a)) return a;
+
+        let progress = a.progress || 0;
+        switch (a.trigger.type) {
+            case 'level':
+                progress = character.isTrainingMode ? character.trainingLevel : character.level;
+                break;
+            case 'streak':
+                progress = character.currentStreak || 0;
+                break;
+            case 'quest_count':
+                if (totalQuestsCompleted !== undefined) {
+                    progress = totalQuestsCompleted;
+                }
+                break;
+            // category_count uses cached progress
+        }
+        return { ...a, progress };
+    });
 }
 
 /**

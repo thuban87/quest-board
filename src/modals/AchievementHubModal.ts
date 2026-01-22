@@ -8,7 +8,7 @@
 import { App, Modal, Notice, Setting } from 'obsidian';
 import { Achievement, isUnlocked, getProgressPercent } from '../models/Achievement';
 import { useCharacterStore } from '../store/characterStore';
-import { AchievementService } from '../services/AchievementService';
+import { AchievementService, calculateAchievementProgress } from '../services/AchievementService';
 import { CreateAchievementModal } from './CreateAchievementModal';
 
 interface AchievementHubModalOptions {
@@ -37,8 +37,13 @@ export class AchievementHubModal extends Modal {
         contentEl.addClass('qb-achievement-hub-modal');
 
         const achievements = useCharacterStore.getState().achievements;
+        const character = useCharacterStore.getState().character;
         const achievementService = new AchievementService(this.app.vault, this.badgeFolder);
-        const sorted = achievementService.getSortedAchievements(achievements);
+
+        // Calculate progress using shared utility (single source of truth)
+        const achievementsWithProgress = calculateAchievementProgress(achievements, character);
+
+        const sorted = achievementService.getSortedAchievements(achievementsWithProgress);
         const unlockedCount = achievementService.getUnlockedCount(achievements);
 
         // Header
@@ -83,6 +88,8 @@ export class AchievementHubModal extends Modal {
             locked.forEach(a => this.renderAchievementRow(lockedContainer, a));
         }
     }
+
+
 
     private renderAchievementRow(container: HTMLElement, achievement: Achievement) {
         const row = container.createDiv({ cls: `qb-hub-row ${isUnlocked(achievement) ? 'unlocked' : 'locked'}` });

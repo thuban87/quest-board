@@ -16,6 +16,8 @@ import { useTaskSectionsStore } from '../store/taskSectionsStore';
 import { saveManualQuest, saveAIQuest } from './QuestService';
 import { toggleTaskInFile, readTasksWithSections, getTaskCompletion } from './TaskFileService';
 import { updateStreak, getStreakDisplay, StreakUpdateResult } from './StreakService';
+import { AchievementService } from './AchievementService';
+import { showAchievementUnlock } from '../modals/AchievementUnlockModal';
 import {
     evaluateTriggers,
     grantPowerUp,
@@ -138,6 +140,24 @@ export async function moveQuest(
 
                     // Save power-ups
                     useCharacterStore.getState().setPowerUps(streakPowerUps);
+                }
+
+                // === STREAK ACHIEVEMENTS ===
+                // Check for streak milestone achievements (7-day, 30-day, etc.)
+                const achievements = useCharacterStore.getState().achievements;
+                const achievementService = new AchievementService(null as any, ''); // vault/folder not needed for checks
+                const streakAchievementCheck = achievementService.checkStreakAchievements(achievements, newStreak);
+
+                if (streakAchievementCheck.newlyUnlocked.length > 0) {
+                    // Show unlock popups
+                    streakAchievementCheck.newlyUnlocked.forEach((achievement, index) => {
+                        setTimeout(() => {
+                            showAchievementUnlock(null as any, achievement, '');
+                        }, 2000 + (index * 1000));
+                    });
+
+                    // Save achievements to store
+                    useCharacterStore.setState({ achievements: [...achievements] });
                 }
             }
         }

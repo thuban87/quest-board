@@ -275,6 +275,11 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
                         }
                     }, 1500 + (index * 1000)); // Stagger popups
                 });
+
+                // IMPORTANT: Save modified achievements back to store (preserves unlock state)
+                if (levelCheck.newlyUnlocked.length > 0) {
+                    useCharacterStore.setState({ achievements: [...achievements] });
+                }
             }
         }
 
