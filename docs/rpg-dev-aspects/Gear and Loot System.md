@@ -636,15 +636,11 @@ function getSetFromQuest(quest: Quest): GearSet | null {
 
 ## Open Questions
 
-1. **Inventory Limit?**
-   - Should there be a cap on how much unequipped gear you can hold?
-   - Could be a goal-based unlock (more inventory = more quests)
-   - **Proposed:** Start with 50 slots, unlock more via achievements
+1. ~~**Inventory Limit?**~~ ✅ DECIDED
+   - **Answer:** Start with 50 slots, unlock more via achievements. Need to add achievement rewards system.
 
-2. **Gear Comparison?**
-   - Auto-equip if better?
-   - Show +/- stat comparison when hovering new gear?
-   - **Proposed:** Show comparison tooltip, but don't auto-equip
+2. ~~**Gear Comparison?**~~ ✅ DECIDED
+   - **Answer:** Show comparison tooltip on hover, but no auto-equip.
 
 3. ~~**Salvage/Sell System?**~~ ✅ DECIDED
    - **Answer:** Sell for gold. Gold buys consumables.
@@ -652,9 +648,8 @@ function getSetFromQuest(quest: Quest): GearSet | null {
 4. ~~**Set Bonuses?**~~ ✅ DECIDED
    - **Answer:** Project folder-based sets. See "Set Bonuses" section above.
 
-5. **Gear Degradation?**
-   - Durability system? (Probably too punishing)
-   - **Proposed:** No degradation - too punishing for task gamification
+5. ~~**Gear Degradation?**~~ ✅ DECIDED
+   - **Answer:** No degradation - too punishing for task gamification.
 
 ---
 

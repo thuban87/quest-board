@@ -188,22 +188,36 @@ export function processXPForStats(
 }
 
 /**
- * Apply level-up stat gains (+2 to primary, +1 to others)
+ * Apply level-up stat gains with EXPONENTIAL scaling
+ * 
+ * Aligned with gear system formula. Higher levels = bigger stat gains.
+ * 
+ * Formula per level:
+ *   Primary stats: base + (level * 0.5)  → levels 1-10: +2-6, levels 30-40: +16-21
+ *   Other stats:   base + (level * 0.25) → levels 1-10: +1-3, levels 30-40: +8-11
+ * 
+ * This creates exponential feel: level 40 stat gains are ~4x level 1 gains.
  */
 export function applyLevelUpStats(character: Character): Character {
     const classInfo = CLASS_INFO[character.class];
     const newBaseStats = { ...character.baseStats };
+    const newLevel = character.level; // This is the NEW level we just reached
 
-    // +2 to primary stats
+    // Exponential growth: stat gain increases with level
+    // Primary stats get higher scaling factor
+    const primaryGain = Math.floor(2 + (newLevel * 0.5));  // Level 1: +2, Level 10: +7, Level 40: +22
+    const secondaryGain = Math.floor(1 + (newLevel * 0.25)); // Level 1: +1, Level 10: +3, Level 40: +11
+
+    // Apply primary stat gains
     for (const primaryStat of classInfo.primaryStats) {
-        newBaseStats[primaryStat] += 2;
+        newBaseStats[primaryStat] += primaryGain;
     }
 
-    // +1 to all other stats
+    // Apply secondary stat gains
     const allStats: StatType[] = ['strength', 'intelligence', 'wisdom', 'constitution', 'dexterity', 'charisma'];
     for (const stat of allStats) {
         if (!classInfo.primaryStats.includes(stat)) {
-            newBaseStats[stat] += 1;
+            newBaseStats[stat] += secondaryGain;
         }
     }
 

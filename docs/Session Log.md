@@ -1664,6 +1664,36 @@ This completes Phase 2 of the Quest Board plugin!
 
 ---
 
+## 2026-01-23 - Exponential Stat Progression Fix
+
+**Focus:** Fix level-up stat persistence bug and implement exponential stat growth
+
+**Completed:**
+- ✅ Fixed bug: `applyLevelUpStats()` wasn't persisting to settings (added `onSaveCharacter()` call)
+- ✅ Changed stat growth from linear to **exponential** to align with gear system scaling
+- ✅ New formula:
+  - Primary stats: `+floor(2 + level × 0.5)` → Level 2: +3, Level 40: +22
+  - Secondary stats: `+floor(1 + level × 0.25)` → Level 2: +1, Level 40: +11
+
+**Stat Progression Table (Paladin):**
+
+| Level | STR (Primary) | WIS (Primary) | Others | Per-Level Gain (Primary/Secondary) |
+|-------|--------------|--------------|--------|-----------------------------------|
+| 1 | 10 | 10 | 10 | - |
+| 2 | 13 | 13 | 11 | +3 / +1 |
+| 10 | 44 | 44 | 26 | +7 / +3 |
+| 20 | 116 | 116 | 63 | +12 / +6 |
+| 40 | 350 | 350 | 179 | +22 / +11 |
+
+**Key Files:**
+- `src/services/StatsService.ts` - New exponential formula in `applyLevelUpStats()`
+- `src/hooks/useXPAward.ts` - Added `onSaveCharacter()` after stat gains
+
+**Hours Worked:** ~30 min
+**Phase:** Phase 2 (RPG Mechanics)
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD

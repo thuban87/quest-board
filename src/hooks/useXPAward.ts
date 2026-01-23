@@ -208,6 +208,8 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
                 if (currentChar) {
                     const updatedChar = applyLevelUpStats(currentChar);
                     useCharacterStore.getState().setCharacter(updatedChar);
+                    // IMPORTANT: Persist the updated baseStats to settings
+                    onSaveCharacter();
                 }
             }
 
