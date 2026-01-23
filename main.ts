@@ -25,6 +25,7 @@ import { checkStreakOnLoad } from './src/services/StreakService';
 import { statusBarService } from './src/services/StatusBarService';
 import { BuffStatusProvider } from './src/services/BuffStatusProvider';
 import { QuestBoardCommandMenu } from './src/modals/QuestBoardCommandMenu';
+import { WelcomeModal } from './src/modals/WelcomeModal';
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
@@ -126,8 +127,7 @@ export default class QuestBoardPlugin extends Plugin {
             id: 'create-edit-character',
             name: 'Create/Edit Character',
             callback: () => {
-                // TODO: Open character creation modal
-                console.log('Character creation modal - coming soon');
+                this.showWelcomeModal();
             },
         });
 
@@ -295,4 +295,17 @@ export default class QuestBoardPlugin extends Plugin {
             workspace.revealLeaf(leaf);
         }
     }
+
+    /**
+     * Shows the welcome modal for new users or character creation
+     */
+    showWelcomeModal(): void {
+        new WelcomeModal(this.app, this, async () => {
+            // Refresh views after character creation
+            this.app.workspace.trigger('quest-board:refresh');
+            // Re-activate sidebar to show the new character
+            await this.activateSidebarView();
+        }).open();
+    }
 }
+
