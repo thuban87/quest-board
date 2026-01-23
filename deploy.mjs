@@ -1,12 +1,20 @@
 /**
- * Deploy script - copies built files to production Obsidian vault
+ * Deploy script - copies built files to Obsidian vaults
+ * 
+ * Usage:
+ *   node deploy.mjs test        - Deploy to TEST vault (safe, for development)
+ *   node deploy.mjs production  - Deploy to PRODUCTION vault (requires confirmation)
  */
 
 import { copyFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
+import { createInterface } from 'readline';
 
-// Production vault path
-const PRODUCTION_PATH = 'G:\\My Drive\\IT\\Obsidian Vault\\My Notebooks\\.obsidian\\plugins\\quest-board';
+// Vault paths
+const VAULTS = {
+    test: 'C:\\Quest-Board-Test-Vault\\.obsidian\\plugins\\quest-board',
+    production: 'G:\\My Drive\\IT\\Obsidian Vault\\My Notebooks\\.obsidian\\plugins\\quest-board'
+};
 
 // Files to copy
 const FILES_TO_COPY = [
@@ -15,27 +23,96 @@ const FILES_TO_COPY = [
     'styles.css'
 ];
 
-// Ensure the destination directory exists
-if (!existsSync(PRODUCTION_PATH)) {
-    console.log(`Creating directory: ${PRODUCTION_PATH}`);
-    mkdirSync(PRODUCTION_PATH, { recursive: true });
+// Get target from command line
+const target = process.argv[2];
+
+if (!target || !VAULTS[target]) {
+    console.error('❌ Invalid deploy target!');
+    console.error('');
+    console.error('Usage:');
+    console.error('  npm run deploy:test        - Deploy to TEST vault (safe)');
+    console.error('  npm run deploy:production  - Deploy to PRODUCTION vault (dangerous!)');
+    console.error('');
+    process.exit(1);
 }
 
-// Copy files
-console.log('Deploying to production vault...');
-for (const file of FILES_TO_COPY) {
-    const src = join(process.cwd(), file);
-    const dest = join(PRODUCTION_PATH, file);
+const targetPath = VAULTS[target];
 
-    try {
-        copyFileSync(src, dest);
-        console.log(`  ✓ ${file}`);
-    } catch (error) {
-        console.error(`  ✗ Failed to copy ${file}:`, error.message);
-        process.exit(1);
+/**
+ * Prompt user for confirmation (production only)
+ */
+async function confirmProduction() {
+    if (target !== 'production') {
+        return true;
     }
+
+    console.log('');
+    console.log('⚠️  ========================================');
+    console.log('⚠️  PRODUCTION DEPLOY');
+    console.log('⚠️  ========================================');
+    console.log('');
+    console.log(`Target: ${targetPath}`);
+    console.log('');
+    console.log('This will overwrite your REAL Obsidian vault!');
+    console.log('');
+
+    const rl = createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    return new Promise((resolve) => {
+        rl.question('Type "yes" to continue: ', (answer) => {
+            rl.close();
+            if (answer.toLowerCase() === 'yes') {
+                resolve(true);
+            } else {
+                console.log('');
+                console.log('❌ Deploy cancelled.');
+                resolve(false);
+            }
+        });
+    });
 }
 
-console.log('\n✅ Deployment complete!');
-console.log(`   Files copied to: ${PRODUCTION_PATH}`);
-console.log('   Reload Obsidian to see changes.');
+/**
+ * Deploy files to target vault
+ */
+async function deploy() {
+    // Confirm production deploys
+    const confirmed = await confirmProduction();
+    if (!confirmed) {
+        process.exit(0);
+    }
+
+    // Ensure the destination directory exists
+    if (!existsSync(targetPath)) {
+        console.log(`Creating directory: ${targetPath}`);
+        mkdirSync(targetPath, { recursive: true });
+    }
+
+    // Copy files
+    const label = target === 'production' ? '🚀 PRODUCTION' : '🧪 TEST';
+    console.log(`\nDeploying to ${label} vault...`);
+
+    for (const file of FILES_TO_COPY) {
+        const src = join(process.cwd(), file);
+        const dest = join(targetPath, file);
+
+        try {
+            copyFileSync(src, dest);
+            console.log(`  ✓ ${file}`);
+        } catch (error) {
+            console.error(`  ✗ Failed to copy ${file}:`, error.message);
+            process.exit(1);
+        }
+    }
+
+    console.log('');
+    console.log('✅ Deployment complete!');
+    console.log(`   Target: ${label}`);
+    console.log(`   Path: ${targetPath}`);
+    console.log('   Reload Obsidian to see changes.');
+}
+
+deploy();

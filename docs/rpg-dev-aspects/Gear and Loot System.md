@@ -229,8 +229,11 @@ type GearTier = 'common' | 'adept' | 'journeyman' | 'master' | 'epic' | 'legenda
 > **Solution:** Two distinct inventories on Character.
 
 ```typescript
-// Updated Character interface additions
+// Updated Character interface additions (Schema v2)
 interface Character {
+  // Schema version for migration
+  schemaVersion: 2;              // Bump from 1 to 2
+  
   // ... existing fields ...
   
   // Stackable items (consumables, materials, keys)
@@ -242,8 +245,9 @@ interface Character {
   // Equipped gear (one per slot)
   equippedGear: Record<GearSlot, GearItem | null>;  // UPDATED
   
-  // Currency
+  // Currency & Limits
   gold: number;                   // NEW - for sell/buy economy
+  inventoryLimit: number;         // NEW - default 50, unlock via achievements
 }
 
 // Existing stackable inventory item (unchanged)
@@ -508,7 +512,11 @@ interface GearItem {
   isLegendary: boolean;          // Quick check
   legendaryName?: string;        // "The Accountant's Greataxe"
   legendaryLore?: string;        // Flavor text
-  originQuest?: string;          // Quest title that spawned it
+  
+  // Quest origin (store BOTH for resilience - quest can be renamed/deleted)
+  originQuestId?: string;        // Quest ID (stable reference)
+  originQuestTitle?: string;     // Quest title snapshot (for display even if quest deleted)
+  originQuestCategory?: string;  // Quest category snapshot
 }
 ```
 
@@ -573,9 +581,20 @@ type SetBonusEffect =
 
 ### Automatic Set Generation
 
+> [!TIP]
+> **Folder Rename Resilience:** Set IDs are normalized at drop time so minor folder rename changes don't break sets.
+
 Sets are created automatically based on quest folder structure:
 
 ```typescript
+// Normalize folder path to create stable set ID
+function normalizeSetId(folderPath: string): string {
+  return folderPath
+    .replace(/^.*\/quests\//, '')  // Remove vault prefix
+    .toLowerCase()
+    .replace(/\s+/g, '_');         // "Kitchen Renovation" → "kitchen_renovation"
+}
+
 function getSetFromQuest(quest: Quest): GearSet | null {
   // Parse folder path
   const folderPath = quest.path.substring(0, quest.path.lastIndexOf('/'));
@@ -585,8 +604,8 @@ function getSetFromQuest(quest: Quest): GearSet | null {
   if (folderPath === 'Life/Quest Board/quests') return null;
   
   return {
-    id: hashString(folderPath),
-    name: folderName,
+    id: normalizeSetId(folderPath),  // Stable ID survives minor renames
+    name: folderName,                 // Display name (can update)
     folderPath,
     bonuses: generateDefaultBonuses(folderName),
   };
@@ -781,22 +800,231 @@ function GearIcon({ item }: { item: GearItem }) {
 
 ---
 
+## Character Schema Migration
+
+> [!CAUTION]
+> Must migrate existing Character data before any gear code runs.
+
+```typescript
+// In characterStore initialization
+function migrateCharacterV1toV2(oldData: any): Character {
+  // Already v2 or uninitialized
+  if (oldData?.schemaVersion === 2) return oldData;
+  
+  const migrated: Character = {
+    ...oldData,
+    schemaVersion: 2,
+    
+    // Gear System defaults
+    gearInventory: oldData.gearInventory ?? [],
+    equippedGear: migrateEquippedGear(oldData.equippedGear),
+    gold: oldData.gold ?? 0,
+    inventoryLimit: oldData.inventoryLimit ?? 50,
+    
+    // Fight System defaults (added here for completeness)
+    currentHP: oldData.currentHP ?? calculateMaxHP(oldData),
+    currentMana: oldData.currentMana ?? calculateMaxMana(oldData),
+    stamina: oldData.stamina ?? 10,
+    staminaGainedToday: oldData.staminaGainedToday ?? 0,
+    lastStaminaResetDate: oldData.lastStaminaResetDate ?? getLocalDateString(),
+    
+    // Exploration defaults
+    dungeonKeys: oldData.dungeonKeys ?? 0,
+  };
+  
+  return migrated;
+}
+
+function migrateEquippedGear(oldFormat: any): Record<GearSlot, GearItem | null> {
+  const slots: GearSlot[] = ['head', 'chest', 'legs', 'boots', 'weapon', 'shield', 
+                            'accessory1', 'accessory2', 'accessory3'];
+  const newFormat: Record<GearSlot, GearItem | null> = {};
+  
+  // Initialize all slots to null
+  slots.forEach(slot => newFormat[slot] = null);
+  
+  // If old format was array with {slot, itemId}, convert
+  if (Array.isArray(oldFormat)) {
+    for (const item of oldFormat) {
+      if (item.slot && newFormat.hasOwnProperty(item.slot)) {
+        newFormat[item.slot] = generateStarterGear(item.slot); // Fallback
+      }
+    }
+  } else if (typeof oldFormat === 'object' && oldFormat !== null) {
+    // Already in new format shape, just ensure all slots exist
+    slots.forEach(slot => {
+      newFormat[slot] = oldFormat[slot] ?? null;
+    });
+  }
+  
+  return newFormat;
+}
+```
+
+---
+
+## Atomic Character Store Actions
+
+> [!IMPORTANT]
+> Prevents race conditions when multiple systems update character simultaneously.
+
+```typescript
+// In characterStore.ts - Add granular setters
+interface CharacterStore {
+  character: Character | null;
+  derivedCombatStats: CombatStats | null;   // Cached, recalc on equip
+  activeSetBonuses: SetBonus[];              // Cached, recalc on equip
+  
+  // Existing
+  setCharacter: (character: Character) => void;
+  
+  // NEW - Atomic field updates (each updates & saves atomically)
+  updateGold: (deltaGold: number) => void;
+  updateHP: (newHP: number) => void;
+  updateMana: (newMana: number) => void;
+  updateStamina: (deltaStamina: number) => void;
+  updateDungeonKeys: (deltaKeys: number) => void;
+  
+  // NEW - Gear operations
+  addGear: (item: GearItem) => void;
+  removeGear: (itemId: string) => GearItem | null;
+  equipGear: (slot: GearSlot, item: GearItem) => void;
+  unequipGear: (slot: GearSlot) => GearItem | null;
+  
+  // NEW - Stat recalculation (call on equip/unequip/level-up)
+  recalculateCombatStats: () => void;
+}
+
+// Example atomic update
+updateGold: (deltaGold) => {
+  set((state) => {
+    if (!state.character) return state;
+    const newGold = Math.max(0, state.character.gold + deltaGold);
+    return {
+      character: { ...state.character, gold: newGold }
+    };
+  });
+  
+  // Auto-persist after update
+  get().saveCharacter();
+}
+```
+
+---
+
+## Unique Items Registry
+
+> [!NOTE]
+> For boss drops and special loot - items with fixed stats that don't procedurally generate.
+
+```typescript
+// src/data/uniqueItems.ts
+export const UNIQUE_ITEMS: Record<string, GearItem> = {
+  goblin_kings_crown: {
+    id: 'unique_goblin_kings_crown',
+    name: "Goblin King's Crown",
+    description: "A crown forged from stolen gold. It whispers of greed.",
+    slot: 'head',
+    tier: 'epic',
+    level: 15,
+    stats: {
+      primaryStat: 'intelligence',
+      primaryValue: 25,
+      secondaryStats: { charisma: 10, wisdom: 5 },
+    },
+    sellValue: 350,
+    iconEmoji: '👑',
+    source: 'combat',
+    isUnique: true,
+    acquiredAt: '', // Set at drop time
+  },
+  // ... more unique items
+};
+
+// LootGenerationService.ts
+function rollLoot(lootTable: LootTableEntry[]): GearItem | null {
+  for (const entry of lootTable) {
+    if (Random(0, 100) < entry.chance) {
+      if (entry.itemId) {
+        // Specific unique item
+        const unique = UNIQUE_ITEMS[entry.itemId];
+        if (unique) {
+          return { ...unique, id: crypto.randomUUID(), acquiredAt: new Date().toISOString() };
+        }
+      } else if (entry.slot) {
+        // Procedural gear
+        return generateGearItem(entry.slot, ...);
+      }
+    }
+  }
+  return null;
+}
+```
+
+---
+
+## Inventory Management Modal
+
+> [!TIP]
+> When inventory is full on dungeon exit, let user decide what to do - never silently lose items.
+
+```typescript
+interface InventoryManagementModalProps {
+  pendingLoot: GearItem[];
+  currentInventory: GearItem[];
+  freeSlots: number;
+  onConfirm: (acceptedItems: GearItem[]) => void;
+  onAbandon: () => void;
+}
+
+// Modal Layout:
+// ┌─────────────────────────────────────────────────────────┐
+// │  ⚠️ Inventory Full!                                     │
+// │  You have 5 new items but only 2 free slots.           │
+// ├─────────────────────────────────────────────────────────┤
+// │  PENDING LOOT                  │  CURRENT INVENTORY     │
+// │  ┌─────┐ ┌─────┐ ┌─────┐      │  ┌─────┐ ┌─────┐       │
+// │  │ ⚔️  │ │ 🛡️  │ │ 🪖  │      │  │ ⚔️  │ │ 🎽  │ ...   │
+// │  │ Keep│ │ Keep│ │Trash│      │  │ Sell│ │ Keep│       │
+// │  └─────┘ └─────┘ └─────┘      │  └─────┘ └─────┘       │
+// ├─────────────────────────────────────────────────────────┤
+// │  Free 3 more slots to accept all loot                   │
+// │                                                         │
+// │  [Sell Selected (2) for 75g]  [Confirm]  [Abandon All] │
+// └─────────────────────────────────────────────────────────┘
+
+function showInventoryManagementModal(props: InventoryManagementModalProps): void {
+  // User can:
+  // 1. Mark pending items as "keep" or "trash"
+  // 2. Mark current inventory items as "sell" 
+  // 3. See running count: "Free X more slots to accept all"
+  // 4. Confirm when enough slots freed
+  // 5. Or abandon all pending loot
+}
+```
+
+---
+
 ## Implementation Order
 
 > [!CAUTION]
 > **Step 0 is CRITICAL** - We're modifying Character data structure.
 > Must handle migration to avoid breaking existing user saves.
 
-0. **Migration safety** - Update `characterStore` to initialize `gearInventory: []` and `gold: 0` if missing from saved data
+0. **Migration & Schema** - Add `migrateCharacterV1toV2()`, atomic store actions, test migration
 1. **Data models** - `GearItem`, `GearSlot`, `GearTier`, `LootReward` types
 2. **Gold system** - Add to Character, display in UI
 3. **Starter gear** - Assign to new characters
-4. **Loot generation service** - Roll tiers, stats, slots
-5. **Quest completion integration** - Drop gear + gold on quest complete
-6. **Character sheet UI** - Display equipped gear + gold
-7. **Inventory UI** - View/equip/unequip/sell
-8. **Settings UI** - Quest type remapping
-9. **Quest modal update** - Override rewards
+4. **Unique items registry** - Create `UNIQUE_ITEMS` map for boss drops
+5. **Loot generation service** - Roll tiers, stats, slots, unique items
+6. **Quest completion integration** - Drop gear + gold on quest complete
+7. **Character sheet UI** - Display equipped gear, gold, derived stats
+8. **Inventory UI** - View/equip/unequip/sell with virtualization
+9. **Inventory management modal** - Handle full inventory on dungeon exit
+10. **Smelting system** - Transaction pattern, UI
+11. **Set bonuses** - Normalized IDs, bonus calculation, display
+12. **Legendary lore** - Template + AI generation, quest context snapshot
+13. **Settings UI** - Quest type remapping
 
 ---
 

@@ -31,7 +31,7 @@ Instructions for AI assistants working on this project.
 1. **Review & Discuss** - Clarify requirements, check Feature Roadmap
 2. **Do the Work** - Write code in dev environment only
 3. **Test** - `npm run build`, fix errors, rebuild until passing
-4. **Deploy** - `npm run deploy` (copies to production folder)
+4. **Deploy** - `npm run deploy:production` (copies to production folder)
 5. **Wait for Confirmation** - Brad tests in production Obsidian
 6. **Wrap Up** - Update Session Log, Feature Roadmap, provide commit message
 
@@ -222,10 +222,27 @@ quest-board/
 
 ## Key Documentation
 
-- **[[Session Log]]** - Development progress by date
+- **[[Foundation Session Log]]** - Development history (Phases 1-2)
+- **[[Phase 3 Implementation Session Log]]** - Current development
+- **[[Workspace Rules - Phase 3 Implementation]]** - Agent rules for Phase 3
+- **[[Phase 3 Implementation Checklist]]** - Step-by-step implementation guide
 - **[[Feature Roadmap]]** - Phase/priority tracking
 - **[[Power-Ups System]]** - Trigger and buff documentation
 
 ---
 
-**Last Updated:** 2026-01-22
+## Phase 3 Notice
+
+> ⚠️ **If working on Gear, Combat, or Exploration systems:**
+> 
+> Read `docs/Workspace Rules - Phase 3 Implementation.md` FIRST.
+> 
+> Key differences:
+> - Deploy to **dev vault** (`npm run deploy:test`), not main vault
+> - Run unit tests (`npm test`)
+> - Follow atomic store action patterns
+> - Mobile-first design
+
+---
+
+**Last Updated:** 2026-01-23

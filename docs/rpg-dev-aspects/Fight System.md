@@ -207,10 +207,11 @@ class StoreService {
 
 ```typescript
 interface StaminaConfig {
-  maxStamina: number;          // Cap at 10
+  maxStamina: number;          // Cap at 10 current stamina
   staminaPerTask: number;      // +2 per task
   staminaPerFight: number;     // -1 per random fight
   questBountyFree: boolean;    // true - Quest bounties don't cost stamina
+  maxDailyStamina: number;     // NEW - 50/day cap to prevent infinite grinding
 }
 
 const DEFAULT_STAMINA_CONFIG: StaminaConfig = {
@@ -218,15 +219,54 @@ const DEFAULT_STAMINA_CONFIG: StaminaConfig = {
   staminaPerTask: 2,
   staminaPerFight: 1,
   questBountyFree: true,
+  maxDailyStamina: 50,         // 25 fights max per day
 };
+
+// Character fields for stamina tracking
+interface Character {
+  // ... existing fields ...
+  stamina: number;              // Current stamina (0-10)
+  staminaGainedToday: number;   // Resets at midnight
+  lastStaminaResetDate: string; // ISO date for reset detection
+}
 ```
 
-### Why 2:1 Ratio?
+### Daily Stamina Cap
+
+> [!IMPORTANT]
+> Prevents infinite "1 task = 2 fights" grinding. Max 50 stamina earned per day = 25 fights.
+
+```typescript
+function awardStamina(character: Character, amount: number): Character {
+  const today = getLocalDateString();
+  
+  // Reset if new day
+  if (character.lastStaminaResetDate !== today) {
+    character.staminaGainedToday = 0;
+    character.lastStaminaResetDate = today;
+  }
+  
+  // Check daily cap (50 stamina/day = 25 fights)
+  const MAX_DAILY_STAMINA = 50;
+  if (character.staminaGainedToday >= MAX_DAILY_STAMINA) {
+    return character; // No more stamina today
+  }
+  
+  const granted = Math.min(amount, MAX_DAILY_STAMINA - character.staminaGainedToday);
+  character.stamina = Math.min(character.stamina + granted, 10);
+  character.staminaGainedToday += granted;
+  
+  return character;
+}
+```
+
+### Why 2:1 Ratio + Daily Cap?
 
 - Every task completed = 2 fights available
 - Allows some gameplay flexibility without infinite grinding
 - Quest Bounty fights are FREE (bonus for completing quests!)
-- Cap of 10 prevents hoarding too much stamina
+- Current cap of 10 prevents hoarding
+- **Daily cap of 50 prevents "task spam → fight spam" loop**
 
 ---
 
@@ -601,7 +641,11 @@ interface LootTableEntry {
 > **Critical:** Combat state MUST persist if user switches notes!
 > Can't lose a dragon fight because you clicked a link.
 
-### Zustand Battle Store
+### Zustand Battle Store with Dual Persistence
+
+> [!IMPORTANT]
+> **Multi-Device Support:** localStorage is per-window. Plugin data syncs via Obsidian Sync.
+> Write to BOTH for resilience.
 
 ```typescript
 interface BattleState {
@@ -628,6 +672,42 @@ interface BattleState {
   executeTurn: (action: PlayerAction) => void;
 }
 
+// Custom storage that writes to BOTH localStorage AND plugin data
+function createBattleStorage(): StateStorage {
+  return {
+    getItem: async (name) => {
+      // Try localStorage first (fast, same-device recovery)
+      const local = localStorage.getItem(name);
+      if (local) return local;
+      
+      // Fallback to plugin data (synced across devices)
+      const plugin = app.plugins.getPlugin('quest-board');
+      return plugin?.settings?.battleState || null;
+    },
+    
+    setItem: async (name, value) => {
+      // Write to localStorage (fast)
+      localStorage.setItem(name, value);
+      
+      // Also write to plugin data (synced)
+      const plugin = app.plugins.getPlugin('quest-board');
+      if (plugin) {
+        plugin.settings.battleState = value;
+        await plugin.saveSettings();
+      }
+    },
+    
+    removeItem: async (name) => {
+      localStorage.removeItem(name);
+      const plugin = app.plugins.getPlugin('quest-board');
+      if (plugin) {
+        delete plugin.settings.battleState;
+        await plugin.saveSettings();
+      }
+    },
+  };
+}
+
 const useBattleStore = create<BattleState>()(
   persist(
     (set, get) => ({
@@ -643,7 +723,7 @@ const useBattleStore = create<BattleState>()(
         const character = useCharacterStore.getState().character;
         set({
           isInCombat: true,
-          playerStats: deriveCombatstats(character),
+          playerStats: deriveCombatStats(character),
           monster,
           currentTurn: determineFirstTurn(character, monster),
           turnNumber: 1,
@@ -654,7 +734,10 @@ const useBattleStore = create<BattleState>()(
       
       // ... other actions
     }),
-    { name: 'quest-board-battle' }
+    { 
+      name: 'quest-board-battle',
+      storage: createBattleStorage(),  // Dual persistence!
+    }
   )
 );
 ```
@@ -741,6 +824,59 @@ Bosses are special monsters with:
 - **Miss:** Flash with "MISS" text
 - **Critical:** Screen shake + flash + big numbers (2x damage!)
 - **Victory:** Character sprite bounces, confetti
+
+### Mobile Combat Controls
+
+> [!TIP]
+> Mobile is a priority. Combat buttons must be touch-friendly.
+
+```typescript
+// Detect mobile via Obsidian API
+import { Platform } from 'obsidian';
+
+function BattleView() {
+  const isMobile = Platform.isMobile;
+  
+  return (
+    <div className={cn('battle-view', isMobile && 'mobile')}>
+      {/* Monster at top (mobile: smaller sprite) */}
+      <MonsterSprite size={isMobile ? 'small' : 'large'} />
+      
+      {/* Combat log (mobile: shorter, scrollable) */}
+      <CombatLog maxHeight={isMobile ? 100 : 200} />
+      
+      {/* Action buttons (mobile: larger, full width stacked) */}
+      <div className={cn('action-buttons', isMobile && 'stacked')}>
+        <button className="action-btn">⚔️ Attack</button>
+        <button className="action-btn">🛡️ Defend</button>
+        <button className="action-btn">🏃 Run</button>
+        <button className="action-btn">🧪 Item</button>
+      </div>
+    </div>
+  );
+}
+```
+
+```css
+/* Mobile-specific combat styles */
+.battle-view.mobile .action-buttons.stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.battle-view.mobile .action-btn {
+  width: 100%;
+  min-height: 60px;      /* Large touch target */
+  font-size: 18px;
+  touch-action: manipulation;  /* Disable double-tap zoom */
+}
+
+.action-btn:active {
+  transform: scale(0.95);  /* Touch feedback */
+  opacity: 0.9;
+}
+```
 
 ---
 

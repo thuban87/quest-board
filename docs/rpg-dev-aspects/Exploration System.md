@@ -363,23 +363,41 @@ type TileInteraction =
 > **Click-to-Move is MANDATORY.** WASD is friction for mouse-first Obsidian users.
 
 ```typescript
-// A* with timeout protection
+// A* with timeout protection AND path validation
 function findPath(
   start: [number, number],
   goal: [number, number],
   room: Room
-): [number, number][] {
+): [number, number][] | null {
+  // VALIDATION: Check if goal is even reachable
+  if (!isWalkable(goal, room)) {
+    return null; // Goal is a wall - can't reach it!
+  }
+  
   const MAX_ITERATIONS = 500;
   let iterations = 0;
   
   // ... A* implementation ...
   
   if (iterations >= MAX_ITERATIONS) {
-    // Timeout: just return one step toward goal
-    return [getStepToward(start, goal, room)];
+    // Timeout: try to return one step toward goal
+    const fallback = getAdjacentWalkableTile(start, room, goal);
+    return fallback ? [fallback] : null;
   }
   
   return path;
+}
+
+// Handler validates result before moving
+function handleTileClick(x: number, y: number): void {
+  const path = findPath(playerPos, [x, y], currentRoom);
+  
+  if (!path) {
+    showNotification("Can't reach that tile!");
+    return; // Don't move - prevent frustration
+  }
+  
+  moveAlongPath(path);
 }
 ```
 
@@ -418,7 +436,8 @@ function findPath(
 
 ```typescript
 interface DungeonKeyConfig {
-  maxKeys: number;            // 5
+  maxKeys: number;            // 10 (hard cap)
+  decayToMax: number;         // 5 (soft cap - keys decay if above)
   keysPerMainQuest: number;   // 1
   keysPerSideQuest: number;   // 0 (or 0.5 with rounding)
 }
@@ -439,6 +458,40 @@ function exitDungeon(completed: boolean): void {
   } else {
     refundReservedKey();
     grantPartialRewards(); // Only loot collected so far
+  }
+}
+```
+
+### Single Dungeon at a Time
+
+> [!IMPORTANT]
+> **Simplified state management:** One active dungeon per character.
+> If user tries to start another, warn them about losing progress.
+
+```typescript
+interface PluginSettings {
+  // Single dungeon state (NOT Record<> of multiple)
+  activeDungeonState?: PersistedDungeonState;
+}
+
+function attemptStartDungeon(templateId: string): void {
+  const existing = plugin.settings.activeDungeonState;
+  
+  if (existing) {
+    // Show warning modal
+    showWarningModal({
+      title: 'Active Dungeon Detected',
+      message: `You have an in-progress dungeon (${existing.dungeonTemplateId}). 
+                Starting a new dungeon will lose your progress.`,
+      options: [
+        { label: 'Resume Existing', action: () => resumeDungeon(existing) },
+        { label: 'Abandon & Start New', action: () => overwriteDungeon(templateId) },
+        { label: 'Cancel', action: () => {} },
+      ],
+    });
+  } else {
+    // No existing dungeon, proceed
+    initializeDungeon(templateId);
   }
 }
 ```
