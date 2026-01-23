@@ -42,13 +42,24 @@ interface TaskSnapshot {
     completion: TaskCompletion;
 }
 
+// ============================================
+// MODULE-LEVEL SINGLETONS
+// These are shared across ALL hook instances to prevent duplicate file watchers
+// when multiple components (Kanban + Sidebar) use the hook simultaneously.
+// ============================================
+const globalTaskSnapshots = new Map<string, TaskSnapshot>();
+const globalFileWatchers = new Map<string, () => void>();
+const globalProcessing = new Set<string>();
+let subscriberCount = 0;
+
 /**
  * Hook to watch task files and award XP on completion
  */
 export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/badges', customStatMappings, onCategoryUsed, onSaveCharacter }: UseXPAwardOptions) {
-    // Store previous task snapshots
-    const taskSnapshotsRef = useRef<Map<string, TaskSnapshot>>(new Map());
-    const fileWatchersRef = useRef<Map<string, () => void>>(new Map());
+    // Use refs that point to the global singletons (for React pattern compatibility)
+    const taskSnapshotsRef = useRef(globalTaskSnapshots);
+    const fileWatchersRef = useRef(globalFileWatchers);
+    const processingRef = useRef(globalProcessing);
 
     const character = useCharacterStore((state) => state.character);
     const achievements = useCharacterStore((state) => state.achievements);
@@ -57,6 +68,28 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
     const setPowerUps = useCharacterStore((state) => state.setPowerUps);
     const incrementTasksToday = useCharacterStore((state) => state.incrementTasksToday);
     const quests = useQuestStore((state) => state.quests);
+
+    // Track subscriber count for proper cleanup
+    useEffect(() => {
+        subscriberCount++;
+        console.log('[XP Debug] useXPAward subscriber mounted, count:', subscriberCount);
+
+        return () => {
+            subscriberCount--;
+            console.log('[XP Debug] useXPAward subscriber unmounted, count:', subscriberCount);
+
+            // Only cleanup watchers when the LAST subscriber unmounts
+            if (subscriberCount === 0) {
+                console.log('[XP Debug] Last subscriber unmounted, cleaning up all file watchers');
+                for (const unsubscribe of globalFileWatchers.values()) {
+                    unsubscribe();
+                }
+                globalFileWatchers.clear();
+                globalTaskSnapshots.clear();
+                globalProcessing.clear();
+            }
+        };
+    }, []);
 
     // Award XP for completed tasks
     const awardXPForTasks = useCallback(async (
@@ -334,8 +367,7 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
         await onSaveCharacter();
     }, [character, achievements, addXP, graduate, setPowerUps, onSaveCharacter, app, vault, badgeFolder]);
 
-    // Track which quests are currently being processed
-    const processingRef = useRef<Set<string>>(new Set());
+    // processingRef now points to globalProcessing (defined at module level)
 
     // Check a single task file for changes
     const checkTaskFile = useCallback(async (quest: Quest) => {

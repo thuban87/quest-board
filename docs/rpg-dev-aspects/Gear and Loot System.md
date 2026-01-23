@@ -653,6 +653,134 @@ function getSetFromQuest(quest: Quest): GearSet | null {
 
 ---
 
+## Architectural Considerations
+
+> [!CAUTION]
+> **Critical issues to address during implementation.**
+> These can cause data loss, race conditions, or poor UX if not handled properly.
+
+### Priority 1: Data Integrity
+
+| Issue | Problem | Solution |
+|-------|---------|----------|
+| **Smelting Atomicity** | If smelt fails mid-operation, could lose 3 items without creating result | **Transaction pattern:** Mark inputs as "pending_smelt", create output item, delete inputs only on success. Rollback on failure. |
+| **Equip Race Condition** | User rapidly clicking equip/unequip could corrupt equipped state | Use `isEquipping` flag to block operations while one is in progress. Queue rapid clicks. |
+| **EquippedGear Migration** | Current format: `{ slot, itemId }[]`. New format: `Record<GearSlot, GearItem \| null>` | Add explicit migration in Step 0: detect old format, convert to new, save immediately. |
+
+### Priority 2: Edge Cases
+
+| Issue | Problem | Solution |
+|-------|---------|----------|
+| **Inventory Full** | User earns loot but has 50/50 items. What happens? | Show "Inventory Full" modal with options: (1) Open inventory to sell/discard, (2) Auto-sell lowest tier item for gold, (3) Abandon loot. **Never silently lose items!** |
+| **Legendary Lore AI Failure** | AI API fails, rate-limited, or not configured | Always fallback to template-based generation. AI is enhancement, not required. |
+| **Data Size Growth** | Each GearItem ~500 bytes. 50 items = 25KB. Power users could have 200+ items over time | Consider: (1) Auto-archive Common items after 30 days, (2) Prompt user when > 100 items, (3) Export/backup old gear |
+
+### Priority 3: Performance
+
+| Issue | Problem | Solution |
+|-------|---------|----------|
+| **Combat Stat Recalculation** | When do we recalculate stats from gear? Every frame? Every combat tick? | **Recalculate on equip/unequip only.** Cache `derivedCombatStats` in character store. Combat reads cached value. |
+| **Set Bonus Calculation** | Same problem - when do we check which set pieces are equipped? | **Recalculate on equip change.** Cache `activeSetBonuses` in character store. |
+
+### Priority 4: UX Resilience
+
+| Issue | Problem | Solution |
+|-------|---------|----------|
+| **Gear Sprite Fallback** | Sprite fails to load (missing file, corrupt, etc.) | Use same pattern as Fight System: try `spriteId`, on error fall back to `iconEmoji`. |
+| **UUID Generation** | `GearItem.id` says "UUID" but no generation method specified | Use `crypto.randomUUID()` (browser native). Add to `generateGearItem()` function. |
+
+### Implementation Patterns
+
+#### Smelting Transaction Pattern
+
+```typescript
+async function smeltItems(items: [GearItem, GearItem, GearItem]): Promise<GearItem> {
+  // 1. Mark items as pending (prevent re-use)
+  items.forEach(item => item.status = 'pending_smelt');
+  await saveGearInventory();
+  
+  try {
+    // 2. Generate new item
+    const outputItem = generateSmeltResult(items);
+    
+    // 3. Add new item to inventory
+    addToGearInventory(outputItem);
+    
+    // 4. Remove old items (now safe)
+    items.forEach(item => removeFromGearInventory(item.id));
+    
+    await saveGearInventory();
+    return outputItem;
+    
+  } catch (error) {
+    // Rollback: clear pending status
+    items.forEach(item => item.status = undefined);
+    await saveGearInventory();
+    throw error;
+  }
+}
+```
+
+#### Inventory Full Handling
+
+```typescript
+function handleLootDrop(loot: LootDrop, character: Character): void {
+  const gearRewards = loot.filter(r => r.type === 'gear');
+  const currentCount = character.gearInventory.length;
+  const maxSlots = character.inventoryLimit; // 50 default
+  
+  if (currentCount + gearRewards.length > maxSlots) {
+    showInventoryFullModal({
+      newItems: gearRewards,
+      currentCount,
+      maxSlots,
+      options: [
+        { action: 'open_inventory', label: 'Manage Inventory' },
+        { action: 'auto_sell_lowest', label: 'Auto-sell lowest tier items' },
+        { action: 'abandon', label: 'Abandon new loot' },
+      ],
+    });
+    return; // Don't auto-add until user decides
+  }
+  
+  // Safe to add
+  gearRewards.forEach(r => addToGearInventory(r.item));
+}
+```
+
+#### Sprite Fallback Pattern
+
+```tsx
+function GearIcon({ item }: { item: GearItem }) {
+  const [spriteError, setSpriteError] = useState(false);
+  
+  // Use emoji tier colors as fallback
+  const tierEmoji: Record<GearTier, string> = {
+    common: '⚪', adept: '🟢', journeyman: '🔵',
+    master: '🟣', epic: '🟠', legendary: '🟡',
+  };
+  
+  if (spriteError || !item.spriteId) {
+    return (
+      <span className={`gear-icon tier-${item.tier}`}>
+        {item.iconEmoji || tierEmoji[item.tier]}
+      </span>
+    );
+  }
+  
+  return (
+    <img 
+      src={getSpritePath(item.spriteId)}
+      onError={() => setSpriteError(true)}
+      alt={item.name}
+      className={`gear-sprite tier-${item.tier}`}
+    />
+  );
+}
+```
+
+---
+
 ## Implementation Order
 
 > [!CAUTION]
