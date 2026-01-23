@@ -4,9 +4,9 @@
  * Modal for creating new quest files with frontmatter and body sections.
  */
 
-import { App, Modal, Setting, TFile, Notice, TextComponent, DropdownComponent, TextAreaComponent, FuzzySuggestModal, FuzzyMatch } from 'obsidian';
+import { App, Modal, Setting, TFile, TFolder, Notice, TextComponent, DropdownComponent, TextAreaComponent, FuzzySuggestModal, FuzzyMatch } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
-import { QuestType, QuestPriority, QuestDifficulty } from '../models/QuestStatus';
+import { QuestPriority, QuestDifficulty } from '../models/QuestStatus';
 import { ManualQuest, QUEST_SCHEMA_VERSION } from '../models/Quest';
 import { saveManualQuest, loadAllQuests } from '../services/QuestService';
 
@@ -37,7 +37,7 @@ class FileSuggestModal extends FuzzySuggestModal<TFile> {
 
 interface QuestFormData {
     questName: string;
-    questType: QuestType.MAIN | QuestType.SIDE | QuestType.TRAINING;
+    questType: string;  // Dynamic folder name (Main, Side, Training, Recurring, etc.)
     category: string;
     priority: QuestPriority;
     linkedTaskFile: string;
@@ -55,6 +55,7 @@ export class CreateQuestModal extends Modal {
     private plugin: QuestBoardPlugin;
     private formData: QuestFormData;
     private existingCategories: Set<string> = new Set();
+    private availableTypes: string[] = [];  // Dynamic from folders
     private onSave: () => void;
 
     constructor(app: App, plugin: QuestBoardPlugin, onSave?: () => void) {
@@ -65,7 +66,7 @@ export class CreateQuestModal extends Modal {
         // Initialize form with defaults
         this.formData = {
             questName: '',
-            questType: QuestType.MAIN,
+            questType: 'main',  // Default, will be updated from folders
             category: '',
             priority: QuestPriority.MEDIUM,
             linkedTaskFile: '',
@@ -88,6 +89,9 @@ export class CreateQuestModal extends Modal {
         // Load existing categories for autocomplete
         await this.loadExistingCategories();
 
+        // Load available quest type folders
+        await this.loadAvailableTypes();
+
         // Title
         contentEl.createEl('h2', { text: '⚔️ Create New Quest' });
 
@@ -101,18 +105,20 @@ export class CreateQuestModal extends Modal {
                 text.inputEl.addClass('qb-input-wide');
             });
 
-        // Quest Type
+        // Quest Type (dynamic from folders)
         new Setting(contentEl)
             .setName('Quest Type')
-            .setDesc('Main quests are primary objectives, Side quests are optional')
+            .setDesc('Select folder to save quest in')
             .addDropdown(dropdown => {
+                // Add options from scanned folders
+                for (const folderName of this.availableTypes) {
+                    const emoji = this.getTypeEmoji(folderName);
+                    dropdown.addOption(folderName.toLowerCase(), `${emoji} ${this.titleCase(folderName)}`);
+                }
                 dropdown
-                    .addOption(QuestType.MAIN, '🏆 Main Quest')
-                    .addOption(QuestType.SIDE, '📜 Side Quest')
-                    .addOption(QuestType.TRAINING, '🎓 Training Quest')
                     .setValue(this.formData.questType)
                     .onChange(value => {
-                        this.formData.questType = value as QuestType.MAIN | QuestType.SIDE | QuestType.TRAINING;
+                        this.formData.questType = value;
                     });
             });
 
@@ -329,6 +335,64 @@ export class CreateQuestModal extends Modal {
         }
     }
 
+    /**
+     * Scan the quests folder for subfolders to use as type options
+     */
+    private async loadAvailableTypes() {
+        const questsPath = `${this.plugin.settings.storageFolder}/quests`;
+        const folder = this.app.vault.getAbstractFileByPath(questsPath);
+
+        if (folder instanceof TFolder) {
+            for (const child of folder.children) {
+                if (child instanceof TFolder) {
+                    const folderName = child.name.toLowerCase();
+                    // Exclude archive and ai-generated from the dropdown
+                    if (folderName !== 'archive' && folderName !== 'ai-generated') {
+                        this.availableTypes.push(child.name);
+                    }
+                }
+            }
+        }
+
+        // Sort alphabetically, but put 'main' first if present
+        this.availableTypes.sort((a, b) => {
+            if (a.toLowerCase() === 'main') return -1;
+            if (b.toLowerCase() === 'main') return 1;
+            return a.localeCompare(b);
+        });
+
+        // If no folders found, add defaults
+        if (this.availableTypes.length === 0) {
+            this.availableTypes = ['main', 'side', 'training'];
+        }
+
+        // Set default formData.questType to first available
+        this.formData.questType = this.availableTypes[0].toLowerCase();
+    }
+
+    /**
+     * Get emoji for a quest type folder name
+     */
+    private getTypeEmoji(typeName: string): string {
+        const lower = typeName.toLowerCase();
+        const emojiMap: Record<string, string> = {
+            'main': '🏆',
+            'side': '📜',
+            'training': '🎓',
+            'recurring': '🔁',
+            'daily': '☀️',
+            'weekly': '📅',
+        };
+        return emojiMap[lower] || '📁';
+    }
+
+    /**
+     * Title case a string (capitalize first letter of each word)
+     */
+    private titleCase(str: string): string {
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+
     private async handleCreate() {
         // Validate required fields
         if (!this.formData.questName.trim()) {
@@ -342,12 +406,8 @@ export class CreateQuestModal extends Modal {
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-|-$/g, '');
 
-        // Determine linkedTaskFile (self-link if empty)
-        const subFolder = this.formData.questType === QuestType.SIDE
-            ? 'quests/side'
-            : this.formData.questType === QuestType.TRAINING
-                ? 'quests/training'
-                : 'quests/main';
+        // Use questType directly as folder name (lowercase)
+        const subFolder = `quests/${this.formData.questType.toLowerCase()}`;
 
         const questFilePath = `${this.plugin.settings.storageFolder}/${subFolder}/${questId}.md`;
         const linkedTaskFile = this.formData.linkedTaskFile.trim() || questFilePath;
@@ -387,11 +447,8 @@ export class CreateQuestModal extends Modal {
 
     private async saveQuestWithBody(quest: ManualQuest): Promise<boolean> {
         try {
-            const subFolder = quest.questType === QuestType.SIDE
-                ? 'quests/side'
-                : quest.questType === QuestType.TRAINING
-                    ? 'quests/training'
-                    : 'quests/main';
+            // Use questType directly as folder name (lowercase)
+            const subFolder = `quests/${quest.questType.toLowerCase()}`;
 
             const folderPath = `${this.plugin.settings.storageFolder}/${subFolder}`;
             const filePath = `${folderPath}/${quest.questId}.md`;

@@ -54,8 +54,8 @@ export interface BaseQuest {
     /** Display name */
     questName: string;
 
-    /** Quest classification */
-    questType: QuestType;
+    /** Quest type from folder name (Main, Side, Training, Recurring, etc.) */
+    questType: string;
 
     /** Category for filtering (admin, shopping, school, etc.) */
     category: string;
@@ -84,10 +84,14 @@ export interface BaseQuest {
 
 /**
  * Manual Quest (Markdown-based)
- * Loads from quests/main/ folder
+ * Loads from quests/{type}/ folder where type can be Main, Side, Training, Recurring, etc.
  */
 export interface ManualQuest extends BaseQuest {
-    questType: QuestType.MAIN | QuestType.TRAINING | QuestType.SIDE;
+    /** Quest type from folder name (Main, Side, Training, Recurring, etc.) */
+    questType: string;
+
+    /** Custom sort order within status column (lower = higher in list) */
+    sortOrder?: number;
 
     /** Path to the markdown file containing tasks (for single file) */
     linkedTaskFile: string;

@@ -1549,6 +1549,121 @@ Views Consolidation:
 
 ---
 
+## 2026-01-22 - Filter/Search & Dynamic Quest Type Refactor (Phase 2 Complete!)
+
+**Focus:** Implement filter/search for Kanban + Sidebar, then refactor quest types to be dynamic (folder-based)
+
+### Features Implemented
+
+**Filter/Search System:**
+- ✅ Created `filterStore.ts` - Zustand stores for filter state (separate for Kanban/Sidebar)
+- ✅ Created `FilterBar.tsx` - Compact filter bar with Category, Priority, Tags, Type, Date, Sort
+- ✅ Created `useFilteredQuests.ts` - Hook for filtering and sorting quest lists
+- ✅ Integrated FilterBar into both `FullKanban.tsx` and `SidebarQuests.tsx`
+- ✅ Dynamic filter options populated from actual quest data (categories, tags, types)
+- ✅ Search bar with real-time text filtering (name, category, tags, task names)
+- ✅ Sort options: Default, Sort Order, Task Count (asc/desc), Created Date (asc/desc)
+
+**Quest Card Enhancements:**
+- ✅ Added `sortOrder` field to `ManualQuest` model for intra-column drag reordering
+- ✅ Added dual file link icons: 📄 (quest file) + 🔗 (linked task file, only if different)
+- ✅ Intra-column drag-and-drop reordering with `SortableContext` + gap-based sorting
+
+**XP Bug Fix:**
+- ✅ Fixed XP not awarding from Kanban view (added `useXPAward` hook to `FullKanban.tsx`)
+
+### Dynamic Quest Type Refactor
+
+**Problem:** Quest types were hardcoded to an enum (`MAIN | SIDE | TRAINING`). Setting `questType: recurring` caused quests to disappear from Kanban because the validator rejected anything not in the enum.
+
+**Solution:** Made quest types fully dynamic based on folder names.
+
+**Files Changed (5 files, ~40 lines):**
+
+| File | Change |
+|------|--------|
+| `validator.ts` | Accept any non-empty string as questType (was rejecting 'recurring') |
+| `Quest.ts` | Changed `questType` from enum to `string` in BaseQuest and ManualQuest |
+| `QuestService.ts` | Infer questType from folder path + use `quests/${questType}` for save path |
+| `TemplateService.ts` | Use questType directly as folder path |
+| `CreateQuestModal.ts` | Scans `quests/` folder for subfolders, populates dropdown dynamically |
+
+**How It Works Now:**
+- Quests in `quests/main/` → `questType: main`
+- Quests in `quests/recurring/` → `questType: recurring`
+- Add new folder → Automatically appears in dropdown and filter
+
+**Known Limitations:**
+- `JobHuntModal.ts` still has hardcoded paths (`Life/Quest Board/quests/side` and `quests/main`) - those templates are designed to go to those specific folders anyway, so this is low priority
+
+### Testing Performed
+- ✅ Filter bar displays and functions correctly
+- ✅ Search filters quests in real-time
+- ✅ Sort by all options works
+- ✅ Type filter now shows "Recurring" and other custom folders
+- ✅ Create Quest modal shows all quest type folders in dropdown
+- ✅ Recurring quests display on Kanban
+- ✅ Quest file links work (📄 opens quest, 🔗 opens linked file)
+- ✅ Intra-column drag reordering works (~90% of the time)
+- ✅ XP awards from Kanban view
+
+### Files Created/Modified
+
+**New Files:**
+- `src/store/filterStore.ts` - Filter state stores
+- `src/components/FilterBar.tsx` - Filter bar UI
+- `src/hooks/useFilteredQuests.ts` - Filtering hook with helper functions
+
+**Modified Files:**
+- `src/models/Quest.ts` - Added `sortOrder`, changed `questType` to string
+- `src/services/QuestService.ts` - Dynamic paths, sortOrder support, questType inference
+- `src/services/TemplateService.ts` - Dynamic folder paths
+- `src/components/FullKanban.tsx` - Filter integration, DnD reorder, useXPAward
+- `src/components/SidebarQuests.tsx` - Filter integration, DnD reorder
+- `src/components/QuestCard.tsx` - Dual file links, sortOrder
+- `src/components/DnDWrappers.tsx` - Added SortableCard component
+- `src/hooks/useDndQuests.ts` - Intra-column reorder with gap-based sorting
+- `src/utils/validator.ts` - Removed QuestType enum check
+- `src/modals/CreateQuestModal.ts` - Dynamic folder scanning for type dropdown
+- `styles.css` - FilterBar styles (~50 lines)
+
+**Hours Worked:** ~3 hours
+**Phase:** Phase 2 (Complete! 🎉)
+
+**Recommended Commit Message:**
+```
+feat(phase-2): Complete Filter/Search & Dynamic Quest Type Refactor
+
+Filter/Search System:
+- Add filterStore.ts for filter state management
+- Add FilterBar.tsx with Category, Priority, Tags, Type, Date, Sort
+- Add useFilteredQuests.ts hook with collectAllCategories/Tags/Types
+- Integrate FilterBar into FullKanban and SidebarQuests
+- Add sortOrder field for intra-column drag reordering
+
+Quest Card Enhancements:
+- Dual file link icons: 📄 (quest file) + 🔗 (linked task file)
+- Intra-column drag reorder with SortableContext
+- Fix XP not awarding from Kanban view
+
+Dynamic Quest Type Refactor:
+- Change questType from enum to string (supports any folder name)
+- Infer questType from folder path (quests/recurring/ → 'recurring')
+- CreateQuestModal scans folders dynamically for dropdown
+- Validator accepts any non-empty string as questType
+
+This completes Phase 2 of the Quest Board plugin!
+```
+
+**Next Session Prompt:**
+> Phase 2 is complete! 🎉 The Quest Board now has full filter/search functionality and dynamic quest types based on folder names. Consider:
+> - Phase 3 Polish: Theme compatibility testing, performance optimization
+> - Wire Streak Shield effect (buff granted but doesn't protect streaks yet)
+> - More power-up triggers (Hat Trick, Blitz, etc.)
+> - Sprite Renderer Service for character visuals
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD
@@ -1575,4 +1690,5 @@ Views Consolidation:
 
 ---
 
-**Last Updated:** 2026-01-21 (Power-Ups System + Bug Fixes)
+**Last Updated:** 2026-01-22 (Phase 2 Complete - Filter/Search + Dynamic Quest Types)
+

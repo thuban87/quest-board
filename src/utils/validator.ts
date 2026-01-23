@@ -7,7 +7,7 @@
 
 import { Notice } from 'obsidian';
 import { Quest, QUEST_SCHEMA_VERSION } from '../models/Quest';
-import { QuestStatus, QuestPriority, QuestType } from '../models/QuestStatus';
+import { QuestStatus, QuestPriority } from '../models/QuestStatus';
 import { Character, CHARACTER_SCHEMA_VERSION, CharacterClass } from '../models/Character';
 
 /**
@@ -28,11 +28,6 @@ const VALID_STATUSES = Object.values(QuestStatus);
  * Valid priority values
  */
 const VALID_PRIORITIES = Object.values(QuestPriority);
-
-/**
- * Valid quest types
- */
-const VALID_QUEST_TYPES = Object.values(QuestType);
 
 /**
  * Valid character classes
@@ -73,8 +68,8 @@ export function validateQuest(data: unknown): ValidationResult<Quest> {
         errors.push('Missing or invalid questName');
     }
 
-    if (!quest.questType || !VALID_QUEST_TYPES.includes(quest.questType as QuestType)) {
-        errors.push(`Invalid questType: ${quest.questType}`);
+    if (!quest.questType || typeof quest.questType !== 'string') {
+        errors.push('Missing or invalid questType');
     }
 
     if (!quest.category || typeof quest.category !== 'string') {

@@ -7,6 +7,7 @@
  */
 
 import React, { memo, useState } from 'react';
+import { App as ObsidianApp } from 'obsidian';
 import { Quest, isManualQuest } from '../models/Quest';
 import { QuestStatus, QuestPriority } from '../models/QuestStatus';
 import { CLASS_INFO } from '../models/Character';
@@ -27,6 +28,10 @@ interface QuestCardProps {
     isCollapsed?: boolean;
     /** Callback to toggle quest collapse */
     onToggleCollapse?: () => void;
+    /** Obsidian App instance for opening files */
+    app?: ObsidianApp;
+    /** Storage folder path for locating quest files */
+    storageFolder?: string;
 }
 
 /**
@@ -68,11 +73,36 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
     visibleTaskCount = 4,
     isCollapsed = false,
     onToggleCollapse,
+    app,
+    storageFolder,
 }) => {
     const character = useCharacterStore((state) => state.character);
 
     // Track which sections are collapsed
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+
+    // Handler to open the quest file itself
+    const handleOpenQuestFile = () => {
+        if (!app || !isManualQuest(quest) || !storageFolder) return;
+        const questFilePath = `${storageFolder}/quests/${quest.questType}/${quest.questId}.md`;
+        app.workspace.openLinkText(questFilePath, '', true);
+    };
+
+    // Handler to open the linked task file (only if different from quest file)
+    const handleOpenLinkedTaskFile = () => {
+        if (!app || !isManualQuest(quest)) return;
+        app.workspace.openLinkText(quest.linkedTaskFile, '', true);
+    };
+
+    // Determine if the linked task file is different from the quest file
+    const getLinkedFileIsDifferent = (): boolean => {
+        if (!isManualQuest(quest) || !storageFolder) return false;
+        const questFilePath = `${storageFolder}/quests/${quest.questType}/${quest.questId}.md`;
+        // Normalize paths for comparison
+        const normalizedQuestPath = questFilePath.toLowerCase().replace(/\\/g, '/');
+        const normalizedLinkedPath = quest.linkedTaskFile?.toLowerCase().replace(/\\/g, '/');
+        return !!(normalizedLinkedPath && normalizedLinkedPath !== normalizedQuestPath);
+    };
 
     // Calculate XP with class bonus indicator
     const baseXP = isManualQuest(quest)
@@ -252,10 +282,34 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
                         </div>
                     )}
 
-                    {/* XP Reward */}
+                    {/* XP Reward with Open File Links */}
                     <div className="qb-card-xp">
-                        ⭐ {baseXP} XP
-                        {hasClassBonus && <span className="qb-bonus-indicator">+bonus</span>}
+                        <span>
+                            ⭐ {baseXP} XP
+                            {hasClassBonus && <span className="qb-bonus-indicator">+bonus</span>}
+                        </span>
+                        <div className="qb-card-file-links">
+                            {/* Quest file link (always shown) */}
+                            {app && isManualQuest(quest) && storageFolder && (
+                                <button
+                                    className="qb-card-file-link"
+                                    onClick={(e) => { e.stopPropagation(); handleOpenQuestFile(); }}
+                                    title="Open quest file"
+                                >
+                                    📄
+                                </button>
+                            )}
+                            {/* Linked task file link (only if different from quest file) */}
+                            {app && isManualQuest(quest) && getLinkedFileIsDifferent() && (
+                                <button
+                                    className="qb-card-file-link"
+                                    onClick={(e) => { e.stopPropagation(); handleOpenLinkedTaskFile(); }}
+                                    title="Open linked task file"
+                                >
+                                    🔗
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Action Buttons */}

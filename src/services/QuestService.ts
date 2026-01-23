@@ -134,9 +134,9 @@ function parseQuestFrontmatter(content: string, filePath: string): Partial<Manua
                 quest.questName = value;
                 break;
             case 'questType':
-                // Only accept valid manual quest types
-                if (value === 'main' || value === 'training' || value === 'side') {
-                    quest.questType = value as QuestType.MAIN | QuestType.TRAINING | QuestType.SIDE;
+                // Accept any questType value (supports dynamic folder names)
+                if (value) {
+                    quest.questType = value as QuestType;
                 }
                 break;
             case 'category':
@@ -186,6 +186,9 @@ function parseQuestFrontmatter(content: string, filePath: string): Partial<Manua
             case 'instanceDate':
                 quest.instanceDate = value;
                 break;
+            case 'sortOrder':
+                quest.sortOrder = parseInt(value);
+                break;
         }
     }
 
@@ -217,12 +220,28 @@ async function loadMarkdownQuest(
             return null;
         }
 
+        // Infer questType from folder path if not in frontmatter
+        // Path format: basefolder/quests/{Type}/questfile.md
+        let inferredType = parsed.questType;
+        if (!inferredType) {
+            const pathParts = file.path.split('/');
+            // Find 'quests' in path and get the next folder name
+            const questsIndex = pathParts.findIndex(p => p.toLowerCase() === 'quests');
+            if (questsIndex >= 0 && questsIndex + 1 < pathParts.length - 1) {
+                // The folder after 'quests' is the type (capitalize first letter)
+                const folderName = pathParts[questsIndex + 1];
+                inferredType = folderName.charAt(0).toUpperCase() + folderName.slice(1).toLowerCase();
+            } else {
+                inferredType = 'Main'; // Default fallback
+            }
+        }
+
         // Set defaults
         const quest: Partial<ManualQuest> = {
             schemaVersion: QUEST_SCHEMA_VERSION,
             questId: parsed.questId || file.basename,
             questName: parsed.questName || file.basename,
-            questType: parsed.questType || QuestType.MAIN,
+            questType: inferredType,
             category: parsed.category || 'general',
             status: parsed.status || QuestStatus.AVAILABLE,
             priority: parsed.priority || QuestPriority.MEDIUM,
@@ -236,6 +255,7 @@ async function loadMarkdownQuest(
             completionBonus: parsed.completionBonus || 30,
             visibleTasks: parsed.visibleTasks || 4,
             milestones: [],
+            sortOrder: parsed.sortOrder,  // Preserve sortOrder if present
             ...parsed,
         };
 
@@ -414,6 +434,11 @@ function generateQuestFrontmatter(quest: ManualQuest): string {
         `visibleTasks: ${quest.visibleTasks}`,
     ];
 
+    // Add sortOrder if set (for custom ordering within columns)
+    if (quest.sortOrder !== undefined) {
+        lines.push(`sortOrder: ${quest.sortOrder}`);
+    }
+
     // NOTE: Tags are NOT written to frontmatter - user has another plugin for tag management
 
     lines.push(`createdDate: "${quest.createdDate}"`);
@@ -443,7 +468,8 @@ export async function saveManualQuest(
 ): Promise<boolean> {
     try {
         const safeQuestId = sanitizeQuestId(quest.questId);
-        const subFolder = QUEST_FOLDERS[quest.questType as keyof typeof QUEST_FOLDERS] || QUEST_FOLDERS.main;
+        // Use questType directly as folder name (lowercase)
+        const subFolder = `quests/${quest.questType.toLowerCase()}`;
         const folderPath = `${baseFolder}/${subFolder}`;
         const filePath = `${folderPath}/${safeQuestId}.md`;
 
@@ -551,10 +577,68 @@ function updateFrontmatterFields(
     if (updates.completedDate && !content.includes('completedDate:')) {
         // Insert before closing ---
         lines.splice(frontmatterEnd, 0, `completedDate: "${updates.completedDate}"`);
+        frontmatterEnd++; // Adjust for inserted line
         console.log('[QuestService] Added completedDate field to frontmatter');
     }
 
+    // Handle adding sortOrder if it doesn't exist but should
+    if (updates.sortOrder !== undefined && !content.includes('sortOrder:')) {
+        // Insert before closing ---
+        lines.splice(frontmatterEnd, 0, `sortOrder: ${updates.sortOrder}`);
+        console.log('[QuestService] Added sortOrder field to frontmatter');
+    }
+
     return lines.join('\n');
+}
+
+/**
+ * Update just the sortOrder field for a quest.
+ * Used for intra-column drag reordering.
+ */
+export async function updateQuestSortOrder(
+    vault: Vault,
+    baseFolder: string,
+    questId: string,
+    sortOrder: number
+): Promise<boolean> {
+    try {
+        const safeQuestId = sanitizeQuestId(questId);
+
+        // Search in all subfolders to find the quest file
+        for (const subFolder of Object.values(QUEST_FOLDERS)) {
+            const filePath = `${baseFolder}/${subFolder}/${safeQuestId}.md`;
+            const file = vault.getAbstractFileByPath(filePath);
+
+            if (file instanceof TFile) {
+                const existingContent = await vault.read(file);
+                const updatedContent = updateFrontmatterFields(existingContent, {
+                    sortOrder,
+                });
+                await vault.modify(file, updatedContent);
+                console.log(`[QuestService] Updated sortOrder for ${questId}: ${sortOrder}`);
+                return true;
+            }
+        }
+
+        // Also check base folder
+        const basePath = `${baseFolder}/${safeQuestId}.md`;
+        const baseFile = vault.getAbstractFileByPath(basePath);
+        if (baseFile instanceof TFile) {
+            const existingContent = await vault.read(baseFile);
+            const updatedContent = updateFrontmatterFields(existingContent, {
+                sortOrder,
+            });
+            await vault.modify(baseFile, updatedContent);
+            console.log(`[QuestService] Updated sortOrder for ${questId}: ${sortOrder}`);
+            return true;
+        }
+
+        console.warn(`[QuestService] Quest file not found for sortOrder update: ${questId}`);
+        return false;
+    } catch (error) {
+        console.error('[QuestService] Failed to update sortOrder:', error);
+        return false;
+    }
 }
 
 /**

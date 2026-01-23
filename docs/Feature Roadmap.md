@@ -76,7 +76,7 @@
 | 30 | **Sprite Renderer Service** ✅ | Tier-based sprite folders (tier1-5), animated GIF display, auto-switch on level up | 5 visual tiers, `getLevelTier()` |
 | 31 | **Command Menu & Settings** ✅ | Consolidated command menu modal (`QuestBoardCommandMenu.ts`), folder exclusion settings, template configuration | 5 categories, excluded folders hide from Kanban |
 
-| 33 | **Filter/Search** | Filter quests by category, priority, or search text | Add to board header |
+| 33 | **Filter/Search** ✅ | Filter/Sort by category, priority, tags, type, date, search text. Dynamic quest types from folders. Intra-column drag reorder. Dual file links on cards. | `filterStore.ts`, `FilterBar.tsx`, `useFilteredQuests.ts`, dynamic `questType` |
 
 **Deliverable:** Plugin feels polished, rewarding, visually engaging. Training mode works. Placeholder visuals improved.
 
@@ -89,8 +89,8 @@
 - [x] Training mode: Roman numerals I-X, separate XP (75/level), graduation works
 - [x] Quest visibility: Next 3-4 tasks shown, future hidden
 - [x] Gear slots displayed (empty outlines)
-- [ ] Class perk displayed in power-ups section
-- [ ] Filter works correctly
+- [x] Class perk displayed in power-ups section
+- [x] Filter works correctly (category, priority, tags, type, date, search)
 
 ---
 
