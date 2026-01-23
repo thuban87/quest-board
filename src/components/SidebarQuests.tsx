@@ -30,10 +30,11 @@ import { useQuestActions } from '../hooks/useQuestActions';
 import { useSaveCharacter } from '../hooks/useSaveCharacter';
 import { useDndQuests } from '../hooks/useDndQuests';
 import { useCollapsedItems } from '../hooks/useCollapsedItems';
-import { useFilteredQuests, collectAllCategories, collectAllTags } from '../hooks/useFilteredQuests';
+import { useFilteredQuests, collectAllCategories, collectAllTags, collectAllTypes } from '../hooks/useFilteredQuests';
 import { useCharacterSprite } from '../hooks/useCharacterSprite';
-import { Droppable, DraggableCard } from './DnDWrappers';
+import { Droppable, SortableCard } from './DnDWrappers';
 import { DndContext, closestCenter } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 interface SidebarQuestsProps {
     plugin: QuestBoardPlugin;
@@ -143,9 +144,10 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         setCollapsed(prev => ({ ...prev, [status]: !prev[status] }));
     };
 
-    // Collect available categories and tags for filter dropdowns
+    // Collect available categories, tags, and types for filter dropdowns
     const availableCategories = useMemo(() => collectAllCategories(allQuests), [allQuests]);
     const availableTags = useMemo(() => collectAllTags(allQuests), [allQuests]);
+    const availableTypes = useMemo(() => collectAllTypes(allQuests), [allQuests]);
 
     // Pre-filter all quests (excludes folders)
     const excludedFolders = plugin.settings.excludedFolders || [];
@@ -269,6 +271,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                             filterStore={filterStore}
                             availableCategories={availableCategories}
                             availableTags={availableTags}
+                            availableTypes={availableTypes}
                             compact
                         />
                         {/* Quest Sections */}
@@ -294,28 +297,33 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
 
                                             {!isCollapsed && (
                                                 <Droppable id={status}>
-                                                    <div className="qb-sb-section-content">
-                                                        {quests.length === 0 ? (
-                                                            <div className="qb-sb-empty">No quests</div>
-                                                        ) : (
-                                                            quests.map((quest) => (
-                                                                <DraggableCard key={quest.questId} id={quest.questId}>
-                                                                    <QuestCard
-                                                                        quest={quest}
-                                                                        onMove={handleMoveQuest}
-                                                                        onToggleTask={handleToggleTask}
-                                                                        taskProgress={taskProgressMap[quest.questId]}
-                                                                        sections={sectionsMap[quest.questId]}
-                                                                        visibleTaskCount={isManualQuest(quest) ? quest.visibleTasks : 4}
-                                                                        isCollapsed={isQuestCollapsed(quest.questId)}
-                                                                        onToggleCollapse={() => toggleQuestCollapse(quest.questId)}
-                                                                        app={app}
-                                                                        storageFolder={plugin.settings.storageFolder}
-                                                                    />
-                                                                </DraggableCard>
-                                                            ))
-                                                        )}
-                                                    </div>
+                                                    <SortableContext
+                                                        items={quests.map(q => q.questId)}
+                                                        strategy={verticalListSortingStrategy}
+                                                    >
+                                                        <div className="qb-sb-section-content">
+                                                            {quests.length === 0 ? (
+                                                                <div className="qb-sb-empty">No quests</div>
+                                                            ) : (
+                                                                quests.map((quest) => (
+                                                                    <SortableCard key={quest.questId} id={quest.questId}>
+                                                                        <QuestCard
+                                                                            quest={quest}
+                                                                            onMove={handleMoveQuest}
+                                                                            onToggleTask={handleToggleTask}
+                                                                            taskProgress={taskProgressMap[quest.questId]}
+                                                                            sections={sectionsMap[quest.questId]}
+                                                                            visibleTaskCount={isManualQuest(quest) ? quest.visibleTasks : 4}
+                                                                            isCollapsed={isQuestCollapsed(quest.questId)}
+                                                                            onToggleCollapse={() => toggleQuestCollapse(quest.questId)}
+                                                                            app={app}
+                                                                            storageFolder={plugin.settings.storageFolder}
+                                                                        />
+                                                                    </SortableCard>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    </SortableContext>
                                                 </Droppable>
                                             )}
                                         </div>

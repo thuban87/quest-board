@@ -213,3 +213,18 @@ export function collectAllCategories(quests: Quest[]): string[] {
     }
     return Array.from(categorySet).sort();
 }
+
+/**
+ * Collect all unique quest types from a list of quests (folder names).
+ * Excludes 'Archive' folder.
+ */
+export function collectAllTypes(quests: Quest[]): string[] {
+    const typeSet = new Set<string>();
+    for (const quest of quests) {
+        // Skip archive type
+        if (quest.questType && quest.questType.toLowerCase() !== 'archive') {
+            typeSet.add(quest.questType);
+        }
+    }
+    return Array.from(typeSet).sort();
+}

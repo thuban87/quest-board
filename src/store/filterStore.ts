@@ -6,7 +6,7 @@
  */
 
 import { create } from 'zustand';
-import { QuestPriority, QuestType } from '../models/QuestStatus';
+import { QuestPriority } from '../models/QuestStatus';
 
 /**
  * Sort options for quest ordering
@@ -29,8 +29,8 @@ export interface FilterState {
     /** Selected tags to filter by (empty = show all) */
     selectedTags: string[];
 
-    /** Selected quest types to filter by (empty = show all) */
-    selectedTypes: QuestType[];
+    /** Selected quest types to filter by (folder names, empty = show all) */
+    selectedTypes: string[];
 
     /** Date range - from date (ISO string, null = no lower bound) */
     dateFrom: string | null;
@@ -68,10 +68,10 @@ export interface FilterActions {
     toggleTag: (tag: string) => void;
 
     /** Set selected types */
-    setSelectedTypes: (types: QuestType[]) => void;
+    setSelectedTypes: (types: string[]) => void;
 
     /** Toggle a single type */
-    toggleType: (type: QuestType) => void;
+    toggleType: (type: string) => void;
 
     /** Set date from */
     setDateFrom: (date: string | null) => void;

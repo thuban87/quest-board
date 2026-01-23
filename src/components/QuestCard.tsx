@@ -81,24 +81,27 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
     // Track which sections are collapsed
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
-    // Handler to open the task file
-    const handleOpenTaskFile = () => {
+    // Handler to open the quest file itself
+    const handleOpenQuestFile = () => {
+        if (!app || !isManualQuest(quest) || !storageFolder) return;
+        const questFilePath = `${storageFolder}/quests/${quest.questType}/${quest.questId}.md`;
+        app.workspace.openLinkText(questFilePath, '', true);
+    };
+
+    // Handler to open the linked task file (only if different from quest file)
+    const handleOpenLinkedTaskFile = () => {
         if (!app || !isManualQuest(quest)) return;
+        app.workspace.openLinkText(quest.linkedTaskFile, '', true);
+    };
 
-        // If multiple linked files exist, open the quest file itself
-        // Otherwise, open the single linkedTaskFile directly
-        const hasMultipleFiles = quest.linkedTaskFiles && quest.linkedTaskFiles.length > 0;
-        let targetFile: string;
-
-        if (hasMultipleFiles) {
-            // Open the quest file since there are multiple linked files
-            targetFile = `${storageFolder}/quests/main/${quest.questId}.md`;
-        } else {
-            // Open the single linked task file directly
-            targetFile = quest.linkedTaskFile;
-        }
-
-        app.workspace.openLinkText(targetFile, '', true);
+    // Determine if the linked task file is different from the quest file
+    const getLinkedFileIsDifferent = (): boolean => {
+        if (!isManualQuest(quest) || !storageFolder) return false;
+        const questFilePath = `${storageFolder}/quests/${quest.questType}/${quest.questId}.md`;
+        // Normalize paths for comparison
+        const normalizedQuestPath = questFilePath.toLowerCase().replace(/\\/g, '/');
+        const normalizedLinkedPath = quest.linkedTaskFile?.toLowerCase().replace(/\\/g, '/');
+        return !!(normalizedLinkedPath && normalizedLinkedPath !== normalizedQuestPath);
     };
 
     // Calculate XP with class bonus indicator
@@ -279,21 +282,34 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
                         </div>
                     )}
 
-                    {/* XP Reward with Open File Link */}
+                    {/* XP Reward with Open File Links */}
                     <div className="qb-card-xp">
                         <span>
                             ⭐ {baseXP} XP
                             {hasClassBonus && <span className="qb-bonus-indicator">+bonus</span>}
                         </span>
-                        {app && isManualQuest(quest) && (
-                            <button
-                                className="qb-card-file-link"
-                                onClick={(e) => { e.stopPropagation(); handleOpenTaskFile(); }}
-                                title={quest.linkedTaskFiles?.length ? 'Open quest file' : 'Open task file'}
-                            >
-                                📄
-                            </button>
-                        )}
+                        <div className="qb-card-file-links">
+                            {/* Quest file link (always shown) */}
+                            {app && isManualQuest(quest) && storageFolder && (
+                                <button
+                                    className="qb-card-file-link"
+                                    onClick={(e) => { e.stopPropagation(); handleOpenQuestFile(); }}
+                                    title="Open quest file"
+                                >
+                                    📄
+                                </button>
+                            )}
+                            {/* Linked task file link (only if different from quest file) */}
+                            {app && isManualQuest(quest) && getLinkedFileIsDifferent() && (
+                                <button
+                                    className="qb-card-file-link"
+                                    onClick={(e) => { e.stopPropagation(); handleOpenLinkedTaskFile(); }}
+                                    title="Open linked task file"
+                                >
+                                    🔗
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Action Buttons */}

@@ -3228,7 +3228,7 @@
   border-radius: var(--qb-radius-md);
   margin-bottom: var(--qb-spacing-md);
   position: relative;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .qb-filter-bar-compact {
@@ -3237,7 +3237,7 @@
   flex-wrap: wrap;
 }
 
-/* Divider between search and filters */
+/* Divider between filters and search */
 .qb-filter-divider {
   color: var(--text-muted);
   opacity: 0.4;
@@ -3245,7 +3245,15 @@
   user-select: none;
 }
 
-/* Search - compact width */
+/* Filter buttons container - spreads buttons evenly */
+.qb-filter-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  flex-shrink: 0;
+}
+
+/* Search - takes remaining space */
 .qb-filter-search {
   display: flex;
   align-items: center;
@@ -3254,8 +3262,8 @@
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--qb-radius-md);
-  min-width: 120px;
-  max-width: 180px;
+  flex: 1;
+  min-width: 100px;
 }
 
 .qb-filter-search-icon {

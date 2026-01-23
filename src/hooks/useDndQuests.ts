@@ -8,6 +8,7 @@
 
 import { useCallback } from 'react';
 import { DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { QuestStatus } from '../models/QuestStatus';
 import { Quest, isManualQuest } from '../models/Quest';
 
@@ -57,6 +58,9 @@ export function useDndQuests({
         const questId = active.id as string;
         const overId = over.id as string;
 
+        // Don't do anything if dropped on itself
+        if (questId === overId) return;
+
         // Check if dropped on a status (column/section header)
         const isDroppedOnStatus = Object.values(QuestStatus).includes(overId as QuestStatus);
 
@@ -64,16 +68,14 @@ export function useDndQuests({
             const newStatus = overId as QuestStatus;
             const currentStatus = getQuestStatus?.(questId);
 
-            // If same column and we have reorder support, this might be a reorder
-            // But if dropped directly on the status, treat as a move
+            // If different column, move the quest
             if (currentStatus !== newStatus) {
                 onMoveQuest(questId, newStatus);
             }
-            // Same column drop on the column itself - no action needed
             return;
         }
 
-        // Dropped on another quest card - this is a reorder
+        // Dropped on another quest card - check if it's a reorder or cross-column move
         const targetQuestId = overId;
 
         if (onReorderQuest && getQuestStatus && getQuestsForStatus) {
@@ -90,31 +92,36 @@ export function useDndQuests({
 
             // Same column - reorder
             const questsInColumn = getQuestsForStatus(sourceStatus);
-            const targetIndex = questsInColumn.findIndex(q => q.questId === targetQuestId);
+            const activeIndex = questsInColumn.findIndex(q => q.questId === questId);
+            const overIndex = questsInColumn.findIndex(q => q.questId === targetQuestId);
 
-            if (targetIndex === -1) return;
+            if (activeIndex === -1 || overIndex === -1 || activeIndex === overIndex) return;
 
-            // Calculate new sort order based on position
-            // We use a gap of 1000 between items to allow insertions
+            // Calculate new sort order based on target position
+            // Use gaps of 1000 between items for easy insertions
             const GAP = 1000;
             let newSortOrder: number;
 
-            if (targetIndex === 0) {
-                // Dropped at the top (before first item)
-                const firstQuest = questsInColumn[0];
-                const firstOrder = isManualQuest(firstQuest) ? (firstQuest.sortOrder ?? GAP * targetIndex) : GAP * targetIndex;
-                newSortOrder = firstOrder - GAP;
-            } else if (targetIndex === questsInColumn.length - 1) {
-                // Dropped at the bottom (after last item)
-                const lastQuest = questsInColumn[questsInColumn.length - 1];
-                const lastOrder = isManualQuest(lastQuest) ? (lastQuest.sortOrder ?? GAP * targetIndex) : GAP * targetIndex;
-                newSortOrder = lastOrder + GAP;
+            // Get the reordered array to determine neighbors
+            const reorderedQuests = arrayMove(questsInColumn, activeIndex, overIndex);
+            const newIndex = reorderedQuests.findIndex(q => q.questId === questId);
+
+            if (newIndex === 0) {
+                // Now at the top - use order before the next item
+                const nextQuest = reorderedQuests[1];
+                const nextOrder = isManualQuest(nextQuest) ? (nextQuest.sortOrder ?? GAP) : GAP;
+                newSortOrder = nextOrder - GAP;
+            } else if (newIndex === reorderedQuests.length - 1) {
+                // Now at the bottom - use order after the previous item
+                const prevQuest = reorderedQuests[newIndex - 1];
+                const prevOrder = isManualQuest(prevQuest) ? (prevQuest.sortOrder ?? GAP * newIndex) : GAP * newIndex;
+                newSortOrder = prevOrder + GAP;
             } else {
-                // Dropped between two items
-                const prevQuest = questsInColumn[targetIndex - 1];
-                const nextQuest = questsInColumn[targetIndex];
-                const prevOrder = isManualQuest(prevQuest) ? (prevQuest.sortOrder ?? GAP * (targetIndex - 1)) : GAP * (targetIndex - 1);
-                const nextOrder = isManualQuest(nextQuest) ? (nextQuest.sortOrder ?? GAP * targetIndex) : GAP * targetIndex;
+                // Between two items - use midpoint
+                const prevQuest = reorderedQuests[newIndex - 1];
+                const nextQuest = reorderedQuests[newIndex + 1];
+                const prevOrder = isManualQuest(prevQuest) ? (prevQuest.sortOrder ?? GAP * (newIndex - 1)) : GAP * (newIndex - 1);
+                const nextOrder = isManualQuest(nextQuest) ? (nextQuest.sortOrder ?? GAP * (newIndex + 1)) : GAP * (newIndex + 1);
                 newSortOrder = Math.floor((prevOrder + nextOrder) / 2);
             }
 

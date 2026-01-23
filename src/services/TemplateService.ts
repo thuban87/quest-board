@@ -276,9 +276,8 @@ export class TemplateService {
         questName: string,
         storageFolder: string
     ): string {
-        // Determine folder based on questType
-        const typeFolder = questType === 'main' ? 'main' : 'side';
-        const basePath = `${storageFolder}/quests/${typeFolder}`;
+        // Use questType directly as folder name (lowercase)
+        const basePath = `${storageFolder}/quests/${questType.toLowerCase()}`;
 
         // Build filename from questName with placeholders replaced
         let fileName = questName;

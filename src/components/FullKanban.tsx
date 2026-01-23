@@ -27,9 +27,10 @@ import { useSaveCharacter } from '../hooks/useSaveCharacter';
 import { useDndQuests } from '../hooks/useDndQuests';
 import { useCollapsedItems } from '../hooks/useCollapsedItems';
 import { useXPAward } from '../hooks/useXPAward';
-import { useFilteredQuests, collectAllCategories, collectAllTags } from '../hooks/useFilteredQuests';
-import { Droppable, DraggableCard } from './DnDWrappers';
+import { useFilteredQuests, collectAllCategories, collectAllTags, collectAllTypes } from '../hooks/useFilteredQuests';
+import { Droppable, SortableCard } from './DnDWrappers';
 import { DndContext, closestCenter } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 interface FullKanbanProps {
     plugin: QuestBoardPlugin;
@@ -135,9 +136,10 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         }
     }, [plugin.settings.character, setCharacter]);
 
-    // Collect available categories and tags for filter dropdowns
+    // Collect available categories, tags, and types for filter dropdowns
     const availableCategories = useMemo(() => collectAllCategories(allQuests), [allQuests]);
     const availableTags = useMemo(() => collectAllTags(allQuests), [allQuests]);
+    const availableTypes = useMemo(() => collectAllTypes(allQuests), [allQuests]);
 
     // Pre-filter all quests (excludes folders, applies filters)
     const excludedFolders = plugin.settings.excludedFolders || [];
@@ -262,6 +264,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                 filterStore={filterStore}
                 availableCategories={availableCategories}
                 availableTags={availableTags}
+                availableTypes={availableTypes}
             />
 
             {/* Columns */}
@@ -314,59 +317,64 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                                 {/* Column Content - hidden when collapsed */}
                                 {!isCollapsed && (
                                     <Droppable id={status}>
-                                        <div className="qb-fp-column-content">
-                                            {quests.length === 0 ? (
-                                                <div className="qb-fp-column-empty">
-                                                    No quests
-                                                </div>
-                                            ) : (
-                                                quests.map((quest) => {
-                                                    const isCardCollapsedState = isCardCollapsed(quest.questId);
+                                        <SortableContext
+                                            items={quests.map(q => q.questId)}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            <div className="qb-fp-column-content">
+                                                {quests.length === 0 ? (
+                                                    <div className="qb-fp-column-empty">
+                                                        No quests
+                                                    </div>
+                                                ) : (
+                                                    quests.map((quest) => {
+                                                        const isCardCollapsedState = isCardCollapsed(quest.questId);
 
-                                                    return (
-                                                        <DraggableCard key={quest.questId} id={quest.questId}>
-                                                            <div className="qb-fp-card-wrapper">
-                                                                {/* Card collapse toggle */}
-                                                                <div
-                                                                    className="qb-fp-card-toggle"
-                                                                    onClick={() => toggleCard(quest.questId)}
-                                                                    title={isCardCollapsedState ? 'Expand' : 'Collapse'}
-                                                                >
-                                                                    {isCardCollapsedState ? '▶' : '▼'}
-                                                                </div>
-
-                                                                {isCardCollapsedState ? (
-                                                                    /* Collapsed card: just name and XP */
+                                                        return (
+                                                            <SortableCard key={quest.questId} id={quest.questId}>
+                                                                <div className="qb-fp-card-wrapper">
+                                                                    {/* Card collapse toggle */}
                                                                     <div
-                                                                        className="qb-fp-card-collapsed"
+                                                                        className="qb-fp-card-toggle"
                                                                         onClick={() => toggleCard(quest.questId)}
+                                                                        title={isCardCollapsedState ? 'Expand' : 'Collapse'}
                                                                     >
-                                                                        <span className="qb-fp-card-name">{quest.questName}</span>
-                                                                        <span className="qb-fp-card-xp">
-                                                                            ⭐ {isManualQuest(quest)
-                                                                                ? (quest.xpPerTask * (taskProgressMap[quest.questId]?.total || 0)) + quest.completionBonus
-                                                                                : quest.xpTotal} XP
-                                                                        </span>
+                                                                        {isCardCollapsedState ? '▶' : '▼'}
                                                                     </div>
-                                                                ) : (
-                                                                    /* Expanded card: full QuestCard */
-                                                                    <QuestCard
-                                                                        quest={quest}
-                                                                        onMove={handleMoveQuest}
-                                                                        onToggleTask={handleToggleTask}
-                                                                        taskProgress={taskProgressMap[quest.questId]}
-                                                                        sections={sectionsMap[quest.questId]}
-                                                                        visibleTaskCount={isManualQuest(quest) ? quest.visibleTasks : 4}
-                                                                        app={app}
-                                                                        storageFolder={plugin.settings.storageFolder}
-                                                                    />
-                                                                )}
-                                                            </div>
-                                                        </DraggableCard>
-                                                    );
-                                                })
-                                            )}
-                                        </div>
+
+                                                                    {isCardCollapsedState ? (
+                                                                        /* Collapsed card: just name and XP */
+                                                                        <div
+                                                                            className="qb-fp-card-collapsed"
+                                                                            onClick={() => toggleCard(quest.questId)}
+                                                                        >
+                                                                            <span className="qb-fp-card-name">{quest.questName}</span>
+                                                                            <span className="qb-fp-card-xp">
+                                                                                ⭐ {isManualQuest(quest)
+                                                                                    ? (quest.xpPerTask * (taskProgressMap[quest.questId]?.total || 0)) + quest.completionBonus
+                                                                                    : quest.xpTotal} XP
+                                                                            </span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        /* Expanded card: full QuestCard */
+                                                                        <QuestCard
+                                                                            quest={quest}
+                                                                            onMove={handleMoveQuest}
+                                                                            onToggleTask={handleToggleTask}
+                                                                            taskProgress={taskProgressMap[quest.questId]}
+                                                                            sections={sectionsMap[quest.questId]}
+                                                                            visibleTaskCount={isManualQuest(quest) ? quest.visibleTasks : 4}
+                                                                            app={app}
+                                                                            storageFolder={plugin.settings.storageFolder}
+                                                                        />
+                                                                    )}
+                                                                </div>
+                                                            </SortableCard>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
+                                        </SortableContext>
                                     </Droppable>
                                 )}
                             </div>

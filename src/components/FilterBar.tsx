@@ -20,6 +20,9 @@ interface FilterBarProps {
     /** Available tags to filter by */
     availableTags: string[];
 
+    /** Available quest types (folder names) to filter by */
+    availableTypes: string[];
+
     /** Compact mode for sidebar */
     compact?: boolean;
 }
@@ -34,12 +37,13 @@ const PRIORITY_INFO: Record<QuestPriority, { label: string; emoji: string }> = {
 };
 
 /**
- * Quest type display info  
+ * Quest type display info (fallback for unknown types)
  */
-const TYPE_INFO: Record<string, { label: string; emoji: string }> = {
-    [QuestType.MAIN]: { label: 'Main', emoji: '⚔️' },
-    [QuestType.SIDE]: { label: 'Side', emoji: '🗡️' },
-    [QuestType.TRAINING]: { label: 'Training', emoji: '🎯' },
+const TYPE_EMOJI: Record<string, string> = {
+    'Main': '⚔️',
+    'Side': '🗡️',
+    'Training': '🎯',
+    'Recurring': '🔄',
 };
 
 /**
@@ -57,6 +61,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     filterStore,
     availableCategories,
     availableTags,
+    availableTypes,
     compact = false,
 }) => {
     // Dropdown visibility state
@@ -114,31 +119,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
     return (
         <div className={`qb-filter-bar ${compact ? 'qb-filter-bar-compact' : ''}`}>
-            {/* Search Input - narrow width */}
-            <div className="qb-filter-search">
-                <span className="qb-filter-search-icon">🔍</span>
-                <input
-                    type="text"
-                    className="qb-filter-search-input"
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                />
-                {searchQuery && (
-                    <button
-                        className="qb-filter-search-clear"
-                        onClick={() => setSearchQuery('')}
-                        title="Clear search"
-                    >
-                        ✕
-                    </button>
-                )}
-            </div>
-
-            {/* Divider */}
-            <span className="qb-filter-divider">|</span>
-
-            {/* Filter Buttons - inline */}
+            {/* Filter Buttons - come first, fixed width */}
             <div className="qb-filter-buttons">
                 {/* Type Filter */}
                 <div className="qb-filter-dropdown-wrapper">
@@ -150,16 +131,20 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                     </button>
                     {showTypeDropdown && (
                         <div className="qb-filter-dropdown">
-                            {Object.entries(TYPE_INFO).map(([type, info]) => (
-                                <label key={type} className="qb-filter-dropdown-item">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedTypes.includes(type as QuestType)}
-                                        onChange={() => toggleType(type as QuestType)}
-                                    />
-                                    <span>{info.emoji} {info.label}</span>
-                                </label>
-                            ))}
+                            {availableTypes.length === 0 ? (
+                                <div className="qb-filter-dropdown-empty">No types</div>
+                            ) : (
+                                availableTypes.map(type => (
+                                    <label key={type} className="qb-filter-dropdown-item">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedTypes.includes(type)}
+                                            onChange={() => toggleType(type)}
+                                        />
+                                        <span>{TYPE_EMOJI[type] || '📄'} {type}</span>
+                                    </label>
+                                ))
+                            )}
                         </div>
                     )}
                 </div>
@@ -170,7 +155,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                         className={`qb-filter-btn ${selectedCategories.length > 0 ? 'active' : ''}`}
                         onClick={() => toggleDropdown(setShowCategoryDropdown, showCategoryDropdown)}
                     >
-                        📁 Cat {selectedCategories.length > 0 && `(${selectedCategories.length})`}
+                        📁 Category {selectedCategories.length > 0 && `(${selectedCategories.length})`}
                     </button>
                     {showCategoryDropdown && (
                         <div className="qb-filter-dropdown">
@@ -198,7 +183,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                         className={`qb-filter-btn ${selectedPriorities.length > 0 ? 'active' : ''}`}
                         onClick={() => toggleDropdown(setShowPriorityDropdown, showPriorityDropdown)}
                     >
-                        ⚡ Pri {selectedPriorities.length > 0 && `(${selectedPriorities.length})`}
+                        ⚡ Priority {selectedPriorities.length > 0 && `(${selectedPriorities.length})`}
                     </button>
                     {showPriorityDropdown && (
                         <div className="qb-filter-dropdown">
@@ -223,7 +208,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                             className={`qb-filter-btn ${selectedTags.length > 0 ? 'active' : ''}`}
                             onClick={() => toggleDropdown(setShowTagDropdown, showTagDropdown)}
                         >
-                            🏷️ {selectedTags.length > 0 && `(${selectedTags.length})`}
+                            🏷️ Tags {selectedTags.length > 0 && `(${selectedTags.length})`}
                         </button>
                         {showTagDropdown && (
                             <div className="qb-filter-dropdown">
@@ -311,6 +296,30 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                         className="qb-filter-clear-btn"
                         onClick={clearFilters}
                         title="Clear all filters"
+                    >
+                        ✕
+                    </button>
+                )}
+            </div>
+
+            {/* Divider */}
+            <span className="qb-filter-divider">|</span>
+
+            {/* Search Input - takes remaining space */}
+            <div className="qb-filter-search">
+                <span className="qb-filter-search-icon">🔍</span>
+                <input
+                    type="text"
+                    className="qb-filter-search-input"
+                    placeholder="Search quests..."
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                />
+                {searchQuery && (
+                    <button
+                        className="qb-filter-search-clear"
+                        onClick={() => setSearchQuery('')}
+                        title="Clear search"
                     >
                         ✕
                     </button>

@@ -134,9 +134,9 @@ function parseQuestFrontmatter(content: string, filePath: string): Partial<Manua
                 quest.questName = value;
                 break;
             case 'questType':
-                // Only accept valid manual quest types
-                if (value === 'main' || value === 'training' || value === 'side') {
-                    quest.questType = value as QuestType.MAIN | QuestType.TRAINING | QuestType.SIDE;
+                // Accept any questType value (supports dynamic folder names)
+                if (value) {
+                    quest.questType = value as QuestType;
                 }
                 break;
             case 'category':
@@ -220,12 +220,28 @@ async function loadMarkdownQuest(
             return null;
         }
 
+        // Infer questType from folder path if not in frontmatter
+        // Path format: basefolder/quests/{Type}/questfile.md
+        let inferredType = parsed.questType;
+        if (!inferredType) {
+            const pathParts = file.path.split('/');
+            // Find 'quests' in path and get the next folder name
+            const questsIndex = pathParts.findIndex(p => p.toLowerCase() === 'quests');
+            if (questsIndex >= 0 && questsIndex + 1 < pathParts.length - 1) {
+                // The folder after 'quests' is the type (capitalize first letter)
+                const folderName = pathParts[questsIndex + 1];
+                inferredType = folderName.charAt(0).toUpperCase() + folderName.slice(1).toLowerCase();
+            } else {
+                inferredType = 'Main'; // Default fallback
+            }
+        }
+
         // Set defaults
         const quest: Partial<ManualQuest> = {
             schemaVersion: QUEST_SCHEMA_VERSION,
             questId: parsed.questId || file.basename,
             questName: parsed.questName || file.basename,
-            questType: parsed.questType || QuestType.MAIN,
+            questType: inferredType,
             category: parsed.category || 'general',
             status: parsed.status || QuestStatus.AVAILABLE,
             priority: parsed.priority || QuestPriority.MEDIUM,
@@ -452,7 +468,8 @@ export async function saveManualQuest(
 ): Promise<boolean> {
     try {
         const safeQuestId = sanitizeQuestId(quest.questId);
-        const subFolder = QUEST_FOLDERS[quest.questType as keyof typeof QUEST_FOLDERS] || QUEST_FOLDERS.main;
+        // Use questType directly as folder name (lowercase)
+        const subFolder = `quests/${quest.questType.toLowerCase()}`;
         const folderPath = `${baseFolder}/${subFolder}`;
         const filePath = `${folderPath}/${safeQuestId}.md`;
 
