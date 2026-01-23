@@ -224,6 +224,13 @@
 - Equipment upgrade system (improve gear through quests)
 - Quest voting system (community-created quests)
 
+### Gear System Enhancements (Deferred)
+
+| Feature | Description | Why Deferred |
+|---------|-------------|--------------|
+| **Tag-Based Loot Tables** | Use task tags (#bugfix → defensive gear, #creative → wisdom weapons) to influence loot drops. Encourages better Obsidian organization to "target farm" stats. | Adds parsing complexity. Folder-based quest types already provide categorization. Good stretch goal after MVP. |
+| **Socketing with Obsidian Files** | "Socket" a markdown note into gear (e.g., `[[My Core Values]]` → Chestpiece). If you edit that file weekly, the item gets +10% stats. Ties important notes to character power. | Very meta/complex. Requires file watching + state management. Cool concept but could feel forced. Revisit after core gear system is stable. |
+
 ### RPG Game Mechanics (Combat System)
 
 **Vision:** Turn productivity into an actual game with visual combat, monsters, and boss battles.
@@ -341,4 +348,4 @@ enemies.json           - Monster stats, boss definitions, loot tables
 
 ---
 
-**Last Updated:** 2026-01-21
+**Last Updated:** 2026-01-23
