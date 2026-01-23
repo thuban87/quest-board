@@ -1694,6 +1694,44 @@ This completes Phase 2 of the Quest Board plugin!
 
 ---
 
+## 2026-01-23 - Fix Double XP Award Bug
+
+**Focus:** Fix XP being awarded twice when both Kanban and Sidebar views are open
+
+**Root Cause:**
+Both `FullKanban.tsx` and `SidebarQuests.tsx` independently called `useXPAward`, creating duplicate file watchers. When a task file changed, both watchers fired and awarded XP.
+
+**Solution:**
+Implemented singleton pattern for file watchers in `useXPAward.ts`:
+- Moved `taskSnapshotsRef`, `fileWatchersRef`, and `processingRef` to module scope
+- Added `subscriberCount` to track active hook instances
+- Only clean up watchers when the last subscriber unmounts
+
+**Key Changes:**
+- `src/hooks/useXPAward.ts`:
+  - Added `globalTaskSnapshots`, `globalFileWatchers`, `globalProcessing` at module level
+  - Added subscriber count tracking with cleanup on last unmount
+  - Refs now point to global singletons instead of local Maps/Sets
+
+**Testing:**
+- Verified single XP award with both views open ✅
+- Build passes ✅
+- Deployed and tested in production ✅
+
+**Hours Worked:** ~30 min
+**Phase:** Bug Fix
+
+**Suggested Commit:**
+```
+fix(xp): prevent double XP award when multiple views open
+
+- Use singleton pattern for file watchers in useXPAward
+- Module-level globals shared across all hook instances
+- Subscriber count ensures cleanup only on last unmount
+```
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD
