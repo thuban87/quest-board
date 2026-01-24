@@ -6,7 +6,7 @@
  */
 
 /** Current character schema version */
-export const CHARACTER_SCHEMA_VERSION = 1;
+export const CHARACTER_SCHEMA_VERSION = 2;
 
 /**
  * Character class types
@@ -246,9 +246,9 @@ export const DEFAULT_APPEARANCE: CharacterAppearance = {
 };
 
 /**
- * Equipped gear item
+ * @deprecated Legacy equipped gear format (schema v1). Use EquippedGearMap from Gear.ts instead.
  */
-export interface EquippedGear {
+export interface LegacyEquippedGear {
     slot: 'weapon' | 'armor' | 'accessory1' | 'accessory2' | 'accessory3';
     itemId: string;
 }
@@ -348,8 +348,8 @@ export interface Character {
     /** Appearance customization */
     appearance: CharacterAppearance;
 
-    /** Equipped gear items */
-    equippedGear: EquippedGear[];
+    /** Equipped gear items (schema v2: Record<GearSlot, GearItem | null>) */
+    equippedGear: import('./Gear').EquippedGearMap;
 
     /** Training mode XP (separate pool) */
     trainingXP: number;
@@ -395,6 +395,45 @@ export interface Character {
 
     /** Active power-ups and buffs (includes class perk as passive) */
     activePowerUps: ActivePowerUp[];
+
+    // ========== Phase 3A: Gear System ==========
+
+    /** Gold currency */
+    gold: number;
+
+    /** Gear inventory (unique items, cannot stack) */
+    gearInventory: import('./Gear').GearItem[];
+
+    /** Maximum gear inventory slots (default 50) */
+    inventoryLimit: number;
+
+    // ========== Phase 3B: Fight System ==========
+
+    /** Current HP (persists between fights) */
+    currentHP: number;
+
+    /** Maximum HP (calculated from Constitution + level) */
+    maxHP: number;
+
+    /** Current Mana (persists between fights) */
+    currentMana: number;
+
+    /** Maximum Mana (calculated from Intelligence + level) */
+    maxMana: number;
+
+    /** Stamina for random fights (max 10, +2 per task, -1 per fight) */
+    stamina: number;
+
+    /** Stamina earned today (resets at midnight, capped at 50) */
+    staminaGainedToday: number;
+
+    /** Date of last stamina reset (YYYY-MM-DD) */
+    lastStaminaResetDate: string | null;
+
+    // ========== Phase 3C: Exploration System ==========
+
+    /** Dungeon keys (earned from quests, consumed on dungeon exit) */
+    dungeonKeys: number;
 }
 
 /**
@@ -422,6 +461,27 @@ export function createCharacter(
 ): Character {
     const classInfo = CLASS_INFO[characterClass];
     const now = new Date().toISOString();
+    const baseStats = getStartingStatsForClass(characterClass);
+
+    // Calculate starting HP and Mana from base stats
+    // HP: 50 + (Constitution * 5) + (Level * 10)
+    // Mana: 20 + (Intelligence * 3) + (Level * 5)
+    const maxHP = 50 + (baseStats.constitution * 5) + (1 * 10);
+    const maxMana = 20 + (baseStats.intelligence * 3) + (1 * 5);
+
+    // Import starter gear function inline to avoid circular deps
+    // Will be replaced with actual starter gear in characterStore
+    const emptyEquippedGear = {
+        head: null,
+        chest: null,
+        legs: null,
+        boots: null,
+        weapon: null,
+        shield: null,
+        accessory1: null,
+        accessory2: null,
+        accessory3: null,
+    };
 
     return {
         schemaVersion: CHARACTER_SCHEMA_VERSION,
@@ -436,12 +496,12 @@ export function createCharacter(
             outfitPrimary: classInfo.primaryColor,
             ...appearance,
         },
-        equippedGear: [],
+        equippedGear: emptyEquippedGear,
         trainingXP: 0,
         trainingLevel: 1,
         isTrainingMode: true, // Start in training mode
-        baseStats: getStartingStatsForClass(characterClass),
-        statBonuses: { ...DEFAULT_STATS, strength: 0, intelligence: 0, wisdom: 0, constitution: 0, dexterity: 0, charisma: 0 },
+        baseStats,
+        statBonuses: { strength: 0, intelligence: 0, wisdom: 0, constitution: 0, dexterity: 0, charisma: 0 },
         categoryXPAccumulator: {},
         currentStreak: 0,
         highestStreak: 0,
@@ -452,6 +512,23 @@ export function createCharacter(
         tasksCompletedToday: 0,
         lastTaskDate: null,
         activePowerUps: [],
+
+        // Phase 3A: Gear System
+        gold: 0,
+        gearInventory: [],
+        inventoryLimit: 50,
+
+        // Phase 3B: Fight System
+        currentHP: maxHP,
+        maxHP,
+        currentMana: maxMana,
+        maxMana,
+        stamina: 10,  // Start with full stamina
+        staminaGainedToday: 0,
+        lastStaminaResetDate: null,
+
+        // Phase 3C: Exploration System
+        dungeonKeys: 0,
     };
 }
 
@@ -478,3 +555,128 @@ export function getTrainingLevelDisplay(level: number): string {
     const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
     return numerals[Math.min(level - 1, 9)] || 'I';
 }
+
+// ============================================
+// Schema Migration Functions (Phase 3A)
+// ============================================
+
+/**
+ * Get today's date as YYYY-MM-DD string
+ */
+function getLocalDateString(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Convert old equipped gear format (schema v1) to new format (schema v2).
+ * Old: EquippedGear[] with { slot, itemId }
+ * New: Record<GearSlot, GearItem | null>
+ */
+export function migrateEquippedGear(oldFormat: unknown): import('./Gear').EquippedGearMap {
+    // Start with empty map
+    const newFormat: import('./Gear').EquippedGearMap = {
+        head: null,
+        chest: null,
+        legs: null,
+        boots: null,
+        weapon: null,
+        shield: null,
+        accessory1: null,
+        accessory2: null,
+        accessory3: null,
+    };
+
+    // If already in new format (object with slot keys), validate and return
+    if (oldFormat && typeof oldFormat === 'object' && !Array.isArray(oldFormat)) {
+        const obj = oldFormat as Record<string, unknown>;
+        // Check if it has the expected slot keys
+        if ('weapon' in obj || 'head' in obj || 'chest' in obj) {
+            // Already in new format, copy over valid slots
+            const slots: (keyof import('./Gear').EquippedGearMap)[] = [
+                'head', 'chest', 'legs', 'boots', 'weapon', 'shield',
+                'accessory1', 'accessory2', 'accessory3'
+            ];
+            for (const slot of slots) {
+                if (slot in obj && obj[slot] !== null && typeof obj[slot] === 'object') {
+                    newFormat[slot] = obj[slot] as import('./Gear').GearItem;
+                }
+            }
+            return newFormat;
+        }
+    }
+
+    // Old format was an empty array or not convertible
+    // Return empty slots (starter gear will be assigned separately in migration)
+    return newFormat;
+}
+
+/**
+ * Calculate max HP for a character based on their stats and level.
+ * Formula: 50 + (Constitution * 5) + (Level * 10)
+ */
+export function calculateMaxHP(character: { baseStats?: CharacterStats; level?: number }): number {
+    const con = character.baseStats?.constitution ?? 10;
+    const level = character.level ?? 1;
+    return 50 + (con * 5) + (level * 10);
+}
+
+/**
+ * Calculate max Mana for a character based on their stats and level.
+ * Formula: 20 + (Intelligence * 3) + (Level * 5)
+ */
+export function calculateMaxMana(character: { baseStats?: CharacterStats; level?: number }): number {
+    const int = character.baseStats?.intelligence ?? 10;
+    const level = character.level ?? 1;
+    return 20 + (int * 3) + (level * 5);
+}
+
+/**
+ * Migrate character data from schema v1 to schema v2.
+ * Adds all new Phase 3 fields with appropriate defaults.
+ * 
+ * @param oldData - Character data (possibly from older schema)
+ * @returns Migrated character data conforming to schema v2
+ */
+export function migrateCharacterV1toV2(oldData: Record<string, unknown>): Character {
+    // Already v2 or higher? Return as-is (with type assertion)
+    if (oldData.schemaVersion === 2) {
+        return oldData as unknown as Character;
+    }
+
+    // Calculate HP/Mana based on existing stats
+    const maxHP = calculateMaxHP(oldData as { baseStats?: CharacterStats; level?: number });
+    const maxMana = calculateMaxMana(oldData as { baseStats?: CharacterStats; level?: number });
+
+    // Build migrated character
+    const migrated: Character = {
+        // Copy all existing fields
+        ...(oldData as object),
+
+        // Bump schema version
+        schemaVersion: 2,
+
+        // Migrate equipped gear format
+        equippedGear: migrateEquippedGear(oldData.equippedGear),
+
+        // Phase 3A: Gear System defaults
+        gold: (oldData.gold as number) ?? 0,
+        gearInventory: (oldData.gearInventory as import('./Gear').GearItem[]) ?? [],
+        inventoryLimit: (oldData.inventoryLimit as number) ?? 50,
+
+        // Phase 3B: Fight System defaults
+        currentHP: (oldData.currentHP as number) ?? maxHP,
+        maxHP: (oldData.maxHP as number) ?? maxHP,
+        currentMana: (oldData.currentMana as number) ?? maxMana,
+        maxMana: (oldData.maxMana as number) ?? maxMana,
+        stamina: (oldData.stamina as number) ?? 10,
+        staminaGainedToday: (oldData.staminaGainedToday as number) ?? 0,
+        lastStaminaResetDate: (oldData.lastStaminaResetDate as string | null) ?? getLocalDateString(),
+
+        // Phase 3C: Exploration defaults
+        dungeonKeys: (oldData.dungeonKeys as number) ?? 0,
+    } as Character;
+
+    return migrated;
+}
+

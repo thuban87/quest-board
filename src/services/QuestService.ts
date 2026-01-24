@@ -332,7 +332,8 @@ async function loadQuestsFromFolder(
 }
 
 /**
- * Load all quests from the quest storage folder
+ * Load all quests from the quest storage folder.
+ * Dynamically scans ALL subfolders in the quests directory.
  */
 export async function loadAllQuests(
     vault: Vault,
@@ -341,14 +342,39 @@ export async function loadAllQuests(
     const errors: string[] = [];
     const allQuests: Quest[] = [];
 
-    // Load from each subfolder
-    for (const [type, subFolder] of Object.entries(QUEST_FOLDERS)) {
-        const fullPath = `${baseFolder}/${subFolder}`;
-        try {
-            const quests = await loadQuestsFromFolder(vault, fullPath);
-            allQuests.push(...quests);
-        } catch (error) {
-            errors.push(`Failed to load from ${fullPath}: ${error}`);
+    // Get the quests folder
+    const questsPath = `${baseFolder}/quests`;
+    const questsFolder = vault.getAbstractFileByPath(questsPath);
+
+    if (questsFolder instanceof TFolder) {
+        // Dynamically scan ALL subfolders in the quests directory
+        for (const child of questsFolder.children) {
+            if (child instanceof TFolder) {
+                const folderName = child.name.toLowerCase();
+
+                // Skip archive folder
+                if (folderName === 'archive') {
+                    continue;
+                }
+
+                try {
+                    const quests = await loadQuestsFromFolder(vault, child.path);
+                    allQuests.push(...quests);
+                } catch (error) {
+                    errors.push(`Failed to load from ${child.path}: ${error}`);
+                }
+            }
+        }
+    } else {
+        // Fallback: Try the hardcoded folders for backward compatibility
+        for (const subFolder of Object.values(QUEST_FOLDERS)) {
+            const fullPath = `${baseFolder}/${subFolder}`;
+            try {
+                const quests = await loadQuestsFromFolder(vault, fullPath);
+                allQuests.push(...quests);
+            } catch (error) {
+                errors.push(`Failed to load from ${fullPath}: ${error}`);
+            }
         }
     }
 

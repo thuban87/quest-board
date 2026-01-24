@@ -258,6 +258,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
             <div className="qb-sheet-stats">
                 <h3>Stats</h3>
                 <div className="qb-stats-grid">
+                    <div className="qb-stat-item qb-stat-gold" title="Gold earned from quests and combat">
+                        <span className="qb-stat-value">🪙 {character.gold?.toLocaleString() ?? 0}</span>
+                        <span className="qb-stat-label">Gold</span>
+                    </div>
                     <div className="qb-stat-item">
                         <span className="qb-stat-value">{completedQuests}</span>
                         <span className="qb-stat-label">Quests Completed</span>

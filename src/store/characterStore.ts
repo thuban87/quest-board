@@ -6,10 +6,20 @@
  */
 
 import { create } from 'zustand';
-import { Character, CharacterClass, CLASS_INFO, CharacterAppearance, ActivePowerUp } from '../models';
+import {
+    Character,
+    CharacterClass,
+    CLASS_INFO,
+    CharacterAppearance,
+    ActivePowerUp,
+    migrateCharacterV1toV2,
+    CHARACTER_SCHEMA_VERSION,
+} from '../models';
+import { GearItem, GearSlot, EquippedGearMap } from '../models/Gear';
 import { InventoryItem } from '../models/Consumable';
 import { Achievement } from '../models/Achievement';
 import { calculateTrainingLevel, calculateLevel, XP_THRESHOLDS } from '../services/XPSystem';
+import { createStarterEquippedGear } from '../data/starterGear';
 
 interface CharacterState {
     /** Current character (null if not created) */
@@ -73,6 +83,23 @@ interface CharacterActions {
 
     /** Increment tasks completed today (for First Blood trigger, persisted) */
     incrementTasksToday: (count: number, dateString: string) => void;
+
+    // ========== Phase 3A: Gear Actions ==========
+
+    /** Update gold (positive = gain, negative = spend) */
+    updateGold: (delta: number) => void;
+
+    /** Add gear item to inventory. Returns false if inventory full. */
+    addGear: (item: GearItem) => boolean;
+
+    /** Remove gear item from inventory by ID. Returns the removed item or null. */
+    removeGear: (itemId: string) => GearItem | null;
+
+    /** Equip gear to a slot. Current item in slot goes to inventory. */
+    equipGear: (slot: GearSlot, itemId: string) => boolean;
+
+    /** Unequip gear from slot. Item goes to inventory. Returns the unequipped item or null. */
+    unequipGear: (slot: GearSlot) => GearItem | null;
 }
 
 type CharacterStore = CharacterState & CharacterActions;
@@ -92,6 +119,11 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
     // Actions
     setCharacter: (character) => {
         if (character) {
+            // Run schema migration if needed (Phase 3A)
+            if (character.schemaVersion !== CHARACTER_SCHEMA_VERSION) {
+                character = migrateCharacterV1toV2(character as unknown as Record<string, unknown>);
+            }
+
             // Recalculate training level in case thresholds changed
             const newTrainingLevel = calculateTrainingLevel(character.trainingXP);
             if (character.trainingLevel !== newTrainingLevel) {
@@ -122,8 +154,15 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             baseStats[primaryStat] += 2;
         }
 
+        // Calculate starting HP and Mana
+        const maxHP = 50 + (baseStats.constitution * 5) + (1 * 10);
+        const maxMana = 20 + (baseStats.intelligence * 3) + (1 * 5);
+
+        // Get starter gear (Phase 3A)
+        const equippedGear = createStarterEquippedGear();
+
         const character: Character = {
-            schemaVersion: 1,
+            schemaVersion: CHARACTER_SCHEMA_VERSION,
             name,
             class: characterClass,
             secondaryClass: null,
@@ -138,7 +177,7 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 outfitPrimary: appearance.outfitPrimary || classInfo.primaryColor,
                 outfitSecondary: appearance.outfitSecondary || '#ffc107',
             },
-            equippedGear: [],
+            equippedGear,
             trainingXP: 0,
             trainingLevel: 1,
             isTrainingMode: true,
@@ -161,6 +200,23 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             tasksCompletedToday: 0,
             lastTaskDate: null,
             activePowerUps: [],
+
+            // Phase 3A: Gear System
+            gold: 0,
+            gearInventory: [],
+            inventoryLimit: 50,
+
+            // Phase 3B: Fight System
+            currentHP: maxHP,
+            maxHP,
+            currentMana: maxMana,
+            maxMana,
+            stamina: 10,
+            staminaGainedToday: 0,
+            lastStaminaResetDate: null,
+
+            // Phase 3C: Exploration
+            dungeonKeys: 0,
         };
 
         set({ character });
@@ -383,6 +439,126 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 lastTaskDate: dateString,
             },
         });
+    },
+
+    // ========== Phase 3A: Gear Actions ==========
+
+    updateGold: (delta) => {
+        const { character } = get();
+        if (!character) return;
+
+        const newGold = Math.max(0, character.gold + delta);
+        set({
+            character: {
+                ...character,
+                gold: newGold,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    addGear: (item) => {
+        const { character } = get();
+        if (!character) return false;
+
+        // Check inventory limit
+        if (character.gearInventory.length >= character.inventoryLimit) {
+            return false;
+        }
+
+        set({
+            character: {
+                ...character,
+                gearInventory: [...character.gearInventory, item],
+                lastModified: new Date().toISOString(),
+            },
+        });
+        return true;
+    },
+
+    removeGear: (itemId) => {
+        const { character } = get();
+        if (!character) return null;
+
+        const item = character.gearInventory.find(i => i.id === itemId);
+        if (!item) return null;
+
+        set({
+            character: {
+                ...character,
+                gearInventory: character.gearInventory.filter(i => i.id !== itemId),
+                lastModified: new Date().toISOString(),
+            },
+        });
+        return item;
+    },
+
+    equipGear: (slot, itemId) => {
+        const { character } = get();
+        if (!character) return false;
+
+        // Find item in inventory
+        const item = character.gearInventory.find(i => i.id === itemId);
+        if (!item) return false;
+
+        // Check slot matches
+        if (item.slot !== slot) return false;
+
+        // Get current equipped item in that slot
+        const currentEquipped = character.equippedGear[slot];
+
+        // Remove new item from inventory
+        let newInventory = character.gearInventory.filter(i => i.id !== itemId);
+
+        // If there was an item equipped, add it to inventory
+        if (currentEquipped) {
+            newInventory = [...newInventory, currentEquipped];
+        }
+
+        // Update equipped gear
+        const newEquippedGear = {
+            ...character.equippedGear,
+            [slot]: item,
+        };
+
+        set({
+            character: {
+                ...character,
+                equippedGear: newEquippedGear,
+                gearInventory: newInventory,
+                lastModified: new Date().toISOString(),
+            },
+        });
+        return true;
+    },
+
+    unequipGear: (slot) => {
+        const { character } = get();
+        if (!character) return null;
+
+        const item = character.equippedGear[slot];
+        if (!item) return null;
+
+        // Check inventory space
+        if (character.gearInventory.length >= character.inventoryLimit) {
+            return null; // Can't unequip - inventory full
+        }
+
+        // Update equipped gear
+        const newEquippedGear = {
+            ...character.equippedGear,
+            [slot]: null,
+        };
+
+        set({
+            character: {
+                ...character,
+                equippedGear: newEquippedGear,
+                gearInventory: [...character.gearInventory, item],
+                lastModified: new Date().toISOString(),
+            },
+        });
+        return item;
     },
 }));
 
