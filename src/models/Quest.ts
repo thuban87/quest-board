@@ -90,6 +90,9 @@ export interface ManualQuest extends BaseQuest {
     /** Quest type from folder name (Main, Side, Training, Recurring, etc.) */
     questType: string;
 
+    /** Quest difficulty (affects loot quality) */
+    difficulty?: QuestDifficulty;
+
     /** Custom sort order within status column (lower = higher in list) */
     sortOrder?: number;
 
@@ -192,6 +195,7 @@ export function createManualQuest(
         category,
         status: QuestStatus.AVAILABLE,
         priority: QuestPriority.MEDIUM,
+        difficulty: QuestDifficulty.MEDIUM,
         tags: [],
         createdDate: new Date().toISOString(),
         completedDate: null,

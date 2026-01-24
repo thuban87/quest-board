@@ -34,6 +34,7 @@ const PRIORITY_INFO: Record<QuestPriority, { label: string; emoji: string }> = {
     [QuestPriority.LOW]: { label: 'Low', emoji: '📎' },
     [QuestPriority.MEDIUM]: { label: 'Medium', emoji: '📌' },
     [QuestPriority.HIGH]: { label: 'High', emoji: '🔥' },
+    [QuestPriority.CRITICAL]: { label: 'Critical', emoji: '🚨' },
 };
 
 /**

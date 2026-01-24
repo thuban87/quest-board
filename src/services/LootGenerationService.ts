@@ -6,7 +6,7 @@
  */
 
 import { Quest } from '../models/Quest';
-import { Character, StatType } from '../models/Character';
+import { Character, StatType, CharacterClass } from '../models/Character';
 import {
     GearItem,
     GearSlot,
@@ -18,6 +18,10 @@ import {
     GEAR_SLOT_ICONS,
     TIER_INFO,
     GEAR_TIERS,
+    ArmorType,
+    WeaponType,
+    CLASS_ARMOR_PROFICIENCY,
+    CLASS_WEAPON_PROFICIENCY,
     calculateBaseStatValue,
     calculateSellValue,
     generateGearId,
@@ -33,8 +37,8 @@ import { createUniqueItem, UniqueItemTemplate } from '../data/uniqueItems';
  * Users can override this in settings.
  */
 const DEFAULT_QUEST_SLOT_MAPPING: Record<string, GearSlot[]> = {
-    main: ['chest', 'weapon'],
-    side: ['legs', 'boots'],
+    main: ['chest', 'weapon', 'head'],
+    side: ['legs', 'boots', 'shield'],
     training: ['head', 'shield'],
     guild: ['chest', 'legs'],
     recurring: ['boots', 'accessory1'],
@@ -137,7 +141,7 @@ export class LootGenerationService {
     generateQuestLoot(quest: Quest, character: Character): LootDrop {
         const rewards: LootReward[] = [];
 
-        // 1. Always give gold
+        // 1. Always give gold (based on priority/urgency)
         const goldAmount = this.calculateQuestGold(quest.priority);
         rewards.push({ type: 'gold', amount: goldAmount });
 
@@ -155,14 +159,16 @@ export class LootGenerationService {
             return rewards;
         }
 
-        // 3. Roll for gear
+        // 3. Roll for gear (based on difficulty)
         const possibleSlots = this.getSlotsForQuestType(questType);
         if (possibleSlots.length > 0) {
             const slot = this.pickRandom(possibleSlots);
-            const tier = this.rollTier(quest.priority, isTraining);
+            // Use quest.difficulty for tier, defaulting to 'medium' for old quests without the field
+            const difficulty = (quest as any).difficulty || 'medium';
+            const tier = this.rollTier(difficulty, isTraining);
             const level = this.rollGearLevel(character.level);
 
-            const gearItem = this.generateGearItem(slot, tier, level, 'quest', quest.questId);
+            const gearItem = this.generateGearItem(slot, tier, level, 'quest', quest.questId, character.class);
             rewards.push({ type: 'gear', item: gearItem });
         }
 
@@ -215,7 +221,7 @@ export class LootGenerationService {
             const tier = this.rollTier(difficulty, false);
             const level = this.rollGearLevel(monsterLevel);
 
-            const gearItem = this.generateGearItem(slot, tier, level, 'combat');
+            const gearItem = this.generateGearItem(slot, tier, level, 'combat', undefined, character.class);
             rewards.push({ type: 'gear', item: gearItem });
         }
 
@@ -255,7 +261,7 @@ export class LootGenerationService {
             const tier = this.rollTier(difficulty, false);
             const level = this.rollGearLevel(roomLevel);
 
-            const gearItem = this.generateGearItem(slot, tier, level, 'exploration');
+            const gearItem = this.generateGearItem(slot, tier, level, 'exploration', undefined, character.class);
             rewards.push({ type: 'gear', item: gearItem });
         }
 
@@ -273,23 +279,40 @@ export class LootGenerationService {
 
     /**
      * Generate a procedural gear item with random stats
+     * If characterClass is provided, generates class-appropriate armor/weapon types
      */
     generateGearItem(
         slot: GearSlot,
         tier: GearTier,
         level: number,
         source: 'quest' | 'combat' | 'exploration' | 'shop' | 'smelt' = 'quest',
-        sourceId?: string
+        sourceId?: string,
+        characterClass?: CharacterClass
     ): GearItem {
         const name = this.generateGearName(slot, tier);
         const stats = this.generateGearStats(slot, tier, level);
         const sellValue = calculateSellValue(level, tier);
+
+        // Determine armor/weapon type based on slot and character class
+        let armorType: ArmorType | undefined;
+        let weaponType: WeaponType | undefined;
+
+        if (slot === 'weapon') {
+            weaponType = this.pickWeaponType(characterClass);
+        } else if (slot === 'shield') {
+            weaponType = 'shield';
+        } else if (!slot.startsWith('accessory')) {
+            // Armor slot
+            armorType = this.pickArmorType(characterClass);
+        }
 
         return {
             id: generateGearId(),
             name,
             description: this.generateDescription(tier, slot),
             slot,
+            armorType,
+            weaponType,
             tier,
             level,
             stats,
@@ -299,6 +322,35 @@ export class LootGenerationService {
             sourceId,
             acquiredAt: new Date().toISOString(),
         };
+    }
+
+    /**
+     * Pick an armor type appropriate for the character class
+     * If no class provided, picks randomly
+     */
+    private pickArmorType(characterClass?: CharacterClass): ArmorType {
+        if (characterClass) {
+            const proficiency = CLASS_ARMOR_PROFICIENCY[characterClass];
+            // Prefer the heaviest armor the class can wear
+            return proficiency[proficiency.length - 1];
+        }
+        // Random for unknown class
+        const types: ArmorType[] = ['cloth', 'leather', 'mail', 'plate'];
+        return this.pickRandom(types);
+    }
+
+    /**
+     * Pick a weapon type appropriate for the character class
+     * If no class provided, picks randomly
+     */
+    private pickWeaponType(characterClass?: CharacterClass): WeaponType {
+        if (characterClass) {
+            const proficiency = CLASS_WEAPON_PROFICIENCY[characterClass].filter(w => w !== 'shield');
+            return this.pickRandom(proficiency);
+        }
+        // Random for unknown class
+        const types: WeaponType[] = ['sword', 'axe', 'mace', 'dagger', 'staff', 'wand', 'bow'];
+        return this.pickRandom(types);
     }
 
     /**
@@ -330,7 +382,7 @@ export class LootGenerationService {
     private rollTier(difficulty: string, isTraining: boolean): GearTier {
         const rates = isTraining
             ? TRAINING_TIER_DROP_RATES
-            : (TIER_DROP_RATES[difficulty.toLowerCase()] || TIER_DROP_RATES.medium);
+            : (TIER_DROP_RATES[difficulty.toLowerCase()] || TIER_DROP_RATES.easy);
 
         const roll = Math.random() * 100;
         let cumulative = 0;

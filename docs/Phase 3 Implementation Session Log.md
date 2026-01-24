@@ -97,20 +97,85 @@ Each session entry should include:
 
 ---
 
+## 2026-01-24 - Phase 3A Progress: Armor Types, Class Restrictions, Settings UI
+
+**Focus:** Added armor/weapon types with class restrictions, comparison tooltips, and settings UI
+
+**Completed:**
+- ✅ **Armor/Weapon Types System**
+  - Added `ArmorType` (cloth, leather, mail, plate)
+  - Added `WeaponType` (sword, axe, mace, dagger, staff, wand, bow, shield)
+  - Created `CLASS_ARMOR_PROFICIENCY` and `CLASS_WEAPON_PROFICIENCY` maps
+  - Loot generation now picks class-appropriate gear types
+  - `equipGear` enforces class restrictions
+- ✅ **Comparison Tooltip in Inventory**
+  - Hover over inventory items to see stat differences vs equipped gear
+  - Shows +/- Attack, Defense, primary stat comparisons
+- ✅ **Armor/Weapon Type Display**
+  - LootModal shows type (e.g., "Chest • Plate")
+  - InventoryModal shows type in item details
+- ✅ **Class Restriction UI**
+  - Equip button disabled for items class can't use
+  - Tooltip explains why item can't be equipped
+- ✅ **Quest→Slot Mapping Settings**
+  - Settings UI for customizing which gear slots drop from quest types
+  - Live updates to loot service when settings change
+  - "Add Custom Quest Type" for new folder types
+- ✅ **Difficulty Field Added**
+  - Added `difficulty` field to quests (trivial/easy/medium/hard/epic)
+  - Difficulty controls gear tier, priority controls gold
+  - Migration command to add difficulty to existing quests
+- ✅ **Fixed Double Loot Bug**
+  - Loot now added before modal, modal just acknowledges
+
+**Files Changed:**
+- `src/models/Gear.ts` - ArmorType, WeaponType, class proficiency maps, canEquipGear()
+- `src/data/starterGear.ts` - Added armorType/weaponType to starter items
+- `src/services/LootGenerationService.ts` - pickArmorType(), pickWeaponType(), uses character class
+- `src/store/characterStore.ts` - equipGear enforces class restrictions
+- `src/modals/LootModal.ts` - Display armor/weapon type
+- `src/modals/InventoryModal.ts` - Comparison tooltip, type display, disabled equip button
+- `src/settings.ts` - Quest→Slot Mapping UI section with live updates
+- `main.ts` - Apply custom mapping on plugin load
+- `styles.css` - Disabled button styles
+
+**Testing Notes:**
+- ✅ Build passes, all tests pass
+- ✅ Loot drops show armor/weapon type correctly
+- ✅ Class restrictions prevent equipping wrong gear
+- ✅ Quest→Slot mapping settings work with live updates
+- ✅ Comparison tooltip shows stat differences
+
+**Bugs Fixed:**
+- Double loot bug (items added twice)
+- Priority vs Difficulty confusion in loot generation
+
+**Next Steps:**
+- Continue Phase 3A remaining steps:
+  - Step 9: Inventory Management Modal (when inventory full)
+  - Step 10: Smelting System
+  - Step 11: Set Bonuses
+  - Step 12: Legendary Lore
+
+---
+
 ## Next Session Prompt
 
-> **Phase 3 Implementation Ready to Begin**
+> **Phase 3A In Progress - Steps 9-12 Remaining**
 > 
-> All planning documents are complete. Before writing any code:
+> What was completed this session:
+> - ✅ Armor/weapon types with class restrictions
+> - ✅ Comparison tooltips in inventory
+> - ✅ Quest→Slot mapping settings UI
+> - ✅ Difficulty field for quests
 > 
-> 1. **Read Workspace Rules:** `docs/Workspace Rules - Phase 3 Implementation.md`
-> 2. **Read Implementation Checklist:** `docs/rpg-dev-aspects/Phase 3 Implementation Checklist.md`
-> 3. **Complete Pre-Implementation Setup:**
->    - [ ] Set up Vitest
->    - [ ] Create dev vault
->    - [ ] Add deploy:test script
+> **Continue with remaining Phase 3A steps:**
+> - Step 9: Inventory Management Modal (blocks dungeon exit when full)
+> - Step 10: Smelting System (combine 3 items → higher tier)
+> - Step 11: Set Bonuses (folder-based gear sets)
+> - Step 12: Legendary Lore (procedural flavor text)
 > 
-> Start with Phase 3A Step 0: Character Schema Migration
+> **Key reminder:** Gear stats don't yet affect character sheet. That's Phase 3B Step 1.
 
 ---
 

@@ -3913,3 +3913,387 @@
   font-size: 1.1rem;
   padding: var(--qb-spacing-md) var(--qb-spacing-xl);
 }
+
+/* ===========================================
+   Loot Modal
+   =========================================== */
+.qb-loot-modal {
+  padding: var(--qb-spacing-lg);
+  text-align: center;
+  max-width: 400px;
+}
+
+.qb-loot-emoji {
+  font-size: 3rem;
+  margin-bottom: var(--qb-spacing-sm);
+  animation: loot-bounce 0.6s ease;
+}
+
+@keyframes loot-bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.qb-loot-title {
+  margin: 0 0 var(--qb-spacing-xs) 0;
+  font-size: 1.5rem;
+  color: var(--text-normal);
+}
+
+.qb-loot-subtitle {
+  margin: 0 0 var(--qb-spacing-lg) 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.qb-loot-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-sm);
+  margin-bottom: var(--qb-spacing-lg);
+  text-align: left;
+}
+
+.qb-loot-item {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  border: 2px solid var(--background-modifier-border);
+  animation: loot-slide-in 0.3s ease;
+}
+
+@keyframes loot-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.qb-loot-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.qb-loot-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.qb-loot-name {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.qb-loot-details {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.qb-loot-stats {
+  font-size: 0.75rem;
+  color: var(--interactive-accent);
+  margin-top: 2px;
+}
+
+/* Gold display */
+.qb-loot-gold {
+  background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(255, 215, 0, 0.1) 100%);
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
+.qb-loot-gold .qb-loot-name {
+  color: #ffd700;
+}
+
+/* Tier colors */
+.qb-loot-gear.qb-tier-common {
+  border-color: #9e9e9e;
+}
+
+.qb-loot-gear.qb-tier-adept {
+  border-color: #4caf50;
+}
+
+.qb-loot-gear.qb-tier-journeyman {
+  border-color: #2196f3;
+}
+
+.qb-loot-gear.qb-tier-master {
+  border-color: #9c27b0;
+}
+
+.qb-loot-gear.qb-tier-epic {
+  border-color: #ff9800;
+  background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(255, 152, 0, 0.1) 100%);
+}
+
+.qb-loot-gear.qb-tier-legendary {
+  border-color: #ffd700;
+  background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(255, 215, 0, 0.15) 100%);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+}
+
+/* Consumable display */
+.qb-loot-consumable {
+  border-color: #4caf50;
+}
+
+/* Empty state */
+.qb-loot-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: var(--qb-spacing-lg);
+}
+
+/* Buttons */
+.qb-loot-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-loot-buttons button {
+  padding: var(--qb-spacing-md) var(--qb-spacing-xl);
+  font-size: 1rem;
+}
+
+/* ===========================================
+   Inventory Modal
+   =========================================== */
+.qb-inventory-modal {
+  padding: var(--qb-spacing-lg);
+  min-width: 500px;
+  max-width: 600px;
+}
+
+.qb-inventory-title {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  text-align: center;
+}
+
+.qb-inventory-tabs {
+  display: flex;
+  gap: var(--qb-spacing-sm);
+  margin-bottom: var(--qb-spacing-md);
+}
+
+.qb-inventory-tab {
+  flex: 1;
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.qb-inventory-tab:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-inventory-tab.active {
+  background: var(--interactive-accent);
+  color: white;
+  border-color: var(--interactive-accent);
+}
+
+.qb-inventory-gold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-sm);
+  background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(255, 215, 0, 0.1) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: var(--qb-radius-md);
+  margin-bottom: var(--qb-spacing-md);
+}
+
+.qb-gold-icon {
+  font-size: 1.2rem;
+}
+
+.qb-gold-amount {
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.qb-inventory-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.qb-inventory-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: var(--qb-spacing-sm);
+  text-align: right;
+}
+
+.qb-inventory-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-inventory-item {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  border: 2px solid var(--background-modifier-border);
+  transition: all 0.15s ease;
+}
+
+.qb-inventory-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-inventory-item-icon {
+  font-size: 2rem;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-primary);
+  border: 2px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-md);
+}
+
+.qb-inventory-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.qb-inventory-item-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qb-inventory-item-details {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.qb-inventory-item-stats {
+  font-size: 0.75rem;
+  color: var(--interactive-accent);
+  margin-top: 2px;
+}
+
+.qb-inventory-item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qb-inventory-btn {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-sm);
+  background: var(--background-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.qb-inventory-btn:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-btn-equip {
+  border-color: var(--interactive-accent);
+  color: var(--interactive-accent);
+}
+
+.qb-btn-equip:hover {
+  background: rgba(var(--interactive-accent-rgb), 0.15);
+}
+
+.qb-btn-sell {
+  border-color: #ffd700;
+  color: #ffd700;
+}
+
+.qb-btn-sell:hover {
+  background: rgba(255, 215, 0, 0.15);
+}
+
+.qb-inventory-empty {
+  text-align: center;
+  padding: var(--qb-spacing-xl);
+  color: var(--text-muted);
+}
+
+.qb-inventory-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--qb-spacing-md);
+  opacity: 0.5;
+}
+
+.qb-inventory-empty-text {
+  font-size: 1rem;
+  margin-bottom: var(--qb-spacing-xs);
+}
+
+.qb-inventory-empty-hint {
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* Inventory button in Character Sheet */
+.qb-inventory-btn-main {
+  width: 100%;
+  margin-top: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(var(--interactive-accent-rgb), 0.1) 100%);
+  border: 2px solid var(--interactive-accent);
+  border-radius: var(--qb-radius-md);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--interactive-accent);
+  transition: all 0.2s ease;
+}
+
+.qb-inventory-btn-main:hover {
+  background: rgba(var(--interactive-accent-rgb), 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(var(--interactive-accent-rgb), 0.2);
+}
+
+/* Disabled equip button */
+.qb-inventory-btn.qb-btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--background-secondary);
+}
+
+.qb-inventory-btn.qb-btn-disabled:hover {
+  transform: none;
+  box-shadow: none;
+}

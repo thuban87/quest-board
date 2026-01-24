@@ -41,6 +41,7 @@ const PRIORITY_COLORS: Record<QuestPriority, string> = {
     [QuestPriority.LOW]: 'var(--text-muted)',
     [QuestPriority.MEDIUM]: 'var(--interactive-accent)',
     [QuestPriority.HIGH]: '#dc3545',
+    [QuestPriority.CRITICAL]: '#ff4500',
 };
 
 /**
@@ -241,8 +242,9 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
                     className="qb-card-priority"
                     style={{ color: PRIORITY_COLORS[quest.priority] }}
                 >
-                    {quest.priority === QuestPriority.HIGH ? '🔥' :
-                        quest.priority === QuestPriority.LOW ? '📎' : '📌'}
+                    {quest.priority === QuestPriority.CRITICAL ? '🚨' :
+                        quest.priority === QuestPriority.HIGH ? '🔥' :
+                            quest.priority === QuestPriority.LOW ? '📎' : '📌'}
                 </span>
             </div>
 

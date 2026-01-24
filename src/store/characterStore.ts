@@ -15,7 +15,7 @@ import {
     migrateCharacterV1toV2,
     CHARACTER_SCHEMA_VERSION,
 } from '../models';
-import { GearItem, GearSlot, EquippedGearMap } from '../models/Gear';
+import { GearItem, GearSlot, EquippedGearMap, canEquipGear } from '../models/Gear';
 import { InventoryItem } from '../models/Consumable';
 import { Achievement } from '../models/Achievement';
 import { calculateTrainingLevel, calculateLevel, XP_THRESHOLDS } from '../services/XPSystem';
@@ -503,6 +503,12 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
 
         // Check slot matches
         if (item.slot !== slot) return false;
+
+        // Check class can equip this item type
+        if (!canEquipGear(character.class, item)) {
+            console.log(`[CharacterStore] Cannot equip ${item.name} - class ${character.class} lacks proficiency`);
+            return false;
+        }
 
         // Get current equipped item in that slot
         const currentEquipped = character.equippedGear[slot];

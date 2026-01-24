@@ -2,22 +2,25 @@
  * Quest Actions Service
  * 
  * Centralized business logic for quest state changes.
- * Handles side effects like streak updates, notifications.
+ * Handles side effects like streak updates, notifications, and loot drops.
  * Used by both SidebarQuests and FullKanban through useQuestActions hook.
  */
 
-import { Vault, Notice } from 'obsidian';
+import { Vault, Notice, App } from 'obsidian';
 import { Quest, isAIGeneratedQuest, isManualQuest } from '../models/Quest';
 import { QuestStatus } from '../models/QuestStatus';
 import { Character } from '../models/Character';
+import { LootDrop } from '../models/Gear';
 import { useQuestStore } from '../store/questStore';
 import { useCharacterStore } from '../store/characterStore';
 import { useTaskSectionsStore } from '../store/taskSectionsStore';
 import { saveManualQuest, saveAIQuest } from './QuestService';
 import { toggleTaskInFile, readTasksWithSections, getTaskCompletion } from './TaskFileService';
 import { updateStreak, getStreakDisplay, StreakUpdateResult } from './StreakService';
+import { lootGenerationService } from './LootGenerationService';
 import { AchievementService } from './AchievementService';
 import { showAchievementUnlock } from '../modals/AchievementUnlockModal';
+import { showLootModal } from '../modals/LootModal';
 import {
     evaluateTriggers,
     grantPowerUp,
@@ -34,6 +37,7 @@ export interface MoveQuestResult {
     success: boolean;
     quest: Quest;
     streakResult?: StreakUpdateResult;
+    loot?: LootDrop;
 }
 
 /**
@@ -49,6 +53,10 @@ export interface ToggleTaskResult {
 export interface MoveQuestOptions {
     storageFolder: string;
     streakMode?: 'quest' | 'task';
+    /** App reference for showing modals (optional) */
+    app?: App;
+    /** Whether to generate and show loot on quest completion */
+    enableLoot?: boolean;
 }
 
 /**
@@ -201,6 +209,50 @@ export async function moveQuest(
         }
     }
 
+    // === LOOT GENERATION ===
+    // Generate and award loot when quest is completed
+    let loot: LootDrop | undefined;
+    if (newStatus === QuestStatus.COMPLETED && options.enableLoot !== false) {
+        const character = useCharacterStore.getState().character;
+        if (character) {
+            try {
+                // Generate loot based on quest and character
+                loot = lootGenerationService.generateQuestLoot(updatedQuest, character);
+
+                console.log('[QuestActionsService] Generated loot:', {
+                    questId: updatedQuest.questId,
+                    lootItems: loot.length,
+                    loot,
+                });
+
+                // Add loot to character inventory directly
+                const charStore = useCharacterStore.getState();
+                for (const reward of loot) {
+                    if (reward.type === 'gold') {
+                        charStore.updateGold(reward.amount);
+                    } else if (reward.type === 'gear') {
+                        charStore.addGear(reward.item);
+                    }
+                    // Consumables handled separately (TODO)
+                }
+
+                // Show loot modal if app is provided
+                if (options.app && loot.length > 0) {
+                    // Delay slightly so quest save completes first
+                    setTimeout(() => {
+                        showLootModal(options.app!, {
+                            title: 'Quest Complete!',
+                            subtitle: updatedQuest.questName,
+                            loot: loot!,
+                        });
+                    }, 500);
+                }
+            } catch (error) {
+                console.error('[QuestActionsService] Failed to generate loot:', error);
+            }
+        }
+    }
+
     // Save to file
     try {
         console.log('[QuestActionsService] Saving quest to file:', {
@@ -220,14 +272,14 @@ export async function moveQuest(
 
         if (!saveResult) {
             console.error('[QuestActionsService] Save returned false');
-            return { success: false, quest: updatedQuest, streakResult };
+            return { success: false, quest: updatedQuest, streakResult, loot };
         }
     } catch (error) {
         console.error('[QuestActionsService] Failed to save quest:', error);
-        return { success: false, quest: updatedQuest, streakResult };
+        return { success: false, quest: updatedQuest, streakResult, loot };
     }
 
-    return { success: true, quest: updatedQuest, streakResult };
+    return { success: true, quest: updatedQuest, streakResult, loot };
 }
 
 /**
