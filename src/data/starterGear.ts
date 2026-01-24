@@ -5,7 +5,7 @@
  * All items are Common tier, Level 1.
  */
 
-import { GearItem, GearSlot, generateGearId } from '../models/Gear';
+import { GearItem, GearSlot, generateGearId, ArmorType, WeaponType } from '../models/Gear';
 
 /**
  * Starter gear templates (without ID/acquiredAt - added at creation time)
@@ -17,6 +17,7 @@ const STARTER_TEMPLATES: Record<GearSlot, StarterGearTemplate | null> = {
         name: 'Cloth Hood',
         description: 'A simple cloth hood that offers minimal protection.',
         slot: 'head',
+        armorType: 'cloth',
         tier: 'common',
         level: 1,
         stats: {
@@ -32,6 +33,7 @@ const STARTER_TEMPLATES: Record<GearSlot, StarterGearTemplate | null> = {
         name: 'Linen Tunic',
         description: 'A basic linen tunic. Better than nothing.',
         slot: 'chest',
+        armorType: 'cloth',
         tier: 'common',
         level: 1,
         stats: {
@@ -47,6 +49,7 @@ const STARTER_TEMPLATES: Record<GearSlot, StarterGearTemplate | null> = {
         name: 'Simple Pants',
         description: 'Plain pants that provide basic coverage.',
         slot: 'legs',
+        armorType: 'cloth',
         tier: 'common',
         level: 1,
         stats: {
@@ -62,6 +65,7 @@ const STARTER_TEMPLATES: Record<GearSlot, StarterGearTemplate | null> = {
         name: 'Worn Sandals',
         description: 'Old sandals. They get the job done.',
         slot: 'boots',
+        armorType: 'cloth',
         tier: 'common',
         level: 1,
         stats: {
@@ -77,6 +81,7 @@ const STARTER_TEMPLATES: Record<GearSlot, StarterGearTemplate | null> = {
         name: 'Wooden Sword',
         description: 'A practice sword made of wood. Surprisingly sturdy.',
         slot: 'weapon',
+        weaponType: 'sword',
         tier: 'common',
         level: 1,
         stats: {
@@ -92,6 +97,7 @@ const STARTER_TEMPLATES: Record<GearSlot, StarterGearTemplate | null> = {
         name: 'Wooden Buckler',
         description: 'A small wooden shield. Blocks some attacks.',
         slot: 'shield',
+        weaponType: 'shield',
         tier: 'common',
         level: 1,
         stats: {

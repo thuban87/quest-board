@@ -1,6 +1,6 @@
 # Phase 3 Implementation Checklist
 
-> **Status:** 🟡 Phase 3A In Progress (Part 2 Complete)  
+> **Status:** 🟡 Phase 3A In Progress (Steps 0-8, 13-14 Complete)  
 > **Estimated Time:** 17-24 days  
 > **Purpose:** Shorthand reference with links to full documentation
 
@@ -77,26 +77,29 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Implement gear level variance (+/- character level)
 - [x] Support unique items via `createUniqueItem()` in combat
 
-### Step 6: Quest Completion Integration
+### Step 6: Quest Completion Integration ✅
 
-- [ ] Hook into `QuestActionsService.moveQuest()` for loot drops
-- [ ] Roll loot on quest complete
-- [ ] Award gold based on difficulty
-- [ ] Show Loot Modal with items
+- [x] Hook into `QuestActionsService.moveQuest()` for loot drops
+- [x] Roll loot on quest complete via `LootGenerationService`
+- [x] Award gold and gear based on quest priority
+- [x] Show `LootModal` with items (tier-colored display)
 
-### Step 7: Character Sheet UI
+### Step 7: Character Sheet UI ✅
 
-- [ ] Display 6 equipped gear slots
-- [ ] Show derived combat stats (cached)
+- [x] Display 6 equipped gear slots with tier colors
+- [ ] Show derived combat stats (cached) - *deferred to Phase 3B*
   - See: [Gear Doc → Architectural Considerations](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Gear%20and%20Loot%20System.md#architectural-considerations)
-- [ ] Implement gear tooltips on hover
+- [x] Implement gear tooltips on hover
 
-### Step 8: Inventory UI
+### Step 8: Inventory UI ✅
 
-- [ ] Create two-tab inventory (Gear | Consumables)
-- [ ] Implement grid view with virtualization for 50+ items
-- [ ] Add equip/unequip actions
-- [ ] Add sell items for gold
+- [x] Create two-tab inventory (Gear | Consumables)
+- [x] Implement grid view for gear items
+- [x] Add equip/swap actions
+- [x] Add sell items for gold
+- [x] Add comparison tooltip (hover to see +/- vs equipped)
+- [x] Add armor/weapon type display
+- [x] Disable equip button for class-restricted items
 
 ### Step 9: Inventory Management Modal
 
@@ -126,10 +129,21 @@ Complete these BEFORE starting any Phase 3 work:
 - [ ] Store `originQuestId` AND `originQuestTitle` snapshot
 - [ ] Optional AI enhancement (fallback to templates)
 
-### Step 13: Settings UI
+### Step 13: Settings UI ✅
 
-- [ ] Quest type → gear slot remapping
-- [ ] Per-type slot assignments (max 3)
+- [x] Quest type → gear slot remapping
+- [x] Per-type slot assignments with live updates
+- [x] Add custom quest type mapping UI
+
+### Step 14: Armor/Weapon Types & Class Restrictions ✅
+
+- [x] Added `ArmorType` (cloth, leather, mail, plate)
+- [x] Added `WeaponType` (sword, axe, mace, dagger, staff, wand, bow, shield)
+- [x] Added `CLASS_ARMOR_PROFICIENCY` and `CLASS_WEAPON_PROFICIENCY` maps
+- [x] Loot generation picks class-appropriate gear types
+- [x] `equipGear` enforces class restrictions
+- [x] Display type in LootModal and InventoryModal
+- [x] Starter gear uses cloth/sword (equippable by all)
 
 ---
 

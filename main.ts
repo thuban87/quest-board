@@ -26,6 +26,9 @@ import { statusBarService } from './src/services/StatusBarService';
 import { BuffStatusProvider } from './src/services/BuffStatusProvider';
 import { QuestBoardCommandMenu } from './src/modals/QuestBoardCommandMenu';
 import { WelcomeModal } from './src/modals/WelcomeModal';
+import { showInventoryModal } from './src/modals/InventoryModal';
+import { lootGenerationService } from './src/services/LootGenerationService';
+import { GearSlot } from './src/models/Gear';
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
@@ -37,6 +40,15 @@ export default class QuestBoardPlugin extends Plugin {
 
         // Load settings
         await this.loadSettings();
+
+        // Apply custom quest→slot mapping to loot service
+        if (this.settings.questSlotMapping) {
+            const typedMapping: Record<string, GearSlot[]> = {};
+            for (const [key, slots] of Object.entries(this.settings.questSlotMapping)) {
+                typedMapping[key] = slots as GearSlot[];
+            }
+            lootGenerationService.setCustomSlotMapping(typedMapping);
+        }
 
         // Check and update streak on load (reset if missed days, reset shield weekly)
         if (this.settings.character) {
@@ -186,6 +198,20 @@ export default class QuestBoardPlugin extends Plugin {
             },
         });
 
+        // Add open inventory command
+        this.addCommand({
+            id: 'open-inventory',
+            name: 'Open Inventory',
+            callback: () => {
+                showInventoryModal(this.app, {
+                    onSave: async () => {
+                        this.settings.character = useCharacterStore.getState().character;
+                        await this.saveSettings();
+                    }
+                });
+            },
+        });
+
         // Add create achievement command
         this.addCommand({
             id: 'create-achievement',
@@ -221,6 +247,15 @@ export default class QuestBoardPlugin extends Plugin {
                     this.recurringQuestService,
                     () => this.app.workspace.trigger('quest-board:refresh')
                 ).open();
+            },
+        });
+
+        // Add migration command to add difficulty field to existing quests
+        this.addCommand({
+            id: 'migrate-add-difficulty',
+            name: 'Migrate: Add Difficulty to Existing Quests',
+            callback: async () => {
+                await this.migrateQuestsDifficulty();
             },
         });
 
@@ -306,6 +341,106 @@ export default class QuestBoardPlugin extends Plugin {
             // Re-activate sidebar to show the new character
             await this.activateSidebarView();
         }).open();
+    }
+
+    /**
+     * Migrate existing quests to add difficulty field
+     * Adds difficulty: medium to quests that don't have it
+     */
+    async migrateQuestsDifficulty(): Promise<void> {
+        const { vault } = this.app;
+        const storageFolder = this.settings.storageFolder || 'Life/Quest Board';
+        const questsPath = `${storageFolder}/quests`;
+
+        // Check if quests folder exists
+        const questsFolder = vault.getAbstractFileByPath(questsPath);
+        if (!questsFolder || !(questsFolder as any).children) {
+            new (await import('obsidian')).Notice('❌ No quests folder found');
+            return;
+        }
+
+        let migratedCount = 0;
+        let skippedCount = 0;
+        let errorCount = 0;
+
+        // Recursively find all .md files in quests folder
+        const findQuestFiles = (folder: any): any[] => {
+            const files: any[] = [];
+            for (const child of folder.children || []) {
+                if (child.extension === 'md') {
+                    files.push(child);
+                } else if (child.children) {
+                    files.push(...findQuestFiles(child));
+                }
+            }
+            return files;
+        };
+
+        const questFiles = findQuestFiles(questsFolder);
+
+        for (const file of questFiles) {
+            try {
+                const content = await vault.read(file);
+
+                // Check if file has frontmatter
+                if (!content.startsWith('---')) {
+                    skippedCount++;
+                    continue;
+                }
+
+                // Check if difficulty already exists in frontmatter
+                const frontmatterEnd = content.indexOf('---', 3);
+                if (frontmatterEnd === -1) {
+                    skippedCount++;
+                    continue;
+                }
+
+                const frontmatter = content.substring(0, frontmatterEnd + 3);
+
+                // Skip if already has difficulty
+                if (/^difficulty:/m.test(frontmatter)) {
+                    skippedCount++;
+                    continue;
+                }
+
+                // Add difficulty after priority line, or at end of frontmatter
+                let newContent: string;
+                const priorityMatch = frontmatter.match(/^(priority:.*)$/m);
+
+                if (priorityMatch) {
+                    // Insert after priority line
+                    newContent = content.replace(
+                        priorityMatch[0],
+                        `${priorityMatch[0]}\ndifficulty: medium`
+                    );
+                } else {
+                    // Insert before closing ---
+                    newContent = content.replace(
+                        /\n---/,
+                        '\ndifficulty: medium\n---'
+                    );
+                }
+
+                await vault.modify(file, newContent);
+                migratedCount++;
+            } catch (error) {
+                console.error(`[Migration] Error processing ${file.path}:`, error);
+                errorCount++;
+            }
+        }
+
+        // Show result notice
+        const Notice = (await import('obsidian')).Notice;
+        new Notice(
+            `✅ Migration complete!\n` +
+            `${migratedCount} quests updated\n` +
+            `${skippedCount} already have difficulty\n` +
+            `${errorCount} errors`,
+            5000
+        );
+
+        // Refresh views
+        this.app.workspace.trigger('quest-board:refresh');
     }
 }
 

@@ -19,12 +19,13 @@ export enum QuestStatus {
 }
 
 /**
- * Quest priority levels
+ * Quest priority levels (urgency/importance)
  */
 export enum QuestPriority {
     LOW = 'low',
     MEDIUM = 'medium',
     HIGH = 'high',
+    CRITICAL = 'critical',
 }
 
 /**
@@ -38,9 +39,10 @@ export enum QuestType {
 }
 
 /**
- * Quest difficulty levels (for AI-generated quests)
+ * Quest difficulty levels (affects loot tier)
  */
 export enum QuestDifficulty {
+    TRIVIAL = 'trivial',
     EASY = 'easy',
     MEDIUM = 'medium',
     HARD = 'hard',

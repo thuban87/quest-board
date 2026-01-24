@@ -10,6 +10,8 @@ import type QuestBoardPlugin from '../main';
 import type { Character } from './models/Character';
 import type { InventoryItem } from './models/Consumable';
 import { Achievement } from './models/Achievement';
+import { lootGenerationService } from './services/LootGenerationService';
+import { GearSlot } from './models/Gear';
 
 // Re-export for convenience
 export type { Achievement };
@@ -69,6 +71,9 @@ export interface QuestBoardSettings {
     archiveFolder: string;          // Folder for archived/completed quests
     defaultQuestTags: string[];     // Tags to add by default when creating quests
     enableDailyNoteLogging: boolean; // Log quest completions to daily notes
+
+    // Loot configuration - custom quest type to gear slot mapping
+    questSlotMapping: Record<string, string[]>;
 }
 
 /**
@@ -96,6 +101,14 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     archiveFolder: 'quests/archive',
     defaultQuestTags: [],
     enableDailyNoteLogging: true,
+    questSlotMapping: {
+        main: ['chest', 'weapon', 'head'],
+        side: ['legs', 'boots', 'shield'],
+        training: ['head', 'shield'],
+        guild: ['chest', 'legs'],
+        recurring: ['boots', 'accessory1'],
+        daily: [],
+    },
 };
 
 /**
@@ -107,6 +120,19 @@ export class QuestBoardSettingTab extends PluginSettingTab {
     constructor(app: App, plugin: QuestBoardPlugin) {
         super(app, plugin);
         this.plugin = plugin;
+    }
+
+    /**
+     * Apply quest slot mapping to loot generation service
+     */
+    private applyQuestSlotMapping(): void {
+        if (this.plugin.settings.questSlotMapping) {
+            const typedMapping: Record<string, GearSlot[]> = {};
+            for (const [key, slots] of Object.entries(this.plugin.settings.questSlotMapping)) {
+                typedMapping[key] = slots as GearSlot[];
+            }
+            lootGenerationService.setCustomSlotMapping(typedMapping);
+        }
     }
 
     display(): void {
@@ -279,6 +305,65 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.streakMode = value as 'quest' | 'task';
                     await this.plugin.saveSettings();
+                }));
+
+        // Quest → Gear Slot Mapping Section
+        containerEl.createEl('h3', { text: 'Quest → Gear Slot Mapping' });
+        containerEl.createEl('p', {
+            text: 'Configure which gear slots can drop from each quest type. Separate slots with commas.',
+            cls: 'setting-item-description'
+        });
+
+        const gearSlotOptions = ['head', 'chest', 'legs', 'boots', 'weapon', 'shield', 'accessory1', 'accessory2', 'accessory3'];
+        const questSlotMapping = this.plugin.settings.questSlotMapping || {};
+
+        // Show existing quest type mappings
+        const questTypes = Object.keys(questSlotMapping);
+        questTypes.forEach(questType => {
+            const slots = questSlotMapping[questType] || [];
+            new Setting(containerEl)
+                .setName(`${questType.charAt(0).toUpperCase() + questType.slice(1)} Quests`)
+                .setDesc(`Slots: ${slots.length > 0 ? slots.join(', ') : '(no gear drops)'}`)
+                .addText(text => text
+                    .setPlaceholder('e.g., chest, weapon, head')
+                    .setValue(slots.join(', '))
+                    .onChange(async (value) => {
+                        const newSlots = value
+                            .split(',')
+                            .map(s => s.trim().toLowerCase())
+                            .filter(s => gearSlotOptions.includes(s));
+                        this.plugin.settings.questSlotMapping[questType] = newSlots;
+                        await this.plugin.saveSettings();
+                        // Update loot service with new mapping
+                        this.applyQuestSlotMapping();
+                    }));
+        });
+
+        // Add new quest type mapping
+        let newQuestType = '';
+        let newSlots = '';
+        new Setting(containerEl)
+            .setName('Add Custom Quest Type')
+            .setDesc('Add a mapping for a custom quest type folder')
+            .addText(text => text
+                .setPlaceholder('Quest type (e.g., fitness)')
+                .onChange(value => { newQuestType = value.toLowerCase().trim(); }))
+            .addText(text => text
+                .setPlaceholder('Slots (e.g., chest, legs)')
+                .onChange(value => { newSlots = value; }))
+            .addButton(button => button
+                .setButtonText('Add')
+                .onClick(async () => {
+                    if (newQuestType) {
+                        const parsedSlots = newSlots
+                            .split(',')
+                            .map(s => s.trim().toLowerCase())
+                            .filter(s => gearSlotOptions.includes(s));
+                        this.plugin.settings.questSlotMapping[newQuestType] = parsedSlots;
+                        await this.plugin.saveSettings();
+                        this.applyQuestSlotMapping();
+                        this.display(); // Refresh
+                    }
                 }));
 
         // Character Section (if character exists)

@@ -58,6 +58,132 @@ export const GEAR_SLOT_ICONS: Record<GearSlot, string> = {
 };
 
 // ============================================
+// Armor & Weapon Types
+// ============================================
+
+/**
+ * Armor weight types - determines which classes can equip
+ */
+export type ArmorType = 'cloth' | 'leather' | 'mail' | 'plate';
+
+/**
+ * Weapon types - determines which classes can equip
+ */
+export type WeaponType =
+    | 'sword'
+    | 'axe'
+    | 'mace'
+    | 'dagger'
+    | 'staff'
+    | 'wand'
+    | 'bow'
+    | 'shield';  // Shields are a weapon type for restriction purposes
+
+/** Display names for armor types */
+export const ARMOR_TYPE_NAMES: Record<ArmorType, string> = {
+    cloth: 'Cloth',
+    leather: 'Leather',
+    mail: 'Mail',
+    plate: 'Plate',
+};
+
+/** Display names for weapon types */
+export const WEAPON_TYPE_NAMES: Record<WeaponType, string> = {
+    sword: 'Sword',
+    axe: 'Axe',
+    mace: 'Mace',
+    dagger: 'Dagger',
+    staff: 'Staff',
+    wand: 'Wand',
+    bow: 'Bow',
+    shield: 'Shield',
+};
+
+/** Emojis for armor types */
+export const ARMOR_TYPE_ICONS: Record<ArmorType, string> = {
+    cloth: '🧵',
+    leather: '🦊',
+    mail: '⛓️',
+    plate: '🛡️',
+};
+
+/** Emojis for weapon types */
+export const WEAPON_TYPE_ICONS: Record<WeaponType, string> = {
+    sword: '⚔️',
+    axe: '🪓',
+    mace: '🔨',
+    dagger: '🗡️',
+    staff: '🪄',
+    wand: '✨',
+    bow: '🏹',
+    shield: '🛡️',
+};
+
+// Import CharacterClass type for restrictions
+import { CharacterClass } from './Character';
+
+/**
+ * Which armor types each class can equip
+ * Classes can equip their tier and below (plate can equip all)
+ */
+export const CLASS_ARMOR_PROFICIENCY: Record<CharacterClass, ArmorType[]> = {
+    scholar: ['cloth'],
+    technomancer: ['cloth', 'leather'],
+    bard: ['cloth', 'leather'],
+    rogue: ['cloth', 'leather'],
+    cleric: ['cloth', 'leather', 'mail'],
+    paladin: ['cloth', 'leather', 'mail', 'plate'],
+    warrior: ['cloth', 'leather', 'mail', 'plate'],
+};
+
+/**
+ * Which weapon types each class can equip
+ */
+export const CLASS_WEAPON_PROFICIENCY: Record<CharacterClass, WeaponType[]> = {
+    warrior: ['sword', 'axe', 'mace', 'shield'],
+    paladin: ['sword', 'mace', 'shield'],
+    rogue: ['sword', 'dagger', 'bow'],
+    bard: ['sword', 'dagger', 'bow'],
+    cleric: ['mace', 'staff', 'wand', 'shield'],
+    scholar: ['staff', 'wand', 'dagger'],
+    technomancer: ['staff', 'wand', 'dagger', 'bow'],
+};
+
+/**
+ * Check if a class can equip an armor type
+ */
+export function canEquipArmor(characterClass: CharacterClass, armorType: ArmorType): boolean {
+    return CLASS_ARMOR_PROFICIENCY[characterClass].includes(armorType);
+}
+
+/**
+ * Check if a class can equip a weapon type
+ */
+export function canEquipWeapon(characterClass: CharacterClass, weaponType: WeaponType): boolean {
+    return CLASS_WEAPON_PROFICIENCY[characterClass].includes(weaponType);
+}
+
+/**
+ * Check if a class can equip a gear item
+ */
+export function canEquipGear(characterClass: CharacterClass, item: GearItem): boolean {
+    // Accessories have no class restrictions
+    if (item.slot.startsWith('accessory')) {
+        return true;
+    }
+
+    // Check weapon proficiency
+    if (item.slot === 'weapon' || item.slot === 'shield') {
+        if (!item.weaponType) return true; // Legacy items without type
+        return canEquipWeapon(characterClass, item.weaponType);
+    }
+
+    // Check armor proficiency
+    if (!item.armorType) return true; // Legacy items without type
+    return canEquipArmor(characterClass, item.armorType);
+}
+
+// ============================================
 // Gear Tiers
 // ============================================
 
@@ -192,6 +318,12 @@ export interface GearItem {
 
     /** Which slot this equips to */
     slot: GearSlot;
+
+    /** Armor weight type (cloth/leather/mail/plate) - for armor slots */
+    armorType?: ArmorType;
+
+    /** Weapon type (sword/axe/staff/etc.) - for weapon/shield slots */
+    weaponType?: WeaponType;
 
     /** Quality tier */
     tier: GearTier;

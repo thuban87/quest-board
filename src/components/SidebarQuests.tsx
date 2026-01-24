@@ -35,6 +35,7 @@ import { useCharacterSprite } from '../hooks/useCharacterSprite';
 import { Droppable, SortableCard } from './DnDWrappers';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { showInventoryModal } from '../modals/InventoryModal';
 
 interface SidebarQuestsProps {
     plugin: QuestBoardPlugin;
@@ -98,6 +99,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         streakMode: plugin.settings.streakMode,
         pendingSavesRef,  // Pass pending saves ref to prevent file watcher race condition
         onSaveCharacter: handleSaveCharacter,  // Save character after streak updates
+        app,  // Pass app for loot modal display
     });
 
     // XP Award hook  
@@ -337,6 +339,9 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                     <CharacterSheet
                         onBack={() => setCurrentView('quests')}
                         onViewAchievements={() => setCurrentView('achievements')}
+                        onOpenInventory={() => showInventoryModal(app, {
+                            onSave: handleSaveCharacter
+                        })}
                         spriteFolder={plugin.settings.spriteFolder}
                         spriteResourcePath={spriteResourcePath}
                     />

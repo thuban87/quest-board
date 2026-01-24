@@ -9,6 +9,7 @@ import { useCharacterStore } from '../store/characterStore';
 import { useQuestStore } from '../store/questStore';
 import { CLASS_INFO, getTrainingLevelDisplay, StatType } from '../models/Character';
 import { QuestStatus } from '../models/QuestStatus';
+import { GearSlot, GearItem, TIER_INFO, GEAR_SLOT_NAMES, ALL_GEAR_SLOTS } from '../models/Gear';
 import { getXPProgress, getXPForNextLevel, XP_THRESHOLDS, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 import { getTotalStats, calculateDerivedStats, STAT_ABBREVIATIONS, STAT_NAMES, getStatCap } from '../services/StatsService';
 import { getStreakDisplay, getStreakMessage } from '../services/StreakService';
@@ -17,20 +18,57 @@ import { getClassPerkAsPowerUp, getTimeRemaining, isExpiringSoon, expirePowerUps
 interface CharacterSheetProps {
     onBack: () => void;
     onViewAchievements?: () => void;
+    onOpenInventory?: () => void;
     spriteFolder?: string;
     spriteResourcePath?: string;  // Pre-computed resource path from vault
 }
 
-const GEAR_SLOTS = [
-    { id: 'head', label: 'Head', emoji: '👑' },
-    { id: 'chest', label: 'Chest', emoji: '🛡️' },
-    { id: 'legs', label: 'Legs', emoji: '👖' },
-    { id: 'boots', label: 'Boots', emoji: '👢' },
-    { id: 'weapon', label: 'Weapon', emoji: '⚔️' },
-    { id: 'shield', label: 'Shield', emoji: '🛡️' },
+const GEAR_SLOTS_CONFIG = [
+    { slot: 'head' as GearSlot, label: 'Head', emoji: '👑' },
+    { slot: 'chest' as GearSlot, label: 'Chest', emoji: '🛡️' },
+    { slot: 'legs' as GearSlot, label: 'Legs', emoji: '👖' },
+    { slot: 'boots' as GearSlot, label: 'Boots', emoji: '👢' },
+    { slot: 'weapon' as GearSlot, label: 'Weapon', emoji: '⚔️' },
+    { slot: 'shield' as GearSlot, label: 'Shield', emoji: '🛡️' },
 ];
 
-export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAchievements, spriteFolder, spriteResourcePath }) => {
+/**
+ * Generate a tooltip string for a gear item
+ */
+function getGearTooltip(item: GearItem): string {
+    const tierInfo = TIER_INFO[item.tier];
+    const lines = [
+        `${item.name}`,
+        `${tierInfo.emoji} ${tierInfo.name} • Level ${item.level}`,
+        '',
+        `+${item.stats.primaryValue} ${item.stats.primaryStat.charAt(0).toUpperCase() + item.stats.primaryStat.slice(1)}`,
+    ];
+
+    // Add secondary stats (it's a Record<StatType, number>)
+    if (item.stats.secondaryStats) {
+        for (const [stat, value] of Object.entries(item.stats.secondaryStats)) {
+            if (value && value > 0) {
+                lines.push(`+${value} ${stat.charAt(0).toUpperCase() + stat.slice(1)}`);
+            }
+        }
+    }
+    if (item.stats.attackPower) {
+        lines.push(`+${item.stats.attackPower} Attack Power`);
+    }
+    if (item.stats.defense) {
+        lines.push(`+${item.stats.defense} Defense`);
+    }
+    if (item.stats.critChance) {
+        lines.push(`+${item.stats.critChance}% Crit Chance`);
+    }
+    if (item.stats.blockChance) {
+        lines.push(`+${item.stats.blockChance}% Block Chance`);
+    }
+
+    return lines.join('\n');
+}
+
+export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAchievements, onOpenInventory, spriteFolder, spriteResourcePath }) => {
     const character = useCharacterStore((state) => state.character);
     const achievements = useCharacterStore((state) => state.achievements);
     const quests = useQuestStore((state) => state.quests);
@@ -168,14 +206,44 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
             <div className="qb-sheet-gear">
                 <h3>Equipment</h3>
                 <div className="qb-gear-grid">
-                    {GEAR_SLOTS.map((slot) => (
-                        <div key={slot.id} className="qb-gear-slot" title={slot.label}>
-                            <div className="qb-gear-slot-icon">{slot.emoji}</div>
-                            <span className="qb-gear-slot-label">{slot.label}</span>
-                            <div className="qb-gear-slot-empty">Empty</div>
-                        </div>
-                    ))}
+                    {GEAR_SLOTS_CONFIG.map(({ slot, label, emoji }) => {
+                        const equippedItem = character.equippedGear?.[slot];
+
+                        return (
+                            <div
+                                key={slot}
+                                className={`qb-gear-slot ${equippedItem ? `qb-tier-${equippedItem.tier}` : ''}`}
+                                title={equippedItem ? getGearTooltip(equippedItem) : `${label} - Empty`}
+                            >
+                                <div
+                                    className="qb-gear-slot-icon"
+                                    style={equippedItem ? { borderColor: TIER_INFO[equippedItem.tier].color } : {}}
+                                >
+                                    {equippedItem?.iconEmoji || emoji}
+                                </div>
+                                <span className="qb-gear-slot-label">{label}</span>
+                                {equippedItem ? (
+                                    <div
+                                        className="qb-gear-slot-name"
+                                        style={{ color: TIER_INFO[equippedItem.tier].color }}
+                                    >
+                                        {equippedItem.name}
+                                    </div>
+                                ) : (
+                                    <div className="qb-gear-slot-empty">Empty</div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
+                {onOpenInventory && (
+                    <button
+                        className="qb-inventory-btn-main"
+                        onClick={onOpenInventory}
+                    >
+                        🎒 Open Inventory
+                    </button>
+                )}
             </div>
 
             {/* Primary Stats */}

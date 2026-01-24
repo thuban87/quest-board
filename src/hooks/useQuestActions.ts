@@ -6,7 +6,7 @@
  */
 
 import { useCallback, MutableRefObject } from 'react';
-import { Vault } from 'obsidian';
+import { Vault, App } from 'obsidian';
 import { QuestStatus } from '../models/QuestStatus';
 import { moveQuest, toggleTask, MoveQuestResult, ToggleTaskResult } from '../services/QuestActionsService';
 import { useCharacterStore } from '../store/characterStore';
@@ -19,6 +19,8 @@ interface UseQuestActionsOptions {
     pendingSavesRef?: MutableRefObject<Set<string>>;
     /** Callback to save character to plugin settings after streak update */
     onSaveCharacter?: () => Promise<void>;
+    /** App reference for showing modals like loot popups */
+    app?: App;
 }
 
 interface UseQuestActionsResult {
@@ -37,6 +39,7 @@ export function useQuestActions({
     streakMode = 'quest',
     pendingSavesRef,
     onSaveCharacter,
+    app,
 }: UseQuestActionsOptions): UseQuestActionsResult {
 
     const handleMoveQuest = useCallback(
@@ -51,6 +54,7 @@ export function useQuestActions({
                 const result = await moveQuest(vault, questId, newStatus, {
                     storageFolder,
                     streakMode,
+                    app,
                 });
 
                 // Save character if streak was updated
@@ -71,7 +75,7 @@ export function useQuestActions({
                 }
             }
         },
-        [vault, storageFolder, streakMode, pendingSavesRef, onSaveCharacter]
+        [vault, storageFolder, streakMode, pendingSavesRef, onSaveCharacter, app]
     );
 
     const handleToggleTask = useCallback(

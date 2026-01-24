@@ -258,8 +258,10 @@ export class CreateQuestModal extends Modal {
         // Difficulty
         new Setting(contentEl)
             .setName('Difficulty')
+            .setDesc('Affects loot quality when quest completes')
             .addDropdown(dropdown => {
                 dropdown
+                    .addOption(QuestDifficulty.TRIVIAL, '⚪ Trivial')
                     .addOption(QuestDifficulty.EASY, '⭐ Easy')
                     .addOption(QuestDifficulty.MEDIUM, '⭐⭐ Medium')
                     .addOption(QuestDifficulty.HARD, '⭐⭐⭐ Hard')
