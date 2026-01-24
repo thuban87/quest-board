@@ -784,6 +784,139 @@ Bosses are special monsters with:
 
 ---
 
+## Combat Balance (Tuned v25)
+
+> [!IMPORTANT]
+> **Finalized Balance Values** - These constants were tuned via `test/combat-simulator.test.ts`.
+> Target: Casual-friendly 50%+ win rate floor across all classes and encounter tiers.
+
+### Target Win Rates
+
+| Tier | Target Range | Notes |
+|------|--------------|-------|
+| **Overworld** | 50-80% | Varied but manageable |
+| **Dungeon** | 50-80% | Challenging but winnable |
+| **Boss** | 50-80% | Significant challenge |
+| **Raid Boss** | 40-60% | Brutal, requires preparation |
+
+### Class Base Modifiers
+
+```typescript
+// Located in: src/config/classConfig.ts
+const CLASS_INFO: Record<CharacterClass, ClassConfig> = {
+    warrior:      { damageModifier: 1.0,  hpModifier: 1.1  }, // Tank: +10% HP
+    paladin:      { damageModifier: 1.1,  hpModifier: 1.05 }, // Hybrid
+    technomancer: { damageModifier: 1.15, hpModifier: 1.0  }, // Glass cannon
+    scholar:      { damageModifier: 1.1,  hpModifier: 1.15 }, // Survivability fix
+    rogue:        { damageModifier: 1.15, hpModifier: 1.0  }, // Glass cannon
+    cleric:       { damageModifier: 1.0,  hpModifier: 1.1  }, // Tank: +10% HP
+    bard:         { damageModifier: 1.1,  hpModifier: 1.05 }, // Hybrid
+};
+```
+
+### Level-Specific Modifiers
+
+```typescript
+// Located in: src/services/CombatService.ts
+function getLevelModifier(cls: CharacterClass, level: number): { damage: number; hp: number } {
+    let damage = 1.0;
+    let hp = 1.0;
+
+    // ===== TANKS: Boost HP, penalty late-game damage =====
+    if (cls === 'warrior') {
+        hp = 1.1;  // +10% HP always
+        if (level >= 18 && level <= 22) damage = 1.15;      // Fix L18-22 dip
+        else if (level >= 15) damage = 0.85;                // -15% damage late
+    }
+    if (cls === 'cleric') {
+        hp = 1.1;  // +10% HP always
+        if (level >= 13 && level <= 17) damage = 1.2;       // +20% at L13-17
+        else if (level >= 18 && level <= 22) damage = 1.15; // Fix L18-22 dip
+        else if (level >= 23) damage = 0.85;                // -15% damage late
+    }
+
+    // ===== GLASS CANNONS: Boost early, nerf late =====
+    if (cls === 'technomancer' || cls === 'rogue') {
+        if (level >= 3 && level <= 7) { damage = 1.3; hp = 1.15; }  // L3-7 survival
+        else if (level >= 20) damage = 0.85;                        // -15% late
+    }
+
+    // ===== HYBRIDS: Boost multiple level ranges =====
+    if (cls === 'paladin') {
+        if (level >= 3 && level <= 7) { damage = 1.4; hp = 1.2; }
+        else if (level >= 8 && level <= 12) { damage = 1.35; hp = 1.15; }
+        else if (level >= 18 && level <= 22) { damage = 1.25; hp = 1.1; }
+        else if (level >= 23) damage = 0.9;
+    }
+    if (cls === 'bard') {
+        if (level >= 3 && level <= 7) { damage = 1.4; hp = 1.2; }
+        else if (level >= 20) damage = 0.9;
+    }
+
+    // ===== SCHOLAR: HP bonus + late nerf =====
+    if (cls === 'scholar') {
+        hp = 1.1;  // +10% HP
+        if (level >= 20) damage = 0.9;
+    }
+
+    return { damage, hp };
+}
+```
+
+### Monster Base Templates
+
+```typescript
+// Located in: src/data/monsters.ts
+const MONSTER_TEMPLATES: MonsterTemplate[] = [
+    { id: 'goblin',   name: 'Goblin',     baseHP: 70, baseAttack: 14, baseDefense: 6, baseMagicDef: 5 },
+    { id: 'skeleton', name: 'Skeleton',   baseHP: 60, baseAttack: 16, baseDefense: 5, baseMagicDef: 6 },
+    { id: 'wolf',     name: 'Wolf',       baseHP: 75, baseAttack: 17, baseDefense: 5, baseMagicDef: 4 },
+    { id: 'troll',    name: 'Cave Troll', baseHP: 90, baseAttack: 13, baseDefense: 9, baseMagicDef: 6 },
+];
+```
+
+### Monster Stat Scaling
+
+```typescript
+// Per-level growth formula (7.5% exponential)
+for (let lvl = 2; lvl <= level; lvl++) {
+    const multiplier = 1 + (lvl * 0.075);  // 7.5% per level
+    
+    hp  += Math.floor(24 * multiplier);    // Moderate HP growth
+    atk += Math.floor(8 * multiplier);     // Moderate attack growth
+    def += Math.floor(3.5 * multiplier);
+    mdef += Math.floor(3.5 * multiplier);
+}
+```
+
+### Tier Multipliers
+
+```typescript
+// Located in: src/config/combatConfig.ts
+const TIER_MULTIPLIERS = {
+    overworld: { hp: 1.0,  atk: 1.0,  def: 1.0, mdef: 1.0  },
+    elite:     { hp: 1.3,  atk: 1.2,  def: 1.1, mdef: 1.1  },  // Rare dangerous
+    dungeon:   { hp: 1.05, atk: 1.0,  def: 1.0, mdef: 1.0  },  // Slightly harder
+    boss:      { hp: 1.15, atk: 1.05, def: 1.0, mdef: 1.0  },  // Moderate
+    raid_boss: { hp: 1.2,  atk: 1.05, def: 1.0, mdef: 1.0  },  // Hardest
+};
+```
+
+### Raid Boss Tank Penalty
+
+```typescript
+// Applied in runSimulation / CombatService when tier === 'raid_boss'
+if (tier === 'raid_boss' && (characterClass === 'warrior' || characterClass === 'cleric')) {
+    totalDamageMod *= 0.85;  // -15% damage penalty for tanks vs raid bosses
+}
+```
+
+> [!NOTE]
+> This penalty prevents tanks from trivializing raid bosses (was 99-100% win rate).
+> Now targets 75-90% for tanks, matching other classes at 40-85%.
+
+---
+
 ## Combat UI
 
 ### Visual Layout (CSS + DOM)

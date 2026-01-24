@@ -8,6 +8,10 @@
         "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
         "deploy:test": "npm run build && node deploy.mjs test",
         "deploy:production": "npm run build && node deploy.mjs production",
+        "test": "vitest",
+        "test:ui": "vitest --ui",
+        "test:run": "vitest run",
+        "test:balance": "vitest run test/combat-simulator.test.ts",
         "version": "node version-bump.mjs && git add manifest.json versions.json"
     },
     "keywords": [
@@ -24,11 +28,13 @@
         "@types/node": "^20.10.0",
         "@types/react": "^18.2.0",
         "@types/react-dom": "^18.2.0",
+        "@vitest/ui": "^4.0.18",
         "builtin-modules": "^3.3.0",
         "esbuild": "^0.19.0",
         "obsidian": "latest",
         "tslib": "^2.6.0",
-        "typescript": "^5.3.0"
+        "typescript": "^5.3.0",
+        "vitest": "^4.0.18"
     },
     "dependencies": {
         "@dnd-kit/core": "^6.3.1",
