@@ -60,6 +60,43 @@ Each session entry should include:
 
 ---
 
+## 2026-01-23 - Combat Balance Tuning Complete
+
+**Focus:** Finalized combat balance via simulator (v25) and integrated into documentation
+
+**Completed:**
+- ✅ Tuned combat simulator through 25+ iterations
+- ✅ Achieved 50%+ win rate floor for all classes/levels (casual-friendly)
+- ✅ Added class base modifiers (damage + HP)
+- ✅ Added level-specific modifiers (fix L5 cliff, nerf late-game domination)
+- ✅ Tuned monster templates and tier multipliers
+- ✅ Added raid boss tank penalty (-15% damage for Warrior/Cleric)
+- ✅ Updated `Fight System.md` with new "Combat Balance (Tuned v25)" section
+- ✅ Updated `Phase 3 Implementation Checklist.md` with balance integration tasks
+
+**Key Balance Decisions:**
+- Tanks (Warrior/Cleric): +10% HP base, -15% damage penalty at L15+
+- Glass Cannons (Technomancer/Rogue): +30% damage/+15% HP at L3-7, -15% damage at L20+
+- Hybrids (Paladin/Bard): Targeted boosts at L3-7, L8-12, L18-22
+- Scholar: +10% HP base, -10% damage at L20+
+- Raid Boss: Special -15% tank penalty to prevent trivialization
+
+**Files Changed:**
+- `test/combat-simulator.test.ts` - Full balance implementation
+- `docs/rpg-dev-aspects/Fight System.md` - Added Combat Balance section
+- `docs/rpg-dev-aspects/Phase 3 Implementation Checklist.md` - Added integration tasks
+
+**Testing Notes:**
+- `npm run test:balance` passes all simulations
+- Win rates verified across L1-L40 for all 7 classes
+- All tiers (overworld, dungeon, boss, raid_boss) within target ranges
+
+**Next Steps:**
+- Extract balanced values into game code (Phase 3B implementation)
+- Begin Phase 3A: Gear & Loot System
+
+---
+
 ## Next Session Prompt
 
 > **Phase 3 Implementation Ready to Begin**

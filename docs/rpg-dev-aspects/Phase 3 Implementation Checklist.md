@@ -1,6 +1,6 @@
 # Phase 3 Implementation Checklist
 
-> **Status:** 🟡 Not Started  
+> **Status:** 🟢 Pre-Implementation Complete  
 > **Estimated Time:** 17-24 days  
 > **Purpose:** Shorthand reference with links to full documentation
 
@@ -10,27 +10,24 @@
 
 Complete these BEFORE starting any Phase 3 work:
 
-- [ ] **Set up Vitest** for unit testing
-  - Install: `npm install -D vitest @vitest/ui`
-  - Create `vitest.config.ts`
-  - Create `test/setup.ts` with Obsidian API mocks
-  - See: Claude code review → Testing Setup
+- [x] **Set up Vitest** for unit testing ✅
+  - Installed `vitest` and `@vitest/ui`
+  - Created `vitest.config.ts` with obsidian alias
+  - Created `test/setup.ts` + `test/mocks/obsidian.ts`
 
-- [ ] **Create Dev Vault** for safe testing
-  - Create `Quest-Board-Test-Vault/` folder
-  - Update `deploy.js` for multi-vault support
-  - Add `npm run deploy:test` script
-  - See: Claude code review → Dev Vault Setup
+- [x] **Create Dev Vault** for safe testing ✅
+  - Created `Quest-Board-Test-Vault/`
+  - Updated `deploy.mjs` for multi-vault
+  - Added `npm run deploy:test` script
 
-- [ ] **Create Combat Simulator** for balance testing
-  - `test/combat-simulator.ts`
-  - Add `npm run test:balance`
-  - Document baseline win rates
-  - See: Claude code review → Combat Simulator
+- [x] **Create Combat Simulator** for balance testing ✅
+  - `test/combat-simulator.test.ts` with full combat simulation logic
+  - Added `npm run test:balance` script
+  - ✅ **Balance tuning complete (v25)** - Casual-friendly 50%+ win rate floor
 
-- [ ] **Add `isMobile()` utility** for responsive components
-  - `src/utils/platform.ts`
-  - Uses `Platform.isMobile` from Obsidian API
+- [x] **Add `isMobile()` utility** for responsive components ✅
+  - Created `src/utils/platform.ts`
+  - Includes `isMobile()`, `isDesktop()`, `getTapTargetSize()`, etc.
 
 ---
 
@@ -137,12 +134,21 @@ Complete these BEFORE starting any Phase 3 work:
 
 ## Phase 3B: Fight System (5-7 days)
 
-### Step 1: Combat Stats
+### Step 1: Combat Stats & Balance Integration
 
 - [ ] Create `CombatStats` interface
   - See: [Fight Doc → Derived Combat Stats](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#derived-combat-stats)
+- [ ] Extract `CLASS_INFO` modifiers to `src/config/classConfig.ts`
+- [ ] Extract `getLevelModifier()` to `src/services/CombatService.ts`
 - [ ] Extend StatsService with gear bonuses
 - [ ] Cache `derivedCombatStats` in character store
+
+### Step 1b: Monster Config
+
+- [ ] Extract `MONSTER_TEMPLATES` to `src/data/monsters.ts`
+- [ ] Extract tier multipliers to `src/config/combatConfig.ts`
+- [ ] Implement raid boss tank penalty in combat service
+  - See: [Fight Doc → Combat Balance (Tuned v25)](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#combat-balance-tuned-v25)
 
 ### Step 2: Stamina System
 

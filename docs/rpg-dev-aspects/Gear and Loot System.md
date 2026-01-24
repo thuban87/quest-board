@@ -138,6 +138,12 @@ function calculateBaseStatValue(gearLevel: number, tier: GearTier): number {
 
 **Why exponential?** Linear scaling (`level * 2 + tier * 5`) made a Level 40 Legendary only ~20x stronger than a Level 1 stick. With this formula, tier matters *multiplicatively* with level, making high-tier finds exciting at any level.
 
+> [!NOTE]
+> **Validated by Combat Simulator (v25)**
+> - These formulas are used in `test/combat-simulator.test.ts` for balance testing
+> - At L40, gear contributes approximately **30% of total combat power**
+> - This ratio ensures gear is important but doesn't overshadow character stats/level
+
 ---
 
 ## Quest Type → Gear Slot Mapping
