@@ -1,6 +1,6 @@
 # Phase 3 Implementation Checklist
 
-> **Status:** 🟡 Phase 3A In Progress (Part 1 Complete)  
+> **Status:** 🟡 Phase 3A In Progress (Part 2 Complete)  
 > **Estimated Time:** 17-24 days  
 > **Purpose:** Shorthand reference with links to full documentation
 
@@ -47,7 +47,7 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Create `GearItem`, `GearSlot`, `GearTier` types
   - See: [Gear Doc → Data Model](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Gear%20and%20Loot%20System.md#data-model)
 - [x] Create `LootReward` discriminated union
-- [ ] Add `validateGearItem()` to validator.ts
+- [x] Add `validateGearItem()` to validator.ts
 
 ### Step 2: Gold & Inventory ✅
 
@@ -62,19 +62,20 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Assign to new characters on creation
 - [x] Grant to existing characters on migration
 
-### Step 4: Unique Items Registry
+### Step 4: Unique Items Registry ✅
 
-- [ ] Create `src/data/uniqueItems.ts`
+- [x] Create `src/data/uniqueItems.ts`
   - See: [Gear Doc → Unique Items Registry](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Gear%20and%20Loot%20System.md#unique-items-registry)
-- [ ] Add boss drops (Goblin King's Crown, etc.)
+- [x] Add boss drops (Goblin King's Crown, Stormbringer Blade, Aegis of the Steadfast, etc.)
+- [x] Add achievement rewards (Ring of the Completionist, Amulet of Dedication)
 
-### Step 5: Loot Generation Service
+### Step 5: Loot Generation Service ✅
 
-- [ ] Create `LootGenerationService.ts`
+- [x] Create `LootGenerationService.ts`
   - See: [Gear Doc → Loot Generation Service](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Gear%20and%20Loot%20System.md#loot-generation-service)
-- [ ] Implement tier rolling with exponential scaling
-- [ ] Implement gear level variance
-- [ ] Support unique items via `itemId` in loot table
+- [x] Implement tier rolling with exponential scaling
+- [x] Implement gear level variance (+/- character level)
+- [x] Support unique items via `createUniqueItem()` in combat
 
 ### Step 6: Quest Completion Integration
 
@@ -360,4 +361,4 @@ Complete these BEFORE starting any Phase 3 work:
 
 ---
 
-*Last Updated: 2026-01-23*
+*Last Updated: 2026-01-24*

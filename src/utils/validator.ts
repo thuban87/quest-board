@@ -9,6 +9,7 @@ import { Notice } from 'obsidian';
 import { Quest, QUEST_SCHEMA_VERSION } from '../models/Quest';
 import { QuestStatus, QuestPriority } from '../models/QuestStatus';
 import { Character, CHARACTER_SCHEMA_VERSION, CharacterClass } from '../models/Character';
+import { GearItem, GearSlot, GearTier, ALL_GEAR_SLOTS, GEAR_TIERS } from '../models/Gear';
 
 /**
  * Validation result
@@ -213,4 +214,79 @@ export function validateCharacter(data: unknown): ValidationResult<Character> {
     }
 
     return { valid: true, data: character as unknown as Character, errors: [] };
+}
+
+/**
+ * Valid gear sources
+ */
+const VALID_GEAR_SOURCES = ['quest', 'combat', 'exploration', 'shop', 'starter', 'smelt'];
+
+/**
+ * Validate gear item data
+ */
+export function validateGearItem(data: unknown): ValidationResult<GearItem> {
+    const errors: string[] = [];
+
+    if (typeof data !== 'object' || data === null) {
+        return { valid: false, data: null, errors: ['Invalid data: not an object'] };
+    }
+
+    const item = data as Record<string, unknown>;
+
+    // Required string fields
+    if (!item.id || typeof item.id !== 'string') {
+        errors.push('Missing or invalid id');
+    }
+    if (!item.name || typeof item.name !== 'string') {
+        errors.push('Missing or invalid name');
+    }
+    if (typeof item.description !== 'string') {
+        item.description = '';
+    }
+
+    // Slot validation
+    if (!item.slot || !ALL_GEAR_SLOTS.includes(item.slot as GearSlot)) {
+        errors.push(`Invalid slot: ${item.slot}`);
+    }
+
+    // Tier validation
+    if (!item.tier || !GEAR_TIERS.includes(item.tier as GearTier)) {
+        errors.push(`Invalid tier: ${item.tier}`);
+    }
+
+    // Level validation
+    if (typeof item.level !== 'number' || item.level < 1 || item.level > 40) {
+        errors.push(`Invalid level: ${item.level}`);
+    }
+
+    // Stats validation (basic check)
+    if (typeof item.stats !== 'object' || item.stats === null) {
+        errors.push('Missing or invalid stats');
+    }
+
+    // Sell value
+    if (typeof item.sellValue !== 'number' || item.sellValue < 0) {
+        item.sellValue = 0;
+    }
+
+    // Icon emoji fallback
+    if (typeof item.iconEmoji !== 'string') {
+        item.iconEmoji = '❓';
+    }
+
+    // Source validation
+    if (!item.source || !VALID_GEAR_SOURCES.includes(item.source as string)) {
+        item.source = 'quest';
+    }
+
+    // Acquired date
+    if (typeof item.acquiredAt !== 'string') {
+        item.acquiredAt = new Date().toISOString();
+    }
+
+    if (errors.length > 0) {
+        return { valid: false, data: null, errors };
+    }
+
+    return { valid: true, data: item as unknown as GearItem, errors: [] };
 }
