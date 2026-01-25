@@ -191,11 +191,11 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Create `src/services/CombatService.ts` with `deriveCombatStats()`
 - [x] Extend StatsService with gear bonuses
 
-### Step 1b: Monster Config
+### Step 1b: Monster Config ✅
 
-- [ ] Extract `MONSTER_TEMPLATES` to `src/data/monsters.ts`
+- [x] Extract `MONSTER_TEMPLATES` to `src/data/monsters.ts` (19 templates across 8 categories)
 - [x] Extract tier multipliers to `src/config/combatConfig.ts`
-- [ ] Implement raid boss tank penalty in combat service
+- [x] Implement raid boss tank penalty in combat service
   - See: [Fight Doc → Combat Balance (Tuned v25)](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#combat-balance-tuned-v25)
 
 ### Step 2: Stamina System ✅
@@ -230,20 +230,29 @@ Complete these BEFORE starting any Phase 3 work:
   - See: [Fight Doc → Zustand Battle Store with Dual Persistence](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#zustand-battle-store-with-dual-persistence)
 - [ ] Test crash recovery (requires combat UI)
 
-### Step 6: Monster System
+### Step 6: Monster System ✅
 
-- [ ] Create `MonsterTemplate` interface
+- [x] Create `Monster.ts` types (`MonsterTemplate`, `Monster`, `MonsterPrefix`, `MonsterCategory`)
   - See: [Fight Doc → Monster Definition](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#monster-definition)
-- [ ] Create 5-10 base monsters with emoji fallbacks
-- [ ] Implement prefix system (Fierce/Sturdy/Ancient)
+- [x] Create 19 base monsters in `src/data/monsters.ts` across 8 categories
+- [x] Implement prefix system (60% none, 20% fierce, 15% sturdy, 5% ancient)
   - See: [Fight Doc → Monster Prefix System](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#monster-prefix-system)
+- [x] Create `MonsterService.ts` with `createMonster()`, `rollPrefix()`, `selectMonsterLevel()`
+- [x] Implement 7.5% exponential stat scaling per level
+- [x] Wire `monsterService` to main.ts for testing access
+- [x] Unit tests for monster creation, prefixes, and level selection (19 tests)
 
-### Step 7: Battle Service
+### Step 7: Battle Service ✅
 
-- [ ] Implement damage calculation with dodge/block/crit
+- [x] Create `BattleService.ts` with full turn execution
+- [x] Implement damage calculation with dodge/block/crit (via CombatService)
   - See: [Fight Doc → Damage Calculation](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#damage-calculation)
-- [ ] Handle state transitions
-- [ ] Victory/defeat logic
+- [x] Attack style handling (physical, magic, hybrid_physical, hybrid_magic)
+- [x] Handle state transitions (PLAYER_INPUT → PROCESSING → ANIMATING → ENEMY_TURN)
+- [x] Victory/defeat logic with XP/gold/loot rewards
+- [x] Retreat mechanics (30% + CHA*2%, fail = 15% HP damage)
+- [x] Wire `battleService` to main.ts for testing access
+- [x] Unit tests for attack styles, defend, and outcome handling (18 tests)
 
 ### Step 8: Combat UI
 

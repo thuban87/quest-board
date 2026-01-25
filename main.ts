@@ -30,11 +30,15 @@ import { showInventoryModal } from './src/modals/InventoryModal';
 import { openStoreModal } from './src/modals/StoreModal';
 import { lootGenerationService } from './src/services/LootGenerationService';
 import { setBonusService } from './src/services/SetBonusService';
+import { monsterService } from './src/services/MonsterService';
+import { battleService } from './src/services/BattleService';
 import { GearSlot } from './src/models/Gear';
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
     recurringQuestService!: RecurringQuestService;
+    monsterService = monsterService; // Expose for testing/debugging
+    battleService = battleService; // Expose for testing/debugging
     private lastRecurrenceCheckHour: number = -1;
 
     async onload(): Promise<void> {

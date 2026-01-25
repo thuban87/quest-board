@@ -487,31 +487,121 @@ After Steps 6-7, Step 8 is the Combat UI (BattleView component).
 
 ---
 
+## 2026-01-24 - Phase 3B Steps 6-7: Monster System & Battle Service
+
+**Focus:** Implemented monster templates, prefix system, and battle service
+
+**Completed:**
+- ✅ **Step 6: Monster System**
+  - Created `src/models/Monster.ts` with types (MonsterTemplate, Monster, MonsterPrefix, MonsterCategory)
+  - Created `src/data/monsters.ts` with 19 monster templates across 8 categories
+  - Created `src/services/MonsterService.ts` with creation, scaling, prefix system
+  - Prefix rates: 60% none, 20% fierce (+10% ATK), 15% sturdy (+10% HP), 5% ancient (+20% all + 1.5x XP)
+  - Level scaling: 7.5% exponential growth per level (matches v25 formula)
+  - Stat variance: ±15% on final stats
+  - Tier multipliers: overworld < elite < dungeon < boss < raid_boss
+  
+- ✅ **Step 7: Battle Service**
+  - Created `src/services/BattleService.ts` with full turn execution
+  - Attack style handling (physical, magic, hybrid_physical, hybrid_magic)
+  - Defend action (50% damage reduction)
+  - Retreat mechanics (30% + CHA*2% success, fail = 15% HP damage)
+  - Victory handling (XP, gold, loot via LootGenerationService)
+  - Defeat handling (10% gold penalty, unconscious status)
+  - State transitions (PLAYER_INPUT → PROCESSING → ANIMATING → ENEMY_TURN)
+  
+- ✅ **Wiring & Testing**
+  - Exposed `monsterService` and `battleService` on plugin for console testing
+  - Unit tests: 19 monster tests + 18 battle tests (all passing)
+  - Manual console testing verified
+
+**Monster Categories (19 total):**
+| Category | Monsters |
+|----------|----------|
+| 🐺 Beasts | Wolf, Bear, Giant Rat |
+| 💀 Undead | Skeleton, Zombie, Ghost |
+| 👺 Goblins | Goblin, Hobgoblin, Bugbear |
+| 🧌 Trolls | Cave Troll, River Troll |
+| 🧛 Night Elves | Shadow Elf, Dark Ranger |
+| ⛏️ Dwarves | Rogue Dwarf, Berserker |
+| 🐉 Dragonkin | Drake, Wyvern |
+| 👁️ Aberrations | Mimic, Eye Beast |
+
+**Files Created:**
+- `src/models/Monster.ts` - Type definitions
+- `src/data/monsters.ts` - 19 monster templates
+- `src/services/MonsterService.ts` - Monster creation + prefix system
+- `src/services/BattleService.ts` - Turn execution + outcomes
+- `test/monster.test.ts` - 19 unit tests
+- `test/battle.test.ts` - 18 unit tests
+
+**Files Modified:**
+- `main.ts` - Exposed monsterService and battleService on plugin
+
+**Testing Notes:**
+- ✅ Build passes (all 78 tests)
+- ✅ Console: `app.plugins.plugins['quest-board'].monsterService.createMonster('goblin', 10, 'overworld')` works
+- ✅ Prefix system applies stat multipliers correctly
+- ✅ Tier system increases monster stats appropriately
+- Note: ±15% variance can cause prefixed monsters to roll lower than non-prefixed (by design)
+
+**Blockers/Issues:**
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Phase 3B Steps 6-7 COMPLETE. Monster and Battle systems are ready.
+
+What's ready:
+- Monster.ts - Type definitions (template, instance, prefix, category)
+- monsters.ts - 19 monster templates across 8 categories
+- MonsterService.ts - createMonster(), rollPrefix(), selectMonsterLevel()
+- BattleService.ts - Turn execution, attack styles, victory/defeat handling
+- All exposed on plugin for testing: app.plugins.plugins['quest-board'].monsterService
+
+Continue with Phase 3B Step 8: Combat UI
+- Create BattleView component (React)
+- Monster display with emoji (sprite foundation ready)
+- Action buttons (Attack/Defend/Run/Item)
+- HP bars for player and monster
+- Combat log display
+- CSS animations for attacks/damage
+
+Key files to reference:
+- docs/rpg-dev-aspects/Fight System.md - UI section
+- src/store/battleStore.ts - State machine to subscribe to
+- src/services/BattleService.ts - Call executePlayerTurn(action)
+
+After Combat UI, Step 9 is Death Penalty (Unconscious status + recovery).
+```
+
+---
+
 ## Git Commit Message
 
 ```
-feat(combat): Phase 3B Steps 1-5 - Combat foundation systems
+feat(combat): Phase 3B Steps 6-7 - Monster System & Battle Service
 
-Step 1: Combat Stats & Config
-- Created combatConfig.ts with v25 balance constants
-- Created CombatService.ts with deriveCombatStats()
+Step 6: Monster System
+- Created Monster.ts types (template, instance, prefix, category)
+- Created 19 monster templates across 8 categories (beasts, undead, goblins, trolls, night elves, dwarves, dragonkin, aberrations)
+- MonsterService with level scaling (7.5% exponential growth)
+- Prefix system (fierce +10% ATK, sturdy +10% HP, ancient +20% all)
+- Tier multipliers (overworld < elite < dungeon < boss < raid_boss)
 
-Step 2: Stamina System
-- Stamina award (+2) on quest completion
-- HP/Mana/Stamina bars in Character Sheet
+Step 7: Battle Service
+- Full turn execution with attack style handling
+- Physical, magic, hybrid_physical, hybrid_magic damage calculation
+- Defend (50% damage reduction), retreat (30% + CHA*2%)
+- Victory/defeat handling with XP, gold, loot integration
+- State transitions for combat flow
 
-Step 3: Store System
-- StoreModal with tiered HP/Mana potions
-- Buy logic (deduct gold, add to inventory)
-- Fixed modal width to 900px
-
-Step 4: HP/Mana Persistence
-- updateHP/updateMana/fullRestore actions
-- Long Rest command for manual restoration
-
-Step 5: Battle Store
-- Combat state machine (IDLE → PLAYER_INPUT → VICTORY/DEFEAT)
-- Dual persistence (localStorage + plugin data)
+Testing:
+- 19 monster tests + 18 battle tests (all passing)
+- 78 total tests passing
 ```
 
 ---
