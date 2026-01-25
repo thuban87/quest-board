@@ -10,8 +10,10 @@ import { QuestBoardSettings, DEFAULT_SETTINGS, QuestBoardSettingTab } from './sr
 import {
     QUEST_BOARD_VIEW_TYPE,
     QUEST_SIDEBAR_VIEW_TYPE,
+    BATTLE_VIEW_TYPE,
     QuestBoardView,
-    QuestSidebarView
+    QuestSidebarView,
+    BattleItemView
 } from './src/views';
 import { CreateQuestModal } from './src/modals/CreateQuestModal';
 import { ApplicationGauntletModal, InterviewArenaModal } from './src/modals/JobHuntModal';
@@ -31,7 +33,7 @@ import { openStoreModal } from './src/modals/StoreModal';
 import { lootGenerationService } from './src/services/LootGenerationService';
 import { setBonusService } from './src/services/SetBonusService';
 import { monsterService } from './src/services/MonsterService';
-import { battleService } from './src/services/BattleService';
+import { battleService, setSaveCallback as setBattleSaveCallback } from './src/services/BattleService';
 import { GearSlot } from './src/models/Gear';
 
 export default class QuestBoardPlugin extends Plugin {
@@ -65,6 +67,15 @@ export default class QuestBoardPlugin extends Plugin {
         // Set up save callback to persist cache when bonuses are generated
         setBonusService.setSaveCallback(async () => {
             this.settings.setBonusCache = setBonusService.getCacheForSave();
+            await this.saveSettings();
+        });
+
+        // Set up save callback for battle outcomes (persists XP, gold, HP after combat)
+        setBattleSaveCallback(async () => {
+            const currentCharacter = useCharacterStore.getState().character;
+            const currentInventory = useCharacterStore.getState().inventory;
+            this.settings.character = currentCharacter;
+            this.settings.inventory = currentInventory;
             await this.saveSettings();
         });
 
@@ -123,6 +134,12 @@ export default class QuestBoardPlugin extends Plugin {
         this.registerView(
             QUEST_SIDEBAR_VIEW_TYPE,
             (leaf: WorkspaceLeaf) => new QuestSidebarView(leaf, this)
+        );
+
+        // Register the battle view (opens in its own tab)
+        this.registerView(
+            BATTLE_VIEW_TYPE,
+            (leaf: WorkspaceLeaf) => new BattleItemView(leaf, this)
         );
 
         // Add ribbon icon to open focused sidebar
@@ -259,6 +276,37 @@ export default class QuestBoardPlugin extends Plugin {
             },
         });
 
+        // Add Fight command (Phase 3B Step 8)
+        this.addCommand({
+            id: 'start-fight',
+            name: 'Start Fight (Random Encounter)',
+            callback: () => {
+                const character = useCharacterStore.getState().character;
+                if (!character) {
+                    new (require('obsidian').Notice)('❌ No character found!', 2000);
+                    return;
+                }
+
+                // Check stamina
+                if ((character.stamina ?? 0) < 1) {
+                    new (require('obsidian').Notice)('⚡ Not enough stamina! Complete quests to earn stamina.', 3000);
+                    return;
+                }
+
+                // Start battle
+                const success = battleService.startRandomBattle(character.level, 'overworld');
+                if (success) {
+                    // Consume stamina on battle start
+                    useCharacterStore.getState().consumeStamina();
+
+                    // Open battle in its own tab
+                    this.activateBattleView();
+                } else {
+                    new (require('obsidian').Notice)('❌ Failed to start battle', 2000);
+                }
+            },
+        });
+
         // Add create achievement command
         this.addCommand({
             id: 'create-achievement',
@@ -374,6 +422,20 @@ export default class QuestBoardPlugin extends Plugin {
         const leaf = workspace.getLeaf('tab');
         if (leaf) {
             await leaf.setViewState({ type: QUEST_BOARD_VIEW_TYPE, active: true });
+            workspace.revealLeaf(leaf);
+        }
+    }
+
+    /**
+     * Activates the battle view in a new tab
+     */
+    async activateBattleView(): Promise<void> {
+        const { workspace } = this.app;
+
+        // Always open in a new tab (battles shouldn't reuse existing)
+        const leaf = workspace.getLeaf('tab');
+        if (leaf) {
+            await leaf.setViewState({ type: BATTLE_VIEW_TYPE, active: true });
             workspace.revealLeaf(leaf);
         }
     }

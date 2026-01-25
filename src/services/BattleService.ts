@@ -24,6 +24,24 @@ import {
 } from '../config/combatConfig';
 
 // =====================
+// SAVE CALLBACK (set by main.ts)
+// =====================
+
+/**
+ * Module-level save callback for persisting character data after battle.
+ * Set via setSaveCallback from main.ts plugin initialization.
+ */
+let saveCallback: (() => Promise<void>) | null = null;
+
+/**
+ * Set the save callback for battle outcomes.
+ * Called from main.ts during plugin initialization.
+ */
+export function setSaveCallback(callback: () => Promise<void>): void {
+    saveCallback = callback;
+}
+
+// =====================
 // TYPE CONVERSIONS
 // =====================
 
@@ -436,11 +454,28 @@ function handleVictory(): void {
     // Award gold
     characterStore.updateGold(monster.goldReward);
 
-    // Sync HP to character (battle damage persists)
-    characterStore.updateHP(store.playerCurrentHP);
+    // Sync HP/Mana to character (battle damage persists)
+    // Need to set absolute values, not delta, and update stored maxHP to derived value
+    // IMPORTANT: Get fresh character AFTER addXP/updateGold to preserve those changes
+    const updatedCharacter = useCharacterStore.getState().character;
+    if (updatedCharacter && store.playerStats) {
+        useCharacterStore.getState().setCharacter({
+            ...updatedCharacter,
+            currentHP: store.playerCurrentHP,
+            maxHP: store.playerStats.maxHP, // Store derived maxHP so comparisons work next time
+            currentMana: store.playerCurrentMana,
+            maxMana: store.playerStats.maxMana,
+            lastModified: new Date().toISOString(),
+        });
+    }
 
     // End battle
     store.endBattle('victory');
+
+    // Persist character data (XP, gold, HP)
+    if (saveCallback) {
+        saveCallback().catch(err => console.error('[BattleService] Save failed:', err));
+    }
 
     // Loot is generated separately when victory modal is shown
     // The lootBonus is stored for the modal to use
@@ -456,18 +491,38 @@ function handleDefeat(): void {
 
     if (!character) return;
 
-    // Apply 10% gold penalty
+    // Calculate 10% gold penalty (applied in setCharacter below)
     const goldLost = Math.floor(character.gold * DEFEAT_GOLD_PENALTY);
-    characterStore.updateGold(-goldLost);
 
-    // Set HP to 0 and mark as unconscious
-    characterStore.updateHP(0);
+    // Set HP to 0 (defeated) - preserve derived maxHP for next session
+    if (store.playerStats) {
+        characterStore.setCharacter({
+            ...character,
+            gold: character.gold - goldLost,
+            currentHP: 0,
+            maxHP: store.playerStats.maxHP,
+            lastModified: new Date().toISOString(),
+        });
+    } else {
+        // Fallback: just set HP to 0
+        characterStore.setCharacter({
+            ...character,
+            gold: character.gold - goldLost,
+            currentHP: 0,
+            lastModified: new Date().toISOString(),
+        });
+    }
 
     console.log('[BattleService] Defeat!', {
         goldLost,
     });
 
     store.endBattle('defeat');
+
+    // Persist character data (gold penalty, HP = 0)
+    if (saveCallback) {
+        saveCallback().catch(err => console.error('[BattleService] Save failed:', err));
+    }
 }
 
 /**

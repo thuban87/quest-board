@@ -87,9 +87,10 @@ Complete these BEFORE starting any Phase 3 work:
 ### Step 7: Character Sheet UI ✅
 
 - [x] Display 6 equipped gear slots with tier colors
-- [ ] Show derived combat stats (cached) - *deferred to Phase 3B*
+- [x] Show derived combat stats (gear-aware via `deriveCombatStats`)
   - See: [Gear Doc → Architectural Considerations](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Gear%20and%20Loot%20System.md#architectural-considerations)
 - [x] Implement gear tooltips on hover
+- [x] Attributes section includes gear stat bonuses
 
 ### Step 8: Inventory UI ✅
 
@@ -254,15 +255,18 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Wire `battleService` to main.ts for testing access
 - [x] Unit tests for attack styles, defend, and outcome handling (18 tests)
 
-### Step 8: Combat UI
+### Step 8: Combat UI ✅
 
-- [ ] Create BattleView with sprites + emoji fallbacks
+- [x] Create BattleView with sprites + emoji fallbacks
   - See: [Fight Doc → Combat UI](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#combat-ui)
-- [ ] Action buttons (Attack/Defend/Run/Item)
-- [ ] Combat log
-- [ ] CSS animations
-- [ ] Mobile-friendly controls
+- [x] Action buttons (Attack/Defend/Run/Item) - fixed layout
+- [x] Combat log
+- [x] CSS animations
+- [x] Mobile-friendly controls
   - See: [Fight Doc → Mobile Combat Controls](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#mobile-combat-controls)
+- [x] XP/gold/HP persistence after battle
+- [x] HP initialization uses derived maxHP (gear-aware)
+- [ ] Damage balance tuning - **NEXT SESSION**
 
 ### Step 9: Death Penalty
 
