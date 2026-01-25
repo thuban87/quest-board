@@ -8,6 +8,7 @@
 import { Modal, App } from 'obsidian';
 import { LootDrop, LootReward, GearItem, TIER_INFO, GEAR_SLOT_NAMES, ARMOR_TYPE_NAMES, WEAPON_TYPE_NAMES } from '../models/Gear';
 import { useCharacterStore } from '../store/characterStore';
+import { formatGearTooltip, formatGearStatsSummary, isSetItem } from '../utils/gearFormatters';
 
 export interface LootModalOptions {
     /** Title for the modal (e.g., "Quest Complete!", "Victory!", "Chest Opened!") */
@@ -64,11 +65,22 @@ export class LootModal extends Modal {
         }
 
         // Display gear
+        // Get character for comparison
+        const character = useCharacterStore.getState().character;
+
         for (const reward of gearRewards) {
             const item = reward.item;
             const tierInfo = TIER_INFO[item.tier];
+
+            // Get currently equipped item for comparison
+            const equippedItem = character?.equippedGear?.[item.slot] ?? null;
+
+            // Use shared tooltip utility with comparison
+            const tooltip = formatGearTooltip(item, equippedItem);
+
             const gearEl = lootContainer.createEl('div', {
-                cls: `qb-loot-item qb-loot-gear qb-tier-${item.tier}`
+                cls: `qb-loot-item qb-loot-gear qb-tier-${item.tier}`,
+                title: tooltip
             });
 
             gearEl.createEl('span', { cls: 'qb-loot-icon', text: item.iconEmoji });
@@ -103,6 +115,14 @@ export class LootModal extends Modal {
             }
             if (item.stats.defense) {
                 statsEl.createEl('span', { text: ` • +${item.stats.defense} DEF` });
+            }
+
+            // Show set membership if present
+            if (item.setName) {
+                infoEl.createEl('span', {
+                    cls: 'qb-loot-set',
+                    text: `⚔️ ${item.setName} Set`
+                });
             }
         }
 

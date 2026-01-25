@@ -159,23 +159,189 @@ Each session entry should include:
 
 ---
 
+## 2026-01-24 - Phase 3A Steps 9-10: Inventory Management & Smelting
+
+**Focus:** Implemented Inventory Management Modal and Blacksmith Smelting System
+
+**Completed:**
+- ✅ **Step 9: Inventory Management Modal**
+  - Created `InventoryManagementModal.ts` with dual-pane layout
+  - Left pane: Pending loot with Keep/Trash toggles
+  - Right pane: Current inventory with Sell checkboxes
+  - Running status bar showing slot math
+  - Modified `QuestActionsService` to check inventory capacity before adding gear
+  - Shows modal when inventory full, processes selections on confirm
+  
+- ✅ **Step 10: Smelting System**
+  - Created `SmeltingService.ts` with transaction pattern
+  - Created `BlacksmithModal.ts` with click-to-select UI
+  - Added Blacksmith button to CharacterSheet
+  - Features: tier filtering, result preview, same-slot bonus
+  - **Tier Logic:**
+    - Mixed tiers → output = highest input tier
+    - All same tier → output = next tier up
+    - All Legendary → stays Legendary (4000g refinement cost)
+  - Post-smelt shows new item in LootModal for comparison
+
+- ✅ **Bug Fixes During Session**
+  - Fixed modal width using `.qb-modal-wide` class on `modalEl`
+  - Fixed InventoryManagementModal crash (undefined Set)
+  - Fixed smelting tier restriction (now allows any combination)
+  - Fixed header centering in inventory modal
+
+**Files Created:**
+- `src/services/SmeltingService.ts` - Smelting logic with transaction pattern
+- `src/modals/BlacksmithModal.ts` - Blacksmith UI
+- `src/modals/InventoryManagementModal.ts` - Full inventory handling
+
+**Files Modified:**
+- `src/store/characterStore.ts` - Added `bulkRemoveGear`, `bulkAddGear`, `markGearPendingSmelt`, `clearGearPendingSmelt`, `getFreeSlots`
+- `src/services/QuestActionsService.ts` - Inventory capacity check before loot
+- `src/components/CharacterSheet.tsx` - Added `onOpenBlacksmith` prop and button
+- `src/components/SidebarQuests.tsx` - Wired up BlacksmithModal
+- `styles.css` - Added styles for both modals and `.qb-modal-wide` helper
+
+**Testing Notes:**
+- ✅ Blacksmith modal opens from Character Sheet
+- ✅ Smelting 3 items works (mixed tiers → highest, same tiers → next tier)
+- ✅ Same-slot bonus correctly detected  
+- ✅ Post-smelt LootModal displays new item
+- ⚠️ **Deferred:** Inventory full modal workflow (hard to generate 50+ items)
+- ⚠️ **Deferred:** Legendary refinement (no legendary items to test)
+
+**Next Steps:**
+- Step 11: Set Bonuses
+- Step 12: Legendary Lore
+- Revisit deferred testing when Legendary items are available
+
+---
+
+## 2026-01-24 - Step 11: Set Bonuses + Bug Fixes
+
+**Focus:** Implemented folder-based gear sets. Fixed training mode toggle and gear tooltip issues.
+
+**Completed:**
+- ✅ Step 11 Core: Set Bonus types in `Gear.ts` (`setId`, `setName`, `SetBonus`, `ActiveSetBonus`)
+- ✅ `SetBonusService.ts` - Set detection from quest paths, thematic bonus generation (keyword-based)
+- ✅ `path` field added to `BaseQuest` for set detection during loot generation
+- ✅ `LootGenerationService` attaches set info when generating gear from quest completion
+- ✅ `selectActiveSetBonuses` selector in characterStore (computes on-demand)
+- ✅ Active Sets section in CharacterSheet (only shows when sets equipped)
+- ✅ `excludedSetFolders` setting with UI (defaults: main, side, training, recurring, daily)
+- ✅ Gear tooltip in LootModal with full stats and set membership
+
+**Bug Fixes:**
+- 🐛 **SetBonusService not initialized** - Added `setBonusService.initialize()` to `main.ts`
+- 🐛 **Training mode toggle didn't migrate character** - Now graduates to Level 1 regular mode
+- 🐛 **Gear tooltip missing on loot modal** - Added hover title with full stats
+
+**Files Changed:**
+- `src/models/Gear.ts` - Added set bonus types
+- `src/models/Quest.ts` - Added `path` field to BaseQuest
+- `src/services/SetBonusService.ts` - New service (set detection, bonus generation)
+- `src/services/LootGenerationService.ts` - Attach setId/setName to gear
+- `src/services/QuestService.ts` - Populate quest.path on load
+- `src/store/characterStore.ts` - Added `selectActiveSetBonuses` selector
+- `src/components/CharacterSheet.tsx` - Added Active Sets section
+- `src/modals/LootModal.ts` - Added gear tooltip and set display
+- `src/settings.ts` - Training mode migration, excluded folders UI
+- `main.ts` - Initialize setBonusService
+- `styles.css` - Set bonus display styles
+
+**Testing Notes:**
+- ✅ Build passes
+- ⏳ Awaiting user testing: sets on gear, training mode toggle, tooltips
+
+**Deferred:**
+- AI-powered thematic bonus generation (stubbed with keyword-based fallback)
+- Step 12: Legendary Lore
+
+**Next Steps:**
+- Test set bonuses in dev vault
+- Step 12: Legendary Lore (procedural flavor text)
+- Phase 3B: Combat System
+
+---
+
 ## Next Session Prompt
 
-> **Phase 3A In Progress - Steps 9-12 Remaining**
+> **Phase 3A Nearly Complete - Step 11 Done, Step 12 Remaining**
 > 
 > What was completed this session:
-> - ✅ Armor/weapon types with class restrictions
-> - ✅ Comparison tooltips in inventory
-> - ✅ Quest→Slot mapping settings UI
-> - ✅ Difficulty field for quests
+> - ✅ Step 11: Set Bonuses (folder-based gear sets with thematic bonuses)
+> - ✅ Bug fixes: Training mode toggle, gear tooltip, setBonusService initialization
 > 
-> **Continue with remaining Phase 3A steps:**
-> - Step 9: Inventory Management Modal (blocks dungeon exit when full)
-> - Step 10: Smelting System (combine 3 items → higher tier)
-> - Step 11: Set Bonuses (folder-based gear sets)
+> **Test in Dev Vault:**
+> - Complete quest in non-excluded folder → gear should have set membership
+> - Toggle training mode OFF → character becomes Level 1
+> - Hover gear in loot modal → tooltip shows stats + set info
+> 
+> **Continue with:**
 > - Step 12: Legendary Lore (procedural flavor text)
+> - Phase 3B: Fight System
 > 
-> **Key reminder:** Gear stats don't yet affect character sheet. That's Phase 3B Step 1.
+> **Key reminder:** Set bonuses are displayed but don't yet apply stat effects. That's a future enhancement.
+
+---
+
+## 2026-01-24 - AI Set Bonuses, Batch Generation, and Cache Persistence
+
+**Focus:** Gemini AI integration for set bonus generation with batch API calls and persistent caching
+
+**Completed:**
+- ✅ Integrated Gemini AI for thematic set bonus generation
+- ✅ Implemented batch generation (ONE API call for ALL uncached folders)
+- ✅ Added `pendingGenerations` map to prevent duplicate API calls
+- ✅ Added cache persistence to plugin settings
+- ✅ Added `syncWithFolders()` to remove stale cache entries on load
+- ✅ Fixed LootModal comparison tooltips (now shows "Compared to Equipped")
+- ✅ Removed verbose debug console.logs from quest services
+- ✅ Increased drop rate to 80% for testing set pieces
+- ✅ Added Gemini test buttons in settings (Generate, Cache Status, Clear Cache)
+- ✅ Removed maxOutputTokens limit (was causing truncation)
+- ✅ Added Step 15 (Inventory Modal Improvements) and Step 16 (Consumables) to Phase 3A
+
+**Files Changed:**
+- `src/services/SetBonusService.ts` - Batch generation, cache persistence, AI integration
+- `src/settings.ts` - Added `setBonusCache` field and Gemini test UI
+- `main.ts` - Cache load/sync on startup, save callback wiring
+- `src/modals/LootModal.ts` - Fixed comparison tooltip label
+- `src/hooks/useQuestActions.ts` - Removed debug logs
+- `src/services/QuestService.ts` - Removed debug logs
+- `src/services/QuestActionsService.ts` - Removed debug logs
+- `docs/rpg-dev-aspects/Phase 3 Implementation Checklist.md` - Added Steps 15-16
+
+**Testing Notes:**
+- Batch generation working (all uncached folders in one API call)
+- Cache persists across reloads
+- Pending count returns to 0 after batch completes
+- Delayed `syncWithFolders()` prevents false stale folder detection
+
+**Blockers/Issues:**
+- None currently
+
+**Next Session Prompt:**
+```
+Continue Phase 3A implementation. Remaining items before Phase 3B:
+1. Step 15: Inventory Modal Improvements - add sorting (tier/level/slot/name) and filtering options
+2. Step 16: Consumables System - fix save to inventory, implement use mechanics
+
+The set piece drop rate is at 80% for testing - remember to lower to 33% when done testing sets.
+```
+
+**Git Commit Message:**
+```
+feat(sets): AI-powered batch set bonus generation with persistent cache
+
+- Gemini AI generates thematic set bonuses (2pc/4pc/6pc)
+- Batch API call for all uncached folders at once
+- Cache persistence across reloads via plugin settings
+- syncWithFolders() cleans up deleted folder entries
+- pendingGenerations prevents duplicate API calls
+- Fixed LootModal comparison tooltip labeling
+- Removed verbose debug console.logs
+- Added Gemini test UI in settings
+```
 
 ---
 

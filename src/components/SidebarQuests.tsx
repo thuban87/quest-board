@@ -36,6 +36,7 @@ import { Droppable, SortableCard } from './DnDWrappers';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { showInventoryModal } from '../modals/InventoryModal';
+import { showBlacksmithModal } from '../modals/BlacksmithModal';
 
 interface SidebarQuestsProps {
     plugin: QuestBoardPlugin;
@@ -341,6 +342,9 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                         onViewAchievements={() => setCurrentView('achievements')}
                         onOpenInventory={() => showInventoryModal(app, {
                             onSave: handleSaveCharacter
+                        })}
+                        onOpenBlacksmith={() => showBlacksmithModal(app, {
+                            onSmelt: handleSaveCharacter
                         })}
                         spriteFolder={plugin.settings.spriteFolder}
                         spriteResourcePath={spriteResourcePath}

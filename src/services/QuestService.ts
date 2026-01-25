@@ -266,6 +266,11 @@ async function loadMarkdownQuest(
             return null;
         }
 
+        // Add file path for set detection
+        if (result.data) {
+            result.data.path = file.path;
+        }
+
         return result.data;
     } catch (error) {
         console.error(`[QuestService] Failed to load ${file.path}:`, error);
@@ -289,6 +294,11 @@ async function loadJsonQuest(
         if (!result.valid) {
             console.warn(`[QuestService] Invalid quest in ${file.path}:`, result.errors);
             return null;
+        }
+
+        // Add file path for set detection
+        if (result.data) {
+            result.data.path = file.path;
         }
 
         return result.data;
@@ -499,13 +509,6 @@ export async function saveManualQuest(
         const folderPath = `${baseFolder}/${subFolder}`;
         const filePath = `${folderPath}/${safeQuestId}.md`;
 
-        console.log('[QuestService] saveManualQuest:', {
-            filePath,
-            status: quest.status,
-            questId: quest.questId,
-            safeQuestId,
-        });
-
         await ensureFolderExists(vault, folderPath);
 
         const existingFile = vault.getAbstractFileByPath(filePath);
@@ -519,13 +522,11 @@ export async function saveManualQuest(
             });
 
             await vault.modify(existingFile, updatedContent);
-            console.log('[QuestService] Surgically updated frontmatter (file body untouched)');
         } else {
             // New file - create with full structure
             const frontmatter = generateQuestFrontmatter(quest);
             const content = `${frontmatter}\n\n# ${quest.questName}\n\n${quest.notes || ''}`;
             await vault.create(filePath, content);
-            console.log('[QuestService] Created new file');
         }
 
         return true;
@@ -595,7 +596,6 @@ function updateFrontmatterFields(
             }
 
             lines[i] = `${key}: ${formattedValue}`;
-            console.log(`[QuestService] Updated frontmatter field: ${key} = ${formattedValue}`);
         }
     }
 
@@ -604,14 +604,12 @@ function updateFrontmatterFields(
         // Insert before closing ---
         lines.splice(frontmatterEnd, 0, `completedDate: "${updates.completedDate}"`);
         frontmatterEnd++; // Adjust for inserted line
-        console.log('[QuestService] Added completedDate field to frontmatter');
     }
 
     // Handle adding sortOrder if it doesn't exist but should
     if (updates.sortOrder !== undefined && !content.includes('sortOrder:')) {
         // Insert before closing ---
         lines.splice(frontmatterEnd, 0, `sortOrder: ${updates.sortOrder}`);
-        console.log('[QuestService] Added sortOrder field to frontmatter');
     }
 
     return lines.join('\n');

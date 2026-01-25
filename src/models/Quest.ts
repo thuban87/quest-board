@@ -80,8 +80,10 @@ export interface BaseQuest {
 
     /** Internal notes */
     notes: string;
-}
 
+    /** Path to the quest markdown file (populated during loading) */
+    path?: string;
+}
 /**
  * Manual Quest (Markdown-based)
  * Loads from quests/{type}/ folder where type can be Main, Side, Training, Recurring, etc.

@@ -5,7 +5,8 @@
  */
 
 import React, { useMemo } from 'react';
-import { useCharacterStore } from '../store/characterStore';
+import { useCharacterStore, selectActiveSetBonuses } from '../store/characterStore';
+import { setBonusService } from '../services/SetBonusService';
 import { useQuestStore } from '../store/questStore';
 import { CLASS_INFO, getTrainingLevelDisplay, StatType } from '../models/Character';
 import { QuestStatus } from '../models/QuestStatus';
@@ -19,6 +20,7 @@ interface CharacterSheetProps {
     onBack: () => void;
     onViewAchievements?: () => void;
     onOpenInventory?: () => void;
+    onOpenBlacksmith?: () => void;
     spriteFolder?: string;
     spriteResourcePath?: string;  // Pre-computed resource path from vault
 }
@@ -68,9 +70,10 @@ function getGearTooltip(item: GearItem): string {
     return lines.join('\n');
 }
 
-export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAchievements, onOpenInventory, spriteFolder, spriteResourcePath }) => {
+export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAchievements, onOpenInventory, onOpenBlacksmith, spriteFolder, spriteResourcePath }) => {
     const character = useCharacterStore((state) => state.character);
     const achievements = useCharacterStore((state) => state.achievements);
+    const activeSetBonuses = useCharacterStore(selectActiveSetBonuses);
     const quests = useQuestStore((state) => state.quests);
 
     if (!character) return null;
@@ -244,7 +247,48 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                         🎒 Open Inventory
                     </button>
                 )}
+                {onOpenBlacksmith && (
+                    <button
+                        className="qb-blacksmith-btn-main"
+                        onClick={onOpenBlacksmith}
+                    >
+                        🔨 Blacksmith
+                    </button>
+                )}
             </div>
+
+            {/* Active Set Bonuses */}
+            {activeSetBonuses.length > 0 && (
+                <div className="qb-sheet-sets">
+                    <h3>⚔️ Set Bonuses</h3>
+                    <div className="qb-sets-list">
+                        {activeSetBonuses.map((set) => (
+                            <div key={set.setId} className="qb-set-item">
+                                <div className="qb-set-header">
+                                    <span className="qb-set-name">{set.setName}</span>
+                                    <span className="qb-set-count">({set.equippedCount}/6)</span>
+                                </div>
+                                <div className="qb-set-bonuses">
+                                    {set.bonuses.map((bonus, idx) => {
+                                        const isActive = bonus.pieces <= set.equippedCount;
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className={`qb-set-bonus ${isActive ? 'active' : 'inactive'}`}
+                                            >
+                                                <span className="qb-set-pieces">({bonus.pieces})</span>
+                                                <span className="qb-set-effect">
+                                                    {setBonusService.formatBonusEffect(bonus.effect)}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Primary Stats */}
             <div className="qb-sheet-primary-stats">

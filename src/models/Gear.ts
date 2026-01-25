@@ -460,10 +460,33 @@ export interface GearSet {
     folderPath: string;
 
     /** Bonuses at different piece counts */
-    bonuses: {
-        pieces: number;  // 2, 4, or 6
-        effect: SetBonusEffect;
-    }[];
+    bonuses: SetBonus[];
+}
+
+/**
+ * A single set bonus at a piece threshold
+ */
+export interface SetBonus {
+    /** Pieces required to activate (2, 4, or 6) */
+    pieces: number;
+    /** Effect provided */
+    effect: SetBonusEffect;
+}
+
+/**
+ * Active set bonus state for equipped gear
+ */
+export interface ActiveSetBonus {
+    /** Set identifier */
+    setId: string;
+    /** Display name */
+    setName: string;
+    /** Number of equipped pieces from this set */
+    equippedCount: number;
+    /** All possible bonuses for this set */
+    bonuses: SetBonus[];
+    /** Bonuses that are currently active (piece threshold met) */
+    activeBonuses: SetBonus[];
 }
 
 // ============================================
