@@ -190,6 +190,69 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                 </p>
             </div>
 
+            {/* HP / Mana / Stamina Bars - Live Resource Display */}
+            <div className="qb-sheet-resources">
+                <h3>⚡ Resources</h3>
+                <div className="qb-resources-grid">
+                    {/* HP Bar */}
+                    <div className="qb-resource-item">
+                        <div className="qb-resource-header">
+                            <span className="qb-resource-label">❤️ HP</span>
+                            <span className="qb-resource-values">
+                                {character.currentHP ?? character.maxHP} / {character.maxHP}
+                            </span>
+                        </div>
+                        <div className="qb-resource-bar qb-bar-hp">
+                            <div
+                                className="qb-resource-fill"
+                                style={{
+                                    width: `${((character.currentHP ?? character.maxHP) / character.maxHP) * 100}%`,
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Mana Bar */}
+                    <div className="qb-resource-item">
+                        <div className="qb-resource-header">
+                            <span className="qb-resource-label">💧 Mana</span>
+                            <span className="qb-resource-values">
+                                {character.currentMana ?? character.maxMana} / {character.maxMana}
+                            </span>
+                        </div>
+                        <div className="qb-resource-bar qb-bar-mana">
+                            <div
+                                className="qb-resource-fill"
+                                style={{
+                                    width: `${((character.currentMana ?? character.maxMana) / character.maxMana) * 100}%`,
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Stamina Bar */}
+                    <div className="qb-resource-item">
+                        <div className="qb-resource-header">
+                            <span className="qb-resource-label">⚡ Stamina</span>
+                            <span className="qb-resource-values">
+                                {character.stamina ?? 10} / 10
+                            </span>
+                        </div>
+                        <div className="qb-resource-bar qb-bar-stamina">
+                            <div
+                                className="qb-resource-fill"
+                                style={{
+                                    width: `${((character.stamina ?? 10) / 10) * 100}%`,
+                                }}
+                            />
+                        </div>
+                        <div className="qb-stamina-hint">
+                            Complete quests to earn stamina for combat
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Streak Display */}
             <div className="qb-sheet-streak">
                 <h3>🔥 Activity Streak</h3>

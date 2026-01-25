@@ -313,6 +313,13 @@ export async function moveQuest(
         }
     }
 
+    // === STAMINA AWARD ===
+    // Award stamina on quest completion (Phase 3B)
+    if (newStatus === QuestStatus.COMPLETED) {
+        useCharacterStore.getState().awardStamina();
+        console.log('[QuestActionsService] Awarded stamina for quest completion');
+    }
+
     // Save to file
     try {
         let saveResult: boolean;

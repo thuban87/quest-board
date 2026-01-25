@@ -115,6 +115,26 @@ interface CharacterActions {
 
     /** Get number of free inventory slots. */
     getFreeSlots: () => number;
+
+    // ========== Phase 3B: Combat Actions ==========
+
+    /** Update current HP (positive = heal, negative = damage). Clamped to [0, maxHP]. */
+    updateHP: (delta: number) => void;
+
+    /** Update current Mana (positive = restore, negative = spend). Clamped to [0, maxMana]. */
+    updateMana: (delta: number) => void;
+
+    /** Award stamina on task completion. Respects daily cap. */
+    awardStamina: (amount?: number) => void;
+
+    /** Consume stamina for a random fight. Returns false if insufficient. */
+    consumeStamina: () => boolean;
+
+    /** Full restore HP and Mana (Long Rest). */
+    fullRestore: () => void;
+
+    /** Recalculate and update maxHP/maxMana based on current stats. */
+    recalculateMaxHPMana: () => void;
 }
 
 type CharacterStore = CharacterState & CharacterActions;
@@ -680,6 +700,124 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         if (!character) return 0;
         return character.inventoryLimit - character.gearInventory.length;
     },
+
+    // ========== Phase 3B: Combat Actions ==========
+
+    updateHP: (delta) => {
+        const { character } = get();
+        if (!character) return;
+
+        const newHP = Math.max(0, Math.min(character.currentHP + delta, character.maxHP));
+        set({
+            character: {
+                ...character,
+                currentHP: newHP,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    updateMana: (delta) => {
+        const { character } = get();
+        if (!character) return;
+
+        const newMana = Math.max(0, Math.min(character.currentMana + delta, character.maxMana));
+        set({
+            character: {
+                ...character,
+                currentMana: newMana,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    awardStamina: (amount = 2) => {
+        const { character } = get();
+        if (!character) return;
+
+        const today = new Date().toISOString().split('T')[0];
+
+        // Reset if new day
+        let todayGained = character.staminaGainedToday;
+        if (character.lastStaminaResetDate !== today) {
+            todayGained = 0;
+        }
+
+        // Check daily cap (50 stamina/day max)
+        const MAX_DAILY = 50;
+        if (todayGained >= MAX_DAILY) return;
+
+        // Grant up to daily cap, max 10 current
+        const MAX_CURRENT = 10;
+        const granted = Math.min(amount, MAX_DAILY - todayGained);
+        const newStamina = Math.min(character.stamina + granted, MAX_CURRENT);
+
+        set({
+            character: {
+                ...character,
+                stamina: newStamina,
+                staminaGainedToday: todayGained + granted,
+                lastStaminaResetDate: today,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    consumeStamina: () => {
+        const { character } = get();
+        if (!character || character.stamina < 1) return false;
+
+        set({
+            character: {
+                ...character,
+                stamina: character.stamina - 1,
+                lastModified: new Date().toISOString(),
+            },
+        });
+        return true;
+    },
+
+    fullRestore: () => {
+        const { character } = get();
+        if (!character) return;
+
+        set({
+            character: {
+                ...character,
+                currentHP: character.maxHP,
+                currentMana: character.maxMana,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    recalculateMaxHPMana: () => {
+        const { character } = get();
+        if (!character) return;
+
+        // Recalculate based on base stats + level
+        const con = character.baseStats.constitution + (character.statBonuses?.constitution || 0);
+        const int = character.baseStats.intelligence + (character.statBonuses?.intelligence || 0);
+        const level = character.level;
+
+        const newMaxHP = 50 + (con * 5) + (level * 10);
+        const newMaxMana = 20 + (int * 3) + (level * 5);
+
+        // Also clamp current values if they exceed new max
+        const newCurrentHP = Math.min(character.currentHP, newMaxHP);
+        const newCurrentMana = Math.min(character.currentMana, newMaxMana);
+
+        set({
+            character: {
+                ...character,
+                maxHP: newMaxHP,
+                maxMana: newMaxMana,
+                currentHP: newCurrentHP,
+                currentMana: newCurrentMana,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
 }));
 
 // ============================================
@@ -706,4 +844,15 @@ export const selectActiveSetBonuses = (state: CharacterStore): ActiveSetBonus[] 
     const char = state.character;
     if (!char?.equippedGear) return [];
     return setBonusService.calculateActiveSetBonuses(char.equippedGear);
+};
+
+// ============================================
+// Combat Stats Selector (computes on-demand)
+// ============================================
+import { deriveCombatStats, CombatStats } from '../services/CombatService';
+
+export const selectDerivedCombatStats = (state: CharacterStore): CombatStats | null => {
+    const char = state.character;
+    if (!char) return null;
+    return deriveCombatStats(char);
 };

@@ -5225,3 +5225,232 @@
   font-style: italic;
   padding: 6px 12px;
 }
+
+/* ===========================================
+   Store Modal (Phase 3B)
+   =========================================== */
+/* Override Obsidian's --dialog-width variable for store modal */
+.modal:has(.qb-store-modal) {
+  --dialog-width: 900px;
+}
+
+.qb-store-modal {
+  width: 100%;
+}
+
+.qb-store-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--qb-spacing-md);
+  border-bottom: 1px solid var(--qb-card-border);
+  margin-bottom: var(--qb-spacing-lg);
+}
+
+.qb-store-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.qb-store-gold {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1.1rem;
+  background: rgba(255, 215, 0, 0.15);
+  padding: 6px 12px;
+  border-radius: var(--qb-radius-md);
+}
+
+.qb-gold-amount {
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.qb-store-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-lg);
+}
+
+.qb-store-section h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+.qb-store-items-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--qb-spacing-md);
+}
+
+.qb-store-item {
+  display: flex;
+  flex-direction: column;
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border: 2px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  transition: all 0.15s ease;
+}
+
+.qb-store-item:hover {
+  background: var(--background-secondary-alt);
+  transform: translateY(-2px);
+}
+
+.qb-store-item-icon {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: var(--qb-spacing-sm);
+}
+
+.qb-store-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.qb-store-item-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.qb-store-item-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.qb-store-item-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--qb-spacing-sm);
+  margin-bottom: var(--qb-spacing-sm);
+}
+
+.qb-store-item-price {
+  font-weight: 600;
+  color: #ffd700;
+}
+
+.qb-store-item-owned {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.qb-store-buy-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--interactive-accent);
+  border-radius: var(--qb-radius-sm);
+  background: rgba(var(--interactive-accent-rgb), 0.1);
+  color: var(--interactive-accent);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.qb-store-buy-btn:hover:not(:disabled) {
+  background: rgba(var(--interactive-accent-rgb), 0.2);
+}
+
+.qb-store-buy-btn.qb-store-buy-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.qb-store-footer {
+  margin-top: var(--qb-spacing-lg);
+  padding-top: var(--qb-spacing-md);
+  border-top: 1px solid var(--qb-card-border);
+  text-align: center;
+}
+
+.qb-store-footer p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ===========================================
+   Resource Bars (HP/Mana/Stamina) - Phase 3B
+   =========================================== */
+.qb-sheet-resources {
+  margin-top: var(--qb-spacing-lg);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+}
+
+.qb-sheet-resources h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+}
+
+.qb-resources-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-md);
+}
+
+.qb-resource-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qb-resource-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.qb-resource-label {
+  font-weight: 600;
+}
+
+.qb-resource-values {
+  color: var(--text-muted);
+}
+
+.qb-resource-bar {
+  height: 12px;
+  background: var(--background-modifier-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.qb-resource-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+/* HP Bar - Red/Pink gradient */
+.qb-bar-hp .qb-resource-fill {
+  background: linear-gradient(90deg, #dc3545, #ff6b6b);
+}
+
+/* Mana Bar - Blue gradient */
+.qb-bar-mana .qb-resource-fill {
+  background: linear-gradient(90deg, #2196f3, #64b5f6);
+}
+
+/* Stamina Bar - Yellow/Gold gradient */
+.qb-bar-stamina .qb-resource-fill {
+  background: linear-gradient(90deg, #ff9800, #ffca28);
+}
+
+.qb-stamina-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 2px;
+}
