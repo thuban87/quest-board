@@ -241,6 +241,37 @@ If balance feels off after implementation:
 
 ---
 
+## Character Migration Notes
+
+> [!IMPORTANT]
+> Brad has an existing character. These formula changes will affect displayed stats.
+
+### What Changes for Existing Characters
+
+| Stat | Before | After | Impact |
+|------|--------|-------|--------|
+| **Max HP** | Base 50 + CON×5 | Base 200 + CON×2 (or ×1 for tanks) | HP number will change significantly |
+| **Defense** | Gear × 2.7 | Gear × 1.5 | Character will take more damage |
+| **Dodge** | DEX × 0.5% (max 30%) | DEX × 0.25% (max 25%) | Slightly less evasion |
+
+### Migration Steps
+
+1. **Before applying changes**, log current character stats:
+   - Current Max HP
+   - Current Defense
+   - Current Level & Class
+   
+2. **After applying changes**, compare new stats and explain difference to Brad
+
+3. **If fights feel too hard**, reduce `BASE_MONSTER_POWER` from 1.12 to 1.08 or 1.05
+
+### No Data Loss Risk
+- Character data (level, XP, gear) is unchanged
+- Only **calculation formulas** are updated
+- Combat balance can be tuned via `BASE_MONSTER_POWER` constant
+
+---
+
 ## Session Handoff
 
 ### What Was Done (2026-01-25)

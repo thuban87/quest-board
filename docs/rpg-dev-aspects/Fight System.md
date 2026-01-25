@@ -893,12 +893,13 @@ for (let lvl = 2; lvl <= level; lvl++) {
 
 ```typescript
 // Located in: src/config/combatConfig.ts
+// Updated from simulation v25 implementation
 const TIER_MULTIPLIERS = {
     overworld: { hp: 1.0,  atk: 1.0,  def: 1.0, mdef: 1.0  },
     elite:     { hp: 1.3,  atk: 1.2,  def: 1.1, mdef: 1.1  },  // Rare dangerous
-    dungeon:   { hp: 1.05, atk: 1.0,  def: 1.0, mdef: 1.0  },  // Slightly harder
-    boss:      { hp: 1.15, atk: 1.05, def: 1.0, mdef: 1.0  },  // Moderate
-    raid_boss: { hp: 1.2,  atk: 1.05, def: 1.0, mdef: 1.0  },  // Hardest
+    dungeon:   { hp: 1.02, atk: 1.01, def: 1.0, mdef: 1.0  },  // Tuned from simulation
+    boss:      { hp: 1.06, atk: 1.04, def: 1.0, mdef: 1.0  },  // Tuned from simulation
+    raid_boss: { hp: 1.1,  atk: 1.06, def: 1.0, mdef: 1.0  },  // Tuned from simulation
 };
 ```
 

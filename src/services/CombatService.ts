@@ -22,6 +22,10 @@ import {
     MAX_DAILY_STAMINA,
     RAID_BOSS_TANK_PENALTY,
     MonsterTier,
+    HP_BASE,
+    HP_PER_CON,
+    HP_PER_CON_TANK,
+    HP_PER_LEVEL,
 } from '../config/combatConfig';
 
 // =====================
@@ -180,8 +184,11 @@ export function deriveCombatStats(character: Character): CombatStats {
             (gearStats.statBonuses.charisma || 0),
     };
 
-    // HP: 50 + (CON * 5) + (Level * 10) + gear bonus, * class modifier
-    const baseHP = 50 + (totalStats.constitution * 5) + (level * 10) + gearStats.hpBonus;
+    // HP: BASE + (CON * multiplier) + (Level * 10) + gear bonus, * class modifier
+    // Tanks (Warrior/Cleric) use reduced CON scaling to balance their high CON stats
+    const isTank = cls === 'warrior' || cls === 'cleric';
+    const conMultiplier = isTank ? HP_PER_CON_TANK : HP_PER_CON;
+    const baseHP = HP_BASE + (totalStats.constitution * conMultiplier) + (level * HP_PER_LEVEL) + gearStats.hpBonus;
     const maxHP = Math.floor(baseHP * classConfig.hpModifier * levelMod.hp);
 
     // Mana: 20 + (INT * 3) + (Level * 5) + gear bonus
@@ -193,11 +200,11 @@ export function deriveCombatStats(character: Character): CombatStats {
     // Magic Attack: max(INT, WIS, CHA) + gear magic attack
     const magicAttack = Math.max(totalStats.intelligence, totalStats.wisdom, totalStats.charisma) + gearStats.magicAttack;
 
-    // Defense: CON/2 + gear defense
-    const defense = Math.floor(totalStats.constitution / 2) + gearStats.defense;
+    // Defense: CON/2 + gear defense * 1.5 (multiplier tuned from simulation v25)
+    const defense = Math.floor(totalStats.constitution / 2) + Math.floor(gearStats.defense * 1.5);
 
-    // Magic Defense: WIS/2 + gear magic defense
-    const magicDefense = Math.floor(totalStats.wisdom / 2) + gearStats.magicDefense;
+    // Magic Defense: WIS/2 + gear magic defense * 1.5
+    const magicDefense = Math.floor(totalStats.wisdom / 2) + Math.floor(gearStats.magicDefense * 1.5);
 
     // Crit Chance: DEX * 0.5% + gear bonus
     const critChance = (totalStats.dexterity * CRIT_PER_DEX) + gearStats.critChance;
@@ -278,6 +285,7 @@ export interface DamageOutput {
 /**
  * Calculate damage from an attack.
  * Handles dodge, block, crit, and variance.
+ * Uses capped percentage reduction formula for defense.
  */
 export function calculateDamage(
     attackPower: number,
@@ -293,14 +301,18 @@ export function calculateDamage(
 
     // 2. Check for block (shields)
     if (defenderBlock > 0 && Math.random() * 100 < defenderBlock) {
-        // Blocked attacks do 25% damage
-        const blockedDamage = Math.floor((attackPower - defenderDefense) * 0.25);
+        // Blocked attacks do 25% damage (after reduction)
+        const reduction = Math.min(0.75, defenderDefense / (100 + defenderDefense));
+        const reducedDamage = attackPower * (1 - reduction);
+        const blockedDamage = Math.floor(reducedDamage * 0.25);
         return { damage: Math.max(MIN_DAMAGE, blockedDamage), result: 'blocked' };
     }
 
-    // 3. Calculate base damage
-    let damage = attackPower - defenderDefense;
-    damage = Math.max(MIN_DAMAGE, damage);
+    // 3. Calculate base damage using capped percentage reduction
+    // Formula: reduction = min(75%, defense / (100 + defense))
+    // This prevents immunity at high defense while still rewarding it
+    const reduction = Math.min(0.75, defenderDefense / (100 + defenderDefense));
+    let damage = Math.max(MIN_DAMAGE, Math.floor(attackPower * (1 - reduction)));
 
     // 4. Check for crit (2.0x multiplier)
     if (Math.random() * 100 < attackerCrit) {

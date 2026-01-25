@@ -266,7 +266,7 @@ Complete these BEFORE starting any Phase 3 work:
   - See: [Fight Doc → Mobile Combat Controls](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#mobile-combat-controls)
 - [x] XP/gold/HP persistence after battle
 - [x] HP initialization uses derived maxHP (gear-aware)
-- [ ] Damage balance tuning - **NEXT SESSION**
+- [x] Damage balance tuning - Integrated v25 simulation results
 
 ### Step 9: Death Penalty
 
@@ -423,4 +423,4 @@ Complete these BEFORE starting any Phase 3 work:
 
 ---
 
-*Last Updated: 2026-01-24*
+*Last Updated: 2026-01-25*

@@ -14,7 +14,7 @@ import {
     PREFIX_DROP_RATES,
 } from '../models/Monster';
 import { MONSTER_TEMPLATES, getMonsterTemplate } from '../data/monsters';
-import { MonsterTier, MONSTER_TIER_CONFIG } from '../config/combatConfig';
+import { MonsterTier, MONSTER_TIER_CONFIG, BASE_MONSTER_POWER, getMonsterPowerMultiplier } from '../config/combatConfig';
 
 // =====================
 // CONSTANTS
@@ -65,6 +65,11 @@ export function createMonster(
     let attack = Math.floor(scaledStats.attack * tierConfig.attackMultiplier);
     let defense = Math.floor(scaledStats.defense * tierConfig.defenseMultiplier);
     let magicDefense = Math.floor(scaledStats.magicDefense * tierConfig.defenseMultiplier);
+
+    // Apply monster power scaling (tuned from simulation v25)
+    const powerMultiplier = BASE_MONSTER_POWER * getMonsterPowerMultiplier(level);
+    hp = Math.floor(hp * powerMultiplier);
+    attack = Math.floor(attack * powerMultiplier);
 
     // Apply prefix multipliers
     hp = Math.floor(hp * prefixConfig.hpMultiplier);

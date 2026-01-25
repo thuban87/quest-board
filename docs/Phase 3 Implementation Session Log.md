@@ -717,6 +717,54 @@ UI:
 
 ---
 
+## 2026-01-25 - Combat Balance Integration (v25 Simulation Results)
+
+**Focus:** Implemented all 7 combat balance changes from the simulation plan
+
+**Completed:**
+- ✅ **Damage Formula** - Changed from flat subtraction (`atk - def`) to capped percentage reduction (`min(75%, def / (100 + def))`)
+- ✅ **HP Formula** - Base 200 (was 50), CON×2 for normal classes, CON×1 for tanks (Warrior/Cleric)
+- ✅ **Defense from Gear** - Applied 1.5x multiplier to gear defense (simulation model assumption)
+- ✅ **Monster Power** - Added `BASE_MONSTER_POWER = 1.12` and `getMonsterPowerMultiplier()` level curve
+- ✅ **Tier Multipliers** - Updated dungeon (1.02/1.01), boss (1.06/1.04), raid_boss (1.1/1.06)
+- ✅ **Dodge Scaling** - Changed from DEX×0.5% to DEX×0.25%, capped at 25%
+- ✅ **Gear Tier** - Already linear 0.5→3.0 in `TIER_INFO` (no change needed)
+
+**Monster Power Curve:**
+```
+L1-3:   92% (early game buffer)
+L4-5:   89%
+L6-12:  91%
+L13-19: 95%
+L20-29: 98%
+L30-32: 91% ← "Welcome to your 30s" hidden buff
+L33-35: 93%
+L36+:   94%
+```
+
+**Files Changed:**
+- `src/config/combatConfig.ts` - HP_BASE, HP_PER_CON, HP_PER_CON_TANK, DODGE_PER_DEX, tier multipliers, BASE_MONSTER_POWER, getMonsterPowerMultiplier()
+- `src/services/CombatService.ts` - Tank-aware HP formula, capped % damage formula, 1.5x gear defense multiplier
+- `src/services/MonsterService.ts` - Apply monster power curve to HP and attack
+
+**Testing Notes:**
+- ✅ Build passes
+- ✅ Deployed to test vault
+- ⏳ Awaiting manual testing: fight at L1, L15, L30, L40 to verify win rates
+
+**Migration Impact:**
+- Character Max HP will increase significantly (base 200 vs 50)
+- Defense will be higher (1.5x gear multiplier)
+- Dodge will be slightly lower (0.25% vs 0.5% per DEX)
+- No data loss - formula changes only
+
+**Next Steps:**
+- Manual testing in test vault
+- Step 9: Death Penalty implementation
+- Step 10: Quest Bounty System
+
+---
+
 *Template for future entries:*
 
 ```markdown

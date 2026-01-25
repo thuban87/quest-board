@@ -161,8 +161,8 @@ export const DODGE_CAP = 25;
 /** Base crit chance per DEX point (0.5%) */
 export const CRIT_PER_DEX = 0.5;
 
-/** Dodge chance per DEX point (0.5%) */
-export const DODGE_PER_DEX = 0.5;
+/** Dodge chance per DEX point (0.25% - reduced from 0.5 for balance) */
+export const DODGE_PER_DEX = 0.25;
 
 /** Damage variance (±10%) */
 export const DAMAGE_VARIANCE = 0.1;
@@ -227,27 +227,50 @@ export const MONSTER_TIER_CONFIG: Record<MonsterTier, MonsterTierConfig> = {
         namePrefix: 'Elite ',
     },
     dungeon: {
-        hpMultiplier: 1.05,
-        attackMultiplier: 1.0,
+        hpMultiplier: 1.02,  // Was 1.05 - tuned from simulation v25
+        attackMultiplier: 1.01,  // Was 1.0
         defenseMultiplier: 1.0,
         critBonus: 5,
         namePrefix: 'Dungeon ',
     },
     boss: {
-        hpMultiplier: 1.15,
-        attackMultiplier: 1.05,
+        hpMultiplier: 1.06,  // Was 1.15 - tuned from simulation v25
+        attackMultiplier: 1.04,  // Was 1.05
         defenseMultiplier: 1.0,
         critBonus: 6,
         namePrefix: 'Boss: ',
     },
     raid_boss: {
-        hpMultiplier: 1.2,
-        attackMultiplier: 1.05,
+        hpMultiplier: 1.1,  // Was 1.2 - tuned from simulation v25
+        attackMultiplier: 1.06,  // Was 1.05
         defenseMultiplier: 1.0,
         critBonus: 6,
         namePrefix: 'RAID BOSS: ',
     },
 };
+
+// =====================
+// MONSTER POWER SCALING
+// =====================
+
+/** Base monster power multiplier (applied to HP and ATK) */
+export const BASE_MONSTER_POWER = 1.12;
+
+/**
+ * Level-specific monster power curve.
+ * Adjusts difficulty at different level ranges.
+ * Values below 1.0 = easier, above 1.0 = harder
+ */
+export function getMonsterPowerMultiplier(level: number): number {
+    if (level <= 3) return 0.92;   // Early game buffer
+    if (level <= 5) return 0.89;   // L4-5 slightly easier
+    if (level <= 12) return 0.91;  // L6-12
+    if (level <= 19) return 0.95;  // L13-19
+    if (level <= 29) return 0.98;  // L20-29
+    if (level <= 32) return 0.91;  // "Welcome to your 30s" hidden buff
+    if (level <= 35) return 0.93;  // L33-35
+    return 0.94;                   // L36+
+}
 
 /** Tank penalty for raid bosses (Warrior, Cleric get -15% damage) */
 export const RAID_BOSS_TANK_PENALTY = 0.85;
@@ -276,11 +299,13 @@ export const QUEST_BOUNTY_FREE = true;
 // =====================
 
 /** 
- * HP Formula: 50 + (Constitution * 5) + (Level * 10) + GearBonus
- * Note: Base formula in Character.ts, gear bonus added in CombatService
+ * HP Formula: 200 + (Constitution * 2) + (Level * 10) + GearBonus
+ * Note: Tanks (Warrior/Cleric) use CON×1 to balance their high CON
+ * Tuned from simulation v25 for early game survivability
  */
-export const HP_BASE = 50;
-export const HP_PER_CON = 5;
+export const HP_BASE = 200;  // Was 50
+export const HP_PER_CON = 2;  // Was 5 - reduced to balance tank dominance
+export const HP_PER_CON_TANK = 1;  // Tanks get reduced CON→HP scaling
 export const HP_PER_LEVEL = 10;
 
 /**
