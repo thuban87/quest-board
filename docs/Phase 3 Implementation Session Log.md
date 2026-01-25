@@ -765,6 +765,57 @@ L36+:   94%
 
 ---
 
+## 2026-01-25 - Phase 3B Step 9: Death Penalty Complete
+
+**Focus:** Implemented death penalty mechanics with recovery options
+
+**Completed:**
+- ✅ Schema v3 migration with `status` and `recoveryTimerEnd` fields
+- ✅ Created `RecoveryTimerService.ts` for 30-min auto-revive
+- ✅ Created `RecoveryOptionsModal.ts` with revive potion, buy potion, take break, long rest options
+- ✅ Created `RecoveryTimerStatusProvider.ts` for status bar countdown
+- ✅ Added `revive-potion` consumable (200g in store)
+- ✅ Updated BattleService to set unconscious status on defeat
+- ✅ Updated BattleView with Recovery Options button on defeat screen
+- ✅ Added working Use buttons for HP/Mana/Revive potions in Inventory Modal
+- ✅ Long Rest command now clearsa unconscious status
+- ✅ Long Rest blocks usage during active timer cooldown
+- ✅ Store purchases now persist immediately
+
+**Files Created:**
+- `src/services/RecoveryTimerService.ts` - Timer check and auto-revive
+- `src/services/RecoveryTimerStatusProvider.ts` - Status bar countdown
+- `src/modals/RecoveryOptionsModal.ts` - Recovery options UI
+
+**Files Changed:**
+- `src/models/Character.ts` - Schema v3 with status/recoveryTimerEnd
+- `src/store/characterStore.ts` - setStatus, setRecoveryTimer, useRevivePotion actions + HP debug logging
+- `src/services/BattleService.ts` - handleDefeat sets unconscious, startRandomBattle blocks when unconscious
+- `src/components/BattleView.tsx` - Recovery Options button on defeat screen
+- `src/modals/InventoryModal.ts` - Working Use buttons for potions
+- `src/modals/StoreModal.ts` - onSave callback for persistence
+- `styles.css` - Recovery modal styling
+- `main.ts` - Long Rest cooldown check, timer service registration
+
+**Testing Notes:**
+- ✅ Build passes
+- ✅ Deployed to test vault
+- ✅ Defeat → unconscious status works
+- ✅ Recovery modal buttons work correctly
+- ✅ Revive potion use works
+- ✅ Long Rest clears unconscious and sets timer
+- ✅ Timer countdown shows in status bar
+- ✅ Long Rest blocks during active timer
+- ✅ Store purchases persist on reload
+
+**Blockers/Issues:**
+- None (sporadic HP drop to 0 could not be reproduced, added debug logging for future investigation)
+
+**Next Steps:**
+- Phase 3B Step 10: Quest Bounty System
+
+---
+
 *Template for future entries:*
 
 ```markdown

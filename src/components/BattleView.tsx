@@ -21,6 +21,7 @@ import { LootDrop } from '../models/Gear';
 interface BattleViewProps {
     onBattleEnd: () => void;
     onShowLoot?: (loot: LootDrop) => void;
+    onOpenRecoveryModal?: () => void;
     playerSpritePath?: string;
     backgroundPath?: string;
 }
@@ -347,9 +348,10 @@ function VictoryScreen({ onCollectRewards }: VictoryScreenProps) {
  */
 interface DefeatScreenProps {
     onReturn: () => void;
+    onOpenRecoveryModal?: () => void;
 }
 
-function DefeatScreen({ onReturn }: DefeatScreenProps) {
+function DefeatScreen({ onReturn, onOpenRecoveryModal }: DefeatScreenProps) {
     const monster = useBattleStore(state => state.monster);
     const character = useCharacterStore(state => state.character);
 
@@ -364,9 +366,16 @@ function DefeatScreen({ onReturn }: DefeatScreenProps) {
             <div className="qb-defeat-penalty">
                 <span>🪙 -{goldLost} Gold lost</span>
             </div>
-            <button className="qb-btn-primary" onClick={onReturn}>
-                Return to Board
-            </button>
+            <div className="qb-defeat-buttons">
+                {onOpenRecoveryModal && (
+                    <button className="qb-btn-secondary" onClick={onOpenRecoveryModal}>
+                        💊 Recovery Options
+                    </button>
+                )}
+                <button className="qb-btn-primary" onClick={onReturn}>
+                    Return to Board
+                </button>
+            </div>
         </div>
     );
 }
@@ -395,7 +404,7 @@ function RetreatScreen({ onReturn }: RetreatScreenProps) {
 // MAIN COMPONENT
 // =====================
 
-export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot, playerSpritePath, backgroundPath }) => {
+export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot, onOpenRecoveryModal, playerSpritePath, backgroundPath }) => {
     const combatState = useBattleStore(state => state.state);
     const isInCombat = useBattleStore(state => state.isInCombat);
     const resetBattle = useBattleStore(state => state.resetBattle);
@@ -493,7 +502,7 @@ export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot,
     if (combatState === 'DEFEAT') {
         return (
             <div className={`qb-battle-view ${isMobile ? 'mobile' : ''}`}>
-                <DefeatScreen onReturn={handleReturn} />
+                <DefeatScreen onReturn={handleReturn} onOpenRecoveryModal={onOpenRecoveryModal} />
             </div>
         );
     }

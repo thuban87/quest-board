@@ -80,9 +80,16 @@ export function startRandomBattle(
     tier: MonsterTier = 'overworld',
     options?: { isBounty?: boolean; questId?: string }
 ): boolean {
-    const character = useCharacterStore.getState().character;
+    const characterStore = useCharacterStore.getState();
+    const character = characterStore.character;
     if (!character) {
         console.warn('[BattleService] No character loaded');
+        return false;
+    }
+
+    // Block fights when unconscious
+    if (character.status === 'unconscious') {
+        console.warn('[BattleService] Cannot start fight - character is unconscious');
         return false;
     }
 
@@ -494,21 +501,23 @@ function handleDefeat(): void {
     // Calculate 10% gold penalty (applied in setCharacter below)
     const goldLost = Math.floor(character.gold * DEFEAT_GOLD_PENALTY);
 
-    // Set HP to 0 (defeated) - preserve derived maxHP for next session
+    // Set HP to 0 (defeated), status to unconscious - preserve derived maxHP for next session
     if (store.playerStats) {
         characterStore.setCharacter({
             ...character,
             gold: character.gold - goldLost,
             currentHP: 0,
             maxHP: store.playerStats.maxHP,
+            status: 'unconscious',
             lastModified: new Date().toISOString(),
         });
     } else {
-        // Fallback: just set HP to 0
+        // Fallback: just set HP to 0, status to unconscious
         characterStore.setCharacter({
             ...character,
             gold: character.gold - goldLost,
             currentHP: 0,
+            status: 'unconscious',
             lastModified: new Date().toISOString(),
         });
     }
@@ -519,7 +528,7 @@ function handleDefeat(): void {
 
     store.endBattle('defeat');
 
-    // Persist character data (gold penalty, HP = 0)
+    // Persist character data (gold penalty, HP = 0, unconscious)
     if (saveCallback) {
         saveCallback().catch(err => console.error('[BattleService] Save failed:', err));
     }

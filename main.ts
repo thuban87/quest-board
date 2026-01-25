@@ -26,6 +26,7 @@ import { RecurringQuestsDashboardModal } from './src/modals/RecurringQuestsDashb
 import { checkStreakOnLoad } from './src/services/StreakService';
 import { statusBarService } from './src/services/StatusBarService';
 import { BuffStatusProvider } from './src/services/BuffStatusProvider';
+import { RecoveryTimerStatusProvider } from './src/services/RecoveryTimerStatusProvider';
 import { QuestBoardCommandMenu } from './src/modals/QuestBoardCommandMenu';
 import { WelcomeModal } from './src/modals/WelcomeModal';
 import { showInventoryModal } from './src/modals/InventoryModal';
@@ -34,6 +35,7 @@ import { lootGenerationService } from './src/services/LootGenerationService';
 import { setBonusService } from './src/services/SetBonusService';
 import { monsterService } from './src/services/MonsterService';
 import { battleService, setSaveCallback as setBattleSaveCallback } from './src/services/BattleService';
+import { startRecoveryTimerCheck, stopRecoveryTimerCheck } from './src/services/RecoveryTimerService';
 import { GearSlot } from './src/models/Gear';
 
 export default class QuestBoardPlugin extends Plugin {
@@ -257,7 +259,13 @@ export default class QuestBoardPlugin extends Plugin {
             id: 'open-store',
             name: 'Open Store',
             callback: () => {
-                openStoreModal(this.app);
+                openStoreModal(this.app, {
+                    onSave: async () => {
+                        this.settings.character = useCharacterStore.getState().character;
+                        this.settings.inventory = useCharacterStore.getState().inventory;
+                        await this.saveSettings();
+                    }
+                });
             },
         });
 
@@ -265,14 +273,35 @@ export default class QuestBoardPlugin extends Plugin {
         this.addCommand({
             id: 'long-rest',
             name: 'Long Rest (Restore HP & Mana)',
-            callback: () => {
-                const character = useCharacterStore.getState().character;
+            callback: async () => {
+                const store = useCharacterStore.getState();
+                const character = store.character;
                 if (!character) {
                     new (require('obsidian').Notice)('❌ No character found!', 2000);
                     return;
                 }
-                useCharacterStore.getState().fullRestore();
-                new (require('obsidian').Notice)('🏨 Long Rest complete! HP and Mana fully restored.', 3000);
+                // Check if already resting (recovery timer active)
+                if (character.recoveryTimerEnd) {
+                    const remaining = new Date(character.recoveryTimerEnd).getTime() - Date.now();
+                    if (remaining > 0) {
+                        const mins = Math.ceil(remaining / 60000);
+                        new (require('obsidian').Notice)(`🛏️ Already resting! ${mins} minutes remaining.`, 3000);
+                        return;
+                    }
+                }
+                // Full restore HP/Mana
+                store.fullRestore();
+                // Clear unconscious status
+                store.setStatus('active');
+                // Set 30-min recovery timer
+                const endTime = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+                store.setRecoveryTimer(endTime);
+
+                // Persist to settings so HP survives reload
+                this.settings.character = useCharacterStore.getState().character;
+                await this.saveSettings();
+
+                new (require('obsidian').Notice)('🏨 Long Rest complete! HP and Mana fully restored. Resting for 30 minutes.', 3000);
             },
         });
 
@@ -357,15 +386,20 @@ export default class QuestBoardPlugin extends Plugin {
         // Add settings tab
         this.addSettingTab(new QuestBoardSettingTab(this.app, this));
 
-        // Initialize status bar with buff provider
+        // Initialize status bar with providers
         statusBarService.initialize(this);
         statusBarService.registerProvider(new BuffStatusProvider());
-        statusBarService.startAutoRefresh(60000); // Update every minute
+        statusBarService.registerProvider(new RecoveryTimerStatusProvider());
+        statusBarService.startAutoRefresh(10000); // Update every 10 seconds for timer countdown
+
+        // Start recovery timer check (Phase 3B Step 9: Death Penalty)
+        startRecoveryTimerCheck();
 
         console.log('Quest Board plugin loaded successfully');
     }
 
     onunload(): void {
+        stopRecoveryTimerCheck();
         statusBarService.destroy();
         console.log('Unloading Quest Board plugin');
     }

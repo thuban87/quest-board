@@ -268,12 +268,15 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] HP initialization uses derived maxHP (gear-aware)
 - [x] Damage balance tuning - Integrated v25 simulation results
 
-### Step 9: Death Penalty
+### Step 9: Death Penalty ✅
 
-- [ ] Implement "Unconscious" status
+- [x] Implement "Unconscious" status
   - See: [Fight Doc → Death Penalty & Recovery](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#death-penalty--recovery)
-- [ ] Apply 10% gold penalty
-- [ ] Show recovery options modal
+- [x] Apply 10% gold penalty
+- [x] Show recovery options modal
+- [x] Block fighting/Long Rest during recovery
+- [x] Status bar timer countdown
+- [x] Working Use buttons for consumables
 
 ### Step 10: Quest Bounty System
 
