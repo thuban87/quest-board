@@ -177,8 +177,19 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
         const oldXP = character.isTrainingMode ? character.trainingXP : character.totalXP;
         const oldLevel = character.isTrainingMode ? character.trainingLevel : character.level;
 
+        console.log('[XP Debug] Task XP award:', {
+            baseXP,
+            totalXP,
+            xpPerTask: quest.xpPerTask,
+            newlyCompleted,
+            oldXP,
+            oldLevel,
+            isTrainingMode: character.isTrainingMode,
+        });
+
         // Award XP (this updates the store)
         addXP(totalXP);
+        console.log('[XP Debug] Called addXP for tasks:', totalXP);
 
         // Process stat gains from XP (only if not in training mode)
         // IMPORTANT: Get the updated character AFTER addXP to avoid overwriting XP changes
@@ -319,11 +330,67 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
         }
 
         // Check for quest completion
-        if (newCompletion.completed === newCompletion.total && newCompletion.total > 0) {
-            // Award completion bonus
+        const wasAlreadyComplete = oldSnapshot && oldSnapshot.completion.completed === oldSnapshot.completion.total && oldSnapshot.completion.total > 0;
+        const isNowComplete = newCompletion.completed === newCompletion.total && newCompletion.total > 0;
+
+        console.log('[XP Debug] Quest completion check:', {
+            wasAlreadyComplete,
+            isNowComplete,
+            shouldAwardBonus: isNowComplete, // ORIGINAL LOGIC - no wasAlreadyComplete check
+            completionBonus: quest.completionBonus,
+        });
+
+        if (isNowComplete) {
+            // Award completion bonus (ORIGINAL LOGIC)
             const completionBonus = calculateXPWithBonus(quest.completionBonus, quest.category, character);
+            console.log('[XP Debug] Awarding quest completion bonus:', completionBonus);
             addXP(completionBonus);
             new Notice(`🎉 Quest Complete! +${completionBonus} bonus XP!`, 4000);
+
+            // Check for level-up from quest completion bonus
+            // Get current state AFTER the addXP call
+            const postBonusChar = useCharacterStore.getState().character;
+            if (postBonusChar) {
+                const postBonusXP = postBonusChar.isTrainingMode ? postBonusChar.trainingXP : postBonusChar.totalXP;
+                // Use XP before completion bonus as the "old" value for comparison
+                const preCompletionXP = postBonusXP - completionBonus;
+                const bonusLevelResult = checkLevelUp(preCompletionXP, postBonusXP, postBonusChar.isTrainingMode);
+
+                console.log('[XP Debug] Quest completion level-up check:', {
+                    preCompletionXP,
+                    postBonusXP,
+                    didLevelUp: bonusLevelResult.didLevelUp,
+                    oldLevel: bonusLevelResult.oldLevel,
+                    newLevel: bonusLevelResult.newLevel,
+                });
+
+                if (bonusLevelResult.didLevelUp) {
+                    // Apply level-up stat gains (non-training only)
+                    if (!postBonusChar.isTrainingMode) {
+                        const currentChar = useCharacterStore.getState().character;
+                        if (currentChar) {
+                            const updatedChar = applyLevelUpStats(currentChar);
+                            useCharacterStore.getState().setCharacter(updatedChar);
+                            onSaveCharacter();
+                        }
+                    }
+
+                    // Show level-up modal
+                    const modal = new LevelUpModal(
+                        app,
+                        postBonusChar.class,
+                        bonusLevelResult.newLevel,
+                        bonusLevelResult.tierChanged,
+                        postBonusChar.isTrainingMode,
+                        () => {
+                            graduate();
+                            onSaveCharacter();
+                            new Notice('🎓 Congratulations! You are now Level 1!', 5000);
+                        }
+                    );
+                    modal.open();
+                }
+            }
 
             // Check for quest count achievements
             const achievementService = new AchievementService(vault, badgeFolder);
