@@ -1732,6 +1732,51 @@ fix(xp): prevent double XP award when multiple views open
 
 ---
 
+## 2026-01-25 - XP Bug Fix: Level-Up from Quest Completion Bonus
+
+**Focus:** Fix level-up celebration not showing when quest completion bonus triggers level-up
+
+**Problem Reported:**
+- Quest completion bonus XP (e.g., 1000 XP) was being awarded correctly
+- But level-up modals weren't showing when the completion bonus pushed the character over a level threshold
+- XP bar wasn't updating visually (appeared frozen)
+- Level jumps were happening silently (e.g., 1 → 5) when bonuses accumulated
+
+**Root Cause:**
+The level-up check in `useXPAward.ts` only ran after task XP was awarded, but **before** the quest completion bonus. If the completion bonus pushed the character over a level threshold, no level-up detection occurred.
+
+**Solution:**
+Added a second level-up check immediately after the quest completion bonus is awarded:
+
+```typescript
+// After addXP(completionBonus)
+const postBonusChar = useCharacterStore.getState().character;
+const postBonusXP = postBonusChar.totalXP;
+const preCompletionXP = postBonusXP - completionBonus;
+const bonusLevelResult = checkLevelUp(preCompletionXP, postBonusXP, false);
+
+if (bonusLevelResult.didLevelUp) {
+    // Apply level-up stats and show modal
+}
+```
+
+**Key Changes:**
+- `src/hooks/useXPAward.ts`:
+  - Added level-up detection block after quest completion bonus (lines ~350-395)
+  - Shows LevelUpModal, applies stat gains, triggers power-ups for quest-completion-triggered level-ups
+
+**Testing:**
+- Confirmed task XP awards work ✅
+- Confirmed quest completion bonus awards work ✅
+- Confirmed level-up modal shows when completion bonus triggers level-up ✅
+- Confirmed XP bar updates in real-time ✅
+- Build passes, deployed to test vault ✅
+
+**Hours Worked:** ~30 min
+**Phase:** Bug Fix
+
+---
+
 ## Template for Future Sessions
 
 **Date:** YYYY-MM-DD
