@@ -1,6 +1,6 @@
 # Phase 3 Implementation Checklist
 
-> **Status:** 🟡 Phase 3A In Progress (Steps 0-10, 13-14 Complete, Step 11 Pending Testing)  
+> **Status:** 🟡 Phase 3B In Progress (Phase 3A Complete!)  
 > **Estimated Time:** 17-24 days  
 > **Purpose:** Shorthand reference with links to full documentation
 
@@ -162,68 +162,73 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Display type in LootModal and InventoryModal
 - [x] Starter gear uses cloth/sword (equippable by all)
 
-### Step 15: Inventory Modal Improvements
+### Step 15: Inventory Modal Improvements ✅
 
-- [ ] Add sorting options (tier, level, slot, name)
-- [ ] Add filtering options (by slot, by tier)
-- [ ] Improve grid layout for large inventories
+- [x] Add sorting options (tier, level, slot, name) - clickable headers with arrows
+- [x] Add filtering options (by slot, by tier) - multi-select toggle buttons
+- [x] Improve grid layout for large inventories
+- [x] Full-page modal sizing (90vw x 85vh)
+- [x] "Clear Filters" button when filters active
 
-### Step 16: Consumables System
+### Step 16: Consumables System ✅
 
-- [ ] Fix consumable generation to save to inventory (currently generates but doesn't save)
-- [ ] Implement use mechanics for consumables (HP restore, mana restore, etc.)
-- [ ] Add consumables tab functionality in inventory modal
-- [ ] Create consumable types with defined effects
+- [x] Fix consumable generation to save to inventory
+- [x] Created 8 tiered HP/Mana potions (Minor, Lesser, Greater, Superior)
+- [x] Removed Pomodoro and Bribery concepts
+- [x] Consumables tab in inventory modal
+- [x] Fixed LootModal to show consumable emoji/name from registry
+- [ ] Implement use mechanics (deferred to Phase 3B combat)
 
 ---
 
 ## Phase 3B: Fight System (5-7 days)
 
-### Step 1: Combat Stats & Balance Integration
+### Step 1: Combat Stats & Balance Integration ✅
 
-- [ ] Create `CombatStats` interface
+- [x] Create `CombatStats` interface
   - See: [Fight Doc → Derived Combat Stats](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#derived-combat-stats)
-- [ ] Extract `CLASS_INFO` modifiers to `src/config/classConfig.ts`
-- [ ] Extract `getLevelModifier()` to `src/services/CombatService.ts`
-- [ ] Extend StatsService with gear bonuses
-- [ ] Cache `derivedCombatStats` in character store
+- [x] Extract v25 balance constants to `src/config/combatConfig.ts`
+- [x] Create `src/services/CombatService.ts` with `deriveCombatStats()`
+- [x] Extend StatsService with gear bonuses
 
 ### Step 1b: Monster Config
 
 - [ ] Extract `MONSTER_TEMPLATES` to `src/data/monsters.ts`
-- [ ] Extract tier multipliers to `src/config/combatConfig.ts`
+- [x] Extract tier multipliers to `src/config/combatConfig.ts`
 - [ ] Implement raid boss tank penalty in combat service
   - See: [Fight Doc → Combat Balance (Tuned v25)](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#combat-balance-tuned-v25)
 
-### Step 2: Stamina System
+### Step 2: Stamina System ✅
 
-- [ ] Add stamina fields to Character (`stamina`, `staminaGainedToday`, `lastStaminaResetDate`)
+- [x] Add stamina fields to Character (`stamina`, `staminaGainedToday`, `lastStaminaResetDate`)
   - See: [Fight Doc → Stamina Details](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#stamina-details)
-- [ ] Implement `awardStamina()` with daily cap (50)
+- [x] Implement `awardStamina()` with daily cap (50)
   - See: [Fight Doc → Daily Stamina Cap](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#daily-stamina-cap)
-- [ ] Consume stamina on `/fight` command
+- [x] Wire stamina award into quest completion
+- [x] Add stamina display to Character Sheet
 
-### Step 3: Store System
+### Step 3: Store System ✅
 
-- [ ] Create `/buy` slash command
+- [x] Create StoreModal with tiered potions
   - See: [Fight Doc → Store System](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#store-system)
-- [ ] Implement health/mana/revive potions
-- [ ] Deduct gold on purchase
+- [x] Implement health/mana potions (8 tiers)
+- [x] Deduct gold on purchase
+- [x] Add to QuestBoardCommandMenu
 
-### Step 4: HP/Mana Persistence
+### Step 4: HP/Mana Persistence ✅
 
-- [ ] Add `currentHP`, `currentMana` to Character
-- [ ] Display in Character Sheet
-- [ ] Implement Long Rest mechanic
+- [x] Add `currentHP`, `currentMana` to Character
+- [x] Display HP/Mana/Stamina bars in Character Sheet
+- [x] Implement Long Rest mechanic (fullRestore command)
   - See: [Fight Doc → The "Long Rest" Mechanic](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#the-long-rest-mechanic)
 
-### Step 5: Battle Store
+### Step 5: Battle Store ✅
 
-- [ ] Create Zustand store with state machine
+- [x] Create `src/store/battleStore.ts` with state machine
   - See: [Fight Doc → Combat State Machine](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#combat-state-machine)
-- [ ] Implement dual persistence (localStorage + plugin data)
+- [x] Implement dual persistence (localStorage + plugin data)
   - See: [Fight Doc → Zustand Battle Store with Dual Persistence](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#zustand-battle-store-with-dual-persistence)
-- [ ] Test crash recovery
+- [ ] Test crash recovery (requires combat UI)
 
 ### Step 6: Monster System
 

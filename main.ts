@@ -27,6 +27,7 @@ import { BuffStatusProvider } from './src/services/BuffStatusProvider';
 import { QuestBoardCommandMenu } from './src/modals/QuestBoardCommandMenu';
 import { WelcomeModal } from './src/modals/WelcomeModal';
 import { showInventoryModal } from './src/modals/InventoryModal';
+import { openStoreModal } from './src/modals/StoreModal';
 import { lootGenerationService } from './src/services/LootGenerationService';
 import { setBonusService } from './src/services/SetBonusService';
 import { GearSlot } from './src/models/Gear';
@@ -227,6 +228,30 @@ export default class QuestBoardPlugin extends Plugin {
                         await this.saveSettings();
                     }
                 });
+            },
+        });
+
+        // Add open store command (Phase 3B)
+        this.addCommand({
+            id: 'open-store',
+            name: 'Open Store',
+            callback: () => {
+                openStoreModal(this.app);
+            },
+        });
+
+        // Add Long Rest command (Phase 3B)
+        this.addCommand({
+            id: 'long-rest',
+            name: 'Long Rest (Restore HP & Mana)',
+            callback: () => {
+                const character = useCharacterStore.getState().character;
+                if (!character) {
+                    new (require('obsidian').Notice)('❌ No character found!', 2000);
+                    return;
+                }
+                useCharacterStore.getState().fullRestore();
+                new (require('obsidian').Notice)('🏨 Long Rest complete! HP and Mana fully restored.', 3000);
             },
         });
 

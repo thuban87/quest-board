@@ -1,0 +1,304 @@
+/**
+ * Combat Configuration
+ * 
+ * Tuned balance constants extracted from combat-simulator.test.ts v25.
+ * Target: Casual-friendly 50%+ win rate floor across all classes and encounter tiers.
+ */
+
+import { CharacterClass } from '../models/Character';
+
+// =====================
+// ATTACK STYLES
+// =====================
+
+export type AttackStyle = 'physical' | 'magic' | 'hybrid_physical' | 'hybrid_magic';
+
+/**
+ * Class combat configuration
+ * - attackStyle: How the class deals damage
+ * - damageModifier: Base damage bonus (1.0 = normal)
+ * - hpModifier: HP bonus (1.1 = +10%)
+ */
+export interface ClassCombatConfig {
+    attackStyle: AttackStyle;
+    damageModifier: number;
+    hpModifier: number;
+    attackName: string;
+}
+
+export const CLASS_COMBAT_CONFIG: Record<CharacterClass, ClassCombatConfig> = {
+    warrior: {
+        attackStyle: 'physical',
+        damageModifier: 1.0,
+        hpModifier: 1.1,
+        attackName: 'Slash',
+    },
+    paladin: {
+        attackStyle: 'hybrid_physical',
+        damageModifier: 1.1,
+        hpModifier: 1.05,
+        attackName: 'Holy Strike',
+    },
+    technomancer: {
+        attackStyle: 'magic',
+        damageModifier: 1.15,
+        hpModifier: 1.0,
+        attackName: 'Arcane Bolt',
+    },
+    scholar: {
+        attackStyle: 'magic',
+        damageModifier: 1.1,
+        hpModifier: 1.15,
+        attackName: 'Mind Blast',
+    },
+    rogue: {
+        attackStyle: 'physical',
+        damageModifier: 1.15,
+        hpModifier: 1.0,
+        attackName: 'Backstab',
+    },
+    cleric: {
+        attackStyle: 'magic',
+        damageModifier: 1.0,
+        hpModifier: 1.1,
+        attackName: 'Smite',
+    },
+    bard: {
+        attackStyle: 'hybrid_magic',
+        damageModifier: 1.1,
+        hpModifier: 1.05,
+        attackName: 'Dissonance',
+    },
+};
+
+// =====================
+// LEVEL MODIFIERS
+// =====================
+
+/**
+ * Level-specific damage and HP modifiers for granular balance.
+ * Boosts weak spots, nerfs dominant ranges.
+ */
+export function getLevelModifier(cls: CharacterClass, level: number): { damage: number; hp: number } {
+    let damage = 1.0;
+    let hp = 1.0;
+
+    // TANKS (Warrior, Cleric): Softened penalties for casual game
+    if (cls === 'warrior') {
+        hp = 1.1;
+        if (level >= 18 && level <= 22) {
+            damage = 1.15;
+        } else if (level >= 15) {
+            damage = 0.85;
+        }
+    }
+    if (cls === 'cleric') {
+        hp = 1.1;
+        if (level >= 13 && level <= 17) {
+            damage = 1.2;
+        } else if (level >= 18 && level <= 22) {
+            damage = 1.15;
+        } else if (level >= 23) {
+            damage = 0.85;
+        }
+    }
+
+    // GLASS CANNONS (Technomancer, Rogue): Nerf late, boost early
+    if (cls === 'technomancer' || cls === 'rogue') {
+        if (level >= 3 && level <= 7) {
+            damage = 1.3;
+            hp = 1.15;
+        } else if (level >= 20) {
+            damage = 0.85;
+        }
+    }
+
+    // HYBRIDS (Paladin, Bard): Boost weak level ranges
+    if (cls === 'paladin') {
+        if (level >= 3 && level <= 7) {
+            damage = 1.4;
+            hp = 1.2;
+        } else if (level >= 8 && level <= 12) {
+            damage = 1.35;
+            hp = 1.15;
+        } else if (level >= 18 && level <= 22) {
+            damage = 1.25;
+            hp = 1.1;
+        } else if (level >= 23) {
+            damage = 0.9;
+        }
+    }
+    if (cls === 'bard') {
+        if (level >= 3 && level <= 7) {
+            damage = 1.4;
+            hp = 1.2;
+        } else if (level >= 20) {
+            damage = 0.9;
+        }
+    }
+
+    // SCHOLAR: Extra HP, nerf late damage
+    if (cls === 'scholar') {
+        hp = 1.1;
+        if (level >= 20) {
+            damage = 0.9;
+        }
+    }
+
+    return { damage, hp };
+}
+
+// =====================
+// COMBAT CONSTANTS
+// =====================
+
+/** Critical hit multiplier (2.0x for satisfying big numbers) */
+export const CRIT_MULTIPLIER = 2.0;
+
+/** Maximum dodge chance (25%) */
+export const DODGE_CAP = 25;
+
+/** Base crit chance per DEX point (0.5%) */
+export const CRIT_PER_DEX = 0.5;
+
+/** Dodge chance per DEX point (0.5%) */
+export const DODGE_PER_DEX = 0.5;
+
+/** Damage variance (±10%) */
+export const DAMAGE_VARIANCE = 0.1;
+
+/** Minimum damage per hit */
+export const MIN_DAMAGE = 1;
+
+// =====================
+// GEAR TIER MULTIPLIERS
+// =====================
+
+import { GearTier } from '../models/Gear';
+
+export const TIER_STAT_MULTIPLIERS: Record<GearTier, number> = {
+    common: 0.5,
+    adept: 1.0,
+    journeyman: 1.5,
+    master: 2.0,
+    epic: 2.5,
+    legendary: 3.0,
+};
+
+/**
+ * Get expected gear tier for a character level
+ */
+export function getExpectedTierForLevel(level: number): GearTier {
+    if (level <= 5) return 'common';
+    if (level <= 12) return 'adept';
+    if (level <= 20) return 'journeyman';
+    if (level <= 28) return 'master';
+    if (level <= 35) return 'epic';
+    return 'legendary';
+}
+
+// =====================
+// MONSTER TIER MULTIPLIERS
+// =====================
+
+export type MonsterTier = 'overworld' | 'elite' | 'dungeon' | 'boss' | 'raid_boss';
+
+export interface MonsterTierConfig {
+    hpMultiplier: number;
+    attackMultiplier: number;
+    defenseMultiplier: number;
+    critBonus: number;
+    namePrefix: string;
+}
+
+export const MONSTER_TIER_CONFIG: Record<MonsterTier, MonsterTierConfig> = {
+    overworld: {
+        hpMultiplier: 1.0,
+        attackMultiplier: 1.0,
+        defenseMultiplier: 1.0,
+        critBonus: 5,
+        namePrefix: '',
+    },
+    elite: {
+        hpMultiplier: 1.3,
+        attackMultiplier: 1.2,
+        defenseMultiplier: 1.1,
+        critBonus: 10,
+        namePrefix: 'Elite ',
+    },
+    dungeon: {
+        hpMultiplier: 1.05,
+        attackMultiplier: 1.0,
+        defenseMultiplier: 1.0,
+        critBonus: 5,
+        namePrefix: 'Dungeon ',
+    },
+    boss: {
+        hpMultiplier: 1.15,
+        attackMultiplier: 1.05,
+        defenseMultiplier: 1.0,
+        critBonus: 6,
+        namePrefix: 'Boss: ',
+    },
+    raid_boss: {
+        hpMultiplier: 1.2,
+        attackMultiplier: 1.05,
+        defenseMultiplier: 1.0,
+        critBonus: 6,
+        namePrefix: 'RAID BOSS: ',
+    },
+};
+
+/** Tank penalty for raid bosses (Warrior, Cleric get -15% damage) */
+export const RAID_BOSS_TANK_PENALTY = 0.85;
+
+// =====================
+// STAMINA CONSTANTS
+// =====================
+
+/** Maximum current stamina pool */
+export const MAX_STAMINA = 10;
+
+/** Stamina earned per completed task */
+export const STAMINA_PER_TASK = 2;
+
+/** Stamina cost per random fight */
+export const STAMINA_PER_FIGHT = 1;
+
+/** Maximum stamina that can be earned per day */
+export const MAX_DAILY_STAMINA = 50;
+
+/** Quest bounty fights are free (no stamina cost) */
+export const QUEST_BOUNTY_FREE = true;
+
+// =====================
+// HP/MANA FORMULAS
+// =====================
+
+/** 
+ * HP Formula: 50 + (Constitution * 5) + (Level * 10) + GearBonus
+ * Note: Base formula in Character.ts, gear bonus added in CombatService
+ */
+export const HP_BASE = 50;
+export const HP_PER_CON = 5;
+export const HP_PER_LEVEL = 10;
+
+/**
+ * Mana Formula: 20 + (Intelligence * 3) + (Level * 5) + GearBonus
+ */
+export const MANA_BASE = 20;
+export const MANA_PER_INT = 3;
+export const MANA_PER_LEVEL = 5;
+
+// =====================
+// LOOT & ECONOMY
+// =====================
+
+/** Quest bounty loot luck bonus (2.0 = +200%) */
+export const QUEST_BOUNTY_LOOT_BONUS = 2.0;
+
+/** Gold penalty on defeat (10%) */
+export const DEFEAT_GOLD_PENALTY = 0.10;
+
+/** Revive potion cost from store */
+export const REVIVE_POTION_COST = 200;

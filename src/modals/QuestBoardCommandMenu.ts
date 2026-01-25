@@ -63,8 +63,10 @@ export class QuestBoardCommandMenu extends Modal {
                 icon: '🧙',
                 commands: [
                     { label: 'Edit Character', icon: '👤', commandId: 'quest-board:create-edit-character', description: 'Modify your hero' },
+                    { label: 'Inventory', icon: '🎒', commandId: 'quest-board:open-inventory', description: 'Manage your gear' },
+                    { label: 'Store', icon: '🏪', commandId: 'quest-board:open-store', description: 'Buy potions' },
+                    { label: 'Long Rest', icon: '🏨', commandId: 'quest-board:long-rest', description: 'Restore HP & Mana' },
                     { label: 'Achievements', icon: '🏆', commandId: 'quest-board:view-achievements', description: 'View trophy case' },
-                    { label: 'New Achievement', icon: '🎖️', commandId: 'quest-board:create-achievement', description: 'Create custom badge' },
                 ]
             },
             {

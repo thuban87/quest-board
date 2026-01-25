@@ -400,28 +400,89 @@ feat(sets): AI-powered batch set bonus generation with persistent cache
 
 ---
 
+## 2026-01-24 - Phase 3B Steps 1-5: Combat Foundation
+
+**Focus:** Core combat systems foundation - stats, stamina, store, persistence, and battle state
+
+**Completed:**
+- ✅ **Step 1: Combat Stats & Config**
+  - Created `src/config/combatConfig.ts` with v25 balance constants
+  - Created `src/services/CombatService.ts` with `deriveCombatStats()` and gear bonus aggregation
+  - Extracted class modifiers, tier multipliers, level modifiers from simulator
+  
+- ✅ **Step 2: Stamina System**
+  - Added `awardStamina()` and `consumeStamina()` actions to characterStore
+  - Wired stamina award (+2) into `QuestActionsService.ts` on quest completion
+  - Added HP/Mana/Stamina resource bars to Character Sheet UI
+  
+- ✅ **Step 3: Store System**
+  - Created `src/modals/StoreModal.ts` with tiered HP/Mana potions
+  - 8 potions total (4 HP tiers, 4 Mana tiers) + Scroll of Pardon
+  - Buy logic deducts gold, adds to consumables inventory
+  - Added Store command to QuestBoardCommandMenu and main.ts
+  - Fixed store modal width (900px via `--dialog-width` override)
+  
+- ✅ **Step 4: HP/Mana Persistence**
+  - Added `updateHP()`, `updateMana()`, `fullRestore()` actions to characterStore
+  - HP/Mana bars display in Character Sheet "Resources" section
+  - Added Long Rest command to command menu (restores HP & Mana)
+  
+- ✅ **Step 5: Battle Store**
+  - Created `src/store/battleStore.ts` with combat state machine
+  - States: IDLE, PLAYER_INPUT, PROCESSING_TURN, ANIMATING, VICTORY, DEFEAT, RETREATED
+  - Dual persistence (localStorage + Zustand persist)
+  - Actions: startBattle, endBattle, selectAction, updatePlayerHP, updateMonsterHP
+
+**Files Created:**
+- `src/config/combatConfig.ts` - v25 balance constants
+- `src/services/CombatService.ts` - Combat stats derivation
+- `src/modals/StoreModal.ts` - Potion shop modal
+- `src/store/battleStore.ts` - Combat state machine
+
+**Files Modified:**
+- `src/store/characterStore.ts` - HP/Mana/Stamina actions
+- `src/services/QuestActionsService.ts` - Stamina award on quest completion
+- `src/modals/QuestBoardCommandMenu.ts` - Store and Long Rest commands
+- `src/components/CharacterSheet.tsx` - HP/Mana/Stamina resource bars
+- `main.ts` - Store and Long Rest command registration
+- `styles.css` - Store modal, resource bar styles
+
+**Testing Notes:**
+- ✅ Build passes
+- ✅ Stamina awards on quest completion (console log + Character Sheet)
+- ✅ Store modal opens, shows potions, buy works
+- ✅ HP/Mana/Stamina bars display in Character Sheet
+- ✅ Long Rest command restores HP/Mana
+- ✅ Store modal width fixed (900px)
+
+**Blockers/Issues:**
+- None
+
+---
+
 ## Next Session Prompt
 
 ```
-Phase 3A is COMPLETE. All 16 steps finished:
-- Gear generation ✅
-- Armor/weapon types ✅
-- Class restrictions ✅
-- Comparison tooltips ✅
-- Inventory management ✅
-- Blacksmith smelting ✅
-- Set bonuses (AI-generated) ✅
-- Inventory sorting/filtering ✅
-- Consumables system ✅
+Phase 3B Steps 1-5 COMPLETE. Combat foundation is in place.
 
-Ready to begin **Phase 3B: Fight System**. Key references:
-- `docs/rpg-dev-aspects/Fight System.md` - Full design doc
-- `docs/rpg-dev-aspects/Combat Balance Tables.md` - Win rate targets
-- `test/combat-simulator.test.ts` - Balance formulas (v25 tuned)
+What's ready:
+- combatConfig.ts - All v25 balance constants extracted
+- CombatService.ts - deriveCombatStats() with gear bonuses
+- battleStore.ts - Combat state machine with dual persistence
+- StoreModal.ts - Tiered potion shop
+- HP/Mana/Stamina bars in Character Sheet
+- Long Rest command for full restore
 
-The combat simulator has tuned values for all classes/levels. Extract those formulas when implementing the actual FightService.
+Continue with Phase 3B Steps 6-7:
+- Step 6: Monster System (MonsterTemplate, 5-10 base monsters, prefix system)
+- Step 7: Battle Service (damage calculation, state transitions, victory/defeat)
 
-Consumables (HP/Mana potions) are ready in inventory - wire them into combat when building the battle UI.
+Key files to reference:
+- docs/rpg-dev-aspects/Fight System.md - Full design doc
+- test/combat-simulator.test.ts - Balance formulas (v25 tuned)
+- docs/rpg-dev-aspects/Combat Balance Tables.md - Win rate targets
+
+After Steps 6-7, Step 8 is the Combat UI (BattleView component).
 ```
 
 ---
@@ -429,27 +490,29 @@ Consumables (HP/Mana potions) are ready in inventory - wire them into combat whe
 ## Git Commit Message
 
 ```
-feat(inventory): sorting, filtering, consumables & UI polish
+feat(combat): Phase 3B Steps 1-5 - Combat foundation systems
 
-Step 15: Inventory Modal Improvements
-- Clickable sort headers (tier/level/slot/name) with direction arrows
-- Multi-select filter buttons for slots and tiers
-- Full-page modal sizing (90vw x 85vh)
+Step 1: Combat Stats & Config
+- Created combatConfig.ts with v25 balance constants
+- Created CombatService.ts with deriveCombatStats()
 
-Step 16: Consumables System
-- 8 tiered HP/Mana potions (Minor → Superior by level range)
-- Removed Pomodoro and Bribery concepts
-- Fixed loot generation to use valid consumable IDs
-- Consumables saved to inventory on quest completion
-- Consumables tab with "(Use in Combat)" placeholder
+Step 2: Stamina System
+- Stamina award (+2) on quest completion
+- HP/Mana/Stamina bars in Character Sheet
 
-Also:
-- Fixed LootModal to show consumable emoji/name from registry
-- Generated Combat Balance Tables document
-- Lowered set piece drop rate from 80% to 40%
+Step 3: Store System
+- StoreModal with tiered HP/Mana potions
+- Buy logic (deduct gold, add to inventory)
+- Fixed modal width to 900px
+
+Step 4: HP/Mana Persistence
+- updateHP/updateMana/fullRestore actions
+- Long Rest command for manual restoration
+
+Step 5: Battle Store
+- Combat state machine (IDLE → PLAYER_INPUT → VICTORY/DEFEAT)
+- Dual persistence (localStorage + plugin data)
 ```
-
----
 
 ---
 
