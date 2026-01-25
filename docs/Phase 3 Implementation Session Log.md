@@ -606,6 +606,117 @@ Testing:
 
 ---
 
+## 2026-01-25 - Battle UI Fixes & Character Sheet Improvements
+
+**Focus:** Fixed critical battle persistence bugs and improved Character Sheet to show gear-adjusted stats
+
+**Completed:**
+- ✅ **Action Button Layout**
+  - Fixed buttons not stretching to fill grid area (`height: 100%`, `min-height: 80px`)
+  
+- ✅ **Combat Stats in Character Sheet**
+  - Combat Stats section now uses `deriveCombatStats()` to show gear-adjusted values
+  - Max HP, Attack, Defense, etc. all reflect equipped gear bonuses
+  
+- ✅ **Battle XP/Gold/HP Persistence**
+  - Added `setSaveCallback` mechanism to `BattleService.ts`
+  - `handleVictory()` and `handleDefeat()` now persist character data to plugin settings
+  - XP, gold, and HP all save correctly after battle
+  
+- ✅ **Battle HP Initialization**
+  - Fixed `deriveCombatStats()` to clamp currentHP to derived maxHP
+  - If character was at "full health" (currentHP >= stored maxHP), now uses derived maxHP
+  - Battles now start with correct HP (e.g., 306 with gear instead of 120 base)
+  
+- ✅ **HP/Mana Persistence Between Battles**
+  - Fixed `handleVictory()` using stale character reference
+  - Now stores derived `maxHP` and `maxMana` so comparisons work on next battle
+  - HP damage persists between battles correctly
+  
+- ✅ **Attributes Include Gear Bonuses**
+  - Updated `getTotalStat()` to include gear stat bonuses
+  - Character Sheet attributes now show correct totals with gear
+  - Tooltip shows breakdown: Base, Quest bonus, Gear, Power-up
+  - Gear indicator removed from display (only in tooltip as requested)
+
+**Files Changed:**
+- `src/services/CombatService.ts` - HP clamping logic, gear-aware currentHP
+- `src/services/BattleService.ts` - Save callback, fresh character reference, absolute HP/maxHP updates
+- `src/services/StatsService.ts` - Added gear bonuses to `getTotalStat()`
+- `src/components/CharacterSheet.tsx` - Combat stats from deriveCombatStats, gear tooltips
+- `main.ts` - Wired setBattleSaveCallback for battle persistence
+- `styles.css` - Action button height fixes
+
+**Testing Notes:**
+- ✅ Action buttons fill their grid cells
+- ✅ Character Sheet shows gear-adjusted combat stats
+- ✅ Battle XP/gold persists after victory (survives reload)
+- ✅ Battle starts with correct HP (306 with gear)
+- ✅ HP damage persists between battles
+- ✅ Attributes show correct totals including gear
+
+**Blockers/Issues:**
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Battle UI fixes complete. Ready to address damage imbalance.
+
+What was done this session:
+- ✅ Action button layout fixed
+- ✅ Combat Stats section uses deriveCombatStats (gear-aware)
+- ✅ Battle XP/gold/HP persistence fixed
+- ✅ Battle HP initialization uses derived maxHP
+- ✅ HP damage persists between battles
+- ✅ Attributes include gear stat bonuses
+
+CURRENT ISSUE: Damage imbalance between player and monsters.
+
+To investigate:
+1. Check `deriveCombatStats()` damage calculations vs monster damage
+2. Review v25 balance constants in `combatConfig.ts`
+3. Compare actual damage dealt vs expected from Combat Balance Tables
+4. Consider: player level, gear effects, class modifiers, monster tier
+
+Key files:
+- src/services/CombatService.ts - deriveCombatStats(), calculateDamage()
+- src/services/BattleService.ts - executePlayerAttack(), executeMonsterTurn()
+- src/config/combatConfig.ts - Balance constants
+- docs/rpg-dev-aspects/Combat Balance Tables.md - Expected win rates
+```
+
+---
+
+## Git Commit Message
+
+```
+fix(battle): XP/gold/HP persistence, gear-aware combat stats, attribute tooltips
+
+Battle Persistence:
+- Added setSaveCallback mechanism to BattleService
+- handleVictory/handleDefeat now persist character to plugin settings
+- Fixed stale character reference overwriting XP gains
+
+HP Initialization:
+- deriveCombatStats() now clamps currentHP to derived maxHP
+- Battles start with correct gear-adjusted HP (306 vs 120 base)
+- HP/maxHP/mana properly stored for persistence between battles
+
+Character Sheet:
+- Combat Stats section uses deriveCombatStats() for gear-aware display
+- getTotalStat() now includes gear stat bonuses
+- Attribute tooltips show Base/Quest/Gear/Power-up breakdown
+- Removed gear indicator from display (tooltip only)
+
+UI:
+- Action buttons fill grid area with height: 100%
+```
+
+---
+
 *Template for future entries:*
 
 ```markdown

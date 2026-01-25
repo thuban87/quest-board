@@ -13,6 +13,7 @@ import {
     DEFAULT_STATS
 } from '../models/Character';
 import { getStatBoostFromPowerUps, expirePowerUps } from './PowerUpService';
+import { aggregateGearStats } from './CombatService';
 
 /**
  * Derived stats calculated from primary stats
@@ -41,7 +42,7 @@ export function getStatCap(level: number): number {
 }
 
 /**
- * Get total stat value (base + quest bonuses + power-up boosts)
+ * Get total stat value (base + quest bonuses + power-up boosts + gear bonuses)
  */
 export function getTotalStat(character: Character, stat: StatType): number {
     const base = character.baseStats?.[stat] || 10;
@@ -51,7 +52,11 @@ export function getTotalStat(character: Character, stat: StatType): number {
     const activePowerUps = expirePowerUps(character.activePowerUps || []);
     const powerUpBoost = getStatBoostFromPowerUps(activePowerUps, stat);
 
-    return base + questBonus + powerUpBoost;
+    // Include gear stat bonuses
+    const gearStats = aggregateGearStats(character.equippedGear);
+    const gearBonus = gearStats.statBonuses[stat] || 0;
+
+    return base + questBonus + powerUpBoost + gearBonus;
 }
 
 /**

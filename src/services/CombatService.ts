@@ -211,11 +211,32 @@ export function deriveCombatStats(character: Character): CombatStats {
     // Damage modifier: class base * level modifier
     const damageModifier = classConfig.damageModifier * levelMod.damage;
 
+    // Clamp currentHP/Mana - but if character is at "full health" (currentHP >= stored maxHP),
+    // they should be at derived full health (accounts for gear HP bonuses)
+    const storedMaxHP = character.maxHP ?? 50; // fallback if not set
+    const storedMaxMana = character.maxMana ?? 20;
+
+    let clampedHP: number;
+    if (character.currentHP == null || character.currentHP >= storedMaxHP) {
+        // At or above full health (stored) → set to new derived maxHP
+        clampedHP = maxHP;
+    } else {
+        // Below full health → preserve current HP but cap at derived max
+        clampedHP = Math.min(character.currentHP, maxHP);
+    }
+
+    let clampedMana: number;
+    if (character.currentMana == null || character.currentMana >= storedMaxMana) {
+        clampedMana = maxMana;
+    } else {
+        clampedMana = Math.min(character.currentMana, maxMana);
+    }
+
     return {
         maxHP,
-        currentHP: character.currentHP,
+        currentHP: clampedHP,
         maxMana,
-        currentMana: character.currentMana,
+        currentMana: clampedMana,
         physicalAttack,
         magicAttack,
         critChance,

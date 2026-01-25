@@ -6,7 +6,7 @@
  *   node deploy.mjs production  - Deploy to PRODUCTION vault (requires confirmation)
  */
 
-import { copyFileSync, mkdirSync, existsSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { createInterface } from 'readline';
 
@@ -23,6 +23,11 @@ const FILES_TO_COPY = [
     'styles.css'
 ];
 
+// Folders to copy recursively
+const FOLDERS_TO_COPY = [
+    'assets'
+];
+
 // Get target from command line
 const target = process.argv[2];
 
@@ -37,6 +42,33 @@ if (!target || !VAULTS[target]) {
 }
 
 const targetPath = VAULTS[target];
+
+/**
+ * Recursively copy a directory
+ */
+function copyDirRecursive(src, dest) {
+    if (!existsSync(src)) {
+        return 0;
+    }
+
+    mkdirSync(dest, { recursive: true });
+    let count = 0;
+
+    const entries = readdirSync(src);
+    for (const entry of entries) {
+        const srcPath = join(src, entry);
+        const destPath = join(dest, entry);
+
+        if (statSync(srcPath).isDirectory()) {
+            count += copyDirRecursive(srcPath, destPath);
+        } else {
+            copyFileSync(srcPath, destPath);
+            count++;
+        }
+    }
+
+    return count;
+}
 
 /**
  * Prompt user for confirmation (production only)
@@ -105,6 +137,21 @@ async function deploy() {
         } catch (error) {
             console.error(`  ✗ Failed to copy ${file}:`, error.message);
             process.exit(1);
+        }
+    }
+
+    // Copy folders
+    for (const folder of FOLDERS_TO_COPY) {
+        const src = join(process.cwd(), folder);
+        const dest = join(targetPath, folder);
+
+        try {
+            const count = copyDirRecursive(src, dest);
+            if (count > 0) {
+                console.log(`  ✓ ${folder}/ (${count} files)`);
+            }
+        } catch (error) {
+            console.error(`  ✗ Failed to copy ${folder}/:`, error.message);
         }
     }
 

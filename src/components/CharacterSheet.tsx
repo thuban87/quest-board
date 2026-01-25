@@ -15,6 +15,7 @@ import { getXPProgress, getXPForNextLevel, XP_THRESHOLDS, TRAINING_XP_THRESHOLDS
 import { getTotalStats, calculateDerivedStats, STAT_ABBREVIATIONS, STAT_NAMES, getStatCap } from '../services/StatsService';
 import { getStreakDisplay, getStreakMessage } from '../services/StreakService';
 import { getClassPerkAsPowerUp, getTimeRemaining, isExpiringSoon, expirePowerUps } from '../services/PowerUpService';
+import { deriveCombatStats, aggregateGearStats } from '../services/CombatService';
 
 interface CharacterSheetProps {
     onBack: () => void;
@@ -105,6 +106,11 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
         const classPerk = getClassPerkAsPowerUp(character);
         const activePowerUps = expirePowerUps(character.activePowerUps || []);
         return [classPerk, ...activePowerUps];
+    }, [character]);
+
+    // Compute combat stats for accurate HP/Mana display (includes gear bonuses)
+    const combatStats = useMemo(() => {
+        return deriveCombatStats(character);
     }, [character]);
 
     return (
@@ -199,14 +205,14 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                         <div className="qb-resource-header">
                             <span className="qb-resource-label">❤️ HP</span>
                             <span className="qb-resource-values">
-                                {character.currentHP ?? character.maxHP} / {character.maxHP}
+                                {character.currentHP ?? combatStats.maxHP} / {combatStats.maxHP}
                             </span>
                         </div>
                         <div className="qb-resource-bar qb-bar-hp">
                             <div
                                 className="qb-resource-fill"
                                 style={{
-                                    width: `${((character.currentHP ?? character.maxHP) / character.maxHP) * 100}%`,
+                                    width: `${((character.currentHP ?? combatStats.maxHP) / combatStats.maxHP) * 100}%`,
                                 }}
                             />
                         </div>
@@ -217,14 +223,14 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                         <div className="qb-resource-header">
                             <span className="qb-resource-label">💧 Mana</span>
                             <span className="qb-resource-values">
-                                {character.currentMana ?? character.maxMana} / {character.maxMana}
+                                {character.currentMana ?? combatStats.maxMana} / {combatStats.maxMana}
                             </span>
                         </div>
                         <div className="qb-resource-bar qb-bar-mana">
                             <div
                                 className="qb-resource-fill"
                                 style={{
-                                    width: `${((character.currentMana ?? character.maxMana) / character.maxMana) * 100}%`,
+                                    width: `${((character.currentMana ?? combatStats.maxMana) / combatStats.maxMana) * 100}%`,
                                 }}
                             />
                         </div>
@@ -362,15 +368,22 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                         const baseValue = character.baseStats?.[stat] || 10;
                         const questBonus = character.statBonuses?.[stat] || 0;
                         const totalValue = totalStats[stat];
-                        const powerUpBoost = totalValue - baseValue - questBonus; // What's left is from power-ups
+
+                        // Calculate gear bonus properly using aggregateGearStats
+                        const aggregatedGear = aggregateGearStats(character.equippedGear);
+                        const gearBonus = aggregatedGear.statBonuses[stat] || 0;
+
+                        // Power-up boost is what's left after base, quest, and gear
+                        const powerUpBoost = totalValue - baseValue - questBonus - gearBonus;
                         const cap = getStatCap(character.level);
                         const isPrimary = CLASS_INFO[character.class].primaryStats.includes(stat);
+                        const hasBuff = powerUpBoost > 0 || gearBonus > 0;
 
                         return (
                             <div
                                 key={stat}
-                                className={`qb-primary-stat ${isPrimary ? 'primary' : ''} ${powerUpBoost > 0 ? 'buffed' : ''}`}
-                                title={`${STAT_NAMES[stat]}\nBase from level: ${baseValue}\nQuest bonus: ${questBonus} (max ${cap} at Level ${character.level})${powerUpBoost > 0 ? `\nPower-up buff: +${powerUpBoost}` : ''}`}
+                                className={`qb-primary-stat ${isPrimary ? 'primary' : ''} ${hasBuff ? 'buffed' : ''}`}
+                                title={`${STAT_NAMES[stat]}\nBase from level: ${baseValue}\nQuest bonus: ${questBonus} (max ${cap} at Level ${character.level})${gearBonus > 0 ? `\nGear: +${gearBonus}` : ''}${powerUpBoost > 0 ? `\nPower-up: +${powerUpBoost}` : ''}`}
                             >
                                 <span className="qb-stat-abbr">{STAT_ABBREVIATIONS[stat]}</span>
                                 <span className="qb-stat-total">{totalValue}</span>
@@ -389,37 +402,46 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
             {/* Derived Stats */}
             <div className="qb-sheet-derived-stats">
                 <h3>Combat Stats</h3>
-                {(() => {
-                    const derived = calculateDerivedStats(character);
-                    return (
-                        <div className="qb-derived-stats-grid">
-                            <div className="qb-derived-stat">
-                                <span className="qb-derived-label">❤️ HP</span>
-                                <span className="qb-derived-value">{derived.maxHp}</span>
-                            </div>
-                            <div className="qb-derived-stat">
-                                <span className="qb-derived-label">💧 Mana</span>
-                                <span className="qb-derived-value">{derived.maxMana}</span>
-                            </div>
-                            <div className="qb-derived-stat">
-                                <span className="qb-derived-label">⚔️ Attack</span>
-                                <span className="qb-derived-value">{derived.attack}</span>
-                            </div>
-                            <div className="qb-derived-stat">
-                                <span className="qb-derived-label">🛡️ Defense</span>
-                                <span className="qb-derived-value">{derived.defense}</span>
-                            </div>
-                            <div className="qb-derived-stat">
-                                <span className="qb-derived-label">⚡ Speed</span>
-                                <span className="qb-derived-value">{derived.speed}</span>
-                            </div>
-                            <div className="qb-derived-stat">
-                                <span className="qb-derived-label">🎯 Crit</span>
-                                <span className="qb-derived-value">{derived.critChance.toFixed(1)}%</span>
-                            </div>
+                <div className="qb-derived-stats-grid">
+                    <div className="qb-derived-stat">
+                        <span className="qb-derived-label">❤️ Max HP</span>
+                        <span className="qb-derived-value">{combatStats.maxHP}</span>
+                    </div>
+                    <div className="qb-derived-stat">
+                        <span className="qb-derived-label">💧 Max Mana</span>
+                        <span className="qb-derived-value">{combatStats.maxMana}</span>
+                    </div>
+                    <div className="qb-derived-stat">
+                        <span className="qb-derived-label">⚔️ Physical Atk</span>
+                        <span className="qb-derived-value">{combatStats.physicalAttack}</span>
+                    </div>
+                    <div className="qb-derived-stat">
+                        <span className="qb-derived-label">✨ Magic Atk</span>
+                        <span className="qb-derived-value">{combatStats.magicAttack}</span>
+                    </div>
+                    <div className="qb-derived-stat">
+                        <span className="qb-derived-label">🛡️ Defense</span>
+                        <span className="qb-derived-value">{combatStats.defense}</span>
+                    </div>
+                    <div className="qb-derived-stat">
+                        <span className="qb-derived-label">🔮 Magic Def</span>
+                        <span className="qb-derived-value">{combatStats.magicDefense}</span>
+                    </div>
+                    <div className="qb-derived-stat">
+                        <span className="qb-derived-label">🎯 Crit %</span>
+                        <span className="qb-derived-value">{combatStats.critChance.toFixed(1)}%</span>
+                    </div>
+                    <div className="qb-derived-stat">
+                        <span className="qb-derived-label">💨 Dodge %</span>
+                        <span className="qb-derived-value">{combatStats.dodgeChance.toFixed(1)}%</span>
+                    </div>
+                    {combatStats.blockChance > 0 && (
+                        <div className="qb-derived-stat">
+                            <span className="qb-derived-label">🛡️ Block %</span>
+                            <span className="qb-derived-value">{combatStats.blockChance.toFixed(1)}%</span>
                         </div>
-                    );
-                })()}
+                    )}
+                </div>
             </div>
 
             <div className="qb-sheet-perk">
