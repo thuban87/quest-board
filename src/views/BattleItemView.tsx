@@ -10,6 +10,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { BATTLE_VIEW_TYPE } from './constants';
 import { BattleView as BattleComponent } from '../components/BattleView';
 import { showLootModal } from '../modals/LootModal';
+import { openRecoveryOptionsModal } from '../modals/RecoveryOptionsModal';
 import type QuestBoardPlugin from '../../main';
 
 export class BattleItemView extends ItemView {
@@ -65,6 +66,21 @@ export class BattleItemView extends ItemView {
                             loot: loot,
                         });
                     }
+                }}
+                onOpenRecoveryModal={() => {
+                    openRecoveryOptionsModal(this.app, {
+                        onRecoveryComplete: () => {
+                            // On recovery complete, close the battle view
+                            this.leaf.detach();
+                        },
+                        onSave: async () => {
+                            // Persist character state after recovery
+                            const { useCharacterStore } = await import('../store/characterStore');
+                            this.plugin.settings.character = useCharacterStore.getState().character;
+                            this.plugin.settings.inventory = useCharacterStore.getState().inventory;
+                            await this.plugin.saveSettings();
+                        }
+                    });
                 }}
                 playerSpritePath={playerSpritePath}
                 backgroundPath={backgroundPath}

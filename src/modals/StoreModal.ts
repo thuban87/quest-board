@@ -102,6 +102,14 @@ const STORE_ITEMS: StoreItem[] = [
         emoji: '📜',
         rarity: ConsumableRarity.MASTER,
     },
+    {
+        consumableId: 'revive-potion',
+        price: 200,
+        displayName: 'Revive Potion',
+        description: 'Revives from unconscious state.',
+        emoji: '💫',
+        rarity: ConsumableRarity.MASTER,
+    },
 ];
 
 // Rarity colors for styling
@@ -116,9 +124,16 @@ const RARITY_COLORS: Record<ConsumableRarity, string> = {
 // STORE MODAL
 // =====================
 
+interface StoreModalOptions {
+    onSave?: () => Promise<void>;
+}
+
 export class StoreModal extends Modal {
-    constructor(app: App) {
+    private options: StoreModalOptions;
+
+    constructor(app: App, options: StoreModalOptions = {}) {
         super(app);
+        this.options = options;
     }
 
     onOpen() {
@@ -210,7 +225,7 @@ export class StoreModal extends Modal {
         }
     }
 
-    private buyItem(item: StoreItem) {
+    private async buyItem(item: StoreItem) {
         const store = useCharacterStore.getState();
         const gold = store.character?.gold ?? 0;
 
@@ -228,6 +243,11 @@ export class StoreModal extends Modal {
         // Success feedback
         new Notice(`✅ Purchased ${item.emoji} ${item.displayName}!`, 2000);
 
+        // Persist purchase to storage
+        if (this.options.onSave) {
+            await this.options.onSave();
+        }
+
         // Re-render to update display
         this.renderStore();
     }
@@ -240,6 +260,6 @@ export class StoreModal extends Modal {
 /**
  * Helper to open the store modal
  */
-export function openStoreModal(app: App): void {
-    new StoreModal(app).open();
+export function openStoreModal(app: App, options: StoreModalOptions = {}): void {
+    new StoreModal(app, options).open();
 }

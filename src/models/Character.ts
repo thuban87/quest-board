@@ -6,7 +6,7 @@
  */
 
 /** Current character schema version */
-export const CHARACTER_SCHEMA_VERSION = 2;
+export const CHARACTER_SCHEMA_VERSION = 3;
 
 /**
  * Character class types
@@ -434,6 +434,14 @@ export interface Character {
 
     /** Dungeon keys (earned from quests, consumed on dungeon exit) */
     dungeonKeys: number;
+
+    // ========== Phase 3B Step 9: Death Penalty ==========
+
+    /** Character status (active, unconscious, etc.) */
+    status: string;
+
+    /** ISO timestamp when recovery timer ends (null = no active timer) */
+    recoveryTimerEnd: string | null;
 }
 
 /**
@@ -529,6 +537,10 @@ export function createCharacter(
 
         // Phase 3C: Exploration System
         dungeonKeys: 0,
+
+        // Phase 3B Step 9: Death Penalty
+        status: 'active',
+        recoveryTimerEnd: null,
     };
 }
 
@@ -639,8 +651,11 @@ export function calculateMaxMana(character: { baseStats?: CharacterStats; level?
  * @returns Migrated character data conforming to schema v2
  */
 export function migrateCharacterV1toV2(oldData: Record<string, unknown>): Character {
-    // Already v2 or higher? Return as-is (with type assertion)
+    // Already v2 or higher? Chain to next migration
     if (oldData.schemaVersion === 2) {
+        return migrateCharacterV2toV3(oldData);
+    }
+    if ((oldData.schemaVersion as number) >= 3) {
         return oldData as unknown as Character;
     }
 
@@ -649,7 +664,7 @@ export function migrateCharacterV1toV2(oldData: Record<string, unknown>): Charac
     const maxMana = calculateMaxMana(oldData as { baseStats?: CharacterStats; level?: number });
 
     // Build migrated character
-    const migrated: Character = {
+    const migrated: Record<string, unknown> = {
         // Copy all existing fields
         ...(oldData as object),
 
@@ -675,6 +690,36 @@ export function migrateCharacterV1toV2(oldData: Record<string, unknown>): Charac
 
         // Phase 3C: Exploration defaults
         dungeonKeys: (oldData.dungeonKeys as number) ?? 0,
+    };
+
+    // Chain to v2 → v3 migration
+    return migrateCharacterV2toV3(migrated);
+}
+
+/**
+ * Migrate character data from schema v2 to schema v3.
+ * Adds status and recoveryTimerEnd fields for death penalty system.
+ * 
+ * @param oldData - Character data at schema v2
+ * @returns Migrated character data conforming to schema v3
+ */
+export function migrateCharacterV2toV3(oldData: Record<string, unknown>): Character {
+    // Already v3 or higher? Return as-is
+    if ((oldData.schemaVersion as number) >= 3) {
+        return oldData as unknown as Character;
+    }
+
+    // Build migrated character
+    const migrated: Character = {
+        // Copy all existing fields
+        ...(oldData as object),
+
+        // Bump schema version
+        schemaVersion: 3,
+
+        // Phase 3B Step 9: Death Penalty defaults
+        status: (oldData.status as string) ?? 'active',
+        recoveryTimerEnd: (oldData.recoveryTimerEnd as string | null) ?? null,
     } as Character;
 
     return migrated;

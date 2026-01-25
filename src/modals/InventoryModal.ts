@@ -469,23 +469,77 @@ export class InventoryModal extends Modal {
         // Actions
         const actionsEl = itemEl.createEl('div', { cls: 'qb-consumable-actions' });
 
-        // Determine if usable now
-        const isHpMp = definition.effect === 'hp_restore' || definition.effect === 'mana_restore';
+        // Check effect type
+        const isHpRestore = definition.effect === 'hp_restore';
+        const isManaRestore = definition.effect === 'mana_restore';
+        const isRevive = definition.effect === 'revive';
 
-        if (isHpMp) {
-            // HP/Mana potions - usable in combat only (Phase 3B)
+        if (isHpRestore || isManaRestore || isRevive) {
+            // Use button
             const useBtn = actionsEl.createEl('button', {
-                cls: 'qb-consumable-btn qb-btn-disabled',
-                text: '⚔️ Use in Combat'
+                cls: 'qb-consumable-btn qb-btn-use',
+                text: '✨ Use'
             });
-            useBtn.disabled = true;
-            useBtn.setAttribute('title', 'Potions can be used during combat (Coming in Phase 3B)');
+            useBtn.addEventListener('click', () => this.useConsumable(item.itemId, definition));
         } else {
             // Other consumables (Streak restore, XP boost) - Coming Soon
-            const comingSoon = actionsEl.createEl('span', {
+            actionsEl.createEl('span', {
                 cls: 'qb-consumable-coming-soon',
                 text: '🔜 Coming Soon'
             });
+        }
+    }
+
+    private async useConsumable(itemId: string, definition: ConsumableDefinition) {
+        const store = useCharacterStore.getState();
+        const character = store.character;
+        if (!character) return;
+
+        // Check what effect this is
+        if (definition.effect === 'hp_restore') {
+            // Calculate restored HP
+            const newHP = Math.min(character.maxHP, character.currentHP + definition.effectValue);
+            const restored = newHP - character.currentHP;
+
+            if (restored <= 0) {
+                new Notice('❤️ HP is already full!', 2000);
+                return;
+            }
+
+            store.updateHP(definition.effectValue);
+            store.removeInventoryItem(itemId, 1);
+            new Notice(`❤️ Restored ${restored} HP!`, 2000);
+        } else if (definition.effect === 'mana_restore') {
+            // Calculate restored Mana
+            const newMana = Math.min(character.maxMana, character.currentMana + definition.effectValue);
+            const restored = newMana - character.currentMana;
+
+            if (restored <= 0) {
+                new Notice('💧 Mana is already full!', 2000);
+                return;
+            }
+
+            store.updateMana(definition.effectValue);
+            store.removeInventoryItem(itemId, 1);
+            new Notice(`💧 Restored ${restored} Mana!`, 2000);
+        } else if (definition.effect === 'revive') {
+            // Revive from unconscious
+            if (character.status !== 'unconscious') {
+                new Notice('💫 You are not unconscious!', 2000);
+                return;
+            }
+
+            const success = store.useRevivePotion();
+            if (success) {
+                new Notice('💫 Revived! You have 25% HP.', 3000);
+            } else {
+                new Notice('❌ Failed to revive.', 2000);
+            }
+        }
+
+        // Save changes
+        if (this.options.onSave) {
+            await this.options.onSave();
         }
     }
 

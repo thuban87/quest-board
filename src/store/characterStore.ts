@@ -135,6 +135,20 @@ interface CharacterActions {
 
     /** Recalculate and update maxHP/maxMana based on current stats. */
     recalculateMaxHPMana: () => void;
+
+    // ========== Phase 3B Step 9: Death Penalty ==========
+
+    /** Set character status (active, unconscious, etc.) */
+    setStatus: (status: string) => void;
+
+    /** Set recovery timer end timestamp (null = clear timer) */
+    setRecoveryTimer: (endTime: string | null) => void;
+
+    /** Check if character is unconscious */
+    isUnconscious: () => boolean;
+
+    /** Use revive potion: consume from inventory, set HP to 25% max, clear unconscious */
+    useRevivePotion: () => boolean;
 }
 
 type CharacterStore = CharacterState & CharacterActions;
@@ -252,6 +266,10 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
 
             // Phase 3C: Exploration
             dungeonKeys: 0,
+
+            // Phase 3B Step 9: Death Penalty
+            status: 'active',
+            recoveryTimerEnd: null,
         };
 
         set({ character });
@@ -708,6 +726,16 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         if (!character) return;
 
         const newHP = Math.max(0, Math.min(character.currentHP + delta, character.maxHP));
+
+        // DEBUG: Log HP changes with stack trace to find mystery HP drops
+        console.log('[CharacterStore] updateHP called:', {
+            oldHP: character.currentHP,
+            delta: delta,
+            newHP: newHP,
+            maxHP: character.maxHP,
+            stack: new Error().stack?.split('\n').slice(1, 4).join(' -> ')
+        });
+
         set({
             character: {
                 ...character,
@@ -817,6 +845,68 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 lastModified: new Date().toISOString(),
             },
         });
+    },
+
+    // ========== Phase 3B Step 9: Death Penalty ==========
+
+    setStatus: (status) => {
+        const { character } = get();
+        if (!character) return;
+
+        set({
+            character: {
+                ...character,
+                status,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    setRecoveryTimer: (endTime) => {
+        const { character } = get();
+        if (!character) return;
+
+        set({
+            character: {
+                ...character,
+                recoveryTimerEnd: endTime,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    isUnconscious: () => {
+        const { character } = get();
+        return character?.status === 'unconscious';
+    },
+
+    useRevivePotion: () => {
+        const state = get();
+        const { character, inventory } = state;
+        if (!character) return false;
+
+        // Check if we have a revive potion
+        const hasPotion = inventory.find(i => i.itemId === 'revive-potion' && i.quantity > 0);
+        if (!hasPotion) return false;
+
+        // Consume one potion
+        state.removeInventoryItem('revive-potion', 1);
+
+        // Calculate 25% of max HP
+        const revivedHP = Math.floor(character.maxHP * 0.25);
+
+        // Revive: set HP, clear status and timer
+        set({
+            character: {
+                ...character,
+                currentHP: revivedHP,
+                status: 'active',
+                recoveryTimerEnd: null,
+                lastModified: new Date().toISOString(),
+            },
+        });
+
+        return true;
     },
 }));
 

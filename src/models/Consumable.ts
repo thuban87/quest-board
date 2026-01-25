@@ -21,6 +21,7 @@ export enum ConsumableRarity {
 export enum ConsumableEffect {
     HP_RESTORE = 'hp_restore',       // Restore health points
     MANA_RESTORE = 'mana_restore',   // Restore mana points
+    REVIVE = 'revive',               // Revive from unconscious state
     STREAK_RESTORE = 'streak',       // Restore broken streak (future)
     XP_BOOST = 'xp_boost',           // Temporary XP multiplier (future)
 }
@@ -166,6 +167,16 @@ export const CONSUMABLES: Record<string, ConsumableDefinition> = {
         rarity: ConsumableRarity.EPIC,
         effectValue: 1.2,
         emoji: '⭐',
+        levelRange: [1, 40],
+    },
+    'revive-potion': {
+        id: 'revive-potion',
+        name: 'Revive Potion',
+        description: 'Revives from unconscious state with 25% HP.',
+        effect: ConsumableEffect.REVIVE,
+        rarity: ConsumableRarity.MASTER,
+        effectValue: 0.25,  // 25% of max HP
+        emoji: '💫',
         levelRange: [1, 40],
     },
 };

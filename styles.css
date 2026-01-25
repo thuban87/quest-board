@@ -6244,3 +6244,144 @@
 .qb-sprite-image.hidden {
   display: none;
 }
+
+/* ===========================================
+   Recovery Options Modal (Phase 3B Step 9)
+   =========================================== */
+.qb-recovery-modal {
+  max-width: 500px;
+}
+
+.qb-recovery-header {
+  text-align: center;
+  padding: var(--qb-spacing-lg) var(--qb-spacing-md);
+  border-bottom: 1px solid var(--qb-card-border);
+}
+
+.qb-recovery-icon {
+  font-size: 3rem;
+  margin-bottom: var(--qb-spacing-sm);
+}
+
+.qb-recovery-header h2 {
+  margin: 0 0 var(--qb-spacing-xs) 0;
+  font-size: 1.5rem;
+}
+
+.qb-recovery-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.qb-recovery-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-md);
+}
+
+.qb-recovery-option-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  min-height: 50px;
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--qb-transition-fast);
+}
+
+.qb-recovery-option-btn:hover:not(.disabled) {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+  transform: translateX(4px);
+}
+
+.qb-recovery-option-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.qb-recovery-option-icon {
+  font-size: 1.75rem;
+  width: 40px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.qb-recovery-option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.qb-recovery-option-label {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-normal);
+}
+
+.qb-recovery-option-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.qb-recovery-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--qb-spacing-md);
+  border-top: 1px solid var(--qb-card-border);
+  background: var(--background-secondary-alt);
+}
+
+.qb-recovery-gold {
+  font-weight: 600;
+  color: #ffc107;
+}
+
+.qb-recovery-exit-btn {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.qb-recovery-exit-btn:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+/* ===========================================
+   Consumable Use Button (Inventory Modal)
+   =========================================== */
+.qb-consumable-btn.qb-btn-use {
+  padding: var(--qb-spacing-xs) var(--qb-spacing-md);
+  border: none;
+  border-radius: var(--qb-radius-sm);
+  background: linear-gradient(135deg, #4cd964, #34c759);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--qb-transition-fast);
+}
+
+.qb-consumable-btn.qb-btn-use:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(76, 217, 100, 0.4);
+}
+
+.qb-defeat-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-sm);
+  margin-top: var(--qb-spacing-md);
+}
