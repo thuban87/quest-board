@@ -106,6 +106,7 @@
 | 37 | **Sprite Layering System** | Client-side Canvas-based sprite assembly | Base + skin + hair + accessories + gear |
 | 38 | **Replace Placeholder Visuals** | Swap all placeholders with real pixel art | Character sheet, board header, everywhere |
 | 39 | **Level Tier Transitions** ✅ | Animate sprite change when crossing tier boundary | Levels 5→6, 12→13, 17→18, 24→25 |
+| 39.5 | **Combat Balance Simulation** ✅ | ~45 iterations to validate balance. Monster power curve, tier multipliers, HP/damage formulas tuned for 40-80% overworld win rate. Includes L30 "Welcome to your 30s" hidden buff. | Implementation plan: `docs/rpg-dev-aspects/Combat Balance Simulation Implementation Plan.md` |
 | 40 | **Gear Visual System** | Display equipped gear on character sprite | Weapon, armor, accessories overlay |
 | 41 | **Dual-Class Unlock** | At Level 25, unlock secondary class selection | Modal, XP bonus, visual blending |
 | 42 | **Dual-Class Visual** | Blend sprites from both classes | Secondary class element added to sprite |
@@ -348,4 +349,4 @@ enemies.json           - Monster stats, boss definitions, loot tables
 
 ---
 
-**Last Updated:** 2026-01-24
+**Last Updated:** 2026-01-25
