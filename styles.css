@@ -4330,6 +4330,87 @@
 }
 
 /* ===========================================
+   Inventory Modal - Full Page Sizing
+   =========================================== */
+.qb-inventory-modal {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Make the Obsidian modal structure expand for inventory */
+.qb-modal-wide .modal-content.qb-inventory-modal {
+  height: calc(85vh - 40px);
+  max-height: 650px;
+}
+
+.qb-inventory-modal .qb-inventory-title {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  text-align: center;
+}
+
+.qb-inventory-modal .qb-inventory-tabs {
+  display: flex;
+  gap: var(--qb-spacing-sm);
+  justify-content: center;
+  margin-bottom: var(--qb-spacing-md);
+}
+
+.qb-inventory-modal .qb-inventory-tab {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-lg);
+  border: 2px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-secondary);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.qb-inventory-modal .qb-inventory-tab:hover {
+  border-color: var(--interactive-accent);
+}
+
+.qb-inventory-modal .qb-inventory-tab.active {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: white;
+}
+
+.qb-inventory-modal .qb-inventory-gold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-md);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+  border-radius: var(--qb-radius-md);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  margin-bottom: var(--qb-spacing-md);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffd700;
+}
+
+.qb-inventory-modal .qb-inventory-content {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: 650px !important;
+  overflow-y: auto;
+}
+
+.qb-inventory-modal .qb-inventory-count {
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: var(--qb-spacing-sm);
+}
+
+/* ===========================================
    Blacksmith Modal
    =========================================== */
 .qb-blacksmith-modal {
@@ -4702,7 +4783,7 @@
 }
 
 .qb-inventory-grid {
-  max-height: 350px;
+  flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -4956,4 +5037,191 @@
   color: #28a745;
   margin-top: 2px;
   font-style: italic;
+}
+
+/* ===========================================
+   Inventory Modal - Sort/Filter Controls
+   =========================================== */
+.qb-inventory-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  margin-bottom: var(--qb-spacing-md);
+}
+
+.qb-inventory-sort-section,
+.qb-inventory-filter-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qb-spacing-sm);
+  align-items: center;
+}
+
+.qb-inventory-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qb-spacing-xs);
+  align-items: center;
+  width: 100%;
+}
+
+.qb-inventory-controls-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  min-width: 40px;
+}
+
+.qb-inventory-sort-btn,
+.qb-inventory-filter-btn {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-sm);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.qb-inventory-sort-btn:hover,
+.qb-inventory-filter-btn:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
+.qb-inventory-sort-btn.active {
+  background: rgba(var(--interactive-accent-rgb), 0.15);
+  border-color: var(--interactive-accent);
+  color: var(--interactive-accent);
+  font-weight: 600;
+}
+
+.qb-inventory-filter-btn.active {
+  background: rgba(var(--interactive-accent-rgb), 0.15);
+  border-color: var(--interactive-accent);
+  font-weight: 600;
+}
+
+.qb-inventory-clear-btn {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border: 1px solid #dc3545;
+  border-radius: var(--qb-radius-sm);
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.qb-inventory-clear-btn:hover {
+  background: rgba(220, 53, 69, 0.2);
+}
+
+.qb-inventory-filter-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: var(--qb-spacing-sm);
+  font-style: italic;
+}
+
+/* ===========================================
+   Inventory Modal - Consumables Tab
+   =========================================== */
+.qb-consumables-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-md);
+}
+
+.qb-consumable-item {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.qb-consumable-icon {
+  font-size: 2rem;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-primary);
+  border-radius: var(--qb-radius-md);
+  border: 2px solid var(--background-modifier-border);
+}
+
+.qb-consumable-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.qb-consumable-header {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  margin-bottom: 4px;
+}
+
+.qb-consumable-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.qb-consumable-quantity {
+  font-size: 0.85rem;
+  color: var(--interactive-accent);
+  font-weight: 700;
+  background: rgba(var(--interactive-accent-rgb), 0.15);
+  padding: 2px 8px;
+  border-radius: var(--qb-radius-sm);
+}
+
+.qb-consumable-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.qb-consumable-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qb-consumable-btn {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  border: 1px solid var(--interactive-accent);
+  border-radius: var(--qb-radius-sm);
+  background: rgba(var(--interactive-accent-rgb), 0.1);
+  color: var(--interactive-accent);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.qb-consumable-btn:hover:not(:disabled) {
+  background: rgba(var(--interactive-accent-rgb), 0.2);
+}
+
+.qb-consumable-btn.qb-btn-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.qb-consumable-coming-soon {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 6px 12px;
 }

@@ -28,6 +28,7 @@ import {
 } from '../models/Gear';
 import { createUniqueItem, UniqueItemTemplate } from '../data/uniqueItems';
 import { setBonusService } from './SetBonusService';
+import { getHpPotionForLevel, getMpPotionForLevel } from '../models/Consumable';
 
 // ============================================
 // Configuration
@@ -152,9 +153,13 @@ export class LootGenerationService {
 
         // Daily quests give consumables instead of gear
         if (questType === 'daily') {
+            // Pick appropriate potion tier based on character level
+            const potionId = Math.random() < 0.7
+                ? getHpPotionForLevel(character.level)
+                : getMpPotionForLevel(character.level);
             rewards.push({
                 type: 'consumable',
-                itemId: 'health_potion',
+                itemId: potionId,
                 quantity: 1,
             });
             return rewards;
@@ -268,9 +273,13 @@ export class LootGenerationService {
 
         // Golden chests always have a consumable too
         if (chestTier === 'golden') {
+            // Pick appropriate potion tier based on room level
+            const potionId = Math.random() < 0.5
+                ? getHpPotionForLevel(roomLevel)
+                : getMpPotionForLevel(roomLevel);
             rewards.push({
                 type: 'consumable',
-                itemId: Math.random() < 0.5 ? 'health_potion' : 'mana_potion',
+                itemId: potionId,
                 quantity: 2,
             });
         }
@@ -308,10 +317,10 @@ export class LootGenerationService {
             armorType = this.pickArmorType(characterClass);
         }
 
-        // Get set info if this is from a quest (~80% chance to be a set piece for testing)
+        // Get set info if this is from a quest (~40% chance to be a set piece)
         let setId: string | undefined;
         let setName: string | undefined;
-        if (questPath && Math.random() < 0.80) {
+        if (questPath && Math.random() < 0.40) {
             const setInfo = setBonusService.getSetFromQuestPath(questPath);
             if (setInfo) {
                 setId = setInfo.id;
