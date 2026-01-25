@@ -1,6 +1,6 @@
 # Phase 3 Implementation Checklist
 
-> **Status:** 🟡 Phase 3A In Progress (Steps 0-8, 13-14 Complete)  
+> **Status:** 🟡 Phase 3A In Progress (Steps 0-10, 13-14 Complete, Step 11 Pending Testing)  
 > **Estimated Time:** 17-24 days  
 > **Purpose:** Shorthand reference with links to full documentation
 
@@ -101,26 +101,43 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Add armor/weapon type display
 - [x] Disable equip button for class-restricted items
 
-### Step 9: Inventory Management Modal
+### Step 9: Inventory Management Modal ✅
 
-- [ ] Show when inventory full on dungeon exit
+- [x] Show when inventory full on loot drop
   - See: [Gear Doc → Inventory Management Modal](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Gear%20and%20Loot%20System.md#inventory-management-modal)
-- [ ] Allow marking items to sell/trash
-- [ ] Show running count of slots needed
+- [x] Dual-pane layout (pending loot | current inventory)
+- [x] Checkboxes for Keep/Trash on pending items
+- [x] Checkboxes for Sell on existing items
+- [x] Running status bar with slot math
+- [x] Integration with QuestActionsService loot flow
 
-### Step 10: Smelting System
+> [!WARNING]
+> **Deferred Testing:** Full workflow untested due to difficulty generating 50+ inventory items. Modal opens but Keep/Trash/Sell workflow needs verification.
 
-- [ ] Implement transaction pattern (pending → create → delete)
+### Step 10: Smelting System ✅
+
+- [x] Create `SmeltingService.ts` with transaction pattern
   - See: [Gear Doc → Smelting Transaction Pattern](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Gear%20and%20Loot%20System.md#smelting-transaction-pattern)
-- [ ] Create 3-slot blacksmith UI
-- [ ] Handle same-slot bonus
+- [x] Create `BlacksmithModal.ts` with 3-slot UI
+- [x] Click-to-select item selection
+- [x] Tier filtering dropdown
+- [x] Result preview section
+- [x] Same-slot bonus detection
+- [x] Level averaging for output
+- [x] Mixed tiers → highest tier output
+- [x] Same tiers → next tier up output
+- [x] Post-smelt LootModal display for new item
+- [x] Legendary refinement (4000g cost) - *untested, no legendary items*
 
-### Step 11: Set Bonuses
+### Step 11: Set Bonuses ✅
 
-- [ ] Implement `normalizeSetId()` for folder rename resilience
+- [x] Implement `normalizeSetId()` for folder rename resilience
   - See: [Gear Doc → Automatic Set Generation](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Gear%20and%20Loot%20System.md#automatic-set-generation)
-- [ ] Calculate bonuses on equip change
-- [ ] Display set membership in tooltips
+- [x] `SetBonusService.ts` with keyword-based thematic bonus generation
+- [x] Calculate bonuses on equip (via `selectActiveSetBonuses` selector)
+- [x] Display set membership in LootModal tooltips and gear display
+- [x] Active Sets section in CharacterSheet
+- [x] `excludedSetFolders` setting with UI (main, side, training, recurring, daily)
 
 ### Step 12: Legendary Lore
 
@@ -144,6 +161,19 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] `equipGear` enforces class restrictions
 - [x] Display type in LootModal and InventoryModal
 - [x] Starter gear uses cloth/sword (equippable by all)
+
+### Step 15: Inventory Modal Improvements
+
+- [ ] Add sorting options (tier, level, slot, name)
+- [ ] Add filtering options (by slot, by tier)
+- [ ] Improve grid layout for large inventories
+
+### Step 16: Consumables System
+
+- [ ] Fix consumable generation to save to inventory (currently generates but doesn't save)
+- [ ] Implement use mechanics for consumables (HP restore, mana restore, etc.)
+- [ ] Add consumables tab functionality in inventory modal
+- [ ] Create consumable types with defined effects
 
 ---
 

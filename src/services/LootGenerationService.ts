@@ -27,6 +27,7 @@ import {
     generateGearId,
 } from '../models/Gear';
 import { createUniqueItem, UniqueItemTemplate } from '../data/uniqueItems';
+import { setBonusService } from './SetBonusService';
 
 // ============================================
 // Configuration
@@ -168,7 +169,7 @@ export class LootGenerationService {
             const tier = this.rollTier(difficulty, isTraining);
             const level = this.rollGearLevel(character.level);
 
-            const gearItem = this.generateGearItem(slot, tier, level, 'quest', quest.questId, character.class);
+            const gearItem = this.generateGearItem(slot, tier, level, 'quest', quest.questId, character.class, quest.path);
             rewards.push({ type: 'gear', item: gearItem });
         }
 
@@ -287,7 +288,8 @@ export class LootGenerationService {
         level: number,
         source: 'quest' | 'combat' | 'exploration' | 'shop' | 'smelt' = 'quest',
         sourceId?: string,
-        characterClass?: CharacterClass
+        characterClass?: CharacterClass,
+        questPath?: string
     ): GearItem {
         const name = this.generateGearName(slot, tier);
         const stats = this.generateGearStats(slot, tier, level);
@@ -306,6 +308,17 @@ export class LootGenerationService {
             armorType = this.pickArmorType(characterClass);
         }
 
+        // Get set info if this is from a quest (~80% chance to be a set piece for testing)
+        let setId: string | undefined;
+        let setName: string | undefined;
+        if (questPath && Math.random() < 0.80) {
+            const setInfo = setBonusService.getSetFromQuestPath(questPath);
+            if (setInfo) {
+                setId = setInfo.id;
+                setName = setInfo.name;
+            }
+        }
+
         return {
             id: generateGearId(),
             name,
@@ -321,6 +334,8 @@ export class LootGenerationService {
             source,
             sourceId,
             acquiredAt: new Date().toISOString(),
+            setId,
+            setName,
         };
     }
 

@@ -21,6 +21,8 @@ import { lootGenerationService } from './LootGenerationService';
 import { AchievementService } from './AchievementService';
 import { showAchievementUnlock } from '../modals/AchievementUnlockModal';
 import { showLootModal } from '../modals/LootModal';
+import { showInventoryManagementModal } from '../modals/InventoryManagementModal';
+import { GearItem } from '../models/Gear';
 import {
     evaluateTriggers,
     grantPowerUp,
@@ -225,27 +227,80 @@ export async function moveQuest(
                     loot,
                 });
 
-                // Add loot to character inventory directly
+                // Separate gold from gear
+                const goldRewards = loot.filter(r => r.type === 'gold');
+                const gearRewards = loot.filter(r => r.type === 'gear') as { type: 'gear'; item: GearItem }[];
+                const consumableRewards = loot.filter(r => r.type === 'consumable');
+
                 const charStore = useCharacterStore.getState();
-                for (const reward of loot) {
+
+                // Gold is always added immediately
+                for (const reward of goldRewards) {
                     if (reward.type === 'gold') {
                         charStore.updateGold(reward.amount);
-                    } else if (reward.type === 'gear') {
-                        charStore.addGear(reward.item);
                     }
-                    // Consumables handled separately (TODO)
                 }
 
-                // Show loot modal if app is provided
-                if (options.app && loot.length > 0) {
-                    // Delay slightly so quest save completes first
-                    setTimeout(() => {
-                        showLootModal(options.app!, {
-                            title: 'Quest Complete!',
-                            subtitle: updatedQuest.questName,
-                            loot: loot!,
-                        });
-                    }, 500);
+                // Check if we have room for gear
+                const gearItems = gearRewards.map(r => r.item);
+                const freeSlots = charStore.getFreeSlots();
+
+                if (gearItems.length > 0 && gearItems.length > freeSlots) {
+                    // Inventory full - show management modal
+                    if (options.app) {
+                        console.log('[QuestActionsService] Inventory full, showing management modal');
+                        setTimeout(() => {
+                            showInventoryManagementModal(options.app!, {
+                                pendingLoot: gearItems,
+                                title: 'Quest Complete - Inventory Full!',
+                                onConfirm: (acceptedItems, itemsToSell) => {
+                                    const store = useCharacterStore.getState();
+
+                                    // Sell marked items first
+                                    if (itemsToSell.length > 0) {
+                                        const sellIds = itemsToSell.map(i => i.id);
+                                        const result = store.bulkRemoveGear(sellIds);
+                                        if (result.totalGold > 0) {
+                                            new Notice(`💰 Sold ${result.removed.length} item(s) for ${result.totalGold}g`, 3000);
+                                        }
+                                    }
+
+                                    // Add accepted items
+                                    const rejected = store.bulkAddGear(acceptedItems);
+                                    if (rejected.length > 0) {
+                                        console.warn('[QuestActionsService] Some items could not be added:', rejected);
+                                    }
+
+                                    // Show what was obtained
+                                    const keptCount = acceptedItems.length - rejected.length;
+                                    if (keptCount > 0) {
+                                        new Notice(`✨ Obtained ${keptCount} item(s)!`, 3000);
+                                    }
+                                },
+                                onAbandon: () => {
+                                    new Notice('🗑️ Abandoned all loot.', 2000);
+                                },
+                            });
+                        }, 500);
+                    }
+                } else {
+                    // Fits - add gear directly
+                    for (const item of gearItems) {
+                        charStore.addGear(item);
+                    }
+
+                    // Consumables handled separately (TODO)
+
+                    // Show loot modal if app is provided
+                    if (options.app && loot.length > 0) {
+                        setTimeout(() => {
+                            showLootModal(options.app!, {
+                                title: 'Quest Complete!',
+                                subtitle: updatedQuest.questName,
+                                loot: loot!,
+                            });
+                        }, 500);
+                    }
                 }
             } catch (error) {
                 console.error('[QuestActionsService] Failed to generate loot:', error);
@@ -255,20 +310,12 @@ export async function moveQuest(
 
     // Save to file
     try {
-        console.log('[QuestActionsService] Saving quest to file:', {
-            questId: updatedQuest.questId,
-            newStatus: updatedQuest.status,
-            isAIGenerated: isAIGeneratedQuest(updatedQuest),
-        });
-
         let saveResult: boolean;
         if (isAIGeneratedQuest(updatedQuest)) {
             saveResult = await saveAIQuest(vault, options.storageFolder, updatedQuest);
         } else {
             saveResult = await saveManualQuest(vault, options.storageFolder, updatedQuest);
         }
-
-        console.log('[QuestActionsService] Save result:', saveResult);
 
         if (!saveResult) {
             console.error('[QuestActionsService] Save returned false');

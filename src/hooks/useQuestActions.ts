@@ -47,7 +47,6 @@ export function useQuestActions({
             // Add to pending saves BEFORE the save operation
             if (pendingSavesRef) {
                 pendingSavesRef.current.add(questId);
-                console.log('[useQuestActions] Added to pending saves:', questId);
             }
 
             try {
@@ -59,7 +58,6 @@ export function useQuestActions({
 
                 // Save character if streak was updated
                 if (result.streakResult && onSaveCharacter) {
-                    console.log('[useQuestActions] Saving character after streak update');
                     await onSaveCharacter();
                 }
 
@@ -70,8 +68,7 @@ export function useQuestActions({
                 if (pendingSavesRef) {
                     setTimeout(() => {
                         pendingSavesRef.current.delete(questId);
-                        console.log('[useQuestActions] Removed from pending saves:', questId);
-                    }, 500); // 500ms delay - less than old 1500ms, but still gives debounce time
+                    }, 500); // 500ms delay for debounce
                 }
             }
         },

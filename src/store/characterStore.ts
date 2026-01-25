@@ -100,6 +100,21 @@ interface CharacterActions {
 
     /** Unequip gear from slot. Item goes to inventory. Returns the unequipped item or null. */
     unequipGear: (slot: GearSlot) => GearItem | null;
+
+    /** Bulk remove gear items by ID. Returns gold value of sold items. */
+    bulkRemoveGear: (itemIds: string[]) => { removed: GearItem[]; totalGold: number };
+
+    /** Bulk add gear items to inventory. Returns items that couldn't be added (inventory full). */
+    bulkAddGear: (items: GearItem[]) => GearItem[];
+
+    /** Mark items as pending smelt (prevents use during transaction). */
+    markGearPendingSmelt: (itemIds: string[]) => void;
+
+    /** Clear pending smelt status from items. */
+    clearGearPendingSmelt: (itemIds: string[]) => void;
+
+    /** Get number of free inventory slots. */
+    getFreeSlots: () => number;
 }
 
 type CharacterStore = CharacterState & CharacterActions;
@@ -566,6 +581,105 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         });
         return item;
     },
+
+    // ========== Bulk Operations (Step 9-10) ==========
+
+    bulkRemoveGear: (itemIds) => {
+        const { character } = get();
+        if (!character) return { removed: [], totalGold: 0 };
+
+        const removed: GearItem[] = [];
+        let totalGold = 0;
+
+        const newInventory = character.gearInventory.filter(item => {
+            if (itemIds.includes(item.id)) {
+                removed.push(item);
+                totalGold += item.sellValue;
+                return false;
+            }
+            return true;
+        });
+
+        set({
+            character: {
+                ...character,
+                gearInventory: newInventory,
+                gold: character.gold + totalGold,
+                lastModified: new Date().toISOString(),
+            },
+        });
+
+        return { removed, totalGold };
+    },
+
+    bulkAddGear: (items) => {
+        const { character } = get();
+        if (!character) return items;
+
+        const freeSlots = character.inventoryLimit - character.gearInventory.length;
+        if (freeSlots <= 0) return items; // All rejected
+
+        // Add as many as we can
+        const toAdd = items.slice(0, freeSlots);
+        const rejected = items.slice(freeSlots);
+
+        set({
+            character: {
+                ...character,
+                gearInventory: [...character.gearInventory, ...toAdd],
+                lastModified: new Date().toISOString(),
+            },
+        });
+
+        return rejected; // Return items that couldn't be added
+    },
+
+    markGearPendingSmelt: (itemIds) => {
+        const { character } = get();
+        if (!character) return;
+
+        const newInventory = character.gearInventory.map(item => {
+            if (itemIds.includes(item.id)) {
+                return { ...item, status: 'pending_smelt' as const };
+            }
+            return item;
+        });
+
+        set({
+            character: {
+                ...character,
+                gearInventory: newInventory,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    clearGearPendingSmelt: (itemIds) => {
+        const { character } = get();
+        if (!character) return;
+
+        const newInventory = character.gearInventory.map(item => {
+            if (itemIds.includes(item.id) && item.status === 'pending_smelt') {
+                const { status, ...rest } = item;
+                return rest as GearItem;
+            }
+            return item;
+        });
+
+        set({
+            character: {
+                ...character,
+                gearInventory: newInventory,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    getFreeSlots: () => {
+        const { character } = get();
+        if (!character) return 0;
+        return character.inventoryLimit - character.gearInventory.length;
+    },
 }));
 
 // ============================================
@@ -581,3 +695,15 @@ export const selectCurrentLevel = (state: CharacterStore) =>
     state.character?.isTrainingMode
         ? state.character.trainingLevel
         : (state.character?.level ?? 1);
+
+// ============================================
+// Set Bonus Selector (computes on-demand)
+// ============================================
+import { setBonusService } from '../services/SetBonusService';
+import { ActiveSetBonus } from '../models/Gear';
+
+export const selectActiveSetBonuses = (state: CharacterStore): ActiveSetBonus[] => {
+    const char = state.character;
+    if (!char?.equippedGear) return [];
+    return setBonusService.calculateActiveSetBonuses(char.equippedGear);
+};

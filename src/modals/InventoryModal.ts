@@ -17,6 +17,7 @@ import {
     canEquipGear,
 } from '../models/Gear';
 import { useCharacterStore } from '../store/characterStore';
+import { formatGearTooltip, isSetItem } from '../utils/gearFormatters';
 
 interface InventoryModalOptions {
     /** Callback when character data changes */
@@ -166,10 +167,18 @@ export class InventoryModal extends Modal {
         if (item.stats.attackPower) statsEl.innerHTML += ` • +${item.stats.attackPower} ATK`;
         if (item.stats.defense) statsEl.innerHTML += ` • +${item.stats.defense} DEF`;
 
-        // Comparison tooltip with equipped item
+        // Show set membership if present
+        if (isSetItem(item)) {
+            infoEl.createEl('div', {
+                cls: 'qb-inventory-item-set',
+                text: `⚔️ ${item.setName} Set`
+            });
+        }
+
+        // Use shared tooltip (includes comparison if equipped item exists)
         const currentlyEquipped = character?.equippedGear?.[item.slot];
-        const comparisonText = this.generateComparisonTooltip(item, currentlyEquipped);
-        itemEl.setAttribute('title', comparisonText);
+        const tooltip = formatGearTooltip(item, currentlyEquipped);
+        itemEl.setAttribute('title', tooltip);
 
         // Check if class can equip this item
         const canEquip = character ? canEquipGear(character.class, item) : true;
@@ -196,67 +205,6 @@ export class InventoryModal extends Modal {
             text: `🪙 Sell (${sellValue}g)`
         });
         sellBtn.addEventListener('click', () => this.sellItem(item, sellValue));
-    }
-
-    /**
-     * Generate a comparison tooltip between an item and the currently equipped item in that slot
-     */
-    private generateComparisonTooltip(item: GearItem, equipped: GearItem | null | undefined): string {
-        const lines: string[] = [];
-
-        // Item name and tier
-        lines.push(`${item.name}`);
-        lines.push(`${TIER_INFO[item.tier].name} • Level ${item.level}`);
-
-        // Armor/weapon type
-        if (item.armorType) {
-            lines.push(`Type: ${ARMOR_TYPE_NAMES[item.armorType]}`);
-        }
-        if (item.weaponType) {
-            lines.push(`Type: ${WEAPON_TYPE_NAMES[item.weaponType]}`);
-        }
-        lines.push('');
-
-        // Stats
-        lines.push(`+${item.stats.primaryValue} ${item.stats.primaryStat.charAt(0).toUpperCase() + item.stats.primaryStat.slice(1)}`);
-        if (item.stats.attackPower) lines.push(`+${item.stats.attackPower} Attack Power`);
-        if (item.stats.defense) lines.push(`+${item.stats.defense} Defense`);
-        if (item.stats.magicDefense) lines.push(`+${item.stats.magicDefense} Magic Defense`);
-        if (item.stats.critChance) lines.push(`+${item.stats.critChance}% Crit Chance`);
-        if (item.stats.blockChance) lines.push(`+${item.stats.blockChance}% Block Chance`);
-        if (item.stats.dodgeChance) lines.push(`+${item.stats.dodgeChance}% Dodge Chance`);
-
-        // Comparison with equipped
-        if (equipped) {
-            lines.push('');
-            lines.push('--- vs Equipped ---');
-
-            // Compare primary stat
-            const primaryDiff = item.stats.primaryValue - equipped.stats.primaryValue;
-            if (primaryDiff !== 0) {
-                const sign = primaryDiff > 0 ? '+' : '';
-                lines.push(`${sign}${primaryDiff} ${item.stats.primaryStat}`);
-            }
-
-            // Compare attack
-            const atkDiff = (item.stats.attackPower || 0) - (equipped.stats.attackPower || 0);
-            if (atkDiff !== 0) {
-                const sign = atkDiff > 0 ? '+' : '';
-                lines.push(`${sign}${atkDiff} Attack`);
-            }
-
-            // Compare defense
-            const defDiff = (item.stats.defense || 0) - (equipped.stats.defense || 0);
-            if (defDiff !== 0) {
-                const sign = defDiff > 0 ? '+' : '';
-                lines.push(`${sign}${defDiff} Defense`);
-            }
-        } else {
-            lines.push('');
-            lines.push('(No item equipped in this slot)');
-        }
-
-        return lines.join('\n');
     }
 
     private async equipItem(item: GearItem) {

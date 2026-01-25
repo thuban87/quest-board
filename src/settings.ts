@@ -74,8 +74,18 @@ export interface QuestBoardSettings {
 
     // Loot configuration - custom quest type to gear slot mapping
     questSlotMapping: Record<string, string[]>;
+
+    // Set bonus configuration
+    excludedSetFolders: string[];  // Folders that don't form sets (e.g., 'main', 'side', etc.)
+    setBonusCache: Record<string, any[]>; // Cached AI-generated set bonuses
 }
 
+/**
+ * Get the quest folder path from settings
+ */
+export function getQuestFolderPath(settings: QuestBoardSettings): string {
+    return `${settings.storageFolder}/quests`;
+}
 /**
  * Default settings
  */
@@ -109,6 +119,8 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
         recurring: ['boots', 'accessory1'],
         daily: [],
     },
+    excludedSetFolders: ['main', 'side', 'training', 'recurring', 'daily'],
+    setBonusCache: {},
 };
 
 /**
@@ -287,12 +299,42 @@ export class QuestBoardSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Training Mode')
-            .setDesc('Enable training mode with separate XP pool (Roman numeral levels I-IV)')
+            .setDesc('Enable training mode with separate XP pool (Roman numeral levels I-IV). Disabling graduates your character to Level 1.')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.enableTrainingMode)
                 .onChange(async (value) => {
                     this.plugin.settings.enableTrainingMode = value;
+
+                    // Sync with character state
+                    if (this.plugin.settings.character) {
+                        if (!value && this.plugin.settings.character.isTrainingMode) {
+                            // Graduate: exit training mode and reset to level 1
+                            this.plugin.settings.character = {
+                                ...this.plugin.settings.character,
+                                isTrainingMode: false,
+                                level: 1,
+                                totalXP: 0,
+                                lastModified: new Date().toISOString(),
+                            };
+                            // Also update the store
+                            const { setCharacter } = await import('./store/characterStore').then(m => m.useCharacterStore.getState());
+                            setCharacter(this.plugin.settings.character);
+                        } else if (value && !this.plugin.settings.character.isTrainingMode) {
+                            // Re-enable training mode (not typical but support it)
+                            this.plugin.settings.character = {
+                                ...this.plugin.settings.character,
+                                isTrainingMode: true,
+                                trainingLevel: 1,
+                                trainingXP: 0,
+                                lastModified: new Date().toISOString(),
+                            };
+                            const { setCharacter } = await import('./store/characterStore').then(m => m.useCharacterStore.getState());
+                            setCharacter(this.plugin.settings.character);
+                        }
+                    }
+
                     await this.plugin.saveSettings();
+                    this.display(); // Refresh to show updated state
                 }));
 
         new Setting(containerEl)
@@ -364,6 +406,28 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         this.applyQuestSlotMapping();
                         this.display(); // Refresh
                     }
+                }));
+
+        // Excluded Set Folders Section
+        containerEl.createEl('h3', { text: 'Set Bonus Configuration' });
+        containerEl.createEl('p', {
+            text: 'Quest folders that should NOT form gear sets. Gear from these folders will have no set membership.',
+            cls: 'setting-item-description'
+        });
+
+        new Setting(containerEl)
+            .setName('Excluded Folders')
+            .setDesc('Comma-separated list of folder names (e.g., main, side, training)')
+            .addText(text => text
+                .setPlaceholder('main, side, training, recurring, daily')
+                .setValue((this.plugin.settings.excludedSetFolders || []).join(', '))
+                .onChange(async (value) => {
+                    const folders = value
+                        .split(',')
+                        .map(s => s.trim().toLowerCase())
+                        .filter(s => s.length > 0);
+                    this.plugin.settings.excludedSetFolders = folders;
+                    await this.plugin.saveSettings();
                 }));
 
         // Character Section (if character exists)
@@ -517,6 +581,66 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                         this.display(); // Refresh the settings tab
                     }
+                }));
+
+        // === Gemini Test Section ===
+        containerEl.createEl('h3', { text: '🧪 Gemini AI Testing' });
+
+        new Setting(containerEl)
+            .setName('Test Set Bonus Generation')
+            .setDesc('Enter a set name and test Gemini generation. Results shown in console.')
+            .addText(text => text
+                .setPlaceholder('e.g., Fitness, Work, Study')
+                .setValue('')
+                .onChange(() => { }))
+            .addButton(button => button
+                .setButtonText('Generate')
+                .onClick(async () => {
+                    const textInput = containerEl.querySelector('.setting-item:last-of-type input') as HTMLInputElement;
+                    const setName = textInput?.value?.trim() || 'Test Set';
+
+                    button.setButtonText('Generating...');
+                    button.setDisabled(true);
+
+                    const { setBonusService } = await import('./services/SetBonusService');
+                    const result = await setBonusService.testGeneration(setName);
+
+                    if (result.success && result.bonuses) {
+                        console.log(`[Gemini Test] SUCCESS for "${setName}":`, result.bonuses);
+                        const bonusStr = result.bonuses.map(b =>
+                            `(${b.pieces}) ${setBonusService.formatBonusEffect(b.effect)}`
+                        ).join('\n');
+                        alert(`✅ Generated bonuses for "${setName}":\n\n${bonusStr}`);
+                    } else {
+                        console.error(`[Gemini Test] FAILED for "${setName}":`, result.error);
+                        alert(`❌ Generation failed:\n${result.error}`);
+                    }
+
+                    button.setButtonText('Generate');
+                    button.setDisabled(false);
+                }));
+
+        new Setting(containerEl)
+            .setName('Cache Status')
+            .setDesc('View current set bonus cache status')
+            .addButton(button => button
+                .setButtonText('Show Status')
+                .onClick(async () => {
+                    const { setBonusService } = await import('./services/SetBonusService');
+                    const status = setBonusService.getCacheStatus();
+                    console.log('[Cache Status]', status);
+                    alert(`📦 Cache Status:\nCached: ${status.cached}\nPending: ${status.pending}\nSets: ${status.setIds.join(', ') || 'none'}`);
+                }));
+
+        new Setting(containerEl)
+            .setName('Clear Set Bonus Cache')
+            .setDesc('Clear cached set bonuses (keeps first entry for comparison)')
+            .addButton(button => button
+                .setButtonText('Clear Cache')
+                .onClick(async () => {
+                    const { setBonusService } = await import('./services/SetBonusService');
+                    setBonusService.clearCacheExceptFirst();
+                    alert('🗑️ Cache cleared (kept first entry)');
                 }));
     }
 }

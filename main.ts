@@ -28,6 +28,7 @@ import { QuestBoardCommandMenu } from './src/modals/QuestBoardCommandMenu';
 import { WelcomeModal } from './src/modals/WelcomeModal';
 import { showInventoryModal } from './src/modals/InventoryModal';
 import { lootGenerationService } from './src/services/LootGenerationService';
+import { setBonusService } from './src/services/SetBonusService';
 import { GearSlot } from './src/models/Gear';
 
 export default class QuestBoardPlugin extends Plugin {
@@ -49,6 +50,23 @@ export default class QuestBoardPlugin extends Plugin {
             }
             lootGenerationService.setCustomSlotMapping(typedMapping);
         }
+
+        // Initialize set bonus service with settings
+        setBonusService.initialize(this.app, this.settings);
+
+        // Load cached set bonuses from settings (sync happens after vault is ready)
+        setBonusService.loadCache(this.settings.setBonusCache);
+
+        // Set up save callback to persist cache when bonuses are generated
+        setBonusService.setSaveCallback(async () => {
+            this.settings.setBonusCache = setBonusService.getCacheForSave();
+            await this.saveSettings();
+        });
+
+        // Sync cache with current folders after vault is ready (remove deleted folder entries)
+        setTimeout(() => {
+            setBonusService.syncWithFolders();
+        }, 2500); // Slightly after recurring quest processing
 
         // Check and update streak on load (reset if missed days, reset shield weekly)
         if (this.settings.character) {

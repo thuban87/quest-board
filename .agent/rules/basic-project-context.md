@@ -35,8 +35,8 @@ Instructions for AI assistants working on this project.
 1. **Review & Discuss** - Clarify requirements, check Feature Roadmap
 2. **Do the Work** - Write code in dev environment only
 3. **Test** - `npm run build`, fix errors, rebuild until passing
-4. **Deploy** - `npm run deploy` (copies to production folder)
-5. **Wait for Confirmation** - Brad tests in production Obsidian
+4. **Deploy** - `npm run deploy:test` (copies to test/dev folder)
+5. **Wait for Confirmation** - Brad tests in dev Obsidian
 6. **Wrap Up** - Update Session Log, Feature Roadmap, provide commit message
 
 ---
