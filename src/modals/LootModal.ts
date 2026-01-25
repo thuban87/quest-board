@@ -7,6 +7,7 @@
 
 import { Modal, App } from 'obsidian';
 import { LootDrop, LootReward, GearItem, TIER_INFO, GEAR_SLOT_NAMES, ARMOR_TYPE_NAMES, WEAPON_TYPE_NAMES } from '../models/Gear';
+import { CONSUMABLES } from '../models/Consumable';
 import { useCharacterStore } from '../store/characterStore';
 import { formatGearTooltip, formatGearStatsSummary, isSetItem } from '../utils/gearFormatters';
 
@@ -167,23 +168,13 @@ export class LootModal extends Modal {
     }
 
     private getConsumableIcon(itemId: string): string {
-        const icons: Record<string, string> = {
-            health_potion: '❤️',
-            mana_potion: '💙',
-            stamina_potion: '💚',
-            dungeon_key: '🗝️',
-        };
-        return icons[itemId] || '📦';
+        const definition = CONSUMABLES[itemId];
+        return definition?.emoji || '📦';
     }
 
     private getConsumableName(itemId: string): string {
-        const names: Record<string, string> = {
-            health_potion: 'Health Potion',
-            mana_potion: 'Mana Potion',
-            stamina_potion: 'Stamina Potion',
-            dungeon_key: 'Dungeon Key',
-        };
-        return names[itemId] || itemId;
+        const definition = CONSUMABLES[itemId];
+        return definition?.name || itemId;
     }
 
     onClose() {

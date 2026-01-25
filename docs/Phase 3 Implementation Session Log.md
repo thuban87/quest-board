@@ -345,6 +345,114 @@ feat(sets): AI-powered batch set bonus generation with persistent cache
 
 ---
 
+## 2026-01-24 - Phase 3A Steps 15-16: Inventory Improvements & Consumables
+
+**Focus:** Inventory modal sorting/filtering, consumables system, and UI polish
+
+**Completed:**
+- ✅ **Step 15: Inventory Modal Improvements**
+  - Sorting by Tier/Level/Slot/Name (clickable headers with direction arrows)
+  - Multi-select filter buttons for slots (Head, Chest, Legs, etc.)
+  - Multi-select filter buttons for tiers (Common → Legendary)
+  - "Clear Filters" button when filters active
+  - Full-page modal sizing (wider and taller)
+  
+- ✅ **Step 16: Consumables System**
+  - Created 8 tiered HP/Mana potions (Minor, Lesser, Greater, Superior)
+  - Removed Pomodoro and Bribery consumable concepts
+  - Kept Scroll of Pardon and Elixir of Experience for future
+  - Fixed `LootGenerationService` to use valid consumable IDs
+  - Fixed `QuestActionsService` to save consumables to inventory
+  - Implemented Consumables tab in InventoryModal
+  - Potions show "(Use in Combat)" since Fight System is Phase 3B
+  
+- ✅ **Additional Work**
+  - Fixed LootModal to display consumable emoji/name from registry
+  - Generated Combat Balance Tables document from simulator
+  - Created standalone balance table generator script
+  - Lowered set piece drop rate: 80% → 40%
+
+**Files Changed:**
+- `src/modals/InventoryModal.ts` - Sorting, filtering, consumables tab, wide modal
+- `src/models/Consumable.ts` - 8 tiered potions, removed Pomodoro/Bribery, helper functions
+- `src/services/LootGenerationService.ts` - Valid consumable IDs, set drop rate 40%
+- `src/services/QuestActionsService.ts` - Save consumables to inventory
+- `src/modals/LootModal.ts` - Use CONSUMABLES registry for display
+- `styles.css` - Sort/filter controls, consumables tab, full-page modal sizing
+
+**Files Created:**
+- `docs/rpg-dev-aspects/Combat Balance Tables.md` - Win rate tables for all classes/levels
+- `test/generate-balance-tables.js` - Standalone script to regenerate balance tables
+
+**Testing Notes:**
+- ✅ Build passes
+- ✅ Sort/filter controls work correctly
+- ✅ Consumables tab displays potions with correct info
+- ✅ Loot modal shows correct emoji and display name
+- ✅ Set drop rate lowered to 40%
+
+**Blockers/Issues:**
+- None
+
+**Next Steps:**
+- Phase 3B: Fight System implementation
+- Wire HP/Mana potion usage into combat
+
+---
+
+## Next Session Prompt
+
+```
+Phase 3A is COMPLETE. All 16 steps finished:
+- Gear generation ✅
+- Armor/weapon types ✅
+- Class restrictions ✅
+- Comparison tooltips ✅
+- Inventory management ✅
+- Blacksmith smelting ✅
+- Set bonuses (AI-generated) ✅
+- Inventory sorting/filtering ✅
+- Consumables system ✅
+
+Ready to begin **Phase 3B: Fight System**. Key references:
+- `docs/rpg-dev-aspects/Fight System.md` - Full design doc
+- `docs/rpg-dev-aspects/Combat Balance Tables.md` - Win rate targets
+- `test/combat-simulator.test.ts` - Balance formulas (v25 tuned)
+
+The combat simulator has tuned values for all classes/levels. Extract those formulas when implementing the actual FightService.
+
+Consumables (HP/Mana potions) are ready in inventory - wire them into combat when building the battle UI.
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(inventory): sorting, filtering, consumables & UI polish
+
+Step 15: Inventory Modal Improvements
+- Clickable sort headers (tier/level/slot/name) with direction arrows
+- Multi-select filter buttons for slots and tiers
+- Full-page modal sizing (90vw x 85vh)
+
+Step 16: Consumables System
+- 8 tiered HP/Mana potions (Minor → Superior by level range)
+- Removed Pomodoro and Bribery concepts
+- Fixed loot generation to use valid consumable IDs
+- Consumables saved to inventory on quest completion
+- Consumables tab with "(Use in Combat)" placeholder
+
+Also:
+- Fixed LootModal to show consumable emoji/name from registry
+- Generated Combat Balance Tables document
+- Lowered set piece drop rate from 80% to 40%
+```
+
+---
+
+---
+
 *Template for future entries:*
 
 ```markdown

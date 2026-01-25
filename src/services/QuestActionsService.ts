@@ -289,7 +289,12 @@ export async function moveQuest(
                         charStore.addGear(item);
                     }
 
-                    // Consumables handled separately (TODO)
+                    // Add consumables to inventory
+                    for (const reward of consumableRewards) {
+                        if (reward.type === 'consumable') {
+                            charStore.addInventoryItem(reward.itemId, reward.quantity);
+                        }
+                    }
 
                     // Show loot modal if app is provided
                     if (options.app && loot.length > 0) {

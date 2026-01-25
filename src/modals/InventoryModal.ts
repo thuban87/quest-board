@@ -2,20 +2,28 @@
  * Inventory Modal
  * 
  * Two-tab inventory view showing Gear and Consumables.
- * Allows equipping gear and selling items for gold.
+ * Allows equipping gear, selling items, and using consumables.
+ * 
+ * Features:
+ * - Sorting by tier/level/slot/name (clickable headers)
+ * - Filtering by slot and tier (multi-select buttons)
  */
 
 import { Modal, App, Notice } from 'obsidian';
 import {
     GearItem,
     GearSlot,
+    GearTier,
     TIER_INFO,
     GEAR_SLOT_NAMES,
+    GEAR_TIERS,
+    PRIMARY_GEAR_SLOTS,
     calculateSellValue,
     ARMOR_TYPE_NAMES,
     WEAPON_TYPE_NAMES,
     canEquipGear,
 } from '../models/Gear';
+import { CONSUMABLES, ConsumableDefinition, InventoryItem } from '../models/Consumable';
 import { useCharacterStore } from '../store/characterStore';
 import { formatGearTooltip, isSetItem } from '../utils/gearFormatters';
 
@@ -25,11 +33,21 @@ interface InventoryModalOptions {
 }
 
 type InventoryTab = 'gear' | 'consumables';
+type SortField = 'tier' | 'level' | 'slot' | 'name';
+type SortDirection = 'asc' | 'desc';
 
 export class InventoryModal extends Modal {
     private options: InventoryModalOptions;
     private currentTab: InventoryTab = 'gear';
     private contentContainer: HTMLElement | null = null;
+
+    // Sorting state
+    private sortBy: SortField = 'tier';
+    private sortDir: SortDirection = 'desc'; // Highest tier first by default
+
+    // Filtering state
+    private slotFilters: Set<GearSlot> = new Set();
+    private tierFilters: Set<GearTier> = new Set();
 
     constructor(app: App, options: InventoryModalOptions = {}) {
         super(app);
@@ -40,6 +58,9 @@ export class InventoryModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('qb-inventory-modal');
+
+        // Make the modal wider
+        this.modalEl.addClass('qb-modal-wide');
 
         // Header
         contentEl.createEl('h2', { cls: 'qb-inventory-title', text: '🎒 Inventory' });
@@ -104,6 +125,8 @@ export class InventoryModal extends Modal {
         }
     }
 
+    // ========== GEAR TAB ==========
+
     private renderGearTab() {
         if (!this.contentContainer) return;
         const character = useCharacterStore.getState().character;
@@ -122,12 +145,169 @@ export class InventoryModal extends Modal {
         const countEl = this.contentContainer.createEl('div', { cls: 'qb-inventory-count' });
         countEl.textContent = `${gearInventory.length} / ${limit} slots used`;
 
+        // Sort/Filter controls
+        this.renderSortFilterControls();
+
+        // Apply filters and sorting
+        let filteredGear = this.applyFilters(gearInventory);
+        filteredGear = this.applySorting(filteredGear);
+
+        // Show filtered count if different
+        if (filteredGear.length !== gearInventory.length) {
+            const filterCountEl = this.contentContainer.createEl('div', { cls: 'qb-inventory-filter-count' });
+            filterCountEl.textContent = `Showing ${filteredGear.length} of ${gearInventory.length} items`;
+        }
+
         // Gear grid
         const gearGrid = this.contentContainer.createEl('div', { cls: 'qb-inventory-grid' });
 
-        for (const item of gearInventory) {
+        for (const item of filteredGear) {
             this.renderGearItem(gearGrid, item);
         }
+    }
+
+    private renderSortFilterControls() {
+        if (!this.contentContainer) return;
+
+        const controlsContainer = this.contentContainer.createEl('div', { cls: 'qb-inventory-controls' });
+
+        // === SORTING SECTION ===
+        const sortSection = controlsContainer.createEl('div', { cls: 'qb-inventory-sort-section' });
+        sortSection.createEl('span', { cls: 'qb-inventory-controls-label', text: 'Sort:' });
+
+        const sortFields: { field: SortField; label: string }[] = [
+            { field: 'tier', label: 'Tier' },
+            { field: 'level', label: 'Level' },
+            { field: 'slot', label: 'Slot' },
+            { field: 'name', label: 'Name' },
+        ];
+
+        for (const { field, label } of sortFields) {
+            const isActive = this.sortBy === field;
+            const arrow = isActive ? (this.sortDir === 'asc' ? ' ↑' : ' ↓') : '';
+
+            const btn = sortSection.createEl('button', {
+                cls: `qb-inventory-sort-btn ${isActive ? 'active' : ''}`,
+                text: label + arrow
+            });
+            btn.addEventListener('click', () => this.handleSortClick(field));
+        }
+
+        // === FILTER SECTION ===
+        const filterSection = controlsContainer.createEl('div', { cls: 'qb-inventory-filter-section' });
+
+        // Slot filters
+        const slotFilterRow = filterSection.createEl('div', { cls: 'qb-inventory-filter-row' });
+        slotFilterRow.createEl('span', { cls: 'qb-inventory-controls-label', text: 'Slot:' });
+
+        for (const slot of PRIMARY_GEAR_SLOTS) {
+            const isActive = this.slotFilters.has(slot);
+            const btn = slotFilterRow.createEl('button', {
+                cls: `qb-inventory-filter-btn ${isActive ? 'active' : ''}`,
+                text: GEAR_SLOT_NAMES[slot]
+            });
+            btn.addEventListener('click', () => this.toggleSlotFilter(slot));
+        }
+
+        // Tier filters
+        const tierFilterRow = filterSection.createEl('div', { cls: 'qb-inventory-filter-row' });
+        tierFilterRow.createEl('span', { cls: 'qb-inventory-controls-label', text: 'Tier:' });
+
+        for (const tier of GEAR_TIERS) {
+            const isActive = this.tierFilters.has(tier);
+            const tierInfo = TIER_INFO[tier];
+            const btn = tierFilterRow.createEl('button', {
+                cls: `qb-inventory-filter-btn ${isActive ? 'active' : ''}`,
+                text: `${tierInfo.emoji} ${tierInfo.name}`
+            });
+            btn.style.color = isActive ? tierInfo.color : '';
+            btn.addEventListener('click', () => this.toggleTierFilter(tier));
+        }
+
+        // Clear filters button (only show if filters active)
+        if (this.slotFilters.size > 0 || this.tierFilters.size > 0) {
+            const clearBtn = filterSection.createEl('button', {
+                cls: 'qb-inventory-clear-btn',
+                text: '✕ Clear Filters'
+            });
+            clearBtn.addEventListener('click', () => this.clearFilters());
+        }
+    }
+
+    private handleSortClick(field: SortField) {
+        if (this.sortBy === field) {
+            // Toggle direction
+            this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            // New field, default to descending for tier/level, ascending for name/slot
+            this.sortBy = field;
+            this.sortDir = (field === 'tier' || field === 'level') ? 'desc' : 'asc';
+        }
+        this.renderContent();
+    }
+
+    private toggleSlotFilter(slot: GearSlot) {
+        if (this.slotFilters.has(slot)) {
+            this.slotFilters.delete(slot);
+        } else {
+            this.slotFilters.add(slot);
+        }
+        this.renderContent();
+    }
+
+    private toggleTierFilter(tier: GearTier) {
+        if (this.tierFilters.has(tier)) {
+            this.tierFilters.delete(tier);
+        } else {
+            this.tierFilters.add(tier);
+        }
+        this.renderContent();
+    }
+
+    private clearFilters() {
+        this.slotFilters.clear();
+        this.tierFilters.clear();
+        this.renderContent();
+    }
+
+    private applyFilters(gear: GearItem[]): GearItem[] {
+        return gear.filter(item => {
+            // Slot filter (empty = show all)
+            if (this.slotFilters.size > 0 && !this.slotFilters.has(item.slot)) {
+                return false;
+            }
+            // Tier filter (empty = show all)
+            if (this.tierFilters.size > 0 && !this.tierFilters.has(item.tier)) {
+                return false;
+            }
+            return true;
+        });
+    }
+
+    private applySorting(gear: GearItem[]): GearItem[] {
+        const tierOrder = GEAR_TIERS;
+        const slotOrder = PRIMARY_GEAR_SLOTS;
+
+        return [...gear].sort((a, b) => {
+            let comparison = 0;
+
+            switch (this.sortBy) {
+                case 'tier':
+                    comparison = tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier);
+                    break;
+                case 'level':
+                    comparison = a.level - b.level;
+                    break;
+                case 'slot':
+                    comparison = slotOrder.indexOf(a.slot) - slotOrder.indexOf(b.slot);
+                    break;
+                case 'name':
+                    comparison = a.name.localeCompare(b.name);
+                    break;
+            }
+
+            return this.sortDir === 'asc' ? comparison : -comparison;
+        });
     }
 
     private renderGearItem(container: HTMLElement, item: GearItem) {
@@ -241,14 +421,72 @@ export class InventoryModal extends Modal {
         }
     }
 
+    // ========== CONSUMABLES TAB ==========
+
     private renderConsumablesTab() {
         if (!this.contentContainer) return;
 
-        // TODO: Implement consumables inventory
-        const emptyEl = this.contentContainer.createEl('div', { cls: 'qb-inventory-empty' });
-        emptyEl.createEl('div', { cls: 'qb-inventory-empty-icon', text: '🧪' });
-        emptyEl.createEl('div', { cls: 'qb-inventory-empty-text', text: 'Consumables coming soon!' });
-        emptyEl.createEl('div', { cls: 'qb-inventory-empty-hint', text: 'Potions and keys will be available in a future update.' });
+        const inventory = useCharacterStore.getState().inventory;
+
+        // Filter to only items that exist in CONSUMABLES registry
+        const consumableItems = inventory.filter(item => CONSUMABLES[item.itemId]);
+
+        if (consumableItems.length === 0) {
+            const emptyEl = this.contentContainer.createEl('div', { cls: 'qb-inventory-empty' });
+            emptyEl.createEl('div', { cls: 'qb-inventory-empty-icon', text: '🧪' });
+            emptyEl.createEl('div', { cls: 'qb-inventory-empty-text', text: 'No consumables in inventory' });
+            emptyEl.createEl('div', { cls: 'qb-inventory-empty-hint', text: 'Complete daily quests and explore dungeons to find potions!' });
+            return;
+        }
+
+        // Consumables list
+        const consumablesList = this.contentContainer.createEl('div', { cls: 'qb-consumables-list' });
+
+        for (const item of consumableItems) {
+            this.renderConsumableItem(consumablesList, item);
+        }
+    }
+
+    private renderConsumableItem(container: HTMLElement, item: InventoryItem) {
+        const definition = CONSUMABLES[item.itemId];
+        if (!definition) return;
+
+        const itemEl = container.createEl('div', { cls: 'qb-consumable-item' });
+
+        // Icon
+        const iconEl = itemEl.createEl('div', { cls: 'qb-consumable-icon' });
+        iconEl.textContent = definition.emoji;
+
+        // Info
+        const infoEl = itemEl.createEl('div', { cls: 'qb-consumable-info' });
+
+        const headerEl = infoEl.createEl('div', { cls: 'qb-consumable-header' });
+        headerEl.createEl('span', { cls: 'qb-consumable-name', text: definition.name });
+        headerEl.createEl('span', { cls: 'qb-consumable-quantity', text: `×${item.quantity}` });
+
+        infoEl.createEl('div', { cls: 'qb-consumable-desc', text: definition.description });
+
+        // Actions
+        const actionsEl = itemEl.createEl('div', { cls: 'qb-consumable-actions' });
+
+        // Determine if usable now
+        const isHpMp = definition.effect === 'hp_restore' || definition.effect === 'mana_restore';
+
+        if (isHpMp) {
+            // HP/Mana potions - usable in combat only (Phase 3B)
+            const useBtn = actionsEl.createEl('button', {
+                cls: 'qb-consumable-btn qb-btn-disabled',
+                text: '⚔️ Use in Combat'
+            });
+            useBtn.disabled = true;
+            useBtn.setAttribute('title', 'Potions can be used during combat (Coming in Phase 3B)');
+        } else {
+            // Other consumables (Streak restore, XP boost) - Coming Soon
+            const comingSoon = actionsEl.createEl('span', {
+                cls: 'qb-consumable-coming-soon',
+                text: '🔜 Coming Soon'
+            });
+        }
     }
 
     onClose() {
