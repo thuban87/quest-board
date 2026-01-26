@@ -83,6 +83,7 @@ export class QuestBoardCommandMenu extends Modal {
                 icon: '🔧',
                 commands: [
                     { label: 'Settings', icon: '⚙️', commandId: '__settings__', description: 'Configure Quest Board' },
+                    { label: 'Preview Dungeon', icon: '🗺️', commandId: 'quest-board:preview-dungeon', description: 'Dev: Test dungeon view' },
                 ]
             },
         ];

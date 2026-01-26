@@ -11,10 +11,13 @@ import {
     QUEST_BOARD_VIEW_TYPE,
     QUEST_SIDEBAR_VIEW_TYPE,
     BATTLE_VIEW_TYPE,
+    DUNGEON_VIEW_TYPE,
     QuestBoardView,
     QuestSidebarView,
-    BattleItemView
+    BattleItemView,
+    DungeonItemView
 } from './src/views';
+import { useDungeonStore } from './src/store/dungeonStore';
 import { CreateQuestModal } from './src/modals/CreateQuestModal';
 import { ApplicationGauntletModal, InterviewArenaModal } from './src/modals/JobHuntModal';
 import { openSmartTemplateModal } from './src/modals/SmartTemplateModal';
@@ -151,6 +154,12 @@ export default class QuestBoardPlugin extends Plugin {
         this.registerView(
             BATTLE_VIEW_TYPE,
             (leaf: WorkspaceLeaf) => new BattleItemView(leaf, this)
+        );
+
+        // Register the dungeon view (opens in its own tab)
+        this.registerView(
+            DUNGEON_VIEW_TYPE,
+            (leaf: WorkspaceLeaf) => new DungeonItemView(leaf, this)
         );
 
         // Add ribbon icon to open focused sidebar
@@ -428,6 +437,33 @@ export default class QuestBoardPlugin extends Plugin {
             },
         });
 
+        // Add dungeon preview command (dev testing)
+        this.addCommand({
+            id: 'preview-dungeon',
+            name: 'Preview Dungeon (Dev)',
+            callback: () => {
+                // Use settings.character directly (store may not be initialized yet)
+                const character = this.settings.character;
+                if (!character) {
+                    new (require('obsidian').Notice)('❌ No character found! Create one first.', 2000);
+                    return;
+                }
+
+                // Ensure the character store is initialized for DungeonView
+                if (!useCharacterStore.getState().character) {
+                    useCharacterStore.getState().setCharacter(character);
+                }
+
+                // Enter test dungeon in preview mode
+                const success = useDungeonStore.getState().enterDungeon('test_cave', character.level, true);
+                if (success) {
+                    this.activateDungeonView();
+                } else {
+                    new (require('obsidian').Notice)('❌ Failed to load dungeon', 2000);
+                }
+            },
+        });
+
         // Add settings tab
         this.addSettingTab(new QuestBoardSettingTab(this.app, this));
 
@@ -515,6 +551,20 @@ export default class QuestBoardPlugin extends Plugin {
         const leaf = workspace.getLeaf('tab');
         if (leaf) {
             await leaf.setViewState({ type: BATTLE_VIEW_TYPE, active: true });
+            workspace.revealLeaf(leaf);
+        }
+    }
+
+    /**
+     * Activates the dungeon view in a new tab
+     */
+    async activateDungeonView(): Promise<void> {
+        const { workspace } = this.app;
+
+        // Always open in a new tab
+        const leaf = workspace.getLeaf('tab');
+        if (leaf) {
+            await leaf.setViewState({ type: DUNGEON_VIEW_TYPE, active: true });
             workspace.revealLeaf(leaf);
         }
     }

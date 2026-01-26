@@ -1075,6 +1075,62 @@ Key files to reference:
 
 ---
 
+## 2026-01-26 - Phase 3C Steps 1-3: Dungeon Exploration Foundation
+
+**Focus:** Dungeon State Store, Tile System, Room Rendering, and Dev Preview
+
+**Completed:**
+- ✅ **Step 1:** Created `dungeonStore.ts` - Zustand store for dungeon exploration state
+- ✅ **Step 2:** Created `TileRegistry.ts` - Tile definitions with sprites for cave tileset
+- ✅ **Step 3:** Created `DungeonView.tsx` - Full-page room rendering with CSS Grid
+- ✅ **Dev Environment:** Added Preview Dungeon command (palette + Quest Board menu)
+- ✅ Created `DungeonItemView.tsx` - Obsidian ItemView wrapper for dungeon component
+- ✅ Created `dungeonTemplates.ts` - Test Cave and Goblin Cave templates
+- ✅ Click-to-teleport movement for preview mode testing
+- ✅ Player sprite rendering with direction-based facing
+- ✅ Scalable tiles (2x default 128px, 1x 64px for mobile/small screens)
+- ✅ Consolidated header bar (merged top header + bottom status to prevent scrolling)
+
+**Technical Fixes:**
+- Fixed Zustand reactivity - used individual selectors instead of full store object
+- Fixed CSS custom properties not working with React inline styles
+- Changed sprite positioning from `transform` to `left`/`top` for reliable rendering
+- Fixed wall tile sprite (cave wall → basalt)
+- Fixed character not found error on fresh load (use settings.character, not store)
+
+**Files Created:**
+- `src/store/dungeonStore.ts` - Dungeon exploration state management
+- `src/data/TileRegistry.ts` - Tile definitions and sprite mappings
+- `src/data/dungeonTemplates.ts` - Hand-crafted dungeon templates
+- `src/components/DungeonView.tsx` - React dungeon exploration UI
+- `src/views/DungeonItemView.tsx` - Obsidian view wrapper
+
+**Files Changed:**
+- `main.ts` - Added Preview Dungeon command and DungeonItemView registration
+- `styles.css` - Added dungeon view CSS (~150 lines), scalable tile variables
+- `src/modals/QuestBoardCommandMenu.ts` - Added Preview Dungeon menu option
+
+**Testing Notes:**
+- ✅ Test Cave renders correctly with 9x7 room
+- ✅ Player spawns at center (P marker position)
+- ✅ Click teleport moves player to walkable tiles
+- ✅ Sprite faces correct direction based on movement
+- ✅ Wall tiles prevent movement
+- ✅ Exit button returns to Quest Board
+
+**Known Limitations:**
+- Max practical room width at 2x scale: ~11 tiles wide (fits without horizontal scroll)
+- Room transitions (doors) not yet implemented
+- Monsters/chests render but don't interact yet
+
+**Next Steps (Phase 3C Remaining):**
+- Step 4-5: Player movement controls (arrow keys, WASD)
+- Step 6-7: Door transitions between rooms
+- Step 8-9: Interactive elements (chests, monsters)
+- Step 10: Dungeon completion and exit flow
+
+---
+
 *Template for future entries:*
 
 ```markdown
