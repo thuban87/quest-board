@@ -33,6 +33,7 @@ import { showInventoryModal } from './src/modals/InventoryModal';
 import { openStoreModal } from './src/modals/StoreModal';
 import { lootGenerationService } from './src/services/LootGenerationService';
 import { setBonusService } from './src/services/SetBonusService';
+import { bountyService } from './src/services/BountyService';
 import { monsterService } from './src/services/MonsterService';
 import { battleService, setSaveCallback as setBattleSaveCallback } from './src/services/BattleService';
 import { startRecoveryTimerCheck, stopRecoveryTimerCheck } from './src/services/RecoveryTimerService';
@@ -69,6 +70,12 @@ export default class QuestBoardPlugin extends Plugin {
         // Set up save callback to persist cache when bonuses are generated
         setBonusService.setSaveCallback(async () => {
             this.settings.setBonusCache = setBonusService.getCacheForSave();
+            await this.saveSettings();
+        });
+
+        // Initialize bounty service with settings (for AI description generation)
+        bountyService.initialize(this.settings);
+        bountyService.setSaveCallback(async () => {
             await this.saveSettings();
         });
 

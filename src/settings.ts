@@ -81,6 +81,7 @@ export interface QuestBoardSettings {
 
     // Bounty system configuration
     bountyChance: number;  // Chance (0-20%) for bounty to trigger on quest completion
+    bountyDescriptionCache: Record<string, { description: string; monsterHint: string }[]>;  // AI-generated bounty descriptions (burn-on-use)
 }
 
 /**
@@ -125,6 +126,7 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     excludedSetFolders: ['main', 'side', 'training', 'recurring', 'daily'],
     setBonusCache: {},
     bountyChance: 10,  // 10% chance by default
+    bountyDescriptionCache: {},  // AI-generated bounty descriptions
 };
 
 /**

@@ -1,6 +1,6 @@
 # Phase 3 Implementation Checklist
 
-> **Status:** 🟡 Phase 3B In Progress (Phase 3A Complete!)  
+> **Status:** ✅ Phase 3B Complete! (Phase 3A + 3B Done, 3C Next)  
 > **Estimated Time:** 17-24 days  
 > **Purpose:** Shorthand reference with links to full documentation
 
@@ -278,7 +278,7 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Status bar timer countdown
 - [x] Working Use buttons for consumables
 
-### Step 10: Quest Bounty System (Partial)
+### Step 10: Quest Bounty System ✅
 
 - [x] Create `Bounty.ts` model and `BountyService.ts`
 - [x] Create `BountyModal.ts` (accept/decline UI with monster preview)
@@ -289,8 +289,9 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Add `onBattleStart` callback to open battle view after accepting
 - [x] Apply +200% loot luck bonus (via `BOUNTY_LOOT_BONUS = 3.0`)
 - [x] Show bounty notification UI
-- [ ] AI-generated bounty descriptions for unknown folders
-- [ ] Cache AI descriptions to settings (like SetBonusService)
+- [x] AI-generated bounty descriptions via Gemini API
+- [x] Burn-on-use cache with background regeneration
+- [x] Keyword-matched fallback templates for non-AI users
 
 ---
 
