@@ -353,13 +353,27 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
     const room = template?.rooms.find(r => r.id === currentRoomId);
     const roomState = roomStates[currentRoomId];
 
-    // Handle tile click (for now just log, movement in next step)
+    // Handle tile click - teleport in preview, check for doors
+    const changeRoom = useDungeonStore(state => state.changeRoom);
+
     const handleTileClick = useCallback((x: number, y: number) => {
         console.log(`[DungeonView] Tile clicked: [${x}, ${y}]`);
 
+        if (!room || !template) return;
+
+        // Check if clicking on a door
+        const doorKey = `${x},${y}`;
+        const doorInfo = room.doors[doorKey];
+
+        if (doorInfo) {
+            console.log(`[DungeonView] Door clicked! Going to ${doorInfo.targetRoom}`);
+            changeRoom(doorInfo.targetRoom, doorInfo.targetEntry);
+            return;
+        }
+
         // In preview mode, allow direct teleport for testing
         if (isPreviewMode) {
-            const tileDef = room ? getTileDefinition(room.layout[y]?.[x] ?? '.', template!.tileSet) : null;
+            const tileDef = getTileDefinition(room.layout[y]?.[x] ?? '.', template.tileSet);
             if (tileDef?.walkable) {
                 // Determine facing based on movement direction
                 const [currentX, currentY] = playerPosition;
@@ -375,7 +389,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                 console.log(`[DungeonView] Tile not walkable`);
             }
         }
-    }, [isPreviewMode, room, template, playerPosition, playerFacing, movePlayer]);
+    }, [isPreviewMode, room, template, playerPosition, playerFacing, movePlayer, changeRoom]);
 
     // Handle exit
     const handleExit = useCallback(() => {
