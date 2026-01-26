@@ -249,6 +249,7 @@
 - **Enemy groups**: "3 Goblins" with combined HP pool
 - **Difficulty scaling**: Based on player level and quest category
 - **Rewards**: XP, gold, gear drops on victory
+- **Elite Overworld Mobs** ✅ (2026-01-26): 15% chance at L5+ for random fights, 30% for bounties. Pre-fight modal with flee option. Red glow animation, random name prefixes.
 
 #### Boss Fights
 - **Quest-based bosses**: Designate a quest as a "Boss Fight" when it meets criteria:
@@ -349,4 +350,4 @@ enemies.json           - Monster stats, boss definitions, loot tables
 
 ---
 
-**Last Updated:** 2026-01-25
+**Last Updated:** 2026-01-26

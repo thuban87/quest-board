@@ -220,11 +220,11 @@ export const MONSTER_TIER_CONFIG: Record<MonsterTier, MonsterTierConfig> = {
         namePrefix: '',
     },
     elite: {
-        hpMultiplier: 1.3,
-        attackMultiplier: 1.2,
-        defenseMultiplier: 1.1,
-        critBonus: 10,
-        namePrefix: 'Elite ',
+        hpMultiplier: 1.05,      // V3 - tuned from elite balance sim
+        attackMultiplier: 1.02,  // V3 - slightly harder than overworld
+        defenseMultiplier: 1.0,  // V3 - no defense bonus
+        critBonus: 6,            // V3 - modest crit bonus
+        namePrefix: 'Elite ',    // Default prefix (actual uses random variety)
     },
     dungeon: {
         hpMultiplier: 1.02,  // Was 1.05 - tuned from simulation v25
@@ -255,6 +255,29 @@ export const MONSTER_TIER_CONFIG: Record<MonsterTier, MonsterTierConfig> = {
 
 /** Base monster power multiplier (applied to HP and ATK) */
 export const BASE_MONSTER_POWER = 1.12;
+
+// =====================
+// ELITE SPAWN CONFIG
+// =====================
+
+/** Minimum level to encounter elite monsters */
+export const ELITE_LEVEL_UNLOCK = 5;
+
+/** Base chance for bounty to spawn elite (30%) */
+export const ELITE_BOUNTY_CHANCE = 0.30;
+
+/** Base chance for overworld fight to spawn elite (15%) */
+export const ELITE_OVERWORLD_CHANCE = 0.15;
+
+/** Name prefixes for elite monsters (random selection) */
+export const ELITE_NAME_PREFIXES = [
+    'Elite',
+    'Champion',
+    'Veteran',
+    'Alpha',
+    'Savage',
+    'Enraged',
+];
 
 /**
  * Level-specific monster power curve.

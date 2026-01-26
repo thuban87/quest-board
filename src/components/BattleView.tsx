@@ -49,13 +49,19 @@ function MonsterDisplay() {
     else if (monster.name.startsWith('Sturdy')) tintClass = 'qb-tint-sturdy';
     else if (monster.name.startsWith('Ancient')) tintClass = 'qb-tint-ancient';
 
+    // Elite class for red glow animation
+    const eliteClass = monster.tier === 'elite' ? 'qb-elite-monster' : '';
+
     // Animation class based on state
     const animClass = combatState === 'ANIMATING_ENEMY' ? 'qb-monster-attacking' : '';
 
     return (
-        <div className="qb-battle-monster">
+        <div className={`qb-battle-monster ${eliteClass}`}>
             <div className="qb-monster-info">
-                <span className="qb-monster-name">{monster.name}</span>
+                <span className="qb-monster-name">
+                    {monster.name}
+                    {monster.tier === 'elite' && <span className="qb-elite-badge">ELITE</span>}
+                </span>
                 <span className="qb-monster-level">Lv. {monster.level}</span>
             </div>
             <div className="qb-hp-bar qb-monster-hp">

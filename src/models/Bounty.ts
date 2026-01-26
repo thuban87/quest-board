@@ -28,6 +28,7 @@ export interface Bounty {
     monster: Monster;
     lootBonus: number;  // 3.0 = +200% luck
     createdAt: string;
+    isElite?: boolean;  // True for elite monster encounters (flee option)
 }
 
 /**

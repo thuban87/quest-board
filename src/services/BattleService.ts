@@ -21,6 +21,10 @@ import {
     DEFEAT_GOLD_PENALTY,
     MonsterTier,
     CRIT_MULTIPLIER,
+    ELITE_LEVEL_UNLOCK,
+    ELITE_BOUNTY_CHANCE,
+    ELITE_OVERWORLD_CHANCE,
+    ELITE_NAME_PREFIXES,
 } from '../config/combatConfig';
 
 // =====================
@@ -73,6 +77,7 @@ export function monsterToBattleMonster(monster: Monster): BattleMonster {
 
 /**
  * Start a random encounter battle.
+ * For overworld fights, 30% chance to spawn elite at L5+.
  * Returns true if battle started successfully.
  */
 export function startRandomBattle(
@@ -93,10 +98,25 @@ export function startRandomBattle(
         return false;
     }
 
-    const monster = createRandomMonster(playerLevel, tier);
+    // Elite spawn: 15% chance for overworld when L5+
+    let effectiveTier = tier;
+    if (tier === 'overworld' && character.level >= ELITE_LEVEL_UNLOCK) {
+        if (Math.random() < ELITE_OVERWORLD_CHANCE) {
+            effectiveTier = 'elite';
+            console.log('[BattleService] Elite overworld spawn!');
+        }
+    }
+
+    const monster = createRandomMonster(playerLevel, effectiveTier);
     if (!monster) {
         console.warn('[BattleService] Failed to create monster');
         return false;
+    }
+
+    // Apply random name prefix for elite mobs
+    if (effectiveTier === 'elite') {
+        const prefix = ELITE_NAME_PREFIXES[Math.floor(Math.random() * ELITE_NAME_PREFIXES.length)];
+        monster.name = `${prefix} ${monster.name.replace(/^Elite /, '')}`;
     }
 
     return startBattleWithMonster(monster, options);

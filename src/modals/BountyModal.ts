@@ -77,6 +77,11 @@ export class BountyModal extends Modal {
         const monsterPreview = contentEl.createDiv('qb-bounty-monster-preview');
         const monster = this.bounty.monster;
 
+        // Add elite class if this is an elite encounter
+        if (this.bounty.isElite) {
+            monsterPreview.addClass('elite');
+        }
+
         const monsterIcon = monsterPreview.createDiv('qb-bounty-monster-icon');
         monsterIcon.textContent = monster.emoji;
 
@@ -84,7 +89,14 @@ export class BountyModal extends Modal {
         const monsterName = monster.prefix !== 'none'
             ? `${monster.prefix.charAt(0).toUpperCase() + monster.prefix.slice(1)} ${monster.name}`
             : monster.name;
-        monsterInfo.createEl('div', { text: monsterName, cls: 'qb-bounty-monster-name' });
+
+        // Create name element with elite badge if applicable
+        const nameEl = monsterInfo.createEl('div', { cls: 'qb-bounty-monster-name' });
+        nameEl.textContent = monsterName;
+        if (this.bounty.isElite) {
+            nameEl.createEl('span', { text: 'ELITE', cls: 'qb-elite-badge' });
+        }
+
         monsterInfo.createEl('div', {
             text: `Level ${monster.level} • ${monster.tier.toUpperCase()}`,
             cls: 'qb-bounty-monster-level'
@@ -106,6 +118,15 @@ export class BountyModal extends Modal {
             cls: 'qb-bounty-accept-btn',
         });
         acceptBtn.onclick = () => this.handleAccept();
+
+        // Flee button for elite encounters
+        if (this.bounty.isElite) {
+            const fleeBtn = buttonContainer.createEl('button', {
+                text: '🏃 Flee',
+                cls: 'qb-bounty-flee-btn',
+            });
+            fleeBtn.onclick = () => this.handleFlee();
+        }
 
         const declineBtn = buttonContainer.createEl('button', {
             text: 'Decline',
@@ -152,6 +173,12 @@ export class BountyModal extends Modal {
     private handleDecline() {
         new Notice('💨 Bounty declined. The creature escapes...', 2000);
         this.options.onDecline?.();
+        this.close();
+    }
+
+    private handleFlee() {
+        new Notice('🏃 You fled from the elite monster! No shame in survival...', 2000);
+        this.options.onDecline?.();  // Same as decline - forfeits bounty
         this.close();
     }
 
