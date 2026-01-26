@@ -771,8 +771,8 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             todayGained = 0;
         }
 
-        // Check daily cap (50 stamina/day max)
-        const MAX_DAILY = 50;
+        // Check daily cap (500 stamina/day max - raised for testing)
+        const MAX_DAILY = 500;
         if (todayGained >= MAX_DAILY) return;
 
         // Grant up to daily cap, max 10 current

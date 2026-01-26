@@ -1,52 +1,55 @@
 /**
  * useCharacterSprite Hook
  *
- * Resolves the character sprite resource path based on character level/tier.
- * Handles fallback from animated.gif to south.png.
+ * Resolves the character sprite resource path based on character class and level/tier.
+ * Uses bundled plugin assets instead of vault-based sprite folders.
  */
 
 import { useMemo } from 'react';
-import { Vault, TFile } from 'obsidian';
+import { DataAdapter } from 'obsidian';
 import { Character, getLevelTier } from '../models/Character';
+import { getPlayerGifPath, getPlayerSpritePath, SpriteDirection } from '../services/SpriteService';
 
-interface UseCharacterSpriteOptions {
+export interface UseCharacterSpriteOptions {
     character: Character | null;
-    spriteFolder: string;
-    vault: Vault;
+    manifestDir: string | undefined;
+    adapter: DataAdapter;
+    /** Whether to return animated GIF (true) or static PNG (false). Default: true */
+    animated?: boolean;
+    /** Direction for static sprites. Default: 'south' */
+    direction?: SpriteDirection;
 }
 
 /**
  * Hook that returns the resolved sprite resource path for a character.
  * 
- * @param options - Character, sprite folder path, and vault reference
- * @returns The vault resource path for the sprite, or undefined if not found
+ * @param options - Character, manifest directory, adapter, and display options
+ * @returns The resource path for the sprite, or undefined if not available
  */
 export function useCharacterSprite({
     character,
-    spriteFolder,
-    vault,
+    manifestDir,
+    adapter,
+    animated = true,
+    direction = 'south',
 }: UseCharacterSpriteOptions): string | undefined {
     return useMemo(() => {
         if (!character) return undefined;
-        if (!spriteFolder) return undefined;
+        if (!manifestDir) return undefined;
 
         // Get tier based on training mode or level
         const tier = character.isTrainingMode ? 1 : getLevelTier(character.level);
+        const className = character.class;
 
-        // Try animated.gif first
-        const animatedPath = `${spriteFolder}/tier${tier}/animated.gif`;
-        const animatedFile = vault.getAbstractFileByPath(animatedPath);
-        if (animatedFile && animatedFile instanceof TFile) {
-            return vault.getResourcePath(animatedFile);
+        try {
+            if (animated) {
+                return getPlayerGifPath(manifestDir, adapter, className, tier);
+            } else {
+                return getPlayerSpritePath(manifestDir, adapter, className, tier, direction);
+            }
+        } catch {
+            // Return undefined if path resolution fails
+            return undefined;
         }
-
-        // Fallback to south.png
-        const fallbackPath = `${spriteFolder}/tier${tier}/south.png`;
-        const fallbackFile = vault.getAbstractFileByPath(fallbackPath);
-        if (fallbackFile && fallbackFile instanceof TFile) {
-            return vault.getResourcePath(fallbackFile);
-        }
-
-        return undefined;
-    }, [character, spriteFolder, vault, character?.level, character?.isTrainingMode]);
+    }, [character, manifestDir, adapter, animated, direction, character?.level, character?.isTrainingMode, character?.class]);
 }

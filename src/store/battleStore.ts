@@ -52,6 +52,7 @@ export interface CombatLogEntry {
  */
 export interface BattleMonster {
     id: string;
+    templateId: string;  // Monster template ID for sprite resolution
     name: string;
     tier: 'overworld' | 'elite' | 'dungeon' | 'boss' | 'raid_boss';
     level: number;

@@ -570,10 +570,12 @@ Be creative and fun! Match monsters to the theme:
         }
 
         // Create monster at player level
+        // For elites, force no prefix so we can add our own clean elite name
         const monster = monsterService.createMonster(
             monsterId,
             character.level,
-            tier
+            tier,
+            isElite ? { forcePrefix: 'none' } : {}
         );
 
         if (!monster) {
@@ -582,9 +584,12 @@ Be creative and fun! Match monsters to the theme:
         }
 
         // Apply random name prefix for elites
+        // Monster was created with forcePrefix 'none', so just add the elite prefix cleanly
         if (isElite) {
             const prefix = ELITE_NAME_PREFIXES[Math.floor(Math.random() * ELITE_NAME_PREFIXES.length)];
-            monster.name = `${prefix} ${monster.name.replace(/^Elite /, '')}`;
+            // Strip any tier namePrefix that may have been added (e.g., 'Elite ', 'Dungeon ')
+            const baseName = monster.name.replace(/^(Elite |Dungeon |Boss: |RAID BOSS: )/, '');
+            monster.name = `${prefix} ${baseName}`;
             console.log('[BountyService] Elite monster spawned:', monster.name);
         }
 

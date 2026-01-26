@@ -55,6 +55,7 @@ export function setSaveCallback(callback: () => Promise<void>): void {
 export function monsterToBattleMonster(monster: Monster): BattleMonster {
     return {
         id: monster.id,
+        templateId: monster.templateId,  // For sprite path resolution
         name: monster.name,
         tier: monster.tier,
         level: monster.level,
@@ -114,9 +115,14 @@ export function startRandomBattle(
     }
 
     // Apply random name prefix for elite mobs
+    // Strip all existing prefixes (monster prefix + tier prefix) before adding elite name
     if (effectiveTier === 'elite') {
         const prefix = ELITE_NAME_PREFIXES[Math.floor(Math.random() * ELITE_NAME_PREFIXES.length)];
-        monster.name = `${prefix} ${monster.name.replace(/^Elite /, '')}`;
+        // Remove any existing prefixes: Fierce/Sturdy/Ancient + Elite/Dungeon/Boss
+        const baseName = monster.name
+            .replace(/^(Fierce |Sturdy |Ancient )/, '')
+            .replace(/^(Elite |Dungeon |Boss: |RAID BOSS: )/, '');
+        monster.name = `${prefix} ${baseName}`;
     }
 
     return startBattleWithMonster(monster, options);

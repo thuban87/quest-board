@@ -10,6 +10,7 @@ import type { Bounty } from '../models/Bounty';
 import { useCharacterStore } from '../store/characterStore';
 import { battleService } from '../services/BattleService';
 import { BOUNTY_LOOT_BONUS } from '../services/BountyService';
+import { getMonsterGifPath } from '../services/SpriteService';
 
 // =====================
 // MODAL OPTIONS
@@ -24,6 +25,8 @@ export interface BountyModalOptions {
     onSave?: () => Promise<void>;
     /** Callback to open battle view after battle starts */
     onBattleStart?: () => void;
+    /** Plugin manifest directory for sprite resolution */
+    manifestDir?: string;
 }
 
 // =====================
@@ -83,12 +86,33 @@ export class BountyModal extends Modal {
         }
 
         const monsterIcon = monsterPreview.createDiv('qb-bounty-monster-icon');
-        monsterIcon.textContent = monster.emoji;
+
+        // Try to show monster sprite, fallback to emoji
+        if (this.options.manifestDir && monster.templateId) {
+            const spritePath = getMonsterGifPath(
+                this.options.manifestDir,
+                this.app.vault.adapter,
+                monster.templateId
+            );
+            const img = monsterIcon.createEl('img', {
+                attr: {
+                    src: spritePath,
+                    alt: monster.name,
+                },
+                cls: 'qb-monster-sprite-img',
+            });
+            // Fallback to emoji on error
+            img.onerror = () => {
+                img.remove();
+                monsterIcon.textContent = monster.emoji;
+            };
+        } else {
+            monsterIcon.textContent = monster.emoji;
+        }
 
         const monsterInfo = monsterPreview.createDiv('qb-bounty-monster-info');
-        const monsterName = monster.prefix !== 'none'
-            ? `${monster.prefix.charAt(0).toUpperCase() + monster.prefix.slice(1)} ${monster.name}`
-            : monster.name;
+        // monster.name already includes prefix from BountyService, use directly
+        const monsterName = monster.name;
 
         // Create name element with elite badge if applicable
         const nameEl = monsterInfo.createEl('div', { cls: 'qb-bounty-monster-name' });

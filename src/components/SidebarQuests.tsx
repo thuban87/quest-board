@@ -81,8 +81,9 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
     // Character sprite resource path (uses consolidated hook)
     const spriteResourcePath = useCharacterSprite({
         character,
-        spriteFolder: plugin.settings.spriteFolder,
-        vault: app.vault,
+        manifestDir: plugin.manifest.dir,
+        adapter: app.vault.adapter,
+        animated: true,  // Animated GIF for character sheet
     });
 
     // === SHARED HOOKS ===
@@ -103,6 +104,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         app,  // Pass app for loot modal display
         bountyChance: plugin.settings.bountyChance,  // Pass bounty chance for bounty triggers
         onBattleStart: () => plugin.activateBattleView(),  // Open battle view when bounty fight starts
+        manifestDir: plugin.manifest.dir,  // For monster sprite resolution in BountyModal
     });
 
     // XP Award hook  

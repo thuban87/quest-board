@@ -142,6 +142,7 @@ describe('Attack Style Logic', () => {
 
     const mockMonster: BattleMonster = {
         id: 'test',
+        templateId: 'test-monster',
         name: 'Test Monster',
         tier: 'overworld',
         level: 10,

@@ -11,6 +11,10 @@ import { BATTLE_VIEW_TYPE } from './constants';
 import { BattleView as BattleComponent } from '../components/BattleView';
 import { showLootModal } from '../modals/LootModal';
 import { openRecoveryOptionsModal } from '../modals/RecoveryOptionsModal';
+import { useCharacterStore } from '../store/characterStore';
+import { useBattleStore } from '../store/battleStore';
+import { getLevelTier } from '../models/Character';
+import { getPlayerBattleSprite, getMonsterBattleSprite } from '../services/SpriteService';
 import type QuestBoardPlugin from '../../main';
 
 export class BattleItemView extends ItemView {
@@ -39,15 +43,29 @@ export class BattleItemView extends ItemView {
         container.empty();
         container.addClass('qb-battle-container');
 
-        // Compute player sprite path from plugin's bundled assets
         const manifestDir = this.plugin.manifest.dir;
-        const playerSpritePath = manifestDir
-            ? this.app.vault.adapter.getResourcePath(`${manifestDir}/assets/sprites/player/north-east.png`)
-            : undefined;
+        const adapter = this.app.vault.adapter;
+
+        // Get character for class/tier-based sprite
+        const character = useCharacterStore.getState().character;
+        let playerSpritePath: string | undefined;
+
+        if (manifestDir && character) {
+            const tier = character.isTrainingMode ? 1 : getLevelTier(character.level);
+            playerSpritePath = getPlayerBattleSprite(manifestDir, adapter, character.class, tier);
+        }
+
+        // Get monster sprite path from current battle state
+        const monster = useBattleStore.getState().monster;
+        let monsterSpritePath: string | undefined;
+
+        if (manifestDir && monster?.templateId) {
+            monsterSpritePath = getMonsterBattleSprite(manifestDir, adapter, monster.templateId);
+        }
 
         // Compute background image path
         const backgroundPath = manifestDir
-            ? this.app.vault.adapter.getResourcePath(`${manifestDir}/assets/backgrounds/battle-bg.jpg`)
+            ? adapter.getResourcePath(`${manifestDir}/assets/backgrounds/battle-bg.jpg`)
             : undefined;
 
         // Create React root and render
@@ -83,6 +101,7 @@ export class BattleItemView extends ItemView {
                     });
                 }}
                 playerSpritePath={playerSpritePath}
+                monsterSpritePath={monsterSpritePath}
                 backgroundPath={backgroundPath}
             />
         );
