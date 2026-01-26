@@ -359,7 +359,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
             .setName('Bounty Chance')
             .setDesc('Chance (%) for a bounty fight to trigger when completing a quest. Set to 0 to disable.')
             .addSlider(slider => slider
-                .setLimits(0, 20, 1)
+                .setLimits(0, 100, 5)
                 .setValue(this.plugin.settings.bountyChance ?? 10)
                 .setDynamicTooltip()
                 .onChange(async (value) => {

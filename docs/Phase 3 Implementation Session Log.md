@@ -1016,6 +1016,65 @@ Key files to reference:
 
 ---
 
+## 2026-01-26 - Monster Sprites, Elite Naming, Bounty Modal Fixes
+
+**Focus:** Fixed monster sprite loading issues, elite naming duplication, and bounty system bugs
+
+**Completed:**
+- ✅ **Monster templateId for Sprites**
+  - Added `templateId` field to `BattleMonster` interface
+  - Updated `toBattleMonster()` conversion to include templateId
+  - Battle screen now loads correct monster sprites from assets
+  
+- ✅ **Elite Naming Fix**
+  - Fixed elites getting multiple prefix stacks ("Sturdy Savage Sturdy Elite Drake")
+  - BountyService now uses `forcePrefix: 'none'` for elites
+  - Added prefix stripping before applying elite name
+  - BattleService also strips all prefixes before elite naming
+  
+- ✅ **BountyModal Sprite Loading**
+  - Fixed `manifestDir` not being passed through hook chain
+  - Added `manifestDir` to `useQuestActions` options
+  - Added to both `FullKanban.tsx` and `SidebarQuests.tsx` hook calls
+  
+- ✅ **SpriteService Path Fix**
+  - Folders use hyphens (`cave-troll/`) but files use underscores (`cave_troll.gif`)
+  - Fixed `getMonsterGifPath()`, `getMonsterSpritePath()`, `getMonsterFallbackSprite()`
+  - Bounty modal now shows animated GIFs correctly
+  
+- ✅ **Stamina Cap Visibility**
+  - Added dynamic message to CharacterSheet stamina section
+  - Shows "You've hit your daily stamina cap" when limit reached
+  
+- ✅ **BountyModal Name Fix**
+  - Removed duplicate prefix logic (monster.name already prefixed by BountyService)
+
+**Files Changed:**
+- `src/models/Monster.ts` - BattleMonster interface with templateId
+- `src/services/MonsterService.ts` - toBattleMonster includes templateId
+- `src/services/BountyService.ts` - forcePrefix 'none' for elites, clean prefix
+- `src/services/BattleService.ts` - Strip all prefixes before elite naming
+- `src/services/SpriteService.ts` - Fixed underscore/hyphen mismatch in paths
+- `src/hooks/useQuestActions.ts` - Added manifestDir option
+- `src/components/FullKanban.tsx` - Pass manifestDir to hook
+- `src/components/SidebarQuests.tsx` - Pass manifestDir to hook
+- `src/components/CharacterSheet.tsx` - Dynamic stamina cap message
+- `src/modals/BountyModal.ts` - Removed duplicate prefix, fixed name display
+- `src/settings.ts` - Bounty slider extended to 100% for testing
+
+**Testing Notes:**
+- ✅ Monster GIFs show in BountyModal
+- ✅ Battle screen loads correct monster PNGs
+- ✅ Elite names are clean single-prefix (e.g., "Savage Drake")
+- ✅ Stamina cap message appears when daily limit reached
+
+**Testing Items Adjusted:**
+- Bounty slider: 0-20% → 0-100% (for testing)
+- Daily stamina cap: 50 → 500 (for testing)
+- See Feature Roadmap "Testing Items to Switch Back" section
+
+---
+
 *Template for future entries:*
 
 ```markdown

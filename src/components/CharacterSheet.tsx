@@ -253,7 +253,9 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                             />
                         </div>
                         <div className="qb-stamina-hint">
-                            Complete quests to earn stamina for combat
+                            {(character.staminaGainedToday ?? 0) >= 500
+                                ? "You've hit your daily stamina cap. Try again tomorrow!"
+                                : "Complete quests to earn stamina for combat"}
                         </div>
                     </div>
                 </div>

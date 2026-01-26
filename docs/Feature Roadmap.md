@@ -172,6 +172,18 @@
 
 ---
 
+## ⚠️ Testing Items to Switch Back Before Launch
+
+These values were adjusted for development/testing and should be reverted before release:
+
+| Item | Current Value | Production Value | Location |
+|------|---------------|------------------|----------|
+| **Daily Stamina Cap** | 500 | 50 | `characterStore.ts` → `awardStamina()` → `MAX_DAILY` |
+| **Bounty Slider Max** | 100% | 20% | `settings.ts` → Bounty Chance slider → `.setLimits(0, 100, 5)` → change to `.setLimits(0, 20, 1)` |
+| **Set Piece Drop Rate** | 40% | 33% | `LootGenerationService.ts` → set drop probability |
+
+---
+
 ## Technical Debt / Risks
 
 **Performance:**

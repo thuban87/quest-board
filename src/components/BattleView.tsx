@@ -23,6 +23,7 @@ interface BattleViewProps {
     onShowLoot?: (loot: LootDrop) => void;
     onOpenRecoveryModal?: () => void;
     playerSpritePath?: string;
+    monsterSpritePath?: string;
     backgroundPath?: string;
 }
 
@@ -33,7 +34,7 @@ interface BattleViewProps {
 /**
  * Monster display section
  */
-function MonsterDisplay() {
+function MonsterDisplay({ spritePath }: { spritePath?: string }) {
     const monster = useBattleStore(state => state.monster);
     const monsterHP = useBattleStore(state => state.monster?.currentHP ?? 0);
     const monsterMaxHP = useBattleStore(state => state.monster?.maxHP ?? 1);
@@ -72,7 +73,18 @@ function MonsterDisplay() {
                 <span className="qb-hp-text">{monsterHP} / {monsterMaxHP}</span>
             </div>
             <div className={`qb-monster-sprite ${tintClass} ${animClass}`}>
-                <span className="qb-sprite-emoji">{monster.emoji}</span>
+                {spritePath ? (
+                    <img
+                        src={spritePath}
+                        alt={`${monster.name} sprite`}
+                        className="qb-sprite-image"
+                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                    />
+                ) : null}
+                <span className={`qb-sprite-emoji ${spritePath ? 'hidden' : ''}`}>{monster.emoji}</span>
             </div>
         </div>
     );
@@ -410,7 +422,7 @@ function RetreatScreen({ onReturn }: RetreatScreenProps) {
 // MAIN COMPONENT
 // =====================
 
-export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot, onOpenRecoveryModal, playerSpritePath, backgroundPath }) => {
+export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot, onOpenRecoveryModal, playerSpritePath, monsterSpritePath, backgroundPath }) => {
     const combatState = useBattleStore(state => state.state);
     const isInCombat = useBattleStore(state => state.isInCombat);
     const resetBattle = useBattleStore(state => state.resetBattle);
@@ -530,7 +542,7 @@ export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot,
 
     return (
         <div className={`qb-battle-view ${isMobile ? 'mobile' : ''}`} style={bgStyle}>
-            <MonsterDisplay />
+            <MonsterDisplay spritePath={monsterSpritePath} />
             <CombatLog />
             <PlayerDisplay spritePath={playerSpritePath} />
             <ActionButtons

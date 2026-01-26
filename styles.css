@@ -6245,6 +6245,33 @@
   display: none;
 }
 
+/* Monster sprite variant tinting via CSS filters */
+.qb-tint-fierce {
+  filter: hue-rotate(-15deg) saturate(1.4) brightness(1.1);
+}
+
+.qb-tint-sturdy {
+  filter: sepia(0.25) saturate(1.3) brightness(1.05);
+}
+
+.qb-tint-ancient {
+  filter: hue-rotate(280deg) saturate(0.9) brightness(1.15);
+}
+
+/* Bounty modal monster sprite */
+.qb-bounty-monster-icon .qb-monster-sprite-img {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+/* Monster sprite in battle view */
+.qb-monster-sprite .qb-sprite-image {
+  width: 80px;
+  height: 80px;
+}
+
 /* ===========================================
    Recovery Options Modal (Phase 3B Step 9)
    =========================================== */
