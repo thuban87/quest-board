@@ -34,9 +34,11 @@ import { openStoreModal } from './src/modals/StoreModal';
 import { lootGenerationService } from './src/services/LootGenerationService';
 import { setBonusService } from './src/services/SetBonusService';
 import { bountyService } from './src/services/BountyService';
-import { monsterService } from './src/services/MonsterService';
+import { monsterService, createRandomMonster } from './src/services/MonsterService';
 import { battleService, setSaveCallback as setBattleSaveCallback } from './src/services/BattleService';
 import { startRecoveryTimerCheck, stopRecoveryTimerCheck } from './src/services/RecoveryTimerService';
+import { showEliteEncounterModal } from './src/modals/EliteEncounterModal';
+import { ELITE_LEVEL_UNLOCK, ELITE_OVERWORLD_CHANCE, ELITE_NAME_PREFIXES } from './src/config/combatConfig';
 import { GearSlot } from './src/models/Gear';
 
 export default class QuestBoardPlugin extends Plugin {
@@ -312,7 +314,7 @@ export default class QuestBoardPlugin extends Plugin {
             },
         });
 
-        // Add Fight command (Phase 3B Step 8)
+        // Add Fight command (Phase 3B Step 8) - with elite modal for elite spawns
         this.addCommand({
             id: 'start-fight',
             name: 'Start Fight (Random Encounter)',
@@ -329,16 +331,52 @@ export default class QuestBoardPlugin extends Plugin {
                     return;
                 }
 
-                // Start battle
-                const success = battleService.startRandomBattle(character.level, 'overworld');
-                if (success) {
-                    // Consume stamina on battle start
-                    useCharacterStore.getState().consumeStamina();
+                // Roll for elite (15% at L5+)
+                let tier: 'overworld' | 'elite' = 'overworld';
+                if (character.level >= ELITE_LEVEL_UNLOCK && Math.random() < ELITE_OVERWORLD_CHANCE) {
+                    tier = 'elite';
+                }
 
-                    // Open battle in its own tab
-                    this.activateBattleView();
+                // Create monster first
+                const monster = createRandomMonster(character.level, tier);
+                if (!monster) {
+                    new (require('obsidian').Notice)('❌ Failed to create monster', 2000);
+                    return;
+                }
+
+                // Apply random name prefix for elite mobs
+                if (tier === 'elite') {
+                    const prefix = ELITE_NAME_PREFIXES[Math.floor(Math.random() * ELITE_NAME_PREFIXES.length)];
+                    monster.name = `${prefix} ${monster.name.replace(/^Elite /, '')}`;
+                }
+
+                // If elite, show modal first; otherwise start battle directly
+                if (tier === 'elite') {
+                    showEliteEncounterModal(this.app, monster, {
+                        onFight: () => {
+                            // Consume stamina when fight is accepted
+                            useCharacterStore.getState().consumeStamina();
+                        },
+                        onFlee: () => {
+                            // No stamina consumed if flee
+                        },
+                        onSave: async () => {
+                            this.settings.character = useCharacterStore.getState().character;
+                            await this.saveSettings();
+                        },
+                        onBattleStart: () => {
+                            this.activateBattleView();
+                        },
+                    });
                 } else {
-                    new (require('obsidian').Notice)('❌ Failed to start battle', 2000);
+                    // Regular mob - start battle directly
+                    const success = battleService.startBattleWithMonster(monster);
+                    if (success) {
+                        useCharacterStore.getState().consumeStamina();
+                        this.activateBattleView();
+                    } else {
+                        new (require('obsidian').Notice)('❌ Failed to start battle', 2000);
+                    }
                 }
             },
         });

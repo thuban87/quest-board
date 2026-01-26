@@ -864,8 +864,155 @@ L36+:   94%
 - ✅ AI generation triggers in background for unknown folders
 - ✅ Cache persists permanently in plugin data
 
-**Next Steps:**
-- Phase 3B Complete! → Begin Phase 3C: Exploration System
+---
+
+## 2026-01-25 - Loot Table Tuning: Drop Rate Rebalancing
+
+**Focus:** Rebalanced quest loot drop rates and fixed combat loot tier naming mismatch
+
+**Completed:**
+- ✅ **Quest Loot RNG Gates**
+  - Normal quests: 60% gear, 45% consumable, 100% gold (was 100% gear only)
+  - Training mode: 100% gear, 100% consumable (dopamine mode preserved)
+  - Daily quests: 100% consumable + 25% gear (was consumable only)
+  
+- ✅ **Weighted Consumable Table**
+  - HP Potion: ~58% (weight 70)
+  - MP Potion: ~33% (weight 40)  
+  - Revive Potion: ~8% (weight 10)
+  
+- ✅ **Combat Loot Tier Fix**
+  - Changed `generateCombatLoot()` to use actual monster tier names
+  - Old: `'minion' | 'normal' | 'elite' | 'boss'`
+  - New: `'overworld' | 'elite' | 'dungeon' | 'boss' | 'raid_boss'`
+  - Removed tier translation layer in `BattleService.ts`
+  - Added `dungeon` tier (35% drop) and `raid_boss` tier (100% + 8x gold)
+
+**Combat Loot Drop Rates (unchanged functionality, fixed naming):**
+| Monster Tier | Gear Drop % | Gold Multiplier |
+|--------------|-------------|-----------------|
+| overworld    | 25%         | 1.0x            |
+| dungeon      | 35%         | 1.5x            |
+| elite        | 50%         | 2.0x            |
+| boss         | 100%        | 5.0x            |
+| raid_boss    | 100%        | 8.0x            |
+
+**Files Changed:**
+- `src/services/LootGenerationService.ts` - Quest drop rates, consumable table, combat tier names
+- `src/services/BattleService.ts` - Removed tier translation layer
+
+**Testing Notes:**
+- ✅ Build passes
+- ✅ Deployed to test vault
+- ⏳ Awaiting user testing of new drop rates
+
+**Rationale:**
+- Gear flood was caused by 100% quest drop rate during heavy testing
+- 60% gear gives variance without killing the reward feeling
+- Training mode stays 100% to maintain dopamine-driven learning
+- Dailies get small gear bonus (25%) as a nice surprise
+
+---
+
+## 2026-01-26 - Elite Overworld Mobs System Complete
+
+**Focus:** Implemented elite monster spawns with pre-fight modal, flee option, and visual effects for both overworld and bounty fights
+
+**Completed:**
+- ✅ **Elite Combat Stats**
+  - Added `ELITE_LEVEL_UNLOCK = 5` (elites don't spawn before L5)
+  - Added `ELITE_BOUNTY_CHANCE = 0.30` (30% for bounties)
+  - Added `ELITE_OVERWORLD_CHANCE = 0.15` (15% for random fights)
+  - Added `ELITE_NAME_PREFIXES` (6 options: Elite, Champion, Veteran, Alpha, Savage, Enraged)
+  
+- ✅ **Bounty Elite Spawns**
+  - Updated `BountyService.generateBounty()` with elite roll logic
+  - Added `isElite` flag to `Bounty` interface
+  - Bounty monsters get random name prefix when elite
+  - Updated `BountyModal.ts` with elite badge and flee button
+
+- ✅ **Overworld Elite Spawns**
+  - Updated `main.ts` start-fight command with elite modal flow
+  - Creates monster first, rolls for elite (15% at L5+)
+  - Shows `EliteEncounterModal` for elites with Fight/Flee options
+  - Regular mobs bypass modal entirely, start battle directly
+  - No stamina consumed if player flees elite
+
+- ✅ **Elite Encounter Modal** (NEW)
+  - Created `EliteEncounterModal.ts` with:
+    - Warning header ("ELITE MONSTER!")
+    - Monster preview with red pulsing glow animation
+    - Elite badge next to monster name
+    - Monster stats preview (HP, ATK)
+    - Fight and Flee buttons
+  - Flee closes modal without penalty or stamina cost
+
+- ✅ **Battle View Elite Visuals**
+  - Updated `MonsterDisplay` component with elite class detection
+  - Added `qb-elite-monster` class for red glow animation during combat
+  - Added elite badge display next to monster name in battle
+
+- ✅ **CSS Animations**
+  - Added `qb-elite-pulse` keyframes (2s infinite red glow cycle)
+  - Elite modal styling (warning box, monster preview, buttons)
+  - Battle view elite styling (name glow, emoji drop-shadow)
+
+**Files Created:**
+- `src/modals/EliteEncounterModal.ts` - Pre-fight modal for elite overworld encounters
+
+**Files Changed:**
+- `src/config/combatConfig.ts` - Elite constants (level unlock, spawn chances, name prefixes)
+- `src/services/BountyService.ts` - Elite spawn logic for bounties (30%)
+- `src/models/Bounty.ts` - Added `isElite` flag
+- `src/modals/BountyModal.ts` - Elite badge, flee button, handleFlee()
+- `src/services/BattleService.ts` - Unused elite imports (elite roll moved to main.ts)
+- `src/components/BattleView.tsx` - Elite class + badge in MonsterDisplay
+- `main.ts` - Elite modal flow in start-fight command
+- `styles.css` - Elite pulse animation, modal styles, battle view elite styles
+
+**Testing Notes:**
+- ✅ Build passes
+- ✅ Deployed to test vault
+- ⏳ Manual testing pending:
+  - L4 character → no elites should spawn
+  - L5+ character → ~15% overworld elite, ~30% bounty elite
+  - Elite modal shows with glow, badge, Fight/Flee
+  - Flee closes modal, no stamina consumed
+  - Fight starts battle with elite glow in BattleView
+
+**Design Decisions:**
+- Elite uses same tier as elite (not overworld) in `MONSTER_TIER_CONFIG` (HP×1.05, ATK×1.02, crit+6%)
+- Flee option only appears for elites (not regular mobs)
+- Name prefixes are randomized per spawn for variety
+- Modal appears BEFORE combat starts, giving player choice to avoid fight
+
+---
+
+## Next Session Prompt
+
+```
+Elite Overworld Mobs COMPLETE. Full implementation with pre-fight modal and flee option.
+
+What was done this session:
+- combatConfig.ts: ELITE_LEVEL_UNLOCK=5, 15%/30% spawn chances, 6 name prefixes
+- BountyService: 30% elite bounty spawn at L5+ with isElite flag
+- BountyModal: Elite badge + flee button for bounty elites
+- main.ts: Elite modal flow for overworld (15% at L5+)
+- EliteEncounterModal: NEW modal with Fight/Flee before elite combat
+- BattleView: Elite glow animation + badge during combat
+- CSS: qb-elite-pulse animation, all elite styling
+
+Next session focus options:
+1. Test elite system thoroughly in test vault
+2. Continue with dungeon/boss preparations
+3. Implement streak shield for Paladin
+4. Add more power-up triggers
+
+Key files to reference:
+- src/modals/EliteEncounterModal.ts - Pre-fight elite modal
+- src/config/combatConfig.ts - Elite constants
+- main.ts lines 317-380 - Start fight command with elite logic
+```
 
 ---
 
@@ -895,3 +1042,4 @@ L36+:   94%
 
 ---
 ```
+

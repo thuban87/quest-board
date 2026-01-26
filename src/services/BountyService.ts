@@ -17,6 +17,12 @@ import type { Monster } from '../models/Monster';
 import type { Bounty, BountyTemplate, BountyRollResult } from '../models/Bounty';
 import type { QuestBoardSettings } from '../settings';
 import { monsterService } from './MonsterService';
+import {
+    ELITE_LEVEL_UNLOCK,
+    ELITE_BOUNTY_CHANCE,
+    ELITE_NAME_PREFIXES,
+    type MonsterTier
+} from '../config/combatConfig';
 
 // =====================
 // BOUNTY LOOT BONUS
@@ -545,22 +551,41 @@ Be creative and fun! Match monsters to the theme:
 
     /**
      * Generate a bounty for a completed quest.
+     * Elite monsters spawn at 30% chance for characters level 5+.
      */
     generateBounty(quest: Quest, character: Character): Bounty | null {
         const folderName = this.getFolderFromQuest(quest);
         const template = this.getTemplateForFolder(folderName);
         const monsterId = this.selectMonsterFromHint(template.monsterHint);
 
-        // Create monster at player level, overworld tier
+        // Determine tier: elite (30% at L5+) or overworld
+        let tier: MonsterTier = 'overworld';
+        let isElite = false;
+
+        if (character.level >= ELITE_LEVEL_UNLOCK) {
+            if (Math.random() < ELITE_BOUNTY_CHANCE) {
+                tier = 'elite';
+                isElite = true;
+            }
+        }
+
+        // Create monster at player level
         const monster = monsterService.createMonster(
             monsterId,
             character.level,
-            'overworld'
+            tier
         );
 
         if (!monster) {
             console.warn('[BountyService] Failed to create monster for bounty:', monsterId);
             return null;
+        }
+
+        // Apply random name prefix for elites
+        if (isElite) {
+            const prefix = ELITE_NAME_PREFIXES[Math.floor(Math.random() * ELITE_NAME_PREFIXES.length)];
+            monster.name = `${prefix} ${monster.name.replace(/^Elite /, '')}`;
+            console.log('[BountyService] Elite monster spawned:', monster.name);
         }
 
         return {
@@ -573,6 +598,7 @@ Be creative and fun! Match monsters to the theme:
             monster,
             lootBonus: BOUNTY_LOOT_BONUS,
             createdAt: new Date().toISOString(),
+            isElite,  // Track elite status for flee option
         };
     }
 

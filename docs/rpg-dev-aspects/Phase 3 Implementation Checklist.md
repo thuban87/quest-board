@@ -293,6 +293,23 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Burn-on-use cache with background regeneration
 - [x] Keyword-matched fallback templates for non-AI users
 
+### Step 11: Elite Overworld Mobs ✅
+
+- [x] Add elite spawn constants to `combatConfig.ts`
+  - `ELITE_LEVEL_UNLOCK = 5` (no elites before L5)
+  - `ELITE_BOUNTY_CHANCE = 0.30` (30% for bounties)
+  - `ELITE_OVERWORLD_CHANCE = 0.15` (15% for random fights)
+  - `ELITE_NAME_PREFIXES` (6 options: Elite, Champion, Veteran, Alpha, Savage, Enraged)
+- [x] Update `BountyService.generateBounty()` with elite roll logic
+- [x] Add `isElite` flag to `Bounty` interface
+- [x] Update `BountyModal.ts` with elite badge and flee button
+- [x] Create `EliteEncounterModal.ts` (pre-fight modal for overworld elites)
+  - Warning header, monster preview with red glow animation
+  - Fight and Flee buttons (flee = no stamina cost)
+- [x] Update `main.ts` start-fight command with elite modal flow
+- [x] Update `BattleView.tsx` MonsterDisplay with elite class + badge
+- [x] Add CSS animations (`qb-elite-pulse`, elite styling for modal and battle)
+
 ---
 
 ## Phase 3C: Exploration System (7-10 days)
@@ -434,4 +451,4 @@ Complete these BEFORE starting any Phase 3 work:
 
 ---
 
-*Last Updated: 2026-01-25*
+*Last Updated: 2026-01-26*
