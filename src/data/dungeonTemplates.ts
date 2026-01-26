@@ -3,6 +3,11 @@
  * 
  * Hand-crafted dungeons for development and testing.
  * These serve as examples for how to create custom dungeons.
+ * 
+ * Size Constraints (at 2x scale / 128px tiles):
+ * - Max width: 11 tiles (no horizontal scroll)
+ * - Max height: 7 tiles (no vertical scroll)
+ * - Taller rooms (21+ height) will scroll vertically
  */
 
 import type { DungeonTemplate } from '../models/Dungeon';
@@ -13,12 +18,16 @@ import type { DungeonTemplate } from '../models/Dungeon';
 
 /**
  * Simple test dungeon for development.
- * Single room for testing rendering and movement.
+ * Tests rendering, movement, and vertical scrolling.
+ * 
+ * Room 1: Standard 11×7 entry
+ * Room 2: TALL 11×21 for scroll testing
+ * Room 3: Standard 11×7 treasure room
  */
 export const TEST_CAVE: DungeonTemplate = {
     id: 'test_cave',
     name: 'Test Cave',
-    description: 'A small cave for testing the exploration system.',
+    description: 'A test cave for development. Includes a tall scrolling room.',
     baseDifficulty: 'easy',
     tileSet: 'cave',
     lootBias: {
@@ -29,63 +38,79 @@ export const TEST_CAVE: DungeonTemplate = {
         {
             id: 'entry',
             type: 'entry',
-            width: 9,
+            width: 11,
             height: 7,
             layout: [
-                '#########',
-                '#.......#',
-                '#.......#',
-                '#...P...#',
-                '#.......#',
-                '#.......#',
-                '####.####',
+                '###########',
+                '#.........#',
+                '#.........#',
+                '#....P....#',
+                '#.........#',
+                '#.........#',
+                '#####.#####',
             ],
             doors: {
-                '4,6': { targetRoom: 'combat1', targetEntry: 'north' },
+                '5,6': { targetRoom: 'tall_corridor', targetEntry: 'north' },
             },
         },
         {
-            id: 'combat1',
+            // TALL ROOM - 21 height for scroll testing
+            id: 'tall_corridor',
             type: 'combat',
-            width: 9,
-            height: 7,
+            width: 11,
+            height: 21,
             layout: [
-                '####.####',
-                '#.......#',
-                '#.......#',
-                '#...M...#',
-                '#.......#',
-                '#.......#',
-                '####.####',
+                '#####.#####',
+                '#.........#',
+                '#.........#',
+                '#.........#',
+                '#....M....#',
+                '#.........#',
+                '#.........#',
+                '#.........#',
+                '#..#...#..#',
+                '#..#...#..#',
+                '#.........#',
+                '#.........#',
+                '#....M....#',
+                '#.........#',
+                '#.........#',
+                '#..#...#..#',
+                '#..#...#..#',
+                '#.........#',
+                '#.........#',
+                '#.........#',
+                '#####.#####',
             ],
             doors: {
-                '4,0': { targetRoom: 'entry', targetEntry: 'south' },
-                '4,6': { targetRoom: 'treasure', targetEntry: 'north' },
+                '5,0': { targetRoom: 'entry', targetEntry: 'south' },
+                '5,20': { targetRoom: 'treasure', targetEntry: 'north' },
             },
             monsters: [
-                { position: [4, 3], pool: ['goblin'], isBoss: false },
+                { position: [5, 4], pool: ['goblin'], isBoss: false },
+                { position: [5, 12], pool: ['goblin'], isBoss: false },
             ],
         },
         {
             id: 'treasure',
             type: 'treasure',
-            width: 9,
+            width: 11,
             height: 7,
             layout: [
-                '####.####',
-                '#.......#',
-                '#..C.C..#',
-                '#.......#',
-                '#...O...#',
-                '#.......#',
-                '#########',
+                '#####.#####',
+                '#.........#',
+                '#..C...C..#',
+                '#.........#',
+                '#....O....#',
+                '#.........#',
+                '###########',
             ],
             doors: {
-                '4,0': { targetRoom: 'combat1', targetEntry: 'south' },
+                '5,0': { targetRoom: 'tall_corridor', targetEntry: 'south' },
             },
             chests: [
                 { position: [3, 2], tier: 'adept' },
-                { position: [5, 2], tier: 'journeyman' },
+                { position: [7, 2], tier: 'journeyman' },
             ],
         },
     ],
@@ -98,6 +123,7 @@ export const TEST_CAVE: DungeonTemplate = {
 /**
  * Goblin Cave - The first proper dungeon.
  * 5 rooms with increasing difficulty.
+ * All rooms sized 11×7 for consistent display.
  */
 export const GOBLIN_CAVE: DungeonTemplate = {
     id: 'goblin_cave',
@@ -114,121 +140,112 @@ export const GOBLIN_CAVE: DungeonTemplate = {
             id: 'entrance',
             type: 'entry',
             width: 11,
-            height: 9,
+            height: 7,
             layout: [
                 '###########',
                 '#.........#',
                 '#.........#',
-                '#.........#',
                 '#....P....#',
+                '#.........#',
+                '#.........#',
+                '#####.#####',
+            ],
+            doors: {
+                '5,6': { targetRoom: 'fork', targetEntry: 'north' },
+            },
+        },
+        {
+            id: 'fork',
+            type: 'combat',
+            width: 11,
+            height: 7,
+            layout: [
+                '#####.#####',
+                '#.........#',
+                '#....M....#',
+                '#.........#',
+                '#..M...M..#',
+                '#.........#',
+                '##.#####.##',
+            ],
+            doors: {
+                '5,0': { targetRoom: 'entrance', targetEntry: 'south' },
+                '2,6': { targetRoom: 'treasure_left', targetEntry: 'north' },
+                '8,6': { targetRoom: 'guard_room', targetEntry: 'north' },
+            },
+            monsters: [
+                { position: [5, 2], pool: ['goblin'] },
+                { position: [3, 4], pool: ['goblin'] },
+                { position: [7, 4], pool: ['goblin'] },
+            ],
+        },
+        {
+            id: 'treasure_left',
+            type: 'treasure',
+            width: 11,
+            height: 7,
+            layout: [
+                '##.########',
+                '#.........#',
+                '#....C....#',
+                '#.........#',
+                '#.........#',
+                '#.........#',
+                '###########',
+            ],
+            doors: {
+                '2,0': { targetRoom: 'fork', targetEntry: 'south' },
+            },
+            chests: [
+                { position: [5, 2], tier: 'adept' },
+            ],
+        },
+        {
+            id: 'guard_room',
+            type: 'combat',
+            width: 11,
+            height: 7,
+            layout: [
+                '########.##',
+                '#.........#',
+                '#..M...M..#',
                 '#.........#',
                 '#.........#',
                 '#.........#',
                 '#####.#####',
             ],
             doors: {
-                '5,8': { targetRoom: 'fork', targetEntry: 'north' },
-            },
-        },
-        {
-            id: 'fork',
-            type: 'combat',
-            width: 15,
-            height: 9,
-            layout: [
-                '#####.#####....',
-                '#.........#....',
-                '#....M....#....',
-                '#.........#....',
-                '.....M.........',
-                '#.........#....',
-                '#.........#....',
-                '#.........#....',
-                '##.#####.##....',
-            ],
-            doors: {
-                '5,0': { targetRoom: 'entrance', targetEntry: 'south' },
-                '2,8': { targetRoom: 'treasure_left', targetEntry: 'north' },
-                '8,8': { targetRoom: 'guard_room', targetEntry: 'north' },
-            },
-            monsters: [
-                { position: [5, 2], pool: ['goblin'] },
-                { position: [5, 4], pool: ['goblin'] },
-            ],
-        },
-        {
-            id: 'treasure_left',
-            type: 'treasure',
-            width: 7,
-            height: 7,
-            layout: [
-                '##.####',
-                '#.....#',
-                '#..C..#',
-                '#.....#',
-                '#.....#',
-                '#.....#',
-                '#######',
-            ],
-            doors: {
-                '2,0': { targetRoom: 'fork', targetEntry: 'south' },
-            },
-            chests: [
-                { position: [3, 2], tier: 'adept' },
-            ],
-        },
-        {
-            id: 'guard_room',
-            type: 'combat',
-            width: 9,
-            height: 9,
-            layout: [
-                '####.####',
-                '#.......#',
-                '#..M.M..#',
-                '#.......#',
-                '#.......#',
-                '#.......#',
-                '#.......#',
-                '#.......#',
-                '####.####',
-            ],
-            doors: {
-                '4,0': { targetRoom: 'fork', targetEntry: 'south' },
-                '4,8': { targetRoom: 'boss_lair', targetEntry: 'north' },
+                '8,0': { targetRoom: 'fork', targetEntry: 'south' },
+                '5,6': { targetRoom: 'boss_lair', targetEntry: 'north' },
             },
             monsters: [
                 { position: [3, 2], pool: ['hobgoblin'] },
-                { position: [5, 2], pool: ['hobgoblin'] },
+                { position: [7, 2], pool: ['hobgoblin'] },
             ],
         },
         {
             id: 'boss_lair',
             type: 'boss',
-            width: 13,
-            height: 11,
+            width: 11,
+            height: 7,
             layout: [
-                '####..####...',
-                '#..........#.',
-                '#..........#.',
-                '#..........#.',
-                '#.....M....#.',
-                '#..........#.',
-                '#..........#.',
-                '#...C..C...#.',
-                '#..........#.',
-                '#....O.....#.',
-                '#############',
+                '#####.#####',
+                '#.........#',
+                '#....M....#',
+                '#.........#',
+                '#..C...C..#',
+                '#....O....#',
+                '###########',
             ],
             doors: {
-                '4,0': { targetRoom: 'guard_room', targetEntry: 'south' },
+                '5,0': { targetRoom: 'guard_room', targetEntry: 'south' },
             },
             chests: [
-                { position: [4, 7], tier: 'master' },
-                { position: [7, 7], tier: 'master' },
+                { position: [3, 4], tier: 'master' },
+                { position: [7, 4], tier: 'master' },
             ],
             monsters: [
-                { position: [6, 4], pool: ['bugbear'], isBoss: true },
+                { position: [5, 2], pool: ['bugbear'], isBoss: true },
             ],
         },
     ],
