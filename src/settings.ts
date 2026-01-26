@@ -78,6 +78,10 @@ export interface QuestBoardSettings {
     // Set bonus configuration
     excludedSetFolders: string[];  // Folders that don't form sets (e.g., 'main', 'side', etc.)
     setBonusCache: Record<string, any[]>; // Cached AI-generated set bonuses
+
+    // Bounty system configuration
+    bountyChance: number;  // Chance (0-20%) for bounty to trigger on quest completion
+    bountyDescriptionCache: Record<string, { description: string; monsterHint: string }[]>;  // AI-generated bounty descriptions (burn-on-use)
 }
 
 /**
@@ -121,6 +125,8 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     },
     excludedSetFolders: ['main', 'side', 'training', 'recurring', 'daily'],
     setBonusCache: {},
+    bountyChance: 10,  // 10% chance by default
+    bountyDescriptionCache: {},  // AI-generated bounty descriptions
 };
 
 /**
@@ -346,6 +352,18 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.streakMode || 'quest')
                 .onChange(async (value) => {
                     this.plugin.settings.streakMode = value as 'quest' | 'task';
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Bounty Chance')
+            .setDesc('Chance (%) for a bounty fight to trigger when completing a quest. Set to 0 to disable.')
+            .addSlider(slider => slider
+                .setLimits(0, 20, 1)
+                .setValue(this.plugin.settings.bountyChance ?? 10)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.bountyChance = value;
                     await this.plugin.saveSettings();
                 }));
 

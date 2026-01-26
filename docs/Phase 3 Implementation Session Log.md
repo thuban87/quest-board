@@ -816,6 +816,59 @@ L36+:   94%
 
 ---
 
+## 2026-01-25 - Phase 3B Step 10: Quest Bounty System ✅
+
+**Focus:** Implemented bounty system with AI-generated descriptions and battle integration
+
+**Completed:**
+- ✅ Created `Bounty.ts` model with types for bounty data
+- ✅ Refactored `BountyService.ts` to class-based service with:
+  - Bounty roll mechanic (0-20% configurable chance)
+  - 25+ keyword-matched bounty templates (kitchen, work, fitness, study, school, paper, home, etc.)
+  - Monster hint mapping to 19 monster templates
+  - **AI generation via Gemini API (gemini-2.5-flash-lite)**
+  - **Burn-on-use caching** - each use removes template from cache
+  - **Background regeneration** when ≤1 template left (non-blocking)
+  - Persistent cache in `settings.bountyDescriptionCache`
+- ✅ Created `BountyModal.ts` - Accept/decline UI with monster preview and rewards
+- ✅ Created `BountyReviveModal.ts` - Pre-modal for unconscious players (use/buy revive potion)
+- ✅ Added `bountyChance` setting (0-20% slider, default 10%)
+- ✅ Added `bountyDescriptionCache` to settings for AI-generated descriptions
+- ✅ Integrated bounty trigger in `QuestActionsService.moveQuest()`
+- ✅ Fixed race condition: bounty modal triggers on loot modal close, not parallel
+- ✅ Added `onBattleStart` callback chain to open battle view after accepting bounty
+- ✅ Added 300+ lines CSS styling for bounty modals (amber/gold theme)
+
+**Files Created:**
+- `src/models/Bounty.ts` - Bounty, BountyTemplate, BountyRollResult types
+- `src/services/BountyService.ts` - Class-based service with AI generation + caching
+- `src/modals/BountyModal.ts` - Accept/decline bounty offer UI
+- `src/modals/BountyReviveModal.ts` - Revive pre-modal for unconscious players
+
+**Files Changed:**
+- `src/settings.ts` - Added bountyChance slider + bountyDescriptionCache
+- `src/services/QuestActionsService.ts` - Bounty trigger + onBattleStart callback
+- `src/hooks/useQuestActions.ts` - Added bountyChance and onBattleStart options
+- `src/components/FullKanban.tsx` - Pass bountyChance and onBattleStart to hook
+- `src/components/SidebarQuests.tsx` - Pass bountyChance and onBattleStart to hook
+- `main.ts` - Initialize bountyService with settings and save callback
+- `styles.css` - Bounty modal styling
+
+**Testing Notes:**
+- ✅ Bounty modal appears correctly after loot modal closes
+- ✅ Accept bounty → Battle starts → Battle view opens
+- ✅ Decline bounty → Modal closes with "escape" message
+- ✅ Unconscious + bounty → Revive modal with options works
+- ✅ Buy revive potion option works (deducts 200g)
+- ✅ Keyword templates match folders (e.g., "school paper" → school templates)
+- ✅ AI generation triggers in background for unknown folders
+- ✅ Cache persists permanently in plugin data
+
+**Next Steps:**
+- Phase 3B Complete! → Begin Phase 3C: Exploration System
+
+---
+
 *Template for future entries:*
 
 ```markdown

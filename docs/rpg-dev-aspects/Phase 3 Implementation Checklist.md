@@ -1,6 +1,6 @@
 # Phase 3 Implementation Checklist
 
-> **Status:** 🟡 Phase 3B In Progress (Phase 3A Complete!)  
+> **Status:** ✅ Phase 3B Complete! (Phase 3A + 3B Done, 3C Next)  
 > **Estimated Time:** 17-24 days  
 > **Purpose:** Shorthand reference with links to full documentation
 
@@ -278,12 +278,20 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Status bar timer countdown
 - [x] Working Use buttons for consumables
 
-### Step 10: Quest Bounty System
+### Step 10: Quest Bounty System ✅
 
-- [ ] Generate bounty on main quest complete
-  - See: [Fight Doc → Quest Bounty System](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Fight%20System.md#quest-bounty-system-)
-- [ ] Apply +200% loot luck bonus
-- [ ] Show bounty notification UI
+- [x] Create `Bounty.ts` model and `BountyService.ts`
+- [x] Create `BountyModal.ts` (accept/decline UI with monster preview)
+- [x] Create `BountyReviveModal.ts` (unconscious player pre-modal)
+- [x] Add `bountyChance` setting (0-20% slider)
+- [x] Integrate bounty trigger in `QuestActionsService.moveQuest()`
+- [x] Fix race condition - bounty triggers on loot modal close
+- [x] Add `onBattleStart` callback to open battle view after accepting
+- [x] Apply +200% loot luck bonus (via `BOUNTY_LOOT_BONUS = 3.0`)
+- [x] Show bounty notification UI
+- [x] AI-generated bounty descriptions via Gemini API
+- [x] Burn-on-use cache with background regeneration
+- [x] Keyword-matched fallback templates for non-AI users
 
 ---
 
