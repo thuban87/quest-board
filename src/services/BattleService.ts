@@ -545,15 +545,9 @@ export function generateVictoryLoot(): ReturnType<typeof lootGenerationService.g
 
     if (!monster || !character) return [];
 
-    // Map monster tier to loot tier
-    const lootTier = monster.tier === 'raid_boss' || monster.tier === 'boss'
-        ? 'boss'
-        : monster.tier === 'elite'
-            ? 'elite'
-            : 'normal';
-
+    // Pass actual monster tier directly to loot service
     const loot = lootGenerationService.generateCombatLoot(
-        lootTier,
+        monster.tier,
         monster.level,
         character,
         undefined // No unique drop ID for random fights

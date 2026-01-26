@@ -71,6 +71,35 @@ const TRAINING_TIER_DROP_RATES: Record<GearTier, number> = {
     legendary: 0,
 };
 
+// ============================================
+// Quest Loot Drop Rates
+// ============================================
+
+/**
+ * Quest completion drop rates
+ * Training mode always gets 100% drops for dopamine
+ */
+const QUEST_LOOT_RATES = {
+    training: {
+        gear: 1.0,        // 100% gear drop in training
+        consumable: 1.0,  // 100% consumable in training
+    },
+    normal: {
+        gear: 0.60,       // 60% gear drop
+        consumable: 0.45, // 45% consumable drop
+    },
+};
+
+/**
+ * Consumable drop weights for quest completion
+ * Normalized during selection (total = 120, so: HP 58%, MP 33%, Revive 8%)
+ */
+const QUEST_CONSUMABLE_WEIGHTS = {
+    hp: 70,
+    mp: 40,
+    revive: 10,
+};
+
 /**
  * Gold rewards by quest priority
  */
@@ -151,9 +180,9 @@ export class LootGenerationService {
         const questType = quest.questType?.toLowerCase() || 'main';
         const isTraining = questType === 'training' || character.isTrainingMode;
 
-        // Daily quests give consumables instead of gear
+        // Daily quests: guaranteed consumable + 25% chance for gear
         if (questType === 'daily') {
-            // Pick appropriate potion tier based on character level
+            // Pick appropriate potion tier based on character level (guaranteed)
             const potionId = Math.random() < 0.7
                 ? getHpPotionForLevel(character.level)
                 : getMpPotionForLevel(character.level);
@@ -162,12 +191,29 @@ export class LootGenerationService {
                 itemId: potionId,
                 quantity: 1,
             });
+
+            // 25% chance for bonus gear from dailies
+            if (Math.random() < 0.25) {
+                const possibleSlots = this.getSlotsForQuestType('daily');
+                // Dailies can drop accessories or boots (smaller rewards)
+                const dailySlots: GearSlot[] = possibleSlots.length > 0 ? possibleSlots : ['boots', 'accessory1'];
+                const slot = this.pickRandom(dailySlots);
+                const tier = this.rollTier('easy', false); // Lower tier gear from dailies
+                const level = this.rollGearLevel(character.level);
+
+                const gearItem = this.generateGearItem(slot, tier, level, 'quest', quest.questId, character.class, quest.path);
+                rewards.push({ type: 'gear', item: gearItem });
+            }
+
             return rewards;
         }
 
-        // 3. Roll for gear (based on difficulty)
+        // Get drop rates based on mode
+        const dropRates = isTraining ? QUEST_LOOT_RATES.training : QUEST_LOOT_RATES.normal;
+
+        // 3. Roll for gear (RNG gated)
         const possibleSlots = this.getSlotsForQuestType(questType);
-        if (possibleSlots.length > 0) {
+        if (possibleSlots.length > 0 && Math.random() < dropRates.gear) {
             const slot = this.pickRandom(possibleSlots);
             // Use quest.difficulty for tier, defaulting to 'medium' for old quests without the field
             const difficulty = (quest as any).difficulty || 'medium';
@@ -178,14 +224,47 @@ export class LootGenerationService {
             rewards.push({ type: 'gear', item: gearItem });
         }
 
+        // 4. Roll for consumable (RNG gated, separate from gear)
+        if (Math.random() < dropRates.consumable) {
+            const consumable = this.rollQuestConsumable(character.level);
+            rewards.push(consumable);
+        }
+
         return rewards;
     }
 
     /**
+     * Roll a consumable for quest completion using weighted table
+     */
+    private rollQuestConsumable(level: number): LootReward {
+        const totalWeight = QUEST_CONSUMABLE_WEIGHTS.hp + QUEST_CONSUMABLE_WEIGHTS.mp + QUEST_CONSUMABLE_WEIGHTS.revive;
+        const roll = Math.random() * totalWeight;
+
+        let itemId: string;
+        if (roll < QUEST_CONSUMABLE_WEIGHTS.hp) {
+            // HP potion (most common)
+            itemId = getHpPotionForLevel(level);
+        } else if (roll < QUEST_CONSUMABLE_WEIGHTS.hp + QUEST_CONSUMABLE_WEIGHTS.mp) {
+            // MP potion
+            itemId = getMpPotionForLevel(level);
+        } else {
+            // Revive potion (rare)
+            itemId = 'revive_potion';
+        }
+
+        return {
+            type: 'consumable',
+            itemId,
+            quantity: 1,
+        };
+    }
+
+    /**
      * Generate loot from combat victory
+     * Uses actual monster tier names from the combat system
      */
     generateCombatLoot(
-        monsterTier: 'minion' | 'normal' | 'elite' | 'boss',
+        monsterTier: 'overworld' | 'elite' | 'dungeon' | 'boss' | 'raid_boss',
         monsterLevel: number,
         character: Character,
         uniqueDropId?: string
@@ -193,22 +272,24 @@ export class LootGenerationService {
         const rewards: LootReward[] = [];
 
         // Gold based on monster tier
-        const goldMultiplier = {
-            minion: 0.5,
-            normal: 1.0,
+        const goldMultiplier: Record<typeof monsterTier, number> = {
+            overworld: 1.0,
+            dungeon: 1.5,
             elite: 2.0,
             boss: 5.0,
+            raid_boss: 8.0,
         };
         const baseGold = 10 + monsterLevel * 2;
         const goldAmount = Math.floor(baseGold * goldMultiplier[monsterTier]);
         rewards.push({ type: 'gold', amount: goldAmount });
 
         // Gear drop chance based on tier
-        const gearChance = {
-            minion: 0.1,
-            normal: 0.25,
-            elite: 0.5,
-            boss: 1.0,
+        const gearChance: Record<typeof monsterTier, number> = {
+            overworld: 0.25,  // 25% - basic encounters
+            dungeon: 0.35,    // 35% - dungeon trash mobs
+            elite: 0.50,      // 50% - rare spawns
+            boss: 1.0,        // 100% - guaranteed
+            raid_boss: 1.0,   // 100% - guaranteed
         };
 
         if (Math.random() < gearChance[monsterTier]) {
@@ -221,9 +302,13 @@ export class LootGenerationService {
                 }
             }
 
-            // Normal procedural gear
+            // Normal procedural gear - map tier to difficulty for quality roll
             const slot = this.pickRandom(PRIMARY_GEAR_SLOTS);
-            const difficulty = monsterTier === 'boss' ? 'epic' : monsterTier === 'elite' ? 'hard' : 'medium';
+            const difficulty = (monsterTier === 'boss' || monsterTier === 'raid_boss')
+                ? 'epic'
+                : monsterTier === 'elite'
+                    ? 'hard'
+                    : 'medium';
             const tier = this.rollTier(difficulty, false);
             const level = this.rollGearLevel(monsterLevel);
 
