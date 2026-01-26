@@ -21,6 +21,10 @@ interface UseQuestActionsOptions {
     onSaveCharacter?: () => Promise<void>;
     /** App reference for showing modals like loot popups */
     app?: App;
+    /** Bounty chance percentage (0-20) for bounty fight triggers */
+    bountyChance?: number;
+    /** Callback to open battle view when bounty fight starts */
+    onBattleStart?: () => void;
 }
 
 interface UseQuestActionsResult {
@@ -40,6 +44,8 @@ export function useQuestActions({
     pendingSavesRef,
     onSaveCharacter,
     app,
+    bountyChance,
+    onBattleStart,
 }: UseQuestActionsOptions): UseQuestActionsResult {
 
     const handleMoveQuest = useCallback(
@@ -54,6 +60,8 @@ export function useQuestActions({
                     storageFolder,
                     streakMode,
                     app,
+                    bountyChance,
+                    onBattleStart,
                 });
 
                 // Save character if streak was updated
@@ -72,7 +80,7 @@ export function useQuestActions({
                 }
             }
         },
-        [vault, storageFolder, streakMode, pendingSavesRef, onSaveCharacter, app]
+        [vault, storageFolder, streakMode, pendingSavesRef, onSaveCharacter, app, bountyChance, onBattleStart]
     );
 
     const handleToggleTask = useCallback(

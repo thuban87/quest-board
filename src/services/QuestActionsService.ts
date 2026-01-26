@@ -31,6 +31,9 @@ import {
     rollFromPool,
     TriggerContext,
 } from './PowerUpService';
+import { checkBountyTrigger } from './BountyService';
+import { showBountyModal } from '../modals/BountyModal';
+import { showBountyReviveModal } from '../modals/BountyReviveModal';
 
 /**
  * Result of moving a quest
@@ -59,6 +62,10 @@ export interface MoveQuestOptions {
     app?: App;
     /** Whether to generate and show loot on quest completion */
     enableLoot?: boolean;
+    /** Bounty chance percentage (0-20, defaults to 10) */
+    bountyChance?: number;
+    /** Callback to open battle view when bounty fight starts */
+    onBattleStart?: () => void;
 }
 
 /**
@@ -214,6 +221,46 @@ export async function moveQuest(
     // === LOOT GENERATION ===
     // Generate and award loot when quest is completed
     let loot: LootDrop | undefined;
+
+    // === BOUNTY ROLL ===
+    // Roll for bounty first, but don't show modal yet (wait for loot modal to close)
+    let pendingBounty: ReturnType<typeof checkBountyTrigger>['bounty'] = undefined;
+    if (newStatus === QuestStatus.COMPLETED && options.app) {
+        const character = useCharacterStore.getState().character;
+        if (character) {
+            const bountyChance = options.bountyChance ?? 10;
+            const bountyResult = checkBountyTrigger(updatedQuest, character, bountyChance);
+            if (bountyResult.triggered && bountyResult.bounty) {
+                pendingBounty = bountyResult.bounty;
+            }
+        }
+    }
+
+    // Helper to show bounty modal (called after loot modal closes)
+    const showPendingBounty = () => {
+        if (!pendingBounty || !options.app) return;
+
+        // Check if player is unconscious
+        const currentChar = useCharacterStore.getState().character;
+        if (currentChar?.status === 'unconscious') {
+            // Show revive pre-modal
+            showBountyReviveModal(options.app, pendingBounty, {
+                onSave: async () => {
+                    // Will be called after revive + bounty modal chain
+                },
+                onBattleStart: options.onBattleStart,
+            });
+        } else {
+            // Show bounty modal directly
+            showBountyModal(options.app, pendingBounty, {
+                onSave: async () => {
+                    // Battle service handles saving
+                },
+                onBattleStart: options.onBattleStart,
+            });
+        }
+    };
+
     if (newStatus === QuestStatus.COMPLETED && options.enableLoot !== false) {
         const character = useCharacterStore.getState().character;
         if (character) {
@@ -276,9 +323,14 @@ export async function moveQuest(
                                     if (keptCount > 0) {
                                         new Notice(`✨ Obtained ${keptCount} item(s)!`, 3000);
                                     }
+
+                                    // Show pending bounty after inventory management
+                                    showPendingBounty();
                                 },
                                 onAbandon: () => {
                                     new Notice('🗑️ Abandoned all loot.', 2000);
+                                    // Show pending bounty even if loot was abandoned
+                                    showPendingBounty();
                                 },
                             });
                         }, 500);
@@ -303,7 +355,16 @@ export async function moveQuest(
                                 title: 'Quest Complete!',
                                 subtitle: updatedQuest.questName,
                                 loot: loot!,
+                                onClose: () => {
+                                    // Show bounty modal after loot modal closes
+                                    showPendingBounty();
+                                },
                             });
+                        }, 500);
+                    } else if (pendingBounty && options.app) {
+                        // No loot to show, but we have a bounty - show it after short delay
+                        setTimeout(() => {
+                            showPendingBounty();
                         }, 500);
                     }
                 }
@@ -311,6 +372,11 @@ export async function moveQuest(
                 console.error('[QuestActionsService] Failed to generate loot:', error);
             }
         }
+    } else if (pendingBounty && options.app) {
+        // Loot disabled but bounty triggered - show bounty after short delay
+        setTimeout(() => {
+            showPendingBounty();
+        }, 500);
     }
 
     // === STAMINA AWARD ===

@@ -71,6 +71,8 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         pendingSavesRef,  // Pass pending saves ref to prevent file watcher race condition
         onSaveCharacter: handleSaveCharacter,  // Save character after streak updates
         app,  // Pass app for loot modal display
+        bountyChance: plugin.settings.bountyChance,  // Pass bounty chance for bounty triggers
+        onBattleStart: () => plugin.activateBattleView(),  // Open battle view when bounty fight starts
     });
 
     // XP Award hook - watches task file changes and awards XP

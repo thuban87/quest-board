@@ -816,6 +816,60 @@ L36+:   94%
 
 ---
 
+## 2026-01-25 - Phase 3B Step 10: Quest Bounty System (Partial)
+
+**Focus:** Implemented core bounty system with themed descriptions and battle integration
+
+**Completed:**
+- ✅ Created `Bounty.ts` model with types for bounty data
+- ✅ Created `BountyService.ts` with:
+  - Bounty roll mechanic (0-20% configurable chance)
+  - Smart template selection based on questType
+  - Monster hint mapping to 19 monster templates
+  - 20+ keyword-based bounty templates (kitchen, work, fitness, study, home, etc.)
+  - Added templates for standard quest types (Main, Side, Training, Recurring)
+- ✅ Created `BountyModal.ts` - Accept/decline UI with monster preview and rewards
+- ✅ Created `BountyReviveModal.ts` - Pre-modal for unconscious players (use/buy revive potion)
+- ✅ Added `bountyChance` setting (0-20% slider, default 10%)
+- ✅ Integrated bounty trigger in `QuestActionsService.moveQuest()`
+- ✅ Fixed race condition: bounty modal now triggers on loot modal close, not parallel
+- ✅ Added `onBattleStart` callback chain to open battle view after accepting bounty
+- ✅ Added 300+ lines CSS styling for bounty modals (amber/gold theme)
+
+**Files Created:**
+- `src/models/Bounty.ts` - Bounty, BountyTemplate, BountyRollResult types
+- `src/services/BountyService.ts` - Template matching, monster selection, bounty generation
+- `src/modals/BountyModal.ts` - Accept/decline bounty offer UI
+- `src/modals/BountyReviveModal.ts` - Revive pre-modal for unconscious players
+
+**Files Changed:**
+- `src/settings.ts` - Added bountyChance (0-20%) slider setting
+- `src/services/QuestActionsService.ts` - Bounty trigger after quest completion + onBattleStart callback
+- `src/hooks/useQuestActions.ts` - Added bountyChance and onBattleStart options
+- `src/components/FullKanban.tsx` - Pass bountyChance and onBattleStart to hook
+- `src/components/SidebarQuests.tsx` - Pass bountyChance and onBattleStart to hook
+- `styles.css` - Bounty modal styling
+
+**Testing Notes:**
+- ✅ Bounty modal appears correctly after loot modal closes
+- ✅ Accept bounty → Battle starts → Battle view opens
+- ✅ Decline bounty → Modal closes with "escape" message
+- ✅ Unconscious + bounty → Revive modal with options works
+- ✅ Buy revive potion option works (deducts 200g)
+- ⚠️ Themed descriptions not matching folders dynamically (falls back to defaults)
+
+**Known Issue:**
+- Bounty templates use static keyword matching - doesn't dynamically support new folder names
+- "school paper" folder gets default templates because no "school" keyword template exists
+- **Solution:** Needs AI integration to generate descriptions for unknown folders (next session)
+
+**Next Steps:**
+- Add AI-generated bounty descriptions via Gemini API (like SetBonusService)
+- Cache generated descriptions to settings
+- Fall back to default templates if no API key
+
+---
+
 *Template for future entries:*
 
 ```markdown

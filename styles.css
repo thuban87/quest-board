@@ -6385,3 +6385,308 @@
   gap: var(--qb-spacing-sm);
   margin-top: var(--qb-spacing-md);
 }
+
+/* ===========================================
+   Bounty Modal (Phase 3B Step 10)
+   =========================================== */
+.qb-bounty-modal {
+  max-width: 450px;
+}
+
+.qb-modal-bounty {
+  border: 2px solid #f59e0b;
+}
+
+.qb-bounty-header {
+  text-align: center;
+  padding: var(--qb-spacing-lg) var(--qb-spacing-md);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), transparent);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.qb-bounty-icon {
+  font-size: 3.5rem;
+  margin-bottom: var(--qb-spacing-sm);
+  animation: qb-pulse 2s ease-in-out infinite;
+}
+
+.qb-bounty-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #f59e0b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.qb-bounty-quest-info {
+  text-align: center;
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.qb-bounty-description {
+  margin: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  border-left: 4px solid #f59e0b;
+  font-style: italic;
+}
+
+.qb-bounty-description p {
+  margin: 0;
+}
+
+.qb-bounty-monster-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+  margin: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary-alt);
+  border-radius: var(--qb-radius-md);
+  border: 1px solid var(--qb-card-border);
+}
+
+.qb-bounty-monster-icon {
+  font-size: 3rem;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.qb-bounty-monster-info {
+  flex: 1;
+}
+
+.qb-bounty-monster-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-normal);
+}
+
+.qb-bounty-monster-level {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.qb-bounty-rewards {
+  margin: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: linear-gradient(135deg, rgba(76, 217, 100, 0.1), transparent);
+  border-radius: var(--qb-radius-md);
+  border: 1px solid rgba(76, 217, 100, 0.3);
+}
+
+.qb-bounty-rewards h4 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  color: #4cd964;
+  font-size: 1rem;
+}
+
+.qb-bounty-rewards ul {
+  margin: 0;
+  padding-left: var(--qb-spacing-lg);
+  list-style: none;
+}
+
+.qb-bounty-rewards li {
+  padding: 2px 0;
+  font-size: 0.9rem;
+}
+
+.qb-bounty-buttons {
+  display: flex;
+  gap: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  border-top: 1px solid var(--qb-card-border);
+}
+
+.qb-bounty-accept-btn {
+  flex: 2;
+  padding: var(--qb-spacing-md) var(--qb-spacing-lg);
+  border: none;
+  border-radius: var(--qb-radius-md);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--qb-transition-fast);
+}
+
+.qb-bounty-accept-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+}
+
+.qb-bounty-decline-btn {
+  flex: 1;
+  padding: var(--qb-spacing-md);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all var(--qb-transition-fast);
+}
+
+.qb-bounty-decline-btn:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+/* ===========================================
+   Bounty Revive Modal (Pre-modal for unconscious)
+   =========================================== */
+.qb-bounty-revive-modal {
+  max-width: 450px;
+}
+
+.qb-modal-bounty-revive {
+  border: 2px solid #ef4444;
+}
+
+.qb-bounty-revive-header {
+  text-align: center;
+  padding: var(--qb-spacing-lg) var(--qb-spacing-md);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), transparent);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.qb-bounty-revive-icon {
+  font-size: 3rem;
+  margin-bottom: var(--qb-spacing-sm);
+}
+
+.qb-bounty-revive-header h2 {
+  margin: 0 0 var(--qb-spacing-xs) 0;
+  font-size: 1.4rem;
+  color: #ef4444;
+}
+
+.qb-bounty-revive-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.qb-bounty-revive-preview {
+  margin: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  border-left: 4px solid #f59e0b;
+}
+
+.qb-bounty-revive-preview-label {
+  font-weight: 600;
+  color: #f59e0b;
+  margin-bottom: var(--qb-spacing-xs);
+}
+
+.qb-bounty-revive-preview-desc {
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: var(--qb-spacing-sm);
+}
+
+.qb-bounty-revive-monster-line {
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.qb-bounty-revive-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-md);
+}
+
+.qb-bounty-revive-option-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  min-height: 50px;
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--qb-transition-fast);
+}
+
+.qb-bounty-revive-option-btn:hover:not(.disabled) {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+  transform: translateX(4px);
+}
+
+.qb-bounty-revive-option-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.qb-bounty-revive-option-icon {
+  font-size: 1.75rem;
+  width: 40px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.qb-bounty-revive-option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.qb-bounty-revive-option-label {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-normal);
+}
+
+.qb-bounty-revive-option-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.qb-bounty-revive-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--qb-spacing-md);
+  border-top: 1px solid var(--qb-card-border);
+  background: var(--background-secondary-alt);
+}
+
+.qb-bounty-revive-gold {
+  font-weight: 600;
+  color: #ffc107;
+}
+
+.qb-bounty-revive-decline-btn {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  border: 1px solid #ef4444;
+  border-radius: var(--qb-radius-md);
+  background: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all var(--qb-transition-fast);
+}
+
+.qb-bounty-revive-decline-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
