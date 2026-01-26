@@ -115,8 +115,8 @@
 | 45 | **Quest Generation Preview** | Show generated quest with hints, not full details, sanitize all text fields | "Contains X tasks, Y rewards" |
 | 46 | **Progressive Quest Reveal** | Hide future milestones/tasks until reached | Update as quest progresses |
 | 47 | **Enrage System** | EnrageSystem service: check quests in progress > 7 days, apply XP penalty | Red glow, warning notices |
-| 48 | **Loot System** | LootSystem service: roll for consumables on quest/task complete | Loot drop modal, inventory display |
-| 49 | **Consumable Usage** | Use consumable items (Pomodoro timer, restore streak, skip task, XP boost) | Apply effects to character/quests |
+| 48 | **Loot System** ✅| LootSystem service: roll for consumables on quest/task complete | Loot drop modal, inventory display |
+| 49 | **Consumable Usage** ✅| Use consumable items (Pomodoro timer, restore streak, skip task, XP boost) | Apply effects to character/quests |
 | 50 | **Tavern View** | TavernView component: cozy rest screen with sitting character sprite | Manual toggle or weekend auto-enable |
 | 51 | **"Take Quest" Button** | Pick random Available quest, open details | Prominent button in header |
 | 52 | **Weekly Sprint View** | Dedicated view showing weekly progress with character sprite | Switch Board/Sheet/Sprint |

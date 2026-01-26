@@ -199,3 +199,195 @@ For the character selection screen, each class needs one animated GIF showing:
 - 3-8 frames, looping
 
 Generate as sprite sheet or individual frames, then combine into GIF.
+
+---
+
+## Character Sprite Checklist
+
+### Warrior ⚔️
+- [ ] Tier 1 - Novice Warrior
+- [ ] Tier 2 - Apprentice Warrior
+- [ ] Tier 3 - Journeyman Warrior
+- [ ] Tier 4 - Master Warrior
+- [ ] Tier 5 - Legendary Warrior
+
+### Paladin 🛡️
+- [ ] Tier 1 - Novice Paladin
+- [ ] Tier 2 - Apprentice Paladin
+- [ ] Tier 3 - Journeyman Paladin
+- [ ] Tier 4 - Master Paladin
+- [ ] Tier 5 - Legendary Paladin
+
+### Technomancer ⚡
+- [ ] Tier 1 - Novice Technomancer
+- [ ] Tier 2 - Apprentice Technomancer
+- [ ] Tier 3 - Journeyman Technomancer
+- [ ] Tier 4 - Master Technomancer
+- [ ] Tier 5 - Legendary Technomancer
+
+### Scholar 📚
+- [ ] Tier 1 - Novice Scholar
+- [ ] Tier 2 - Apprentice Scholar
+- [ ] Tier 3 - Journeyman Scholar
+- [ ] Tier 4 - Master Scholar
+- [ ] Tier 5 - Legendary Scholar
+
+### Rogue 🗡️
+- [ ] Tier 1 - Novice Rogue
+- [ ] Tier 2 - Apprentice Rogue
+- [ ] Tier 3 - Journeyman Rogue
+- [ ] Tier 4 - Master Rogue
+- [ ] Tier 5 - Legendary Rogue
+
+### Cleric 💚
+- [ ] Tier 1 - Novice Cleric
+- [ ] Tier 2 - Apprentice Cleric
+- [ ] Tier 3 - Journeyman Cleric
+- [ ] Tier 4 - Master Cleric
+- [ ] Tier 5 - Legendary Cleric
+
+### Bard 🎭
+- [ ] Tier 1 - Novice Bard
+- [ ] Tier 2 - Apprentice Bard
+- [ ] Tier 3 - Journeyman Bard
+- [ ] Tier 4 - Master Bard
+- [ ] Tier 5 - Legendary Bard
+
+---
+
+## Monster Sprites
+
+All monster sprites should be **pixel art style**, **front-facing** (toward viewer), **aggressive/combat pose**, **no background**.
+
+For elite variants, use same sprite with color tint overlay:
+- **Fierce** = red tint (+10% ATK)
+- **Sturdy** = green tint (+10% HP)
+- **Ancient** = gold/purple tint (+20% all)
+
+---
+
+### 🐺 Beasts
+
+#### Wolf
+A fierce wolf in pixel art style, front-facing aggressive stance. Gray fur with glowing yellow eyes. Snarling with fangs bared, hackles raised. Muscular predator ready to pounce. Dark fantasy RPG style. No background.
+
+#### Bear
+A massive bear in pixel art style, front-facing threatening pose. Brown fur, powerful build. Standing on hind legs with claws raised, roaring. Imposing hulking beast. Dark fantasy RPG style. No background.
+
+#### Giant Rat
+A giant rat in pixel art style, front-facing attack stance. Mangy gray-brown fur, red beady eyes. Unnaturally large rodent with long yellow teeth bared. Disease-ridden and aggressive. Dark fantasy RPG style. No background.
+
+---
+
+### 💀 Undead
+
+#### Skeleton
+An animated skeleton warrior in pixel art style, front-facing combat stance. Yellowed bones with empty eye sockets glowing faint purple. Wielding a rusty sword. Tattered remnants of armor. Menacing undead creature. Dark fantasy RPG style. No background.
+
+#### Zombie
+A shambling zombie in pixel art style, front-facing lurching pose. Rotting gray-green flesh, exposed bones. Tattered clothing, arms outstretched. Dead milky eyes. Horrific undead corpse. Dark fantasy RPG style. No background.
+
+#### Ghost
+A vengeful ghost in pixel art style, front-facing floating pose. Translucent pale blue ethereal form. Hollow dark eyes, wispy trailing form. Spectral wailing expression. Haunting presence. Dark fantasy RPG style. No background.
+
+---
+
+### 👺 Goblins
+
+#### Goblin
+A sneaky goblin in pixel art style, front-facing crouching stance. Green skin, large pointed ears, yellow eyes. Small and wiry. Holding a crude dagger. Mischievous evil grin. Dark fantasy RPG style. No background.
+
+#### Hobgoblin
+A hobgoblin warrior in pixel art style, front-facing battle stance. Orange-brown skin, larger and more muscular than goblin. Wearing crude leather armor. Wielding a serrated scimitar. Disciplined and fierce. Dark fantasy RPG style. No background.
+
+#### Bugbear
+A hulking bugbear in pixel art style, front-facing intimidating pose. Large hairy goblinoid covered in dark brown fur. Massive build with long arms. Wielding a spiked morningstar. Brutal and savage. Dark fantasy RPG style. No background.
+
+---
+
+### 🧌 Trolls
+
+#### Cave Troll
+A massive cave troll in pixel art style, front-facing threatening stance. Grayish-green thick hide, tusks protruding from lower jaw. Hunched but enormous. Wielding a crude stone club. Covered in moss and cave debris. Dark fantasy RPG style. No background.
+
+#### River Troll
+A river troll in pixel art style, front-facing aggressive pose. Slimy green-blue skin, webbed claws. Muscular aquatic creature. Covered in algae and water plants. Sharp claws and needle teeth. Dark fantasy RPG style. No background.
+
+---
+
+### 🧝 Night Elves
+
+#### Shadow Elf
+A shadow elf warrior in pixel art style, front-facing combat stance. Dark purple-gray skin, white hair, glowing violet eyes. Wearing dark leather armor. Wielding dual curved blades. Cloaked in wisps of shadow. Dark fantasy RPG style. No background.
+
+#### Dark Ranger
+A dark ranger in pixel art style, front-facing aiming pose. Undead elf with pale skin, glowing red eyes. Wielding an ornate black bow with nocked arrow. Tattered dark cloak. Deadly and precise. Dark fantasy RPG style. No background.
+
+---
+
+### ⛏️ Dwarves
+
+#### Rogue Dwarf
+A rogue dwarf bandit in pixel art style, front-facing defensive stance. Stocky build, wild unkempt beard. Wearing patched leather armor. Wielding a hand axe and small shield. Grizzled outlaw appearance. Dark fantasy RPG style. No background.
+
+#### Berserker
+A dwarven berserker in pixel art style, front-facing frenzied attack pose. Bare-chested muscular dwarf, wild red beard. Eyes blazing with battle rage. Wielding two heavy axes. Covered in war paint and scars. Dark fantasy RPG style. No background.
+
+---
+
+### 🐉 Dragonkin
+
+#### Drake
+A drake in pixel art style, front-facing aggressive stance. Red-scaled lesser dragon, wings folded back. Flames licking from nostrils. Sharp claws and fangs. Serpentine neck, deadly predator. Dark fantasy RPG style. No background.
+
+#### Wyvern
+A wyvern in pixel art style, front-facing threatening pose. Green-scaled winged serpent with barbed tail. Large bat-like wings spread. Venomous dripping fangs. Fierce flying predator. Dark fantasy RPG style. No background.
+
+---
+
+### 👁️ Aberrations
+
+#### Mimic
+A mimic in pixel art style, front-facing attack pose. A treasure chest transforming into a monster. Lid opened revealing rows of sharp teeth, long sticky tongue. Wooden body with eye stalks. Horrifying trap creature. Dark fantasy RPG style. No background.
+
+#### Eye Beast
+An eye beast in pixel art style, front-facing hovering pose. Large central eye with many smaller eye stalks. Spherical floating body. Each eye glowing different colors. Alien and unsettling. Tentacles beneath. Dark fantasy RPG style. No background.
+
+---
+
+## Monster Sprite Checklist
+
+### 🐺 Beasts
+- [ ] Wolf
+- [ ] Bear
+- [ ] Giant Rat
+
+### 💀 Undead
+- [ ] Skeleton
+- [ ] Zombie
+- [ ] Ghost
+
+### 👺 Goblins
+- [ ] Goblin
+- [ ] Hobgoblin
+- [ ] Bugbear
+
+### 🧌 Trolls
+- [ ] Cave Troll
+- [ ] River Troll
+
+### 🧝 Night Elves
+- [ ] Shadow Elf
+- [ ] Dark Ranger
+
+### ⛏️ Dwarves
+- [ ] Rogue Dwarf
+- [ ] Berserker
+
+### 🐉 Dragonkin
+- [ ] Drake
+- [ ] Wyvern
+
+### 👁️ Aberrations
+- [ ] Mimic
+- [ ] Eye Beast

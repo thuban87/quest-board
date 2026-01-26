@@ -1,2 +1,2 @@
-- [ ] Need way to exclude folders from the quest folder from being tracked. We currently have an archive folder that I don't want included in tracking but it's in the quest folder (Life/Quest Board/quests/archive) and it's handled by the plugin entirely so we need a way to adjust this in settings. IT would actually be ideal if we had total control over this template system in settings, like maybe even it's own submenu, where you can decide on folder paths for where the templates live, where archives go, adjsut what's set when the template file is created via command palette (no tags, override daily note not being generated for whatever readson, thigns like that). Anything else you can think of that would be useful for me here?
-- [ ] Need to consolidate commands into a command menu, similar to mise
+- [ ] Buffs stacking like crazy. Need to limit certain buffs to so many
+- [ ] 
