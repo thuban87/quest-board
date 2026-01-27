@@ -165,7 +165,6 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             explorationState: 'EXPLORING',
         });
 
-        console.log(`[DungeonStore] Entered dungeon: ${template.name}${isPreview ? ' (Preview Mode)' : ''}, ${combinedRooms.length} rooms from history`);
         return true;
     },
 
