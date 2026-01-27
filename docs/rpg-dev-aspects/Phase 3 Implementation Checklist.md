@@ -1,6 +1,6 @@
 # Phase 3 Implementation Checklist
 
-> **Status:** ✅ Phase 3B Complete! (Phase 3A + 3B Done, 3C Next)  
+> **Status:** ⚡ Phase 3C In Progress (Steps 1-3 ✅, Steps 4-13 Remaining)  
 > **Estimated Time:** 17-24 days  
 > **Purpose:** Shorthand reference with links to full documentation
 
@@ -314,27 +314,36 @@ Complete these BEFORE starting any Phase 3 work:
 
 ## Phase 3C: Exploration System (7-10 days)
 
-### Step 1: Dungeon State Store
+### Step 1: Dungeon State Store ✅
 
-- [ ] Create Zustand store with light persistence
+- [x] Create Zustand store with light persistence
   - See: [Exploration Doc → State Management](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Exploration%20System.md#state-management)
-- [ ] Single dungeon at a time with warning modal
+- [x] Single dungeon at a time with warning modal (preview mode bypasses)
   - See: [Exploration Doc → Single Dungeon at a Time](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Exploration%20System.md#single-dungeon-at-a-time)
-- [ ] Room state tracking (chests, monsters, traps)
+- [x] Room state tracking (chests, monsters, traps)
 
-### Step 2: Tile System
+### Step 2: Tile System ✅
 
-- [ ] Create `TileDefinition`, `TileInstance` types
+- [x] Create `TileDefinition`, `TileInstance` types
   - See: [Exploration Doc → Tile System](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Exploration%20System.md#tile-system)
-- [ ] Emoji fallbacks for all tile types
-- [ ] Walkability and interaction rules
+- [x] Emoji fallbacks for all tile types
+- [x] Walkability and interaction rules
+- [x] TileRegistry with cave tileset sprites (64px tiles at 2x scale = 128px)
+- [x] Organized folder structure for tiles:
+  - `{tileset}/floor/`, `{tileset}/wall/` - tileset-specific tiles
+  - `_shared/floor/`, `_shared/wall/`, `_shared/hazard/`, `_shared/obstacle/`, `_shared/decorative/` - universal tiles
+  - `_interactive/` - chests, doors, portals
+- [x] Overlay tile rendering (`isOverlay: true`) - chests/portals/obstacles render on top of floor
 
-### Step 3: Room Rendering
+### Step 3: Room Rendering ✅
 
-- [ ] CSS Grid with event delegation (ONE click handler)
+- [x] CSS Grid with event delegation (ONE click handler)
   - See: [Exploration Doc → Technical Approach](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Exploration%20System.md#technical-approach)
-- [ ] Player sprite with CSS transform animation
-- [ ] Test performance (165 tiles)
+- [x] Player sprite with direction-based facing (north/south/east/west)
+- [x] Test performance (9x7 = 63 tiles, renders smoothly)
+- [x] Dev Preview command - preview dungeons without consuming resources
+- [x] DungeonView.tsx + DungeonItemView.tsx (Obsidian view wrapper)
+- [x] Scalable tiles (2x default 128px, 1x 64px option)
 
 ### Step 4: Click-to-Move
 

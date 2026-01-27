@@ -2,7 +2,15 @@
  * Tile Registry
  * 
  * Maps layout characters to tile definitions for each tileset.
- * Provides paths to 64x64 environment sprites with emoji fallbacks.
+ * Uses organized folder structure:
+ *   - {tileset}/floor/  - walkable ground tiles
+ *   - {tileset}/wall/   - blocking wall tiles
+ *   - _shared/floor/    - universal floor tiles
+ *   - _shared/wall/     - universal wall tiles
+ *   - _shared/hazard/   - non-walkable terrain (water, lava)
+ *   - _shared/obstacle/ - blocking overlays (boulders)
+ *   - _shared/decorative/ - walkable overlays
+ *   - _interactive/     - chests, doors, portals
  */
 
 import type { TileDefinition, TileSet, TileType } from '../models/Dungeon';
@@ -21,6 +29,8 @@ import type { TileDefinition, TileSet, TileType } from '../models/Dungeon';
  * 'C' = chest
  * 'M' = monster spawn (renders as floor)
  * 'O' = portal/dungeon exit
+ * '~' = water/hazard (non-walkable)
+ * 'B' = boulder/obstacle (renders with floor underneath)
  */
 export const LAYOUT_CHARS = {
     WALL: '#',
@@ -30,7 +40,25 @@ export const LAYOUT_CHARS = {
     CHEST: 'C',
     MONSTER: 'M',
     PORTAL: 'O',
+    HAZARD: '~',
+    OBSTACLE: 'B',
 } as const;
+
+// ============================================
+// Tile Categories (folder-based properties)
+// ============================================
+
+/**
+ * Properties inferred from folder categories.
+ * Used for auto-discovery and defaults.
+ */
+export const CATEGORY_RULES: Record<string, Partial<TileDefinition>> = {
+    floor: { walkable: true, autoInteract: false, type: 'floor' },
+    wall: { walkable: false, autoInteract: false, type: 'wall' },
+    hazard: { walkable: false, autoInteract: false, type: 'floor' },
+    decorative: { walkable: true, autoInteract: false, type: 'floor' },
+    obstacle: { walkable: false, autoInteract: false, type: 'floor' },
+};
 
 // ============================================
 // Tile Definitions per Tileset
@@ -39,6 +67,7 @@ export const LAYOUT_CHARS = {
 /**
  * Complete tile registry mapping layout characters to definitions.
  * Each tileset has its own visual theme.
+ * Sprite paths now use organized folder structure.
  */
 export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
     cave: {
@@ -46,42 +75,43 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'wall',
             walkable: false,
             autoInteract: false,
-            sprite: 'basalt.png', // Was 'cave wall.png' - had black bars
+            sprite: 'cave/wall/cliff.png',
             emoji: '⬛',
         },
         '.': {
             type: 'floor',
             walkable: true,
             autoInteract: false,
-            sprite: 'cave gravel.png',
+            sprite: 'cave/floor/cave gravel.png',
             emoji: '⬜',
         },
         'P': {
             type: 'spawn',
             walkable: true,
             autoInteract: false,
-            sprite: 'cave gravel.png', // Same as floor
+            sprite: 'cave/floor/cave gravel.png',
             emoji: '⬜',
         },
         'D': {
             type: 'door',
             walkable: true,
             autoInteract: true,
-            sprite: 'cave gravel.png', // Cave "doors" are just openings
+            sprite: 'cave/floor/cave gravel.png', // Cave "doors" are just openings
             emoji: '🚪',
         },
         'C': {
             type: 'chest',
             walkable: false,
             autoInteract: false,
-            sprite: null, // Use emoji for now
+            sprite: '_interactive/chest-gold-01.png',
             emoji: '📦',
+            isOverlay: true,
         },
         'M': {
             type: 'monster',
             walkable: true, // Walkable until monster spawns
             autoInteract: false,
-            sprite: 'cave gravel.png',
+            sprite: 'cave/floor/cave gravel.png',
             emoji: '⬜',
         },
         'O': {
@@ -90,6 +120,22 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             autoInteract: true,
             sprite: null,
             emoji: '🌀',
+            isOverlay: true,
+        },
+        '~': {
+            type: 'floor',
+            walkable: false,
+            autoInteract: false,
+            sprite: '_shared/hazard/cavewater.png',
+            emoji: '🌊',
+        },
+        'B': {
+            type: 'floor',
+            walkable: false,
+            autoInteract: false,
+            sprite: '_shared/obstacle/rock-large-01.png',
+            emoji: '🪨',
+            isOverlay: true,
         },
     },
 
@@ -99,28 +145,28 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'wall',
             walkable: false,
             autoInteract: false,
-            sprite: 'cliff.png',
+            sprite: 'forest/wall/wall-brown-01.png',
             emoji: '🌲',
         },
         '.': {
             type: 'floor',
             walkable: true,
             autoInteract: false,
-            sprite: 'grass.png',
+            sprite: '_shared/floor/grass.png',
             emoji: '🟩',
         },
         'P': {
             type: 'spawn',
             walkable: true,
             autoInteract: false,
-            sprite: 'grass.png',
+            sprite: '_shared/floor/grass.png',
             emoji: '🟩',
         },
         'D': {
             type: 'door',
             walkable: true,
             autoInteract: true,
-            sprite: 'path.png', // Forest paths as exits
+            sprite: 'forest/floor/highland.png',
             emoji: '🚪',
         },
         'C': {
@@ -129,12 +175,13 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             autoInteract: false,
             sprite: null,
             emoji: '📦',
+            isOverlay: true,
         },
         'M': {
             type: 'monster',
             walkable: true,
             autoInteract: false,
-            sprite: 'grass.png',
+            sprite: '_shared/floor/grass.png',
             emoji: '🟩',
         },
         'O': {
@@ -143,6 +190,22 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             autoInteract: true,
             sprite: null,
             emoji: '🌀',
+            isOverlay: true,
+        },
+        '~': {
+            type: 'floor',
+            walkable: false,
+            autoInteract: false,
+            sprite: '_shared/hazard/water.png',
+            emoji: '🌊',
+        },
+        'B': {
+            type: 'floor',
+            walkable: false,
+            autoInteract: false,
+            sprite: '_shared/obstacle/rock-large-01.png',
+            emoji: '🪨',
+            isOverlay: true,
         },
     },
 
@@ -152,28 +215,28 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'wall',
             walkable: false,
             autoInteract: false,
-            sprite: 'granite cliff.png',
+            sprite: '_shared/wall/wall-brick-gray-01.png',
             emoji: '⬛',
         },
         '.': {
             type: 'floor',
             walkable: true,
             autoInteract: false,
-            sprite: 'stone tile.png',
+            sprite: 'cave/floor/granite floor.png',
             emoji: '⬜',
         },
         'P': {
             type: 'spawn',
             walkable: true,
             autoInteract: false,
-            sprite: 'stone tile.png',
+            sprite: 'cave/floor/granite floor.png',
             emoji: '⬜',
         },
         'D': {
             type: 'door',
             walkable: true,
             autoInteract: true,
-            sprite: 'stone tile.png',
+            sprite: 'cave/floor/granite floor.png',
             emoji: '🚪',
         },
         'C': {
@@ -182,12 +245,13 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             autoInteract: false,
             sprite: null,
             emoji: '📦',
+            isOverlay: true,
         },
         'M': {
             type: 'monster',
             walkable: true,
             autoInteract: false,
-            sprite: 'stone tile.png',
+            sprite: 'cave/floor/granite floor.png',
             emoji: '⬜',
         },
         'O': {
@@ -196,6 +260,22 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             autoInteract: true,
             sprite: null,
             emoji: '🌀',
+            isOverlay: true,
+        },
+        '~': {
+            type: 'floor',
+            walkable: false,
+            autoInteract: false,
+            sprite: '_shared/hazard/water.png',
+            emoji: '🌊',
+        },
+        'B': {
+            type: 'floor',
+            walkable: false,
+            autoInteract: false,
+            sprite: '_shared/obstacle/rock-large-01.png',
+            emoji: '🪨',
+            isOverlay: true,
         },
     },
 
@@ -205,28 +285,28 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'wall',
             walkable: false,
             autoInteract: false,
-            sprite: 'wood wall.png',
+            sprite: 'castle/wall/wall-brick-red-01.png',
             emoji: '🧱',
         },
         '.': {
             type: 'floor',
             walkable: true,
             autoInteract: false,
-            sprite: 'wood tile.png',
+            sprite: 'castle/floor/wall-metal-01.png',
             emoji: '🟫',
         },
         'P': {
             type: 'spawn',
             walkable: true,
             autoInteract: false,
-            sprite: 'wood tile.png',
+            sprite: 'castle/floor/wall-metal-01.png',
             emoji: '🟫',
         },
         'D': {
             type: 'door',
             walkable: true,
             autoInteract: true,
-            sprite: 'wood tile.png',
+            sprite: 'castle/floor/wall-metal-01.png',
             emoji: '🚪',
         },
         'C': {
@@ -235,12 +315,13 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             autoInteract: false,
             sprite: null,
             emoji: '📦',
+            isOverlay: true,
         },
         'M': {
             type: 'monster',
             walkable: true,
             autoInteract: false,
-            sprite: 'wood tile.png',
+            sprite: 'castle/floor/wall-metal-01.png',
             emoji: '🟫',
         },
         'O': {
@@ -249,6 +330,22 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             autoInteract: true,
             sprite: null,
             emoji: '🌀',
+            isOverlay: true,
+        },
+        '~': {
+            type: 'floor',
+            walkable: false,
+            autoInteract: false,
+            sprite: '_shared/hazard/water.png',
+            emoji: '🌊',
+        },
+        'B': {
+            type: 'floor',
+            walkable: false,
+            autoInteract: false,
+            sprite: '_shared/obstacle/rock-large-01.png',
+            emoji: '🪨',
+            isOverlay: true,
         },
     },
 };
