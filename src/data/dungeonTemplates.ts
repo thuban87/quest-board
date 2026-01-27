@@ -322,9 +322,9 @@ export const FOREST_RUINS: DungeonTemplate = {
                 '5,6': { targetRoom: 'south_combat', targetEntry: 'north' },
             },
             monsters: [
-                { position: [5, 1], pool: ['wolf', 'giant_rat'] },
+                { position: [5, 1], pool: ['wolf', 'giant-rat'] },
                 { position: [5, 3], pool: ['wolf'] },
-                { position: [5, 5], pool: ['wolf', 'giant_rat'] },
+                { position: [5, 5], pool: ['wolf', 'giant-rat'] },
             ],
         },
         {
@@ -474,7 +474,7 @@ export const FOREST_RUINS: DungeonTemplate = {
                 { position: [7, 4], tier: 'master' },
             ],
             monsters: [
-                { position: [5, 2], pool: ['cave_troll'], isBoss: true },
+                { position: [5, 2], pool: ['cave-troll'], isBoss: true },
             ],
         },
     ],
@@ -749,7 +749,7 @@ export const CASTLE_CRYPT: DungeonTemplate = {
                 { position: [7, 4], tier: 'master' },
             ],
             monsters: [
-                { position: [5, 2], pool: ['eye_beast'], isBoss: true },
+                { position: [5, 2], pool: ['eye-beast'], isBoss: true },
             ],
         },
     ],
@@ -814,8 +814,8 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
                 '5,6': { targetRoom: 'main_hall', targetEntry: 'north' },
             },
             monsters: [
-                { position: [3, 2], pool: ['rogue_dwarf'] },
-                { position: [7, 2], pool: ['rogue_dwarf'] },
+                { position: [3, 2], pool: ['rogue-dwarf'] },
+                { position: [7, 2], pool: ['rogue-dwarf'] },
             ],
         },
         {
@@ -840,8 +840,8 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
                 '5,6': { targetRoom: 'inner_hall', targetEntry: 'north' },
             },
             monsters: [
-                { position: [5, 1], pool: ['rogue_dwarf'] },
-                { position: [5, 3], pool: ['dark_ranger'] },
+                { position: [5, 1], pool: ['rogue-dwarf'] },
+                { position: [5, 3], pool: ['dark-ranger'] },
             ],
         },
         {
@@ -864,8 +864,8 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
                 '5,6': { targetRoom: 'barracks', targetEntry: 'north' },
             },
             monsters: [
-                { position: [3, 3], pool: ['rogue_dwarf'] },
-                { position: [7, 3], pool: ['rogue_dwarf'] },
+                { position: [3, 3], pool: ['rogue-dwarf'] },
+                { position: [7, 3], pool: ['rogue-dwarf'] },
             ],
         },
         {
@@ -890,8 +890,8 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
             monsters: [
                 { position: [3, 1], pool: ['berserker'] },
                 { position: [7, 1], pool: ['berserker'] },
-                { position: [3, 4], pool: ['rogue_dwarf'] },
-                { position: [7, 4], pool: ['rogue_dwarf'] },
+                { position: [3, 4], pool: ['rogue-dwarf'] },
+                { position: [7, 4], pool: ['rogue-dwarf'] },
             ],
         },
         {
@@ -916,7 +916,7 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
                 { position: [3, 1], tier: 'adept' },
             ],
             monsters: [
-                { position: [3, 3], pool: ['rogue_dwarf'] },
+                { position: [3, 3], pool: ['rogue-dwarf'] },
                 { position: [7, 3], pool: ['berserker'] },
             ],
         },
@@ -940,8 +940,8 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
                 '5,6': { targetRoom: 'armory', targetEntry: 'north' },
             },
             monsters: [
-                { position: [3, 4], pool: ['dark_ranger'] },
-                { position: [7, 4], pool: ['dark_ranger'] },
+                { position: [3, 4], pool: ['dark-ranger'] },
+                { position: [7, 4], pool: ['dark-ranger'] },
             ],
         },
         {
@@ -995,7 +995,7 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
             monsters: [
                 { position: [3, 3], pool: ['hobgoblin'] },
                 { position: [7, 3], pool: ['hobgoblin'] },
-                { position: [5, 5], pool: ['shadow_elf'] },
+                { position: [5, 5], pool: ['shadow-elf'] },
             ],
         },
         {
@@ -1067,7 +1067,7 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
                 '5,6': { targetRoom: 'treasury', targetEntry: 'north' },
             },
             monsters: [
-                { position: [5, 1], pool: ['shadow_elf'] },
+                { position: [5, 1], pool: ['shadow-elf'] },
             ],
         },
         {
@@ -1118,8 +1118,8 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
                 '5,6': { targetRoom: 'officer_quarters', targetEntry: 'north' },
             },
             monsters: [
-                { position: [3, 2], pool: ['shadow_elf'] },
-                { position: [7, 2], pool: ['shadow_elf'] },
+                { position: [3, 2], pool: ['shadow-elf'] },
+                { position: [7, 2], pool: ['shadow-elf'] },
                 { position: [3, 4], pool: ['hobgoblin'] },
                 { position: [7, 4], pool: ['hobgoblin'] },
             ],
@@ -1200,8 +1200,8 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
                 { position: [5, 1], tier: 'journeyman' },
             ],
             monsters: [
-                { position: [3, 4], pool: ['shadow_elf'] },
-                { position: [7, 4], pool: ['shadow_elf'] },
+                { position: [3, 4], pool: ['shadow-elf'] },
+                { position: [7, 4], pool: ['shadow-elf'] },
             ],
         },
         {
@@ -1250,10 +1250,10 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
                 '5,6': { targetRoom: 'throne_room', targetEntry: 'north' },
             },
             monsters: [
-                { position: [5, 1], pool: ['shadow_elf'] },
+                { position: [5, 1], pool: ['shadow-elf'] },
                 { position: [3, 3], pool: ['berserker'] },
                 { position: [7, 3], pool: ['berserker'] },
-                { position: [5, 5], pool: ['shadow_elf'] },
+                { position: [5, 5], pool: ['shadow-elf'] },
             ],
         },
         {
@@ -1279,7 +1279,7 @@ export const BANDIT_STRONGHOLD: DungeonTemplate = {
                 { position: [7, 4], tier: 'epic' },
             ],
             monsters: [
-                { position: [5, 2], pool: ['river_troll'], isBoss: true },
+                { position: [5, 2], pool: ['river-troll'], isBoss: true },
                 { position: [3, 3], pool: ['berserker'] },
                 { position: [7, 3], pool: ['berserker'] },
             ],
