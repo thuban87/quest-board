@@ -1245,9 +1245,9 @@ Key files to reference:
 
 ---
 
-## 2026-01-27 - Phase 3C Steps 10-11 Complete (Monster Combat & Death Handling)
+## 2026-01-27 - Phase 3C Steps 10-12 Complete (Monster Combat, Death Handling, Exit Summary)
 
-**Focus:** Monster combat integration, death modal, step-on activation, sprites, and layout fixes
+**Focus:** Monster combat integration, death modal, step-on activation, sprites, exit summary screen, and layout fixes
 
 **Completed:**
 - ✅ **Step 10: Monster Combat** - Full integration of dungeon monster encounters
@@ -1259,6 +1259,14 @@ Key files to reference:
   - Fixed race condition where BattleView's defeat screen showed before dungeon modal
   - Added `onDefeat` prop to BattleView for custom defeat handling
   - Fixed `resetBattle()` being called before `onBattleEnd()` (prevented victory detection)
+  - Restart: Respawn all monsters, restore 50% HP
+  - Rescue: Pay gold (100 + 35×level), restore 50% HP, continue from current position
+  - Leave: Exit dungeon, keep loot collected so far
+- ✅ **Step 12: Exit & Summary Screen** - Dungeon completion flow
+  - Exit summary overlay shows rooms explored, gold earned, XP earned
+  - "Complete Dungeon" button exits cleanly via `handleExitConfirm()`
+  - ❌ Pending loot system cancelled - room state persistence already prevents farming (chests stay opened, monsters stay killed)
+  - Dungeon key consumption deferred to post-implementation polish
 - ✅ **Tier Scaling Fix** - Adjusted character sprite tier breakpoints for 40-level cap
   - L1-8=T1, L9-16=T2, L17-24=T3, L25-32=T4, L33-40=T5
 - ✅ **Battle UI Fixes** - Player/monster sprites now display in combat view
@@ -1267,8 +1275,9 @@ Key files to reference:
 - ✅ **Focus Restoration** - WASD works immediately after exiting combat
 
 **Files Changed:**
-- `src/components/DungeonView.tsx` - Step-on combat, sprite paths, tier scaling, focus restoration
+- `src/components/DungeonView.tsx` - Step-on combat, sprite paths, tier scaling, focus restoration, exit summary
 - `src/components/BattleView.tsx` - `onDefeat` prop, fixed `resetBattle()`/`onBattleEnd()` order
+- `src/modals/DungeonDeathModal.ts` - Death modal with 3 options (Restart, Rescue, Leave)
 - `src/data/TileRegistry.ts` - Monster tile rendering as overlay
 - `styles.css` - Monster sprite CSS, battle player layout fixes
 
@@ -1280,13 +1289,18 @@ Key files to reference:
 - ✅ Player sprite shows correct tier in dungeon and combat
 - ✅ HP/Mana bars display below player sprite (no overlap)
 - ✅ WASD movement works immediately after combat ends
+- ✅ Exit summary screen displays correct stats
+
+**Design Decision:**
+- Pending loot system was cancelled because room state persistence already prevents chest/monster farming. Loot is awarded immediately on interaction, and room state tracks opened chests and killed monsters across the session.
 
 **Next Steps:**
-- Step 12: Portal exit & dungeon completion rewards
-- Additional dungeon templates (Cave, Crypt, etc.)
-- Themed monster pools per dungeon
+- Step 13: Dungeon Selection UI and additional dungeon templates
+- Themed monster pools per dungeon (Cave, Crypt, etc.)
+- Post-implementation: Dungeon key consumption
 
 ---
+
 
 *Template for future entries:*
 

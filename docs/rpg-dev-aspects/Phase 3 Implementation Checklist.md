@@ -419,9 +419,8 @@ Complete these BEFORE starting any Phase 3 work:
 
 ### Step 12: Exit & Rewards
 
-- [ ] Grant pending loot on exit
-- [ ] Consume dungeon key (or refund if abandoned)
-- [ ] Show summary screen
+- [x] Grant pending loot on exit (❌ Cancelled due to state persistence taking care of farming potential)
+- [x] Show summary screen
 
 ### Step 13: Dungeon Selection UI
 
@@ -463,6 +462,7 @@ Complete these BEFORE starting any Phase 3 work:
 - [ ] Update GEMINI.md with new file structure
 - [ ] Update Feature Roadmap (mark Phase 3 complete)
 - [ ] Create user-facing documentation
+- [ ] Consume dungeon key (or refund if abandoned)
   - Gear System reference
   - Combat mechanics guide
   - Dungeon creation guide (if user dungeons added)

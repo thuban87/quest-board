@@ -284,8 +284,8 @@ interface DungeonHeaderProps {
     isPreviewMode: boolean;
     visitedRooms: number;
     totalRooms: number;
-    pendingGold: number;
-    pendingXP: number;
+    sessionGold: number;
+    sessionXP: number;
     onExit: () => void;
 }
 
@@ -295,8 +295,8 @@ function DungeonHeader({
     isPreviewMode,
     visitedRooms,
     totalRooms,
-    pendingGold,
-    pendingXP,
+    sessionGold,
+    sessionXP,
     onExit
 }: DungeonHeaderProps) {
     return (
@@ -308,8 +308,8 @@ function DungeonHeader({
             </div>
             <div className="qb-dungeon-status-inline">
                 <span className="qb-status-rooms">🗺️ {visitedRooms}/{totalRooms}</span>
-                <span className="qb-status-gold">🪙 {pendingGold}</span>
-                <span className="qb-status-xp">⭐ {pendingXP}</span>
+                <span className="qb-status-gold">🪙 {sessionGold}</span>
+                <span className="qb-status-xp">⭐ {sessionXP}</span>
             </div>
             <button className="qb-dungeon-exit" onClick={onExit}>
                 ✕ Exit
@@ -552,8 +552,8 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
     const playerFacing = useDungeonStore(state => state.playerFacing);
     const visitedRooms = useDungeonStore(state => state.visitedRooms);
     const roomStates = useDungeonStore(state => state.roomStates);
-    const pendingGold = useDungeonStore(state => state.pendingGold);
-    const pendingXP = useDungeonStore(state => state.pendingXP);
+    const sessionGold = useDungeonStore(state => state.sessionGold);
+    const sessionXP = useDungeonStore(state => state.sessionXP);
     const explorationState = useDungeonStore(state => state.explorationState);
     const activeCombatMonsterId = useDungeonStore(state => state.activeCombatMonsterId);
     const movePlayer = useDungeonStore(state => state.movePlayer);
@@ -1113,10 +1113,12 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
     const handleShowLoot = useCallback((loot: LootDrop) => {
         // LootDrop is LootReward[] - iterate and process each reward
         const parts: string[] = [];
+        let totalGold = 0;
 
         for (const reward of loot) {
             if (reward.type === 'gold') {
                 useCharacterStore.getState().updateGold(reward.amount);
+                totalGold += reward.amount;
                 parts.push(`🪙 +${reward.amount} Gold`);
             } else if (reward.type === 'gear') {
                 useCharacterStore.getState().addGear(reward.item);
@@ -1125,6 +1127,17 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                 useCharacterStore.getState().addInventoryItem(reward.itemId, reward.quantity);
                 parts.push(`🧪 ${reward.quantity}x ${reward.itemId}`);
             }
+        }
+
+        // Track gold in dungeon session totals for summary screen
+        if (totalGold > 0) {
+            useDungeonStore.getState().addSessionGold(totalGold);
+        }
+
+        // Track XP from the defeated monster
+        const monster = useBattleStore.getState().monster;
+        if (monster?.xpReward) {
+            useDungeonStore.getState().addSessionXP(monster.xpReward);
         }
 
         if (parts.length > 0) {
@@ -1172,8 +1185,8 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                 isPreviewMode={isPreviewMode}
                 visitedRooms={visitedRooms.size}
                 totalRooms={template.rooms.length}
-                pendingGold={pendingGold}
-                pendingXP={pendingXP}
+                sessionGold={sessionGold}
+                sessionXP={sessionXP}
                 onExit={handleExit}
             />
 
@@ -1231,11 +1244,11 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                             </div>
                             <div className="qb-exit-stat">
                                 <span className="qb-exit-stat-label">Gold Earned</span>
-                                <span className="qb-exit-stat-value gold">{pendingGold}</span>
+                                <span className="qb-exit-stat-value gold">{sessionGold}</span>
                             </div>
                             <div className="qb-exit-stat">
                                 <span className="qb-exit-stat-label">XP Earned</span>
-                                <span className="qb-exit-stat-value xp">{pendingXP}</span>
+                                <span className="qb-exit-stat-value xp">{sessionXP}</span>
                             </div>
                         </div>
                         <button className="qb-exit-btn" onClick={handleExitConfirm}>

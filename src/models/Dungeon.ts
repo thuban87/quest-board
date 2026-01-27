@@ -179,6 +179,6 @@ export interface PersistedDungeonState {
     visitedRooms: string[];
     roomStates: Record<string, RoomState>;
     pendingLoot: LootReward[];
-    pendingGold: number;
-    pendingXP: number;
+    sessionGold: number;
+    sessionXP: number;
 }

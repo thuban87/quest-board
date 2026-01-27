@@ -42,10 +42,10 @@ interface DungeonState {
     activeCombatMonsterId: string | null;  // Which monster we're fighting
     activeCombatRoomId: string | null;     // Which room the combat is in
 
-    // Pending rewards (granted on exit)
+    // Session rewards tracking (for exit summary display)
     pendingLoot: LootReward[];
-    pendingGold: number;
-    pendingXP: number;
+    sessionGold: number;
+    sessionXP: number;
 
     // State machine
     explorationState: ExplorationState;
@@ -60,8 +60,8 @@ interface DungeonState {
     markChestOpened: (roomId: string, chestId: string) => void;
     markMonsterKilled: (roomId: string, monsterId: string) => void;
     addPendingLoot: (loot: LootReward[]) => void;
-    addPendingGold: (gold: number) => void;
-    addPendingXP: (xp: number) => void;
+    addSessionGold: (gold: number) => void;
+    addSessionXP: (xp: number) => void;
     startCombat: (roomId: string, monsterId: string) => void;
     endCombat: () => void;
     restartDungeonMonsters: () => void;  // Respawn all monsters, reset to room 1
@@ -128,8 +128,8 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
     activeCombatMonsterId: null,
     activeCombatRoomId: null,
     pendingLoot: [],
-    pendingGold: 0,
-    pendingXP: 0,
+    sessionGold: 0,
+    sessionXP: 0,
     explorationState: 'LOADING',
 
     // Actions
@@ -155,8 +155,8 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             visitedRooms: new Set([firstRoom.id]),
             roomStates: { [firstRoom.id]: createEmptyRoomState() },
             pendingLoot: [],
-            pendingGold: 0,
-            pendingXP: 0,
+            sessionGold: 0,
+            sessionXP: 0,
             explorationState: 'EXPLORING',
         });
 
@@ -166,7 +166,7 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
 
     exitDungeon: () => {
         const state = get();
-        console.log(`[DungeonStore] Exiting dungeon. Pending: ${state.pendingGold}g, ${state.pendingXP}xp, ${state.pendingLoot.length} items`);
+        console.log(`[DungeonStore] Exiting dungeon. Session: ${state.sessionGold}g, ${state.sessionXP}xp, ${state.pendingLoot.length} items`);
 
         set({
             isInDungeon: false,
@@ -180,8 +180,8 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             visitedRooms: new Set(),
             roomStates: {},
             pendingLoot: [],
-            pendingGold: 0,
-            pendingXP: 0,
+            sessionGold: 0,
+            sessionXP: 0,
             explorationState: 'LOADING',
         });
     },
@@ -274,14 +274,14 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
         set({ pendingLoot: [...state.pendingLoot, ...loot] });
     },
 
-    addPendingGold: (gold: number) => {
+    addSessionGold: (gold: number) => {
         const state = get();
-        set({ pendingGold: state.pendingGold + gold });
+        set({ sessionGold: state.sessionGold + gold });
     },
 
-    addPendingXP: (xp: number) => {
+    addSessionXP: (xp: number) => {
         const state = get();
-        set({ pendingXP: state.pendingXP + xp });
+        set({ sessionXP: state.sessionXP + xp });
     },
 
     startCombat: (roomId: string, monsterId: string) => {
@@ -363,8 +363,8 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             visitedRooms: new Set(persisted.visitedRooms),
             roomStates: persisted.roomStates,
             pendingLoot: persisted.pendingLoot,
-            pendingGold: persisted.pendingGold,
-            pendingXP: persisted.pendingXP,
+            sessionGold: persisted.sessionGold,
+            sessionXP: persisted.sessionXP,
             explorationState: 'EXPLORING',
         });
 
@@ -382,8 +382,8 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             visitedRooms: Array.from(state.visitedRooms),
             roomStates: state.roomStates,
             pendingLoot: state.pendingLoot,
-            pendingGold: state.pendingGold,
-            pendingXP: state.pendingXP,
+            sessionGold: state.sessionGold,
+            sessionXP: state.sessionXP,
         };
     },
 }));
