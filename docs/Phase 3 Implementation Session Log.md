@@ -1301,6 +1301,52 @@ Key files to reference:
 
 ---
 
+## 2026-01-27 - Dungeon Template Fixes (Castle Crypt & Bandit Stronghold)
+
+**Focus:** Fixing monster spawning, layout issues, and sprite loading in Castle Crypt and Bandit Stronghold dungeons
+
+**Completed:**
+- ✅ **Monster ID Fix** - Changed all kebab-case monster IDs in dungeon templates to underscore format to match `monsters.ts`
+  - `eye-beast` → `eye_beast`
+  - `shadow-elf` → `shadow_elf`
+  - `dark-ranger` → `dark_ranger`
+  - `rogue-dwarf` → `rogue_dwarf`
+  - `river-troll` → `river_troll`
+- ✅ **Layout Row Fixes** - Fixed 3 rooms with 12 characters (should be 11) in Bandit Stronghold
+  - `main_hall`: Row 4 had extra dot
+  - `inner_hall`: Row 4 had extra dot
+  - `officer_quarters`: Row 4 had extra dot
+- ✅ **Chests Blocking Doors** - Moved chests away from door entrances
+  - `prison`: Chest moved from `[5,1]` to `[3,1]`
+  - `officer_quarters`: Chest moved from `[5,1]` to `[3,1]`
+  - `mess_hall`: Chest moved from `[5,1]` to `[3,1]`
+- ✅ **Monster Sprite Path Fix** - Root cause of emoji fallback
+  - Discovered `RoomGrid` was building sprite paths manually without converting underscores to hyphens
+  - Fixed by importing and using `getMonsterGifPath()` from `SpriteService.ts`
+  - `rogue_dwarf` now correctly resolves to `rogue-dwarf/rogue_dwarf.gif`
+
+**Files Changed:**
+- `src/data/dungeonTemplates.ts` - All monster ID references, layout row fixes, chest positions
+- `src/components/DungeonView.tsx` - Import `getMonsterGifPath`, use it in RoomGrid tile loop
+
+**Testing Notes:**
+- ✅ Castle Crypt boss room (eye_beast) now spawns correctly
+- ✅ Bandit Stronghold monsters display as sprites (not emojis)
+- ✅ Layout alignment verified in both dungeons
+- ✅ Chests no longer block room exits
+
+**Design Notes:**
+- Current convention: Monster IDs use underscores (`rogue_dwarf`), sprite folders use hyphens (`rogue-dwarf/`), filenames use underscores (`rogue_dwarf.gif`)
+- `SpriteService.toFolderName()` handles the underscore→hyphen conversion for folder paths
+- This mixed convention should be unified to all-kebab in a future session (see: `Kebab Case Migration Scope.md`)
+
+**Next Steps:**
+- Standardize all monster IDs and sprite files to kebab-case (separate session)
+- Continue with Step 13: Dungeon Selection UI
+- Add more dungeon templates
+
+---
+
 
 *Template for future entries:*
 

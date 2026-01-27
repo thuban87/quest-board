@@ -436,8 +436,10 @@ Complete these BEFORE starting any Phase 3 work:
 - [ ] Full map modal (rooms as colored rectangles)
 - [ ] Fog of war with CSS `filter: brightness(0)`
 
-### Step 15: Additional Dungeons
+### Step 15: Additional Dungeons ⚡
 
+- [x] Castle Crypt (10 rooms) - Undead/Aberration dungeon, medium difficulty, eye_beast boss
+- [x] Bandit Stronghold (20 rooms) - Humanoid dungeon, hard difficulty, river_troll boss
 - [ ] Create 1-2 more hand-crafted templates
 - [ ] Test variety and difficulty scaling
 
@@ -478,4 +480,4 @@ Complete these BEFORE starting any Phase 3 work:
 
 ---
 
-*Last Updated: 2026-01-26*
+*Last Updated: 2026-01-27*

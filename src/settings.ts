@@ -82,6 +82,9 @@ export interface QuestBoardSettings {
     // Bounty system configuration
     bountyChance: number;  // Chance (0-20%) for bounty to trigger on quest completion
     bountyDescriptionCache: Record<string, { description: string; monsterHint: string }[]>;  // AI-generated bounty descriptions (burn-on-use)
+
+    // Dungeon system configuration
+    userDungeonFolder: string;  // Folder for user-created dungeon markdown files
 }
 
 /**
@@ -127,6 +130,7 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     setBonusCache: {},
     bountyChance: 10,  // 10% chance by default
     bountyDescriptionCache: {},  // AI-generated bounty descriptions
+    userDungeonFolder: 'Life/Quest Board/dungeons',  // Default dungeon folder
 };
 
 /**
@@ -248,6 +252,33 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.archiveFolder = value;
                     await this.plugin.saveSettings();
+                }));
+
+        // Dungeon Configuration Section
+        containerEl.createEl('h3', { text: 'Dungeon Configuration' });
+
+        new Setting(containerEl)
+            .setName('User Dungeon Folder')
+            .setDesc('Folder for custom dungeon markdown files. A format guide will be created here on first use.')
+            .addText(text => text
+                .setPlaceholder('Life/Quest Board/dungeons')
+                .setValue(this.plugin.settings.userDungeonFolder || 'Life/Quest Board/dungeons')
+                .onChange(async (value) => {
+                    this.plugin.settings.userDungeonFolder = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Create Dungeon Template')
+            .setDesc('Create the format guide document in your dungeon folder')
+            .addButton(button => button
+                .setButtonText('Create Template')
+                .onClick(async () => {
+                    const { createDungeonTemplateDoc } = await import('./services/UserDungeonLoader');
+                    const folder = this.plugin.settings.userDungeonFolder || 'Life/Quest Board/dungeons';
+                    await createDungeonTemplateDoc(this.app.vault, folder);
+                    const Notice = (await import('obsidian')).Notice;
+                    new Notice(`📜 Template created at ${folder}/DUNGEON_FORMAT.md`);
                 }));
 
         // Template Configuration Section
