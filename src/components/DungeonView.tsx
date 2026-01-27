@@ -6,14 +6,20 @@
  */
 
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
-import { Platform, DataAdapter, Notice } from 'obsidian';
+import { Platform, DataAdapter, Notice, App } from 'obsidian';
 import { useDungeonStore } from '../store/dungeonStore';
 import { useCharacterStore } from '../store/characterStore';
+import { useBattleStore } from '../store/battleStore';
 import { getDungeonTemplate } from '../data/dungeonTemplates';
 import { getTileDefinition, LAYOUT_CHARS, getChestSpritePath } from '../data/TileRegistry';
 import { findPath, getFacingDirection, getStepPosition, canWalkTo } from '../utils/pathfinding';
 import { lootGenerationService } from '../services/LootGenerationService';
+import { monsterService } from '../services/MonsterService';
+import { startBattleWithMonster } from '../services/BattleService';
+import { BattleView } from './BattleView';
+import { DungeonDeathModal, calculateRescueCost } from '../modals/DungeonDeathModal';
 import type { Direction, RoomTemplate, TileSet } from '../models/Dungeon';
+import type { LootDrop } from '../models/Gear';
 
 // =====================
 // TYPES
@@ -22,6 +28,7 @@ import type { Direction, RoomTemplate, TileSet } from '../models/Dungeon';
 interface DungeonViewProps {
     manifestDir: string;
     adapter: DataAdapter;
+    app: App;
     onClose: () => void;
 }
 
@@ -31,13 +38,13 @@ interface DungeonViewProps {
 
 /**
  * Get the tier folder name from character level.
- * L1-5 = tier1, L6-10 = tier2, L11-15 = tier3, L16-20 = tier4, L21+ = tier5
+ * Spread across 40 levels: L1-8=T1, L9-16=T2, L17-24=T3, L25-32=T4, L33-40=T5
  */
 function getTierFromLevel(level: number): number {
-    if (level <= 5) return 1;
-    if (level <= 10) return 2;
-    if (level <= 15) return 3;
-    if (level <= 20) return 4;
+    if (level <= 8) return 1;
+    if (level <= 16) return 2;
+    if (level <= 24) return 3;
+    if (level <= 32) return 4;
     return 5;
 }
 
@@ -88,9 +95,10 @@ interface TileProps {
     manifestDir: string;
     adapter: DataAdapter;
     roomState?: { chestsOpened: string[]; monstersKilled: string[] };
+    monsterSpritePath?: string | null;  // Sprite path for monster tiles
 }
 
-function Tile({ char, x, y, tileSet, manifestDir, adapter, roomState }: TileProps) {
+function Tile({ char, x, y, tileSet, manifestDir, adapter, roomState, monsterSpritePath }: TileProps) {
     const tileDef = getTileDefinition(char, tileSet);
     const spritePath = getTileSpritePath(adapter, manifestDir, tileSet, tileDef.sprite);
 
@@ -141,6 +149,40 @@ function Tile({ char, x, y, tileSet, manifestDir, adapter, roomState }: TileProp
                 style={floorPath ? { backgroundImage: `url("${floorPath}")` } : undefined}
             >
                 {!floorPath && <span className="qb-tile-emoji">{floorDef.emoji}</span>}
+            </div>
+        );
+    }
+
+    // For LIVE monsters, render as floor with monster sprite overlay
+    if (char === LAYOUT_CHARS.MONSTER) {
+        return (
+            <div
+                className="qb-tile qb-tile-monster qb-tile-overlay-container"
+                data-x={x}
+                data-y={y}
+                data-walkable={tileDef.walkable}
+                style={floorPath ? { backgroundImage: `url("${floorPath}")` } : undefined}
+            >
+                {monsterSpritePath ? (
+                    <img
+                        src={monsterSpritePath}
+                        alt="Monster"
+                        className="qb-monster-sprite"
+                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                            // Hide broken image and show emoji fallback
+                            e.currentTarget.style.display = 'none';
+                            const parent = e.currentTarget.parentElement;
+                            if (parent) {
+                                const emoji = document.createElement('span');
+                                emoji.className = 'qb-tile-emoji qb-monster-emoji';
+                                emoji.innerText = '👹';
+                                parent.appendChild(emoji);
+                            }
+                        }}
+                    />
+                ) : (
+                    <span className="qb-tile-emoji qb-monster-emoji">👹</span>
+                )}
             </div>
         );
     }
@@ -328,6 +370,23 @@ function RoomGrid({
             const row = room.layout[y];
             for (let x = 0; x < row.length; x++) {
                 const char = row[x];
+
+                // Look up monster sprite if this is a monster tile
+                let monsterSpritePath: string | null = null;
+                if (char === LAYOUT_CHARS.MONSTER && room.monsters) {
+                    const monsterDef = room.monsters.find(m =>
+                        m.position[0] === x && m.position[1] === y
+                    );
+                    if (monsterDef && monsterDef.pool.length > 0) {
+                        // Use the first template ID as the sprite folder name
+                        const templateId = monsterDef.pool[0];
+                        // Monster sprites are in assets/sprites/monsters/{templateId}/{templateId}.gif
+                        monsterSpritePath = adapter.getResourcePath(
+                            `${manifestDir}/assets/sprites/monsters/${templateId}/${templateId}.gif`
+                        );
+                    }
+                }
+
                 result.push(
                     <Tile
                         key={`${x}-${y}`}
@@ -338,13 +397,14 @@ function RoomGrid({
                         manifestDir={manifestDir}
                         adapter={adapter}
                         roomState={roomState}
+                        monsterSpritePath={monsterSpritePath}
                     />
                 );
             }
         }
 
         return result;
-    }, [room.layout, tileSet, manifestDir, adapter, roomState]);
+    }, [room.layout, room.monsters, tileSet, manifestDir, adapter, roomState]);
 
     const gridStyle: React.CSSProperties = {
         '--room-width': room.width,
@@ -463,7 +523,7 @@ interface TransitionState {
     phase: 'exiting' | 'entering' | 'none';
 }
 
-export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, onClose }) => {
+export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, app, onClose }) => {
     // Container ref for keyboard focus
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -472,6 +532,9 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
 
     // Animation state - prevents input during movement
     const [isAnimating, setIsAnimating] = useState(false);
+
+    // Exit summary state - show completion screen
+    const [showExitSummary, setShowExitSummary] = useState(false);
 
     // Room transition state for Zelda-style slide effect
     const [transition, setTransition] = useState<TransitionState>({
@@ -491,11 +554,19 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
     const roomStates = useDungeonStore(state => state.roomStates);
     const pendingGold = useDungeonStore(state => state.pendingGold);
     const pendingXP = useDungeonStore(state => state.pendingXP);
+    const explorationState = useDungeonStore(state => state.explorationState);
+    const activeCombatMonsterId = useDungeonStore(state => state.activeCombatMonsterId);
     const movePlayer = useDungeonStore(state => state.movePlayer);
     const exitDungeon = useDungeonStore(state => state.exitDungeon);
     const changeRoom = useDungeonStore(state => state.changeRoom);
+    const startCombat = useDungeonStore(state => state.startCombat);
+    const endCombat = useDungeonStore(state => state.endCombat);
+    const markMonsterKilled = useDungeonStore(state => state.markMonsterKilled);
+    const restartDungeonMonsters = useDungeonStore(state => state.restartDungeonMonsters);
 
     const character = useCharacterStore(state => state.character);
+    const combatState = useBattleStore(state => state.state);
+    const resetBattle = useBattleStore(state => state.resetBattle);
 
     const isMobile = Platform.isMobile;
 
@@ -584,6 +655,43 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
 
         // Normal movement
         movePlayer(nx, ny, direction);
+
+        // Step-on activation: Check if new position is a live monster
+        const char = room.layout[ny]?.[nx];
+        if (char === LAYOUT_CHARS.MONSTER) {
+            const currentRoomId = useDungeonStore.getState().currentRoomId;
+            const monsterId = `monster_${nx}_${ny}`;
+            const roomState = useDungeonStore.getState().roomStates[currentRoomId];
+
+            // Check if not already killed
+            if (!roomState?.monstersKilled.includes(monsterId)) {
+                // Find the monster definition in the room's monsters array
+                const monsterDef = room.monsters?.find(m =>
+                    m.position[0] === nx && m.position[1] === ny
+                );
+
+                if (monsterDef) {
+                    // Pick a random template from the pool
+                    const templateId = monsterDef.pool[Math.floor(Math.random() * monsterDef.pool.length)];
+                    const dungeonState = useDungeonStore.getState();
+                    const monsterLevel = dungeonState.scaledLevel;
+                    const tier = monsterDef.isBoss ? 'boss' : 'dungeon';
+
+                    // Create the monster instance
+                    const monster = monsterService.createMonster(templateId, monsterLevel, tier);
+                    if (monster) {
+                        console.log('[DungeonView] Step-on combat with:', monster.name, 'Lv.', monster.level);
+
+                        // Start battle
+                        const battleStarted = startBattleWithMonster(monster);
+                        if (battleStarted) {
+                            // Set dungeon state to combat
+                            useDungeonStore.getState().startCombat(currentRoomId, monsterId);
+                        }
+                    }
+                }
+            }
+        }
     }, [isAnimating, transition.active, room, template, movePlayer, handleRoomTransition]);
 
     /**
@@ -682,13 +790,51 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                 return;
             }
 
-            console.log('[DungeonView] Monster interaction - not yet implemented');
-            new Notice('Monster encounter coming soon!');
+            // Find the monster definition in the room's monsters array
+            const monsterDef = room.monsters?.find(m =>
+                m.position[0] === tx && m.position[1] === ty
+            );
+
+            if (!monsterDef) {
+                console.warn('[DungeonView] Monster at position not found in monsters array:', tx, ty);
+                new Notice('Monster encounter coming soon!');
+                return;
+            }
+
+            // Pick a random template from the pool
+            const templateId = monsterDef.pool[Math.floor(Math.random() * monsterDef.pool.length)];
+            const dungeonState = useDungeonStore.getState();
+            const monsterLevel = dungeonState.scaledLevel;
+            const tier = monsterDef.isBoss ? 'boss' : 'dungeon';
+
+            // Create the monster instance
+            const monster = monsterService.createMonster(templateId, monsterLevel, tier);
+            if (!monster) {
+                console.error('[DungeonView] Failed to create monster:', templateId);
+                new Notice('Failed to spawn monster!');
+                return;
+            }
+
+            console.log('[DungeonView] Starting combat with:', monster.name, 'Lv.', monster.level);
+
+            // Start battle
+            const battleStarted = startBattleWithMonster(monster);
+            if (battleStarted) {
+                // Set dungeon state to combat
+                useDungeonStore.getState().startCombat(currentRoomId, monsterId);
+            }
+            return;
+        }
+
+        // Handle PORTAL interaction
+        if (char === LAYOUT_CHARS.PORTAL) {
+            console.log('[DungeonView] Portal interaction - showing exit summary');
+            setShowExitSummary(true);
             return;
         }
 
         console.log('[DungeonView] Nothing to interact with here');
-    }, [isAnimating, transition.active, room, template]);
+    }, [isAnimating, transition.active, room, template, currentRoomId]);
 
     /**
      * Animate movement along a path (step by step).
@@ -715,6 +861,39 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                 // Use animated transition, don't setIsAnimating(false) here as handleRoomTransition will
                 await handleRoomTransition(doorInfo.targetRoom, doorInfo.targetEntry, facing);
                 return; // handleRoomTransition sets isAnimating to false
+            }
+
+            // Step-on monster activation for click-to-move
+            const char = room?.layout[y]?.[x];
+            if (char === LAYOUT_CHARS.MONSTER) {
+                const currentRoomId = useDungeonStore.getState().currentRoomId;
+                const monsterId = `monster_${x}_${y}`;
+                const roomState = useDungeonStore.getState().roomStates[currentRoomId];
+
+                // Check if not already killed
+                if (!roomState?.monstersKilled.includes(monsterId)) {
+                    const monsterDef = room?.monsters?.find(m =>
+                        m.position[0] === x && m.position[1] === y
+                    );
+
+                    if (monsterDef) {
+                        const templateId = monsterDef.pool[Math.floor(Math.random() * monsterDef.pool.length)];
+                        const dungeonState = useDungeonStore.getState();
+                        const monsterLevel = dungeonState.scaledLevel;
+                        const tier = monsterDef.isBoss ? 'boss' : 'dungeon';
+
+                        const monster = monsterService.createMonster(templateId, monsterLevel, tier);
+                        if (monster) {
+                            console.log('[DungeonView] Click-to-move combat with:', monster.name);
+                            const battleStarted = startBattleWithMonster(monster);
+                            if (battleStarted) {
+                                useDungeonStore.getState().startCombat(currentRoomId, monsterId);
+                                setIsAnimating(false);
+                                return; // Stop path, enter combat
+                            }
+                        }
+                    }
+                }
             }
 
             prevPos = [x, y];
@@ -855,6 +1034,114 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
     }, [exitDungeon, onClose]);
 
     // =====================
+    // COMBAT HANDLERS
+    // =====================
+
+    /**
+     * Handle battle end (victory or retreat - defeat handled via onDefeat)
+     */
+    const handleBattleEnd = useCallback(() => {
+        const battleState = useBattleStore.getState().state;
+        const dungeonState = useDungeonStore.getState();
+        const { activeCombatMonsterId, activeCombatRoomId } = dungeonState;
+
+        if (battleState === 'VICTORY' && activeCombatMonsterId && activeCombatRoomId) {
+            // Mark monster as killed
+            markMonsterKilled(activeCombatRoomId, activeCombatMonsterId);
+            console.log('[DungeonView] Monster defeated:', activeCombatMonsterId);
+        } else if (battleState === 'RETREATED') {
+            // Retreat = monster still alive, but player can try again
+            console.log('[DungeonView] Player retreated from combat');
+        }
+
+        // End combat state (resume exploring)
+        // Note: BattleView calls resetBattle() after onBattleEnd, so we don't call it here
+        endCombat();
+
+        // Restore focus to container for WASD movement
+        setTimeout(() => {
+            containerRef.current?.focus();
+        }, 100);
+    }, [endCombat, markMonsterKilled]);
+
+    /**
+     * Handle defeat - shows DungeonDeathModal with options
+     * Called by BattleView via onDefeat prop
+     */
+    const handleDefeat = useCallback(() => {
+        console.log('[DungeonView] Player defeated - showing death modal');
+        new DungeonDeathModal(app, {
+            onRestart: () => {
+                resetBattle();
+                restartDungeonMonsters();
+                endCombat();
+                // Restore HP to 50% using updateHP with delta
+                const char = useCharacterStore.getState().character;
+                if (char) {
+                    const targetHP = Math.ceil(char.maxHP / 2);
+                    const delta = targetHP - char.currentHP;
+                    useCharacterStore.getState().updateHP(delta);
+                }
+            },
+            onRescue: () => {
+                // Deduct rescue cost
+                const char = useCharacterStore.getState().character;
+                if (char) {
+                    const cost = calculateRescueCost(char.level);
+                    useCharacterStore.getState().updateGold(-cost);
+                    // Restore HP to 50% using updateHP with delta
+                    const targetHP = Math.ceil(char.maxHP / 2);
+                    const delta = targetHP - char.currentHP;
+                    useCharacterStore.getState().updateHP(delta);
+                }
+                resetBattle();
+                endCombat();
+            },
+            onLeave: () => {
+                resetBattle();
+                endCombat();
+                exitDungeon();
+                onClose();
+            },
+        }).open();
+    }, [app, endCombat, exitDungeon, onClose, resetBattle, restartDungeonMonsters]);
+
+    /**
+     * Handle showing loot from battle victory
+     * LootDrop is an array of LootReward objects
+     */
+    const handleShowLoot = useCallback((loot: LootDrop) => {
+        // LootDrop is LootReward[] - iterate and process each reward
+        const parts: string[] = [];
+
+        for (const reward of loot) {
+            if (reward.type === 'gold') {
+                useCharacterStore.getState().updateGold(reward.amount);
+                parts.push(`🪙 +${reward.amount} Gold`);
+            } else if (reward.type === 'gear') {
+                useCharacterStore.getState().addGear(reward.item);
+                parts.push(`⚔️ ${reward.item.tier.toUpperCase()} ${reward.item.slot}`);
+            } else if (reward.type === 'consumable') {
+                useCharacterStore.getState().addInventoryItem(reward.itemId, reward.quantity);
+                parts.push(`🧪 ${reward.quantity}x ${reward.itemId}`);
+            }
+        }
+
+        if (parts.length > 0) {
+            new Notice(`🏆 Victory!\n${parts.join('\n')}`, 4000);
+        }
+    }, []);
+
+    /**
+     * Handle exit summary confirmation
+     */
+    const handleExitConfirm = useCallback(() => {
+        setShowExitSummary(false);
+        exitDungeon();
+        onClose();
+    }, [exitDungeon, onClose]);
+
+    // =====================
     // RENDER
     // =====================
 
@@ -905,10 +1192,61 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                     tileSize={tileSize}
                     spriteOffset={spriteOffset}
                 />
+
+                {/* Combat Overlay */}
+                {explorationState === 'IN_COMBAT' && (() => {
+                    // Get current monster from battle store for sprite path
+                    const currentMonster = useBattleStore.getState().monster;
+                    const monsterSpritePath = currentMonster?.templateId
+                        ? adapter.getResourcePath(`${manifestDir}/assets/sprites/monsters/${currentMonster.templateId}/${currentMonster.templateId}.gif`)
+                        : undefined;
+
+                    // Get player sprite path for battle (use south-facing for battle stance)
+                    const playerSpritePath = adapter.getResourcePath(
+                        `${manifestDir}/assets/sprites/player/${character.class.toLowerCase()}/tier${getTierFromLevel(character.level)}/${character.class.toLowerCase()}_tier_${getTierFromLevel(character.level)}_south.png`
+                    );
+
+                    return (
+                        <div className="qb-dungeon-combat-overlay">
+                            <BattleView
+                                onBattleEnd={handleBattleEnd}
+                                onShowLoot={handleShowLoot}
+                                onDefeat={handleDefeat}
+                                monsterSpritePath={monsterSpritePath}
+                                playerSpritePath={playerSpritePath}
+                            />
+                        </div>
+                    );
+                })()}
+
+                {/* Exit Summary Screen */}
+                {showExitSummary && (
+                    <div className="qb-dungeon-exit-summary">
+                        <div className="qb-exit-icon">🏆</div>
+                        <h2>Dungeon Complete!</h2>
+                        <div className="qb-exit-stats">
+                            <div className="qb-exit-stat">
+                                <span className="qb-exit-stat-label">Rooms Explored</span>
+                                <span className="qb-exit-stat-value">{visitedRooms.size}/{template.rooms.length}</span>
+                            </div>
+                            <div className="qb-exit-stat">
+                                <span className="qb-exit-stat-label">Gold Earned</span>
+                                <span className="qb-exit-stat-value gold">{pendingGold}</span>
+                            </div>
+                            <div className="qb-exit-stat">
+                                <span className="qb-exit-stat-label">XP Earned</span>
+                                <span className="qb-exit-stat-value xp">{pendingXP}</span>
+                            </div>
+                        </div>
+                        <button className="qb-exit-btn" onClick={handleExitConfirm}>
+                            Complete Dungeon
+                        </button>
+                    </div>
+                )}
             </div>
 
-            {/* Mobile D-Pad Controls */}
-            {isMobile && (
+            {/* Mobile D-Pad Controls - only show when not in combat */}
+            {isMobile && explorationState !== 'IN_COMBAT' && !showExitSummary && (
                 <DpadControls
                     onMove={handleDirectionalMove}
                     onInteract={handleInteract}

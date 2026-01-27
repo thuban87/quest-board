@@ -46,6 +46,7 @@ export class DungeonItemView extends ItemView {
             <DungeonView
                 manifestDir={manifestDir}
                 adapter={adapter}
+                app={this.app}
                 onClose={() => {
                     // Close the dungeon view
                     this.leaf.detach();

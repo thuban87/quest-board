@@ -21,6 +21,7 @@ import { LootDrop } from '../models/Gear';
 interface BattleViewProps {
     onBattleEnd: () => void;
     onShowLoot?: (loot: LootDrop) => void;
+    onDefeat?: () => void;  // Custom defeat handler (for dungeon death modal)
     onOpenRecoveryModal?: () => void;
     playerSpritePath?: string;
     monsterSpritePath?: string;
@@ -422,7 +423,7 @@ function RetreatScreen({ onReturn }: RetreatScreenProps) {
 // MAIN COMPONENT
 // =====================
 
-export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot, onOpenRecoveryModal, playerSpritePath, monsterSpritePath, backgroundPath }) => {
+export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot, onDefeat, onOpenRecoveryModal, playerSpritePath, monsterSpritePath, backgroundPath }) => {
     const combatState = useBattleStore(state => state.state);
     const isInCombat = useBattleStore(state => state.isInCombat);
     const resetBattle = useBattleStore(state => state.resetBattle);
@@ -440,6 +441,19 @@ export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot,
 
     const [showItemPicker, setShowItemPicker] = useState(false);
     const isMobile = Platform.isMobile;
+
+    // Call onDefeat when state becomes DEFEAT (for dungeon death modal)
+    const hasCalledDefeat = useRef(false);
+    useEffect(() => {
+        if (combatState === 'DEFEAT' && onDefeat && !hasCalledDefeat.current) {
+            hasCalledDefeat.current = true;
+            onDefeat();
+        }
+        // Reset on new battle
+        if (combatState === 'PLAYER_INPUT') {
+            hasCalledDefeat.current = false;
+        }
+    }, [combatState, onDefeat]);
 
     // Determine if actions should be disabled
     const actionsDisabled = combatState !== 'PLAYER_INPUT';
@@ -498,14 +512,16 @@ export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot,
             const loot = battleService.generateVictoryLoot();
             onShowLoot(loot);
         }
-        resetBattle();
+        // Call onBattleEnd FIRST so parent can read battle state (VICTORY)
         onBattleEnd();
+        resetBattle();
     };
 
     // Handle return from defeat/retreat
     const handleReturn = () => {
-        resetBattle();
+        // Call onBattleEnd FIRST so parent can read battle state (RETREATED)
         onBattleEnd();
+        resetBattle();
     };
 
     // Show outcome screens
@@ -518,6 +534,17 @@ export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot,
     }
 
     if (combatState === 'DEFEAT') {
+        // If onDefeat is provided (dungeon context), use it instead of showing DefeatScreen
+        if (onDefeat) {
+            // Call once and let the parent handle the defeat UI
+            return (
+                <div className={`qb-battle-view ${isMobile ? 'mobile' : ''}`}>
+                    <div className="qb-battle-loading">
+                        <span>Processing...</span>
+                    </div>
+                </div>
+            );
+        }
         return (
             <div className={`qb-battle-view ${isMobile ? 'mobile' : ''}`}>
                 <DefeatScreen onReturn={handleReturn} onOpenRecoveryModal={onOpenRecoveryModal} />

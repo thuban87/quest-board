@@ -1,6 +1,6 @@
 # Phase 3 Implementation Checklist
 
-> **Status:** ⚡ Phase 3C In Progress (Steps 1-5 ✅, Steps 6-13 Remaining)  
+> **Status:** ⚡ Phase 3C In Progress (Steps 1-11 ✅, Step 12-13 Remaining)  
 > **Estimated Time:** 17-24 days  
 > **Purpose:** Shorthand reference with links to full documentation
 
@@ -398,21 +398,24 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] Mark chest opened in room state
 - [x] Chest open/closed sprite variants
 
-### Step 10: Combat Integration
+### Step 10: Combat Integration ✅
 
-- [ ] Monster encounter triggers Fight System
-  - See: [Exploration Doc → Combat Integration](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Exploration%20System.md#combat-integration)
-- [ ] Freeze exploration during combat
-- [ ] Resume exact position on victory
-- [ ] Handle death in dungeon → Death Modal
+- [x] Monster encounter triggers Fight System
+  - Step-on activation for both WASD and click-to-move
+  - Monster sprites display in dungeon (animated GIF with emoji fallback)
+  - Monster sprites passed to BattleView for combat display
+- [x] Freeze exploration during combat (`explorationState === 'IN_COMBAT'`)
+- [x] Resume exact position on victory (player stays on monster tile)
+- [x] Monster tiles disappear after combat (`markMonsterKilled()`)
 
-### Step 11: Death Handling
+### Step 11: Death Handling ✅
 
-- [ ] Show death modal with 3 options
-  - See: [Exploration Doc → Death & Rescue](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Exploration%20System.md#death--rescue)
-- [ ] Restart (lose all)
-- [ ] Rescue (pay gold)
-- [ ] Leave (keep loot so far)
+- [x] Show death modal with 3 options
+  - `DungeonDeathModal` with Restart, Rescue, Leave buttons
+  - Fixed race condition: `onDefeat` prop in BattleView triggers modal
+- [x] Restart (respawn all monsters, restore 50% HP)
+- [x] Rescue (pay gold based on level, restore 50% HP)
+- [x] Leave (exit dungeon, keep loot collected so far)
 
 ### Step 12: Exit & Rewards
 

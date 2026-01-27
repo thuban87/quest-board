@@ -1245,6 +1245,48 @@ Key files to reference:
 
 ---
 
+## 2026-01-27 - Phase 3C Steps 10-11 Complete (Monster Combat & Death Handling)
+
+**Focus:** Monster combat integration, death modal, step-on activation, sprites, and layout fixes
+
+**Completed:**
+- ✅ **Step 10: Monster Combat** - Full integration of dungeon monster encounters
+  - Monsters display with animated GIF sprites (with emoji fallback)
+  - Step-on activation for both WASD and click-to-move pathfinding
+  - Monsters marked as killed after victory, tile disappears from room
+  - Monster sprites passed to BattleView for combat display
+- ✅ **Step 11: Death Handling** - DungeonDeathModal with 3 options
+  - Fixed race condition where BattleView's defeat screen showed before dungeon modal
+  - Added `onDefeat` prop to BattleView for custom defeat handling
+  - Fixed `resetBattle()` being called before `onBattleEnd()` (prevented victory detection)
+- ✅ **Tier Scaling Fix** - Adjusted character sprite tier breakpoints for 40-level cap
+  - L1-8=T1, L9-16=T2, L17-24=T3, L25-32=T4, L33-40=T5
+- ✅ **Battle UI Fixes** - Player/monster sprites now display in combat view
+  - Player sprite and monster sprite paths passed from DungeonView to BattleView
+  - Fixed HP/Mana bars overlaying player sprite with CSS flex fixes
+- ✅ **Focus Restoration** - WASD works immediately after exiting combat
+
+**Files Changed:**
+- `src/components/DungeonView.tsx` - Step-on combat, sprite paths, tier scaling, focus restoration
+- `src/components/BattleView.tsx` - `onDefeat` prop, fixed `resetBattle()`/`onBattleEnd()` order
+- `src/data/TileRegistry.ts` - Monster tile rendering as overlay
+- `styles.css` - Monster sprite CSS, battle player layout fixes
+
+**Testing Notes:**
+- ✅ Monsters trigger combat on step (WASD and click-to-move)
+- ✅ Monster sprites display in dungeon and combat views
+- ✅ DungeonDeathModal shows on defeat with 3 options
+- ✅ Monsters disappear after being killed
+- ✅ Player sprite shows correct tier in dungeon and combat
+- ✅ HP/Mana bars display below player sprite (no overlap)
+- ✅ WASD movement works immediately after combat ends
+
+**Next Steps:**
+- Step 12: Portal exit & dungeon completion rewards
+- Additional dungeon templates (Cave, Crypt, etc.)
+- Themed monster pools per dungeon
+
+---
 
 *Template for future entries:*
 
