@@ -1401,6 +1401,48 @@ Key files to reference:
 
 ---
 
+## 2026-01-27 - Phase 3C Step 14: Dungeon Map Complete
+
+**Focus:** Full dungeon map modal with fog of war and exploration persistence
+
+**Completed:**
+- ✅ Created `DungeonMapService.ts` with BFS room position calculation
+- ✅ Created `DungeonMapModal.ts` with full map rendering
+- ✅ Room rectangles positioned by calculated grid coordinates
+- ✅ SVG connection lines between rooms
+- ✅ True fog of war - only visited rooms rendered (hidden until explored)
+- ✅ Current room pulsing glow effect
+- ✅ Boss room skull icon 💀 styling
+- ✅ M key toggle (open/close) with keydown race condition fix
+- ✅ Map button in DungeonHeader
+- ✅ Added `dungeonExplorationHistory` to Character for permanent per-dungeon persistence
+- ✅ Exploration history saved on dungeon exit, loaded on entry
+- ❌ Minimap scrapped (mobile responsiveness issues, obstructed header)
+
+**Files Changed:**
+- `src/services/DungeonMapService.ts` - NEW: BFS room coordinate calculation
+- `src/modals/DungeonMapModal.ts` - NEW: Full map modal with fog of war
+- `src/components/DungeonView.tsx` - M key handler, openMapModal callback
+- `src/views/DungeonItemView.tsx` - onSave callback for persistence
+- `src/models/Character.ts` - Added `dungeonExplorationHistory` field
+- `src/store/characterStore.ts` - Added `updateDungeonExploration`, `getDungeonExploration`
+- `src/store/dungeonStore.ts` - Load/save exploration history on enter/exit
+- `styles.css` - Map modal styles, pulsing animation, connection lines
+
+**Testing Notes:**
+- ✅ M key opens and closes map modal correctly
+- ✅ Fog of war hides unvisited rooms
+- ✅ Exploration persists across dungeon sessions
+- ✅ Boss rooms show skull icon
+- ✅ Current room has pulsing glow
+
+**Next Steps:**
+- Step 12: Dungeon Encounters & Rewards
+- Step 13: Dungeon Exit Summary
+- Clean up debug console.log statements
+
+---
+
 
 *Template for future entries:*
 

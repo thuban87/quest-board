@@ -435,6 +435,9 @@ export interface Character {
     /** Dungeon keys (earned from quests, consumed on dungeon exit) */
     dungeonKeys: number;
 
+    /** Permanent exploration history per dungeon template (for map fog of war) */
+    dungeonExplorationHistory: Record<string, string[]>;
+
     // ========== Phase 3B Step 9: Death Penalty ==========
 
     /** Character status (active, unconscious, etc.) */
@@ -537,6 +540,7 @@ export function createCharacter(
 
         // Phase 3C: Exploration System
         dungeonKeys: 0,
+        dungeonExplorationHistory: {},
 
         // Phase 3B Step 9: Death Penalty
         status: 'active',

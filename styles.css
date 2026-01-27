@@ -7823,3 +7823,279 @@
   animation: qb-idle-float 2s ease-in-out infinite;
   z-index: 10;
 }
+
+/* ===========================================
+   Minimap - Corner Overlay
+   =========================================== */
+.qb-minimap {
+  position: absolute;
+  top: 80px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 2px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  padding: 8px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.qb-minimap-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qb-minimap-row {
+  display: flex;
+  gap: 2px;
+}
+
+.qb-minimap-cell {
+  width: 24px;
+  height: 24px;
+  background: rgba(40, 40, 40, 0.6);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--qb-transition-fast);
+}
+
+.qb-minimap-cell.empty {
+  background: transparent;
+}
+
+.qb-minimap-cell.visited {
+  background: rgba(100, 100, 100, 0.7);
+  border: 1px solid rgba(150, 150, 150, 0.5);
+}
+
+.qb-minimap-cell.unvisited {
+  background: rgba(30, 30, 30, 0.8);
+  filter: brightness(0.4);
+}
+
+.qb-minimap-cell.current {
+  background: rgba(var(--interactive-accent-rgb, 126, 108, 255), 0.6);
+  border: 2px solid var(--interactive-accent);
+  animation: qb-minimap-pulse 1.5s ease-in-out infinite;
+}
+
+.qb-minimap-cell.boss {
+  background: rgba(220, 53, 69, 0.4);
+  border-color: #dc3545;
+}
+
+.qb-minimap-room {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qb-minimap-player {
+  color: #4cd964;
+  font-size: 10px;
+  text-shadow: 0 0 4px rgba(76, 217, 100, 0.8);
+}
+
+@keyframes qb-minimap-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ===========================================
+   Dungeon Map Modal - Full Map View
+   =========================================== */
+.qb-dungeon-map-modal .modal-content {
+  min-width: 600px;
+  max-width: 90vw;
+  max-height: 85vh;
+}
+
+.qb-map-header {
+  text-align: center;
+  padding-bottom: var(--qb-spacing-md);
+  border-bottom: 1px solid var(--qb-card-border);
+  margin-bottom: var(--qb-spacing-lg);
+}
+
+.qb-map-header h2 {
+  margin: 0 0 var(--qb-spacing-xs) 0;
+}
+
+.qb-map-progress {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.qb-full-map-container {
+  position: relative;
+  min-height: 300px;
+  max-height: 50vh;
+  overflow: auto;
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  padding: var(--qb-spacing-lg);
+}
+
+.qb-full-map-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--map-cols, 5), 80px);
+  grid-template-rows: repeat(var(--map-rows, 5), 60px);
+  gap: 20px;
+  justify-content: center;
+  position: relative;
+  min-height: 200px;
+}
+
+.qb-map-room {
+  width: 80px;
+  height: 60px;
+  background: rgba(100, 100, 100, 0.4);
+  border: 2px solid rgba(150, 150, 150, 0.5);
+  border-radius: var(--qb-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all var(--qb-transition-fast);
+  cursor: default;
+}
+
+.qb-map-room.visited {
+  background: rgba(150, 150, 150, 0.5);
+  border-color: rgba(200, 200, 200, 0.6);
+}
+
+.qb-map-room.unvisited {
+  filter: brightness(0.3);
+  opacity: 0.5;
+}
+
+.qb-map-room.current {
+  background: rgba(var(--interactive-accent-rgb, 126, 108, 255), 0.5);
+  border: 3px solid var(--interactive-accent);
+  box-shadow: 0 0 20px rgba(var(--interactive-accent-rgb, 126, 108, 255), 0.6);
+  animation: qb-current-room-pulse 2s ease-in-out infinite;
+}
+
+.qb-map-room.boss {
+  background: rgba(220, 53, 69, 0.3);
+  border-color: #dc3545;
+}
+
+.qb-map-room.boss.current {
+  box-shadow: 0 0 20px rgba(220, 53, 69, 0.6);
+}
+
+@keyframes qb-current-room-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(var(--interactive-accent-rgb, 126, 108, 255), 0.6);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(var(--interactive-accent-rgb, 126, 108, 255), 0.9);
+  }
+}
+
+.qb-map-room-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.qb-map-boss-icon {
+  font-size: 1.5rem;
+  text-shadow: 0 0 8px rgba(220, 53, 69, 0.8);
+}
+
+.qb-map-player-marker {
+  position: absolute;
+  color: #4cd964;
+  font-size: 1.2rem;
+  text-shadow: 0 0 8px rgba(76, 217, 100, 0.9);
+  animation: qb-player-blink 1s ease-in-out infinite;
+}
+
+@keyframes qb-player-blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Room connection lines (SVG) */
+.qb-map-connections {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.qb-map-connection {
+  stroke: rgba(150, 150, 150, 0.6);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.qb-map-connection.hidden {
+  stroke: rgba(50, 50, 50, 0.3);
+}
+
+.qb-map-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--qb-spacing-lg);
+  margin-top: var(--qb-spacing-lg);
+  border-top: 1px solid var(--qb-card-border);
+}
+
+.qb-map-info {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: var(--qb-spacing-md);
+  padding: var(--qb-spacing-sm);
+}
+
+/* Map button in header */
+.qb-map-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: rgba(100, 100, 100, 0.3);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--qb-transition-fast);
+}
+
+.qb-map-button:hover {
+  background: rgba(100, 100, 100, 0.5);
+  color: var(--text-normal);
+}

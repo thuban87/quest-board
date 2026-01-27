@@ -16,6 +16,7 @@ import type {
 import type { LootReward } from '../models/Gear';
 import { getDungeonTemplate } from '../data/dungeonTemplates';
 import { findSpawnPosition } from '../data/TileRegistry';
+import { useCharacterStore } from './characterStore';
 
 // ============================================
 // Store Interface
@@ -143,6 +144,10 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
         const firstRoom = template.rooms[0];
         const spawnPosition = findSpawnPosition(firstRoom.layout) ?? [4, 3];
 
+        // Load prior exploration history for this dungeon template (for map fog of war)
+        const priorExploration = useCharacterStore.getState().getDungeonExploration(templateId);
+        const combinedRooms = [...new Set([firstRoom.id, ...priorExploration])];
+
         set({
             isInDungeon: true,
             isPreviewMode: isPreview,
@@ -152,7 +157,7 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             currentRoomId: firstRoom.id,
             playerPosition: spawnPosition,
             playerFacing: 'south',
-            visitedRooms: new Set([firstRoom.id]),
+            visitedRooms: new Set(combinedRooms),
             roomStates: { [firstRoom.id]: createEmptyRoomState() },
             pendingLoot: [],
             sessionGold: 0,
@@ -160,13 +165,21 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             explorationState: 'EXPLORING',
         });
 
-        console.log(`[DungeonStore] Entered dungeon: ${template.name}${isPreview ? ' (Preview Mode)' : ''}`);
+        console.log(`[DungeonStore] Entered dungeon: ${template.name}${isPreview ? ' (Preview Mode)' : ''}, ${combinedRooms.length} rooms from history`);
         return true;
     },
 
     exitDungeon: () => {
         const state = get();
         console.log(`[DungeonStore] Exiting dungeon. Session: ${state.sessionGold}g, ${state.sessionXP}xp, ${state.pendingLoot.length} items`);
+
+        // Save exploration history for map persistence
+        if (state.dungeonTemplateId && state.visitedRooms.size > 0) {
+            useCharacterStore.getState().updateDungeonExploration(
+                state.dungeonTemplateId,
+                [...state.visitedRooms]
+            );
+        }
 
         set({
             isInDungeon: false,

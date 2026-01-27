@@ -136,6 +136,14 @@ interface CharacterActions {
     /** Recalculate and update maxHP/maxMana based on current stats. */
     recalculateMaxHPMana: () => void;
 
+    // ========== Phase 3C: Exploration Actions ==========
+
+    /** Update explored rooms for a dungeon template (persisted for map fog of war) */
+    updateDungeonExploration: (templateId: string, visitedRooms: string[]) => void;
+
+    /** Get explored rooms for a dungeon template */
+    getDungeonExploration: (templateId: string) => string[];
+
     // ========== Phase 3B Step 9: Death Penalty ==========
 
     /** Set character status (active, unconscious, etc.) */
@@ -266,6 +274,7 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
 
             // Phase 3C: Exploration
             dungeonKeys: 0,
+            dungeonExplorationHistory: {},
 
             // Phase 3B Step 9: Death Penalty
             status: 'active',
@@ -907,6 +916,34 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         });
 
         return true;
+    },
+
+    // ========== Phase 3C: Exploration Actions ==========
+
+    updateDungeonExploration: (templateId, visitedRooms) => {
+        const { character } = get();
+        if (!character) return;
+
+        // Merge new visited rooms with existing (don't lose progress)
+        const existing = character.dungeonExplorationHistory?.[templateId] || [];
+        const merged = [...new Set([...existing, ...visitedRooms])];
+
+        set({
+            character: {
+                ...character,
+                dungeonExplorationHistory: {
+                    ...character.dungeonExplorationHistory,
+                    [templateId]: merged,
+                },
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    getDungeonExploration: (templateId) => {
+        const { character } = get();
+        if (!character) return [];
+        return character.dungeonExplorationHistory?.[templateId] || [];
     },
 }));
 
