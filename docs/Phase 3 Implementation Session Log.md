@@ -1216,6 +1216,36 @@ Key files to reference:
 
 ---
 
+## 2026-01-26 - Phase 3C Steps 6-9 Complete (Transitions, Dungeon, Chests)
+
+**Focus:** Room transitions, Forest Ruins dungeon, room state tracking, and chest loot interaction
+
+**Completed:**
+- ✅ **Step 6: Room Transitions** - Zelda-style screen slide (200ms), CSS keyframes for 4 directions, input blocking during animation
+- ✅ **Step 7: Forest Ruins Dungeon** - 8-room meandering layout with E/W doors, treasure branches, boss lair
+- ✅ **Step 8: Room State Tracking** - `chestsOpened`/`monstersKilled` per room, visual feedback for opened chests
+- ✅ **Step 9: Chest Interaction** - Immediate loot award via `LootGenerationService.generateChestLoot()`, open sprite display
+- ✅ **Bug Fixes** - Chest sprite path, south_combat room layout width consistency
+
+**Files Changed:**
+- `main.ts` - DungeonSelectModal, dungeon selection in preview command
+- `src/components/DungeonView.tsx` - Transition state, handleInteract with loot awarding
+- `src/data/dungeonTemplates.ts` - Added FOREST_RUINS template (8 rooms)
+- `src/data/TileRegistry.ts` - Added openSprite property, getChestSpritePath()
+- `styles.css` - Room transition CSS animations
+- `assets/environment/_interactive/` - Renamed chest sprites
+
+**Testing Notes:**
+- ✅ Dungeon selector, room transitions, chest loot, room state persistence all verified
+
+**Next Steps:**
+- Step 10: Monster combat integration
+- Step 11: Death handling
+- Step 12: Portal exit & rewards
+
+---
+
+
 *Template for future entries:*
 
 ```markdown

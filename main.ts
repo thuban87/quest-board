@@ -5,7 +5,7 @@
  * All business logic lives in services, components, and stores.
  */
 
-import { Plugin, WorkspaceLeaf } from 'obsidian';
+import { Plugin, WorkspaceLeaf, SuggestModal, App } from 'obsidian';
 import { QuestBoardSettings, DEFAULT_SETTINGS, QuestBoardSettingTab } from './src/settings';
 import {
     QUEST_BOARD_VIEW_TYPE,
@@ -18,6 +18,8 @@ import {
     DungeonItemView
 } from './src/views';
 import { useDungeonStore } from './src/store/dungeonStore';
+import { getAllDungeonTemplates } from './src/data/dungeonTemplates';
+import type { DungeonTemplate } from './src/models/Dungeon';
 import { CreateQuestModal } from './src/modals/CreateQuestModal';
 import { ApplicationGauntletModal, InterviewArenaModal } from './src/modals/JobHuntModal';
 import { openSmartTemplateModal } from './src/modals/SmartTemplateModal';
@@ -43,6 +45,41 @@ import { startRecoveryTimerCheck, stopRecoveryTimerCheck } from './src/services/
 import { showEliteEncounterModal } from './src/modals/EliteEncounterModal';
 import { ELITE_LEVEL_UNLOCK, ELITE_OVERWORLD_CHANCE, ELITE_NAME_PREFIXES } from './src/config/combatConfig';
 import { GearSlot } from './src/models/Gear';
+
+/**
+ * Quick select modal for choosing a dungeon template.
+ */
+class DungeonSelectModal extends SuggestModal<DungeonTemplate> {
+    private templates: DungeonTemplate[];
+    private onSelect: (template: DungeonTemplate) => void;
+
+    constructor(app: App, templates: DungeonTemplate[], onSelect: (template: DungeonTemplate) => void) {
+        super(app);
+        this.templates = templates;
+        this.onSelect = onSelect;
+        this.setPlaceholder('Select a dungeon...');
+    }
+
+    getSuggestions(query: string): DungeonTemplate[] {
+        const search = query.toLowerCase();
+        return this.templates.filter(t =>
+            t.name.toLowerCase().includes(search) ||
+            t.description.toLowerCase().includes(search)
+        );
+    }
+
+    renderSuggestion(template: DungeonTemplate, el: HTMLElement): void {
+        el.createEl('div', { text: template.name, cls: 'suggestion-title' });
+        el.createEl('small', {
+            text: `${template.description} (${template.baseDifficulty})`,
+            cls: 'suggestion-description'
+        });
+    }
+
+    onChooseSuggestion(template: DungeonTemplate): void {
+        this.onSelect(template);
+    }
+}
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
@@ -454,13 +491,20 @@ export default class QuestBoardPlugin extends Plugin {
                     useCharacterStore.getState().setCharacter(character);
                 }
 
-                // Enter test dungeon in preview mode
-                const success = useDungeonStore.getState().enterDungeon('test_cave', character.level, true);
-                if (success) {
-                    this.activateDungeonView();
-                } else {
-                    new (require('obsidian').Notice)('❌ Failed to load dungeon', 2000);
-                }
+                // Show dungeon selection modal
+                const templates = getAllDungeonTemplates();
+                new DungeonSelectModal(
+                    this.app,
+                    templates,
+                    (template) => {
+                        const success = useDungeonStore.getState().enterDungeon(template.id, character.level, true);
+                        if (success) {
+                            this.activateDungeonView();
+                        } else {
+                            new (require('obsidian').Notice)('❌ Failed to load dungeon', 2000);
+                        }
+                    }
+                ).open();
             },
         });
 

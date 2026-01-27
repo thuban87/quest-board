@@ -10,8 +10,9 @@ import { Platform, DataAdapter, Notice } from 'obsidian';
 import { useDungeonStore } from '../store/dungeonStore';
 import { useCharacterStore } from '../store/characterStore';
 import { getDungeonTemplate } from '../data/dungeonTemplates';
-import { getTileDefinition, LAYOUT_CHARS } from '../data/TileRegistry';
+import { getTileDefinition, LAYOUT_CHARS, getChestSpritePath } from '../data/TileRegistry';
 import { findPath, getFacingDirection, getStepPosition, canWalkTo } from '../utils/pathfinding';
+import { lootGenerationService } from '../services/LootGenerationService';
 import type { Direction, RoomTemplate, TileSet } from '../models/Dungeon';
 
 // =====================
@@ -103,8 +104,35 @@ function Tile({ char, x, y, tileSet, manifestDir, adapter, roomState }: TileProp
     const isMonsterKilled = char === LAYOUT_CHARS.MONSTER &&
         roomState?.monstersKilled.includes(`monster_${x}_${y}`);
 
-    // For opened chests/killed monsters, render as floor only
-    if (isChestOpened || isMonsterKilled) {
+    // For opened chests, show open sprite
+    if (isChestOpened) {
+        // Get the open sprite path directly from tile definition
+        const tileDef = getTileDefinition('C', tileSet);
+        const openSpriteName = tileDef.openSprite || tileDef.sprite;
+        const chestSpritePath = openSpriteName
+            ? adapter.getResourcePath(`${manifestDir}/assets/environment/${openSpriteName}`)
+            : null;
+        return (
+            <div
+                className="qb-tile qb-tile-chest qb-tile-overlay-container"
+                data-x={x}
+                data-y={y}
+                style={floorPath ? { backgroundImage: `url("${floorPath}")` } : undefined}
+            >
+                {chestSpritePath ? (
+                    <div
+                        className="qb-tile-overlay qb-chest-opened"
+                        style={{ backgroundImage: `url("${chestSpritePath}")` }}
+                    />
+                ) : (
+                    <span className="qb-tile-emoji">📭</span>
+                )}
+            </div>
+        );
+    }
+
+    // For killed monsters, render as floor only
+    if (isMonsterKilled) {
         return (
             <div
                 className="qb-tile qb-tile-floor"
@@ -425,6 +453,16 @@ const STEP_DELAY_MS = 200;
 /** Cooldown between WASD movements (ms) */
 const MOVE_COOLDOWN_MS = 180;
 
+/** Room transition animation duration (ms) */
+const TRANSITION_DURATION_MS = 200;
+
+/** Room transition state */
+interface TransitionState {
+    active: boolean;
+    direction: Direction;
+    phase: 'exiting' | 'entering' | 'none';
+}
+
 export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, onClose }) => {
     // Container ref for keyboard focus
     const containerRef = useRef<HTMLDivElement>(null);
@@ -434,6 +472,13 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
 
     // Animation state - prevents input during movement
     const [isAnimating, setIsAnimating] = useState(false);
+
+    // Room transition state for Zelda-style slide effect
+    const [transition, setTransition] = useState<TransitionState>({
+        active: false,
+        direction: 'south',
+        phase: 'none',
+    });
 
     // Use individual selectors for proper reactivity
     const isInDungeon = useDungeonStore(state => state.isInDungeon);
@@ -475,12 +520,40 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
     // =====================
 
     /**
+     * Handle room transition with Zelda-style screen slide animation.
+     * Blocks input, animates exit, changes room, animates entry.
+     */
+    const handleRoomTransition = useCallback(async (
+        targetRoom: string,
+        targetEntry: Direction,
+        exitDirection: Direction
+    ) => {
+        // Block input during transition
+        setIsAnimating(true);
+
+        // Start exit animation
+        setTransition({ active: true, direction: exitDirection, phase: 'exiting' });
+        await new Promise(resolve => setTimeout(resolve, TRANSITION_DURATION_MS));
+
+        // Change room
+        changeRoom(targetRoom, targetEntry);
+
+        // Start enter animation
+        setTransition({ active: true, direction: targetEntry, phase: 'entering' });
+        await new Promise(resolve => setTimeout(resolve, TRANSITION_DURATION_MS));
+
+        // Complete transition
+        setTransition({ active: false, direction: 'south', phase: 'none' });
+        setIsAnimating(false);
+    }, [changeRoom]);
+
+    /**
      * Move player one step in a direction.
      * Checks walkability and door transitions.
      * Has cooldown to prevent too-fast movement.
      */
     const handleDirectionalMove = useCallback((direction: Direction) => {
-        if (isAnimating || !room || !template) return;
+        if (isAnimating || transition.active || !room || !template) return;
 
         // Cooldown check for WASD spam prevention
         const now = Date.now();
@@ -504,44 +577,118 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
         if (doorInfo) {
             console.log(`[DungeonView] Walking through door to ${doorInfo.targetRoom}`);
             movePlayer(nx, ny, direction);
-            // Small delay before room transition for visual feedback
-            setTimeout(() => {
-                changeRoom(doorInfo.targetRoom, doorInfo.targetEntry);
-            }, 150);
+            // Trigger animated room transition
+            handleRoomTransition(doorInfo.targetRoom, doorInfo.targetEntry, direction);
             return;
         }
 
         // Normal movement
         movePlayer(nx, ny, direction);
-    }, [isAnimating, room, template, movePlayer, changeRoom]);
+    }, [isAnimating, transition.active, room, template, movePlayer, handleRoomTransition]);
 
     /**
-     * Handle interact key - placeholder for chest/monster interaction.
+     * Determine chest tier based on tile type.
+     * Currently all chests are 'C', but we can add 'B' for iron, 'G' for golden later.
+     */
+    const getChestTier = (char: string): 'wooden' | 'iron' | 'golden' => {
+        // For now, default to golden since dungeon chests should be valuable
+        // Room templates can use different chars for different tiers later
+        return 'golden';
+    };
+
+    /**
+     * Handle interact key - opens chests and triggers monster encounters.
      */
     const handleInteract = useCallback(() => {
-        if (isAnimating || !room || !template) return;
+        if (isAnimating || transition.active || !room || !template) return;
 
+        const currentRoomId = useDungeonStore.getState().currentRoomId;
         const [px, py] = useDungeonStore.getState().playerPosition;
         const facing = useDungeonStore.getState().playerFacing;
         const targetPos = getStepPosition([px, py], facing);
-
-        console.log(`[DungeonView] Interact at [${targetPos[0]}, ${targetPos[1]}]`);
-
-        // Check what's at the target position
         const [tx, ty] = targetPos;
-        if (ty >= 0 && ty < room.layout.length && tx >= 0 && tx < room.layout[ty].length) {
-            const char = room.layout[ty][tx];
-            if (char === LAYOUT_CHARS.CHEST) {
-                console.log('[DungeonView] Chest interaction - not yet implemented');
-                new Notice('Chest interaction coming soon!');
-            } else if (char === LAYOUT_CHARS.MONSTER) {
-                console.log('[DungeonView] Monster interaction - not yet implemented');
-                new Notice('Monster encounter coming soon!');
-            } else {
-                console.log('[DungeonView] Nothing to interact with here');
-            }
+
+        console.log(`[DungeonView] Interact at [${tx}, ${ty}]`);
+
+        // Bounds check
+        if (ty < 0 || ty >= room.layout.length || tx < 0 || tx >= room.layout[ty].length) {
+            return;
         }
-    }, [isAnimating, room, template]);
+
+        const char = room.layout[ty][tx];
+
+        // Handle CHEST interaction
+        if (char === LAYOUT_CHARS.CHEST) {
+            const chestId = `chest_${tx}_${ty}`;
+            const roomState = useDungeonStore.getState().roomStates[currentRoomId];
+
+            // Check if already opened
+            if (roomState?.chestsOpened.includes(chestId)) {
+                new Notice('This chest is already empty.');
+                return;
+            }
+
+            // Get character for loot generation
+            const char = useCharacterStore.getState().character;
+            if (!char) {
+                new Notice('No character found!');
+                return;
+            }
+
+            // Generate loot
+            const chestTier = getChestTier(LAYOUT_CHARS.CHEST);
+            const loot = lootGenerationService.generateChestLoot(chestTier, char.level, char);
+
+            // Award loot directly
+            let goldGained = 0;
+            let gearItems: string[] = [];
+            let consumables: string[] = [];
+
+            for (const reward of loot) {
+                if (reward.type === 'gold') {
+                    goldGained += reward.amount;
+                    useCharacterStore.getState().updateGold(reward.amount);
+                } else if (reward.type === 'gear' && reward.item) {
+                    gearItems.push(`${reward.item.tier.toUpperCase()} ${reward.item.slot}`);
+                    useCharacterStore.getState().addGear(reward.item);
+                } else if (reward.type === 'consumable' && reward.itemId) {
+                    consumables.push(`${reward.quantity || 1}x ${reward.itemId}`);
+                    useCharacterStore.getState().addInventoryItem(reward.itemId, reward.quantity || 1);
+                }
+            }
+
+            // Mark chest as opened
+            useDungeonStore.getState().markChestOpened(currentRoomId, chestId);
+
+            // Show loot notification
+            const lootParts: string[] = [];
+            if (goldGained > 0) lootParts.push(`🪙 ${goldGained} gold`);
+            if (gearItems.length > 0) lootParts.push(`⚔️ ${gearItems.join(', ')}`);
+            if (consumables.length > 0) lootParts.push(`🧪 ${consumables.join(', ')}`);
+
+            new Notice(`📜 Chest opened!\n${lootParts.join('\n')}`, 4000);
+            console.log('[DungeonView] Chest opened:', { chestId, loot });
+            return;
+        }
+
+        // Handle MONSTER interaction
+        if (char === LAYOUT_CHARS.MONSTER) {
+            const monsterId = `monster_${tx}_${ty}`;
+            const roomState = useDungeonStore.getState().roomStates[currentRoomId];
+
+            // Check if already killed
+            if (roomState?.monstersKilled.includes(monsterId)) {
+                new Notice('Nothing here...');
+                return;
+            }
+
+            console.log('[DungeonView] Monster interaction - not yet implemented');
+            new Notice('Monster encounter coming soon!');
+            return;
+        }
+
+        console.log('[DungeonView] Nothing to interact with here');
+    }, [isAnimating, transition.active, room, template]);
 
     /**
      * Animate movement along a path (step by step).
@@ -556,7 +703,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
         for (const [x, y] of path) {
             const facing = getFacingDirection(prevPos, [x, y]);
             move(x, y, facing);
-            prevPos = [x, y];
 
             // Wait for CSS transition to complete
             await new Promise(resolve => setTimeout(resolve, STEP_DELAY_MS));
@@ -566,13 +712,16 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
             if (room?.doors[doorKey]) {
                 const doorInfo = room.doors[doorKey];
                 console.log(`[DungeonView] Path reached door, transitioning to ${doorInfo.targetRoom}`);
-                changeRoom(doorInfo.targetRoom, doorInfo.targetEntry);
-                break;
+                // Use animated transition, don't setIsAnimating(false) here as handleRoomTransition will
+                await handleRoomTransition(doorInfo.targetRoom, doorInfo.targetEntry, facing);
+                return; // handleRoomTransition sets isAnimating to false
             }
+
+            prevPos = [x, y];
         }
 
         setIsAnimating(false);
-    }, [room, changeRoom]);
+    }, [room, handleRoomTransition]);
 
     /**
      * Handle tile click with A* pathfinding.
@@ -741,7 +890,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                 onExit={handleExit}
             />
 
-            <div className="qb-dungeon-content">
+            <div className={`qb-dungeon-content ${transition.active ? `qb-transition-${transition.phase}-${transition.direction}` : ''}`}>
                 <RoomGrid
                     room={room}
                     tileSet={template.tileSet}

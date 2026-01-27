@@ -7292,3 +7292,144 @@
     display: none;
   }
 }
+
+/* ===========================================
+   Room Transition Animations (Zelda-style slide)
+   =========================================== */
+
+/* Exit animations - room slides OUT */
+.qb-transition-exiting-north {
+  animation: slide-out-north 0.2s ease-in forwards;
+}
+
+.qb-transition-exiting-south {
+  animation: slide-out-south 0.2s ease-in forwards;
+}
+
+.qb-transition-exiting-east {
+  animation: slide-out-east 0.2s ease-in forwards;
+}
+
+.qb-transition-exiting-west {
+  animation: slide-out-west 0.2s ease-in forwards;
+}
+
+/* Enter animations - room slides IN */
+.qb-transition-entering-north {
+  animation: slide-in-from-south 0.2s ease-out forwards;
+}
+
+.qb-transition-entering-south {
+  animation: slide-in-from-north 0.2s ease-out forwards;
+}
+
+.qb-transition-entering-east {
+  animation: slide-in-from-west 0.2s ease-out forwards;
+}
+
+.qb-transition-entering-west {
+  animation: slide-in-from-east 0.2s ease-out forwards;
+}
+
+/* Keyframes for exit animations */
+@keyframes slide-out-north {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-out-south {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-out-east {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-out-west {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+/* Keyframes for enter animations */
+@keyframes slide-in-from-north {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-south {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-west {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-east {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Opened chest styling */
+.qb-chest-opened {
+  opacity: 0.9;
+}

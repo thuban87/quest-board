@@ -103,7 +103,8 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'chest',
             walkable: false,
             autoInteract: false,
-            sprite: '_interactive/chest-gold-01.png',
+            sprite: '_interactive/chest-large-closed.png',
+            openSprite: '_interactive/chest-large-open.png',
             emoji: '📦',
             isOverlay: true,
         },
@@ -173,7 +174,8 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'chest',
             walkable: false,
             autoInteract: false,
-            sprite: null,
+            sprite: '_interactive/chest-large-closed.png',
+            openSprite: '_interactive/chest-large-open.png',
             emoji: '📦',
             isOverlay: true,
         },
@@ -243,7 +245,8 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'chest',
             walkable: false,
             autoInteract: false,
-            sprite: null,
+            sprite: '_interactive/chest-large-closed.png',
+            openSprite: '_interactive/chest-large-open.png',
             emoji: '📦',
             isOverlay: true,
         },
@@ -313,7 +316,8 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'chest',
             walkable: false,
             autoInteract: false,
-            sprite: null,
+            sprite: '_interactive/chest-ornate-closed.png',
+            openSprite: '_interactive/chest-ornate-open.png',
             emoji: '📦',
             isOverlay: true,
         },
@@ -412,3 +416,19 @@ export function findAllPositions(layout: string[], char: string): Array<[number,
     }
     return positions;
 }
+
+/**
+ * Get chest sprite path based on open/closed state.
+ * Returns the appropriate sprite path for chest rendering.
+ */
+export function getChestSpritePath(
+    tileSet: TileSet,
+    manifestDir: string,
+    isOpen: boolean
+): string | null {
+    const def = getTileDefinition('C', tileSet);
+    const spritePath = isOpen && def.openSprite ? def.openSprite : def.sprite;
+    if (!spritePath) return null;
+    return `${manifestDir}/assets/environment/${spritePath}`;
+}
+

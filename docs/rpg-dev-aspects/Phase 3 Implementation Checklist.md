@@ -365,30 +365,38 @@ Complete these BEFORE starting any Phase 3 work:
   - onTouchStart for immediate response
   - Mobile tile size reduced to 40px for better visibility
 
-### Step 6: Room Transitions
+### Step 6: Room Transitions ✅
 
-- [ ] Fade-to-black animation (150ms out/in)
-- [ ] Door auto-trigger on walk
-- [ ] Load new room, preserve state
+- [x] Zelda-style screen slide animation (200ms per direction)
+- [x] CSS keyframes for slide-in/out (north/south/east/west)
+- [x] Transition state management with input blocking
+- [x] Door auto-trigger on walk (no separate activation)
 
-### Step 7: Dungeon Templates
+### Step 7: Dungeon Templates ✅
 
-- [ ] Create `DungeonTemplate` format
-  - See: [Exploration Doc → Dungeon Templates](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Exploration%20System.md#dungeon-templates)
-- [ ] Embed door definitions in rooms (NOT separate connections)
-- [ ] Create "Goblin Cave" (5 rooms)
+- [x] Create `DungeonTemplate` format (already existed)
+- [x] Door definitions embedded in rooms
+- [x] **Forest Ruins** (8 rooms) - meandering outdoor dungeon
+  - East/West transitions in addition to North/South
+  - Crossroads hub with 3 exits
+  - Treasure branches (west_treasure, hidden_cache)
+  - Boss lair with Master tier chests
+- [x] Dungeon selection modal (SuggestModal) in dev preview command
 
-### Step 8: Room State Tracking
+### Step 8: Room State Tracking ✅
 
-- [ ] Track `chestsOpened`, `monstersKilled` per room
-- [ ] Persist to prevent exploit (leave/return)
-- [ ] Test exploit prevention
+- [x] Track `chestsOpened`, `monstersKilled` per room via `roomStates`
+- [x] Visual feedback: opened chests show open sprite
+- [x] Visual feedback: killed monsters render as floor
+- [x] Persist across room changes (exploit prevention)
 
-### Step 9: Chest Interaction
+### Step 9: Chest Interaction ✅
 
-- [ ] Show loot modal on open
-- [ ] Add to pending rewards
-- [ ] Mark chest opened in room state
+- [x] E key or click-interact to open adjacent chest
+- [x] Immediate loot award (gold, gear, consumables) - no pending
+- [x] Notification with loot summary
+- [x] Mark chest opened in room state
+- [x] Chest open/closed sprite variants
 
 ### Step 10: Combat Integration
 
