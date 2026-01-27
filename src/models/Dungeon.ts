@@ -50,6 +50,7 @@ export interface TileDefinition {
     autoInteract: boolean;     // true = triggers on walk, false = requires E/click
     sprite: string | null;     // Path relative to assets/environment/
     emoji: string;             // Fallback display
+    isOverlay?: boolean;       // If true, renders on top of floor tile
 }
 
 /**

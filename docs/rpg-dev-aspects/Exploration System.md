@@ -62,6 +62,49 @@ The Exploration System allows players to navigate tile-based dungeons, encounter
 
 ---
 
+## Asset Folder Structure
+
+Tiles are organized in `assets/environment/` with auto-discovery based on folder structure:
+
+```
+assets/environment/
+├── _shared/                    ← Universal tiles (all tilesets)
+│   ├── floor/                  ← Walkable ground (grass, stone, paths)
+│   ├── wall/                   ← Blocking walls
+│   ├── hazard/                 ← Non-walkable terrain (water, lava, pits)
+│   ├── decorative/             ← Walkable overlays (paintings, banners)
+│   └── obstacle/               ← Blocking overlays (boulders, barrels)
+├── _interactive/               ← Chests, doors, portals
+├── cave/
+│   ├── floor/                  ← Cave-specific floors
+│   ├── wall/                   ← Cave-specific walls
+│   ├── decorative/             ← Cave-specific decor
+│   └── obstacle/               ← Cave-specific obstacles
+├── forest/                     ← Same structure
+├── dungeon/                    ← Same structure
+└── castle/                     ← Same structure
+```
+
+### Tile Categories
+
+| Category | Walkable | Purpose |
+|----------|----------|---------|
+| `floor/` | ✅ Yes | Ground tiles (grass, stone, gravel) |
+| `wall/` | ❌ No | Blocking vertical obstacles |
+| `hazard/` | ❌ No | Ground-level terrain you can't cross (water, lava) |
+| `decorative/` | ✅ Yes | Visual overlays on walkable tiles |
+| `obstacle/` | ❌ No | Blocking overlays on floor tiles |
+| `_interactive/` | Varies | Chests, doors, portals with special behavior |
+
+### Overlay Rendering
+
+Tiles marked with `isOverlay: true` (chests, portals, obstacles) render **on top** of the floor tile:
+- Floor tile renders as background
+- Overlay sprite renders as absolute-positioned inner div
+- CSS `background-size: contain` keeps smaller sprites centered
+
+---
+
 ## Dungeon Structure
 
 ### Room Concept

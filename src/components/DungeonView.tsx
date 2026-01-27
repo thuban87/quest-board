@@ -92,16 +92,18 @@ function Tile({ char, x, y, tileSet, manifestDir, adapter, roomState }: TileProp
     const tileDef = getTileDefinition(char, tileSet);
     const spritePath = getTileSpritePath(adapter, manifestDir, tileSet, tileDef.sprite);
 
+    // Get floor tile for overlay rendering
+    const floorDef = getTileDefinition('.', tileSet);
+    const floorPath = getTileSpritePath(adapter, manifestDir, tileSet, floorDef.sprite);
+
     // Check if interactive tile has been used
     const isChestOpened = char === LAYOUT_CHARS.CHEST &&
         roomState?.chestsOpened.includes(`chest_${x}_${y}`);
     const isMonsterKilled = char === LAYOUT_CHARS.MONSTER &&
         roomState?.monstersKilled.includes(`monster_${x}_${y}`);
 
-    // For opened chests/killed monsters, render as floor
+    // For opened chests/killed monsters, render as floor only
     if (isChestOpened || isMonsterKilled) {
-        const floorDef = getTileDefinition('.', tileSet);
-        const floorPath = getTileSpritePath(adapter, manifestDir, tileSet, floorDef.sprite);
         return (
             <div
                 className="qb-tile qb-tile-floor"
@@ -118,6 +120,30 @@ function Tile({ char, x, y, tileSet, manifestDir, adapter, roomState }: TileProp
     const interactiveClass = tileDef.type === 'chest' ? 'qb-tile-interactive' :
         tileDef.type === 'portal' ? 'qb-tile-portal' : '';
 
+    // For overlay tiles (chests, portals, obstacles), render floor underneath
+    if (tileDef.isOverlay) {
+        return (
+            <div
+                className={`qb-tile qb-tile-${tileDef.type} ${interactiveClass} qb-tile-overlay-container`}
+                data-x={x}
+                data-y={y}
+                data-walkable={tileDef.walkable}
+                style={floorPath ? { backgroundImage: `url("${floorPath}")` } : undefined}
+            >
+                {/* Overlay sprite on top of floor */}
+                {spritePath ? (
+                    <div
+                        className="qb-tile-overlay"
+                        style={{ backgroundImage: `url("${spritePath}")` }}
+                    />
+                ) : (
+                    <span className="qb-tile-emoji">{tileDef.emoji}</span>
+                )}
+            </div>
+        );
+    }
+
+    // Regular tile (floor, wall, etc.)
     return (
         <div
             className={`qb-tile qb-tile-${tileDef.type} ${interactiveClass}`}

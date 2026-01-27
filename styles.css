@@ -7100,6 +7100,21 @@
   }
 }
 
+/* Overlay Tile Container - floor background with overlay on top */
+.qb-tile-overlay-container {
+  position: relative;
+}
+
+.qb-tile-overlay {
+  position: absolute;
+  inset: 0;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
 /* Player Sprite */
 .qb-player-sprite {
   position: absolute;

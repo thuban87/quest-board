@@ -1131,6 +1131,42 @@ Key files to reference:
 
 ---
 
+## 2026-01-26 - Tile Folder Organization & Overlay Rendering
+
+**Focus:** Reorganize tile assets into structured folders and implement overlay rendering for chests/portals
+
+**Completed:**
+- ✅ Created organized folder structure for tile assets:
+  - `_shared/floor/`, `_shared/wall/`, `_shared/hazard/`, `_shared/obstacle/`, `_shared/decorative/`
+  - `_interactive/` for chests, doors, portals
+  - `{tileset}/floor/`, `{tileset}/wall/`, `{tileset}/decorative/`, `{tileset}/obstacle/`
+- ✅ Updated `TileRegistry.ts` to use new folder structure
+- ✅ Added new layout characters: `~` (hazard/water), `B` (boulder/obstacle)
+- ✅ Added `isOverlay` property to `TileDefinition` interface
+- ✅ Implemented overlay tile rendering - chests/portals/obstacles render on TOP of floor tile
+- ✅ Added CSS for `.qb-tile-overlay-container` and `.qb-tile-overlay`
+- ✅ Wired chest sprite (`_interactive/chest-gold-01.png`) to cave tileset
+
+**Files Changed:**
+- `src/models/Dungeon.ts` - Added `isOverlay?: boolean` to TileDefinition
+- `src/data/TileRegistry.ts` - Updated all sprite paths, added ~, B chars, isOverlay flags
+- `src/components/DungeonView.tsx` - Overlay rendering logic in Tile component
+- `styles.css` - Added overlay tile CSS (~15 lines)
+- `docs/rpg-dev-aspects/Exploration System.md` - Added Asset Folder Structure section
+- `docs/rpg-dev-aspects/Phase 3 Implementation Checklist.md` - Added folder structure notes
+
+**Testing Notes:**
+- ✅ Chest renders on gravel floor (no more white background)
+- ✅ Build passes, deployed to test vault
+- ✅ All tilesets updated with overlay tiles
+
+**Next Session:**
+- Continue with Step 4-5: Player movement controls
+- Add more chest/portal sprites to other tilesets
+- Consider auto-discovery scanner for tiles (future enhancement)
+
+---
+
 *Template for future entries:*
 
 ```markdown
