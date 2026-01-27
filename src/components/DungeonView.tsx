@@ -16,8 +16,11 @@ import { findPath, getFacingDirection, getStepPosition, canWalkTo } from '../uti
 import { lootGenerationService } from '../services/LootGenerationService';
 import { monsterService } from '../services/MonsterService';
 import { startBattleWithMonster } from '../services/BattleService';
+import { getMonsterGifPath } from '../services/SpriteService';
 import { BattleView } from './BattleView';
 import { DungeonDeathModal, calculateRescueCost } from '../modals/DungeonDeathModal';
+import { InventoryModal } from '../modals/InventoryModal';
+import { useUIStore } from '../store/uiStore';
 import type { Direction, RoomTemplate, TileSet } from '../models/Dungeon';
 import type { LootDrop } from '../models/Gear';
 
@@ -169,10 +172,10 @@ function Tile({ char, x, y, tileSet, manifestDir, adapter, roomState, monsterSpr
                         alt="Monster"
                         className="qb-monster-sprite"
                         onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                            // Hide broken image and show emoji fallback
+                            // Hide broken image and show emoji fallback (only once)
                             e.currentTarget.style.display = 'none';
                             const parent = e.currentTarget.parentElement;
-                            if (parent) {
+                            if (parent && !parent.querySelector('.qb-monster-emoji')) {
                                 const emoji = document.createElement('span');
                                 emoji.className = 'qb-tile-emoji qb-monster-emoji';
                                 emoji.innerText = '👹';
@@ -275,7 +278,7 @@ function PlayerSprite({ position, facing, manifestDir, adapter, characterClass, 
 }
 
 /**
- * Unified header with dungeon info, status, and exit button.
+ * Unified header with dungeon info, status, HP/mana bars, and quick actions.
  * Consolidates top and bottom bars to prevent scrolling.
  */
 interface DungeonHeaderProps {
@@ -287,6 +290,16 @@ interface DungeonHeaderProps {
     sessionGold: number;
     sessionXP: number;
     onExit: () => void;
+    onAvatarClick: () => void;
+    onInventoryClick: () => void;
+    currentHP: number;
+    maxHP: number;
+    currentMana: number;
+    maxMana: number;
+    characterClass: string;
+    level: number;
+    manifestDir: string;
+    adapter: DataAdapter;
 }
 
 function DungeonHeader({
@@ -297,23 +310,89 @@ function DungeonHeader({
     totalRooms,
     sessionGold,
     sessionXP,
-    onExit
+    onExit,
+    onAvatarClick,
+    onInventoryClick,
+    currentHP,
+    maxHP,
+    currentMana,
+    maxMana,
+    characterClass,
+    level,
+    manifestDir,
+    adapter,
 }: DungeonHeaderProps) {
+    // Avatar sprite path
+    const avatarPath = getPlayerSpritePath(adapter, manifestDir, characterClass, level, 'south');
+    const hpPercent = maxHP > 0 ? Math.min(100, (currentHP / maxHP) * 100) : 0;
+    const manaPercent = maxMana > 0 ? Math.min(100, (currentMana / maxMana) * 100) : 0;
+
     return (
         <div className="qb-dungeon-header">
-            <div className="qb-dungeon-title">
-                <span className="qb-dungeon-name">{dungeonName}</span>
-                {isPreviewMode && <span className="qb-preview-badge">PREVIEW</span>}
-                <span className="qb-dungeon-room-name">{roomName}</span>
+            {/* Left: Avatar + Bars */}
+            <div className="qb-dungeon-header-left">
+                <button
+                    className="qb-dungeon-avatar-btn"
+                    onClick={onAvatarClick}
+                    title="Open Character Sheet"
+                >
+                    <img
+                        src={avatarPath}
+                        alt={characterClass}
+                        className="qb-dungeon-avatar-img"
+                        onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                        }}
+                    />
+                    <span className="qb-dungeon-avatar-fallback">🧙</span>
+                </button>
+                <div className="qb-dungeon-bars">
+                    <div className="qb-bar qb-hp-bar">
+                        <div
+                            className="qb-bar-fill qb-hp-fill"
+                            style={{ width: `${hpPercent}%` }}
+                        />
+                        <span className="qb-bar-text">❤️ {currentHP}/{maxHP}</span>
+                    </div>
+                    <div className="qb-bar qb-mana-bar">
+                        <div
+                            className="qb-bar-fill qb-mana-fill"
+                            style={{ width: `${manaPercent}%` }}
+                        />
+                        <span className="qb-bar-text">💧 {currentMana}/{maxMana}</span>
+                    </div>
+                </div>
             </div>
-            <div className="qb-dungeon-status-inline">
-                <span className="qb-status-rooms">🗺️ {visitedRooms}/{totalRooms}</span>
-                <span className="qb-status-gold">🪙 {sessionGold}</span>
-                <span className="qb-status-xp">⭐ {sessionXP}</span>
+
+            {/* Center: Title + Status */}
+            <div className="qb-dungeon-header-center">
+                <div className="qb-dungeon-title">
+                    <span className="qb-dungeon-name">{dungeonName}</span>
+                    {isPreviewMode && <span className="qb-preview-badge">PREVIEW</span>}
+                </div>
+                <div className="qb-dungeon-subtitle">
+                    <span className="qb-dungeon-room-name">{roomName}</span>
+                </div>
+                <div className="qb-dungeon-status-inline">
+                    <span className="qb-status-rooms">🗺️ {visitedRooms}/{totalRooms}</span>
+                    <span className="qb-status-gold">🪙 {sessionGold}</span>
+                    <span className="qb-status-xp">⭐ {sessionXP}</span>
+                </div>
             </div>
-            <button className="qb-dungeon-exit" onClick={onExit}>
-                ✕ Exit
-            </button>
+
+            {/* Right: Actions */}
+            <div className="qb-dungeon-header-right">
+                <button
+                    className="qb-dungeon-inventory-btn"
+                    onClick={onInventoryClick}
+                    title="Open Inventory"
+                >
+                    🎒
+                </button>
+                <button className="qb-dungeon-exit" onClick={onExit}>
+                    ✕
+                </button>
+            </div>
         </div>
     );
 }
@@ -378,12 +457,9 @@ function RoomGrid({
                         m.position[0] === x && m.position[1] === y
                     );
                     if (monsterDef && monsterDef.pool.length > 0) {
-                        // Use the first template ID as the sprite folder name
+                        // Use the first template ID and use SpriteService for proper path
                         const templateId = monsterDef.pool[0];
-                        // Monster sprites are in assets/sprites/monsters/{templateId}/{templateId}.gif
-                        monsterSpritePath = adapter.getResourcePath(
-                            `${manifestDir}/assets/sprites/monsters/${templateId}/${templateId}.gif`
-                        );
+                        monsterSpritePath = getMonsterGifPath(manifestDir, adapter, templateId);
                     }
                 }
 
@@ -1188,6 +1264,25 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                 sessionGold={sessionGold}
                 sessionXP={sessionXP}
                 onExit={handleExit}
+                onAvatarClick={() => {
+                    // Character sheet not accessible during dungeon - show stats summary
+                    const hp = character.currentHP ?? character.maxHP ?? 100;
+                    const maxHp = character.maxHP ?? 100;
+                    const lvl = character.level;
+                    new Notice(`⚔️ Level ${lvl} ${character.class}\n❤️ HP: ${hp}/${maxHp}`);
+                }}
+                onInventoryClick={() => {
+                    // Open the proper inventory modal (same as character sheet)
+                    new InventoryModal(app).open();
+                }}
+                currentHP={character.currentHP ?? character.maxHP ?? 100}
+                maxHP={character.maxHP ?? 100}
+                currentMana={character.currentMana ?? character.maxMana ?? 50}
+                maxMana={character.maxMana ?? 50}
+                characterClass={character.class}
+                level={character.level}
+                manifestDir={manifestDir}
+                adapter={adapter}
             />
 
             <div className={`qb-dungeon-content ${transition.active ? `qb-transition-${transition.phase}-${transition.direction}` : ''}`}>

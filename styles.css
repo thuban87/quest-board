@@ -6959,20 +6959,114 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--qb-spacing-md);
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
   background: var(--background-secondary);
   border-bottom: 1px solid var(--qb-card-border);
+  gap: var(--qb-spacing-md);
 }
 
-.qb-dungeon-title {
+/* Header Left: Avatar + Bars */
+.qb-dungeon-header-left {
   display: flex;
   align-items: center;
   gap: var(--qb-spacing-sm);
 }
 
+.qb-dungeon-avatar-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--interactive-accent);
+  background: var(--background-primary);
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+  padding: 0;
+}
+
+.qb-dungeon-avatar-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 8px var(--interactive-accent);
+}
+
+.qb-dungeon-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.qb-dungeon-avatar-fallback {
+  font-size: 1.5rem;
+  display: none;
+}
+
+.qb-dungeon-avatar-btn:has(.qb-dungeon-avatar-img:not([style*="display: none"])) .qb-dungeon-avatar-fallback {
+  display: none;
+}
+
+/* HP/Mana Bars */
+.qb-dungeon-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.qb-bar {
+  height: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.qb-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+.qb-hp-fill {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.qb-mana-fill {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+.qb-bar-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Header Center: Title */
+.qb-dungeon-header-center {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.qb-dungeon-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--qb-spacing-sm);
+}
+
 .qb-dungeon-name {
   font-weight: 700;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   color: var(--text-normal);
 }
 
@@ -6986,21 +7080,25 @@
   text-transform: uppercase;
 }
 
+.qb-dungeon-subtitle {
+  margin-top: 2px;
+}
+
 .qb-dungeon-room-name {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   text-transform: capitalize;
-  padding-left: var(--qb-spacing-sm);
-  border-left: 1px solid var(--qb-card-border);
 }
 
 /* Inline status bar in header */
 .qb-dungeon-status-inline {
   display: flex;
   align-items: center;
-  gap: var(--qb-spacing-lg);
-  font-size: 0.9rem;
+  justify-content: center;
+  gap: var(--qb-spacing-md);
+  font-size: 0.8rem;
   color: var(--text-muted);
+  margin-top: 4px;
 }
 
 .qb-dungeon-status-inline .qb-status-rooms,
@@ -7011,18 +7109,47 @@
   gap: 4px;
 }
 
+/* Header Right: Actions */
+.qb-dungeon-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-dungeon-inventory-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--qb-radius-md);
+  border: 1px solid var(--qb-card-border);
+  background: var(--background-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  transition: background 0.15s;
+}
+
+.qb-dungeon-inventory-btn:hover {
+  background: var(--background-modifier-hover);
+}
+
 .qb-dungeon-exit {
-  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border: 1px solid var(--qb-card-border);
   border-radius: var(--qb-radius-md);
   background: transparent;
-  color: var(--text-normal);
+  color: var(--text-muted);
   cursor: pointer;
-  transition: background var(--qb-transition-fast);
+  font-size: 1rem;
+  transition: background var(--qb-transition-fast), color var(--qb-transition-fast);
 }
 
 .qb-dungeon-exit:hover {
-  background: var(--background-modifier-hover);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 
 /* Dungeon Content */

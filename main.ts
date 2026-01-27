@@ -5,7 +5,7 @@
  * All business logic lives in services, components, and stores.
  */
 
-import { Plugin, WorkspaceLeaf, SuggestModal, App } from 'obsidian';
+import { Plugin, WorkspaceLeaf } from 'obsidian';
 import { QuestBoardSettings, DEFAULT_SETTINGS, QuestBoardSettingTab } from './src/settings';
 import {
     QUEST_BOARD_VIEW_TYPE,
@@ -18,7 +18,8 @@ import {
     DungeonItemView
 } from './src/views';
 import { useDungeonStore } from './src/store/dungeonStore';
-import { getAllDungeonTemplates } from './src/data/dungeonTemplates';
+import { getAllDungeonTemplates, registerUserDungeons, clearUserDungeons, getRandomDungeon } from './src/data/dungeonTemplates';
+import { loadUserDungeons, createDungeonTemplateDoc } from './src/services/UserDungeonLoader';
 import type { DungeonTemplate } from './src/models/Dungeon';
 import { CreateQuestModal } from './src/modals/CreateQuestModal';
 import { ApplicationGauntletModal, InterviewArenaModal } from './src/modals/JobHuntModal';
@@ -43,43 +44,11 @@ import { monsterService, createRandomMonster } from './src/services/MonsterServi
 import { battleService, setSaveCallback as setBattleSaveCallback } from './src/services/BattleService';
 import { startRecoveryTimerCheck, stopRecoveryTimerCheck } from './src/services/RecoveryTimerService';
 import { showEliteEncounterModal } from './src/modals/EliteEncounterModal';
+import { showDungeonSelectionModal } from './src/modals/DungeonSelectionModal';
 import { ELITE_LEVEL_UNLOCK, ELITE_OVERWORLD_CHANCE, ELITE_NAME_PREFIXES } from './src/config/combatConfig';
 import { GearSlot } from './src/models/Gear';
 
-/**
- * Quick select modal for choosing a dungeon template.
- */
-class DungeonSelectModal extends SuggestModal<DungeonTemplate> {
-    private templates: DungeonTemplate[];
-    private onSelect: (template: DungeonTemplate) => void;
 
-    constructor(app: App, templates: DungeonTemplate[], onSelect: (template: DungeonTemplate) => void) {
-        super(app);
-        this.templates = templates;
-        this.onSelect = onSelect;
-        this.setPlaceholder('Select a dungeon...');
-    }
-
-    getSuggestions(query: string): DungeonTemplate[] {
-        const search = query.toLowerCase();
-        return this.templates.filter(t =>
-            t.name.toLowerCase().includes(search) ||
-            t.description.toLowerCase().includes(search)
-        );
-    }
-
-    renderSuggestion(template: DungeonTemplate, el: HTMLElement): void {
-        el.createEl('div', { text: template.name, cls: 'suggestion-title' });
-        el.createEl('small', {
-            text: `${template.description} (${template.baseDifficulty})`,
-            cls: 'suggestion-description'
-        });
-    }
-
-    onChooseSuggestion(template: DungeonTemplate): void {
-        this.onSelect(template);
-    }
-}
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
@@ -131,7 +100,19 @@ export default class QuestBoardPlugin extends Plugin {
         });
 
         // Sync cache with current folders after vault is ready (remove deleted folder entries)
-        setTimeout(() => {
+        setTimeout(async () => {
+            // Load user dungeons from configured folder
+            const dungeonFolder = this.settings.userDungeonFolder || 'Life/Quest Board/dungeons';
+            clearUserDungeons(); // Clear any previous user dungeons
+            const { templates, errors, warnings } = await loadUserDungeons(this.app.vault, dungeonFolder);
+            if (templates.length > 0) {
+                registerUserDungeons(templates);
+            }
+            if (errors.length > 0) {
+                console.warn('[QuestBoard] User dungeon load errors:', errors);
+            }
+
+            // Sync set bonus cache
             setBonusService.syncWithFolders();
         }, 2500); // Slightly after recurring quest processing
 
@@ -492,10 +473,8 @@ export default class QuestBoardPlugin extends Plugin {
                 }
 
                 // Show dungeon selection modal
-                const templates = getAllDungeonTemplates();
-                new DungeonSelectModal(
+                showDungeonSelectionModal(
                     this.app,
-                    templates,
                     (template) => {
                         const success = useDungeonStore.getState().enterDungeon(template.id, character.level, true);
                         if (success) {
@@ -503,8 +482,9 @@ export default class QuestBoardPlugin extends Plugin {
                         } else {
                             new (require('obsidian').Notice)('❌ Failed to load dungeon', 2000);
                         }
-                    }
-                ).open();
+                    },
+                    false // Include test cave for dev command
+                );
             },
         });
 
