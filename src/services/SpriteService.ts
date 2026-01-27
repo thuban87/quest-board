@@ -27,14 +27,6 @@ export const MONSTER_BATTLE_DIRECTION: SpriteDirection = 'south-west';
 const EXTENSIONS = ['gif', 'png', 'jpg', 'jpeg'] as const;
 
 /**
- * Convert monster ID (underscore format) to folder name (hyphen format)
- * e.g., 'cave_troll' -> 'cave-troll'
- */
-function toFolderName(id: string): string {
-    return id.replace(/_/g, '-');
-}
-
-/**
  * Get the base sprite directory path
  */
 function getBasePath(manifestDir: string): string {
@@ -97,6 +89,9 @@ export function getPlayerBattleSprite(
 /**
  * Get the path to an animated monster sprite (GIF)
  * Used for: Bounty modal, monster lexicon
+ * 
+ * Note: Monster IDs use kebab-case (e.g., 'cave-troll') which matches
+ * both folder names and filenames directly.
  */
 export function getMonsterGifPath(
     manifestDir: string,
@@ -104,15 +99,17 @@ export function getMonsterGifPath(
     monsterId: string
 ): string {
     const basePath = getBasePath(manifestDir);
-    const folderName = toFolderName(monsterId);  // cave-troll
-    // Filename uses original monsterId with underscores (cave_troll.gif)
-    const filePath = `${basePath}/monsters/${folderName}/${monsterId}.gif`;
+    // IDs now match folder names and filenames directly (kebab-case)
+    const filePath = `${basePath}/monsters/${monsterId}/${monsterId}.gif`;
     return adapter.getResourcePath(filePath);
 }
 
 /**
  * Get the path to a static monster sprite (PNG)
  * Used for: Battle view (south-west), other directional displays
+ * 
+ * Note: Monster IDs use kebab-case (e.g., 'cave-troll') which matches
+ * both folder names and filenames directly.
  */
 export function getMonsterSpritePath(
     manifestDir: string,
@@ -121,9 +118,8 @@ export function getMonsterSpritePath(
     direction: SpriteDirection = MONSTER_BATTLE_DIRECTION
 ): string {
     const basePath = getBasePath(manifestDir);
-    const folderName = toFolderName(monsterId);  // cave-troll
-    // Filename uses original monsterId with underscores (cave_troll_south-west.png)
-    const filePath = `${basePath}/monsters/${folderName}/${monsterId}_${direction}.png`;
+    // IDs now match folder names and filenames directly (kebab-case)
+    const filePath = `${basePath}/monsters/${monsterId}/${monsterId}_${direction}.png`;
     return adapter.getResourcePath(filePath);
 }
 
@@ -148,12 +144,9 @@ export function getMonsterFallbackSprite(
     monsterId: string
 ): string {
     const basePath = getBasePath(manifestDir);
-    const folderName = toFolderName(monsterId);
 
     // Try south-west first (battle), then south (fallback for mimic-like monsters)
-    // Filename uses original monsterId with underscores
-    const primaryPath = `${basePath}/monsters/${folderName}/${monsterId}_south-west.png`;
-    const fallbackPath = `${basePath}/monsters/${folderName}/${monsterId}_south.png`;
+    const primaryPath = `${basePath}/monsters/${monsterId}/${monsterId}_south-west.png`;
 
     // Note: We can't actually check file existence synchronously in Obsidian
     // So we return primary and let the img element's onError handle fallback

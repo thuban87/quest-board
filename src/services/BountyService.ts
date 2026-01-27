@@ -45,13 +45,13 @@ const DESCRIPTIONS_PER_FOLDER = 5;
 const HINT_TO_MONSTERS: Record<string, string[]> = {
     // Categories
     goblins: ['goblin', 'hobgoblin', 'bugbear'],
-    beasts: ['wolf', 'bear', 'giant_rat'],
+    beasts: ['wolf', 'bear', 'giant-rat'],
     undead: ['skeleton', 'zombie', 'ghost'],
-    trolls: ['cave_troll', 'river_troll'],
-    night_elves: ['shadow_elf', 'dark_ranger'],
-    dwarves: ['rogue_dwarf', 'berserker'],
+    trolls: ['cave-troll', 'river-troll'],
+    night_elves: ['shadow-elf', 'dark-ranger'],
+    dwarves: ['rogue-dwarf', 'berserker'],
     dragonkin: ['drake', 'wyvern'],
-    aberrations: ['mimic', 'eye_beast'],
+    aberrations: ['mimic', 'eye-beast'],
 
     // Specific monsters (for direct hints)
     goblin: ['goblin'],
@@ -59,20 +59,20 @@ const HINT_TO_MONSTERS: Record<string, string[]> = {
     bugbear: ['bugbear'],
     wolf: ['wolf'],
     bear: ['bear'],
-    giant_rat: ['giant_rat'],
+    'giant-rat': ['giant-rat'],
     skeleton: ['skeleton'],
     zombie: ['zombie'],
     ghost: ['ghost'],
-    cave_troll: ['cave_troll'],
-    river_troll: ['river_troll'],
-    shadow_elf: ['shadow_elf'],
-    dark_ranger: ['dark_ranger'],
-    rogue_dwarf: ['rogue_dwarf'],
+    'cave-troll': ['cave-troll'],
+    'river-troll': ['river-troll'],
+    'shadow-elf': ['shadow-elf'],
+    'dark-ranger': ['dark-ranger'],
+    'rogue-dwarf': ['rogue-dwarf'],
     berserker: ['berserker'],
     drake: ['drake'],
     wyvern: ['wyvern'],
     mimic: ['mimic'],
-    eye_beast: ['eye_beast'],
+    'eye-beast': ['eye-beast'],
 };
 
 // =====================
@@ -88,12 +88,12 @@ const BOUNTY_TEMPLATES: Record<string, BountyTemplate[]> = {
     // Kitchen / Cooking themed
     kitchen: [
         { description: "Goblins are raiding the pantry! Can you stop them?", monsterHint: "goblins" },
-        { description: "Giant rats have infested the kitchen stores...", monsterHint: "giant_rat" },
+        { description: "Giant rats have infested the kitchen stores...", monsterHint: "giant-rat" },
         { description: "Something's been stealing food from the larder. It has claws.", monsterHint: "beasts" },
     ],
     cooking: [
         { description: "A mischievous goblin has made off with the spice rack!", monsterHint: "goblin" },
-        { description: "Dire rats are attracted to the smell of fresh bread.", monsterHint: "giant_rat" },
+        { description: "Dire rats are attracted to the smell of fresh bread.", monsterHint: "giant-rat" },
     ],
     food: [
         { description: "The royal cooks are having problems with monsters stealing food. Can you help?", monsterHint: "goblins" },
@@ -118,7 +118,7 @@ const BOUNTY_TEMPLATES: Record<string, BountyTemplate[]> = {
     // Fitness / Health themed
     fitness: [
         { description: "A bear has claimed your workout space! Challenge it!", monsterHint: "bear" },
-        { description: "Your gains have awakened a cave troll from its slumber.", monsterHint: "cave_troll" },
+        { description: "Your gains have awakened a cave troll from its slumber.", monsterHint: "cave-troll" },
         { description: "The gym guardian challenges your dedication. Will you accept?", monsterHint: "trolls" },
     ],
     gym: [
@@ -137,7 +137,7 @@ const BOUNTY_TEMPLATES: Record<string, BountyTemplate[]> = {
     // Study / Learning themed
     study: [
         { description: "Dusty tomes have awakened skeletal guardians!", monsterHint: "skeleton" },
-        { description: "An eye beast lurks between the bookshelves...", monsterHint: "eye_beast" },
+        { description: "An eye beast lurks between the bookshelves...", monsterHint: "eye-beast" },
         { description: "Knowledge seekers disturbed an ancient ghost.", monsterHint: "ghost" },
     ],
     learn: [
@@ -161,8 +161,8 @@ const BOUNTY_TEMPLATES: Record<string, BountyTemplate[]> = {
     // Home / Chores themed
     home: [
         { description: "House goblins have made a mess of your living room!", monsterHint: "goblins" },
-        { description: "Dust bunnies have evolved into something... larger.", monsterHint: "giant_rat" },
-        { description: "The basement has been claimed by cave-dwelling trolls!", monsterHint: "cave_troll" },
+        { description: "Dust bunnies have evolved into something... larger.", monsterHint: "giant-rat" },
+        { description: "The basement has been claimed by cave-dwelling trolls!", monsterHint: "cave-troll" },
     ],
     cleaning: [
         { description: "The dirt you're cleaning has taken sentient form!", monsterHint: "aberrations" },
@@ -175,7 +175,7 @@ const BOUNTY_TEMPLATES: Record<string, BountyTemplate[]> = {
 
     // Creative / Art themed
     creative: [
-        { description: "A shadow elf critic has harsh words for your work!", monsterHint: "shadow_elf" },
+        { description: "A shadow elf critic has harsh words for your work!", monsterHint: "shadow-elf" },
         { description: "Your muse has been stolen by mischievous goblins.", monsterHint: "goblins" },
     ],
     art: [
@@ -183,7 +183,7 @@ const BOUNTY_TEMPLATES: Record<string, BountyTemplate[]> = {
         { description: "Jealous spirits haunt your studio.", monsterHint: "ghost" },
     ],
     music: [
-        { description: "Your melody disturbed a slumbering cave troll!", monsterHint: "cave_troll" },
+        { description: "Your melody disturbed a slumbering cave troll!", monsterHint: "cave-troll" },
         { description: "Off-key goblins demand a performance.", monsterHint: "goblins" },
     ],
 
@@ -197,7 +197,7 @@ const BOUNTY_TEMPLATES: Record<string, BountyTemplate[]> = {
         { description: "Demolition awakened a territorial troll.", monsterHint: "trolls" },
     ],
     diy: [
-        { description: "Your DIY project attracted curious (hungry) giant rats.", monsterHint: "giant_rat" },
+        { description: "Your DIY project attracted curious (hungry) giant rats.", monsterHint: "giant-rat" },
         { description: "The instruction manual was actually a mimic!", monsterHint: "mimic" },
     ],
 
@@ -213,7 +213,7 @@ const BOUNTY_TEMPLATES: Record<string, BountyTemplate[]> = {
 
     // Social / Relationships themed
     social: [
-        { description: "Social anxiety has manifested as a shadow creature!", monsterHint: "shadow_elf" },
+        { description: "Social anxiety has manifested as a shadow creature!", monsterHint: "shadow-elf" },
         { description: "Party crashers—literal goblins—have arrived.", monsterHint: "goblins" },
     ],
 

@@ -9,6 +9,7 @@ import { App, Modal, Notice } from 'obsidian';
 import type { Monster } from '../models/Monster';
 import { useCharacterStore } from '../store/characterStore';
 import { battleService } from '../services/BattleService';
+import { getMonsterGifPath } from '../services/SpriteService';
 
 // =====================
 // MODAL OPTIONS
@@ -23,6 +24,8 @@ export interface EliteEncounterModalOptions {
     onSave?: () => Promise<void>;
     /** Callback to open battle view after battle starts */
     onBattleStart?: () => void;
+    /** Plugin manifest directory for sprite resolution */
+    manifestDir?: string;
 }
 
 // =====================
@@ -75,7 +78,29 @@ export class EliteEncounterModal extends Modal {
         monsterPreview.addClass('elite'); // For CSS glow animation
 
         const monsterIcon = monsterPreview.createDiv('qb-elite-monster-icon');
-        monsterIcon.textContent = this.monster.emoji;
+
+        // Try to show monster sprite, fallback to emoji
+        if (this.options.manifestDir && this.monster.templateId) {
+            const spritePath = getMonsterGifPath(
+                this.options.manifestDir,
+                this.app.vault.adapter,
+                this.monster.templateId
+            );
+            const img = monsterIcon.createEl('img', {
+                attr: {
+                    src: spritePath,
+                    alt: this.monster.name,
+                },
+                cls: 'qb-monster-sprite-img',
+            });
+            // Fallback to emoji on error
+            img.onerror = () => {
+                img.remove();
+                monsterIcon.textContent = this.monster.emoji;
+            };
+        } else {
+            monsterIcon.textContent = this.monster.emoji;
+        }
 
         const monsterInfo = monsterPreview.createDiv('qb-elite-monster-info');
 

@@ -560,7 +560,7 @@ monsters:
 Use these IDs in your \`pool\` arrays:
 
 ### Beasts 🐺
-- \`wolf\`, \`bear\`, \`giant_rat\`
+- \`wolf\`, \`bear\`, \`giant-rat\`
 
 ### Undead 💀
 - \`skeleton\`, \`zombie\`, \`ghost\`
@@ -569,19 +569,19 @@ Use these IDs in your \`pool\` arrays:
 - \`goblin\`, \`hobgoblin\`, \`bugbear\`
 
 ### Trolls 🧌
-- \`cave_troll\`, \`river_troll\`
+- \`cave-troll\`, \`river-troll\`
 
 ### Night Elves 🧝
-- \`shadow_elf\`, \`dark_ranger\`
+- \`shadow-elf\`, \`dark-ranger\`
 
 ### Dwarves ⛏️
-- \`rogue_dwarf\`, \`berserker\`
+- \`rogue-dwarf\`, \`berserker\`
 
 ### Dragonkin 🐉
 - \`drake\`, \`wyvern\`
 
 ### Aberrations 👁️
-- \`mimic\`, \`eye_beast\`
+- \`mimic\`, \`eye-beast\`
 
 ---
 

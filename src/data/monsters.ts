@@ -60,7 +60,7 @@ const bear: MonsterTemplate = {
 };
 
 const giantRat: MonsterTemplate = {
-    id: 'giant_rat',
+    id: 'giant-rat',
     name: 'Giant Rat',
     description: 'A disease-ridden rodent of unusual size.',
     category: 'beasts',
@@ -219,7 +219,7 @@ const bugbear: MonsterTemplate = {
 // =====================
 
 const caveTroll: MonsterTemplate = {
-    id: 'cave_troll',
+    id: 'cave-troll',
     name: 'Cave Troll',
     description: 'A massive troll lurking in dark caverns.',
     category: 'trolls',
@@ -240,7 +240,7 @@ const caveTroll: MonsterTemplate = {
 };
 
 const riverTroll: MonsterTemplate = {
-    id: 'river_troll',
+    id: 'river-troll',
     name: 'River Troll',
     description: 'A swamp-dwelling troll with slippery skin.',
     category: 'trolls',
@@ -265,7 +265,7 @@ const riverTroll: MonsterTemplate = {
 // =====================
 
 const shadowElf: MonsterTemplate = {
-    id: 'shadow_elf',
+    id: 'shadow-elf',
     name: 'Shadow Elf',
     description: 'A dark elf warrior cloaked in shadow.',
     category: 'night_elves',
@@ -286,7 +286,7 @@ const shadowElf: MonsterTemplate = {
 };
 
 const darkRanger: MonsterTemplate = {
-    id: 'dark_ranger',
+    id: 'dark-ranger',
     name: 'Dark Ranger',
     description: 'An undead archer serving the shadows.',
     category: 'night_elves',
@@ -311,7 +311,7 @@ const darkRanger: MonsterTemplate = {
 // =====================
 
 const rogueDwarf: MonsterTemplate = {
-    id: 'rogue_dwarf',
+    id: 'rogue-dwarf',
     name: 'Rogue Dwarf',
     description: 'A bandit dwarf exiled from his clan.',
     category: 'dwarves',
@@ -425,7 +425,7 @@ const mimic: MonsterTemplate = {
 };
 
 const eyeBeast: MonsterTemplate = {
-    id: 'eye_beast',
+    id: 'eye-beast',
     name: 'Eye Beast',
     description: 'A floating orb of eyes and madness.',
     category: 'aberrations',

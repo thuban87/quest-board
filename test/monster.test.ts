@@ -130,8 +130,8 @@ describe('Prefix System', () => {
         const samples = 20;
 
         for (let i = 0; i < samples; i++) {
-            const normal = createMonster('cave_troll', 20, 'overworld', { forcePrefix: 'none' });
-            const ancient = createMonster('cave_troll', 20, 'overworld', { forcePrefix: 'ancient' });
+            const normal = createMonster('cave-troll', 20, 'overworld', { forcePrefix: 'none' });
+            const ancient = createMonster('cave-troll', 20, 'overworld', { forcePrefix: 'ancient' });
             normalHPSum += normal!.maxHP;
             ancientHPSum += ancient!.maxHP;
             normalAtkSum += normal!.attack;
@@ -146,7 +146,7 @@ describe('Prefix System', () => {
         expect(ancientXPSum / samples).toBeGreaterThan(normalXPSum / samples);
 
         // Single instance check for name and prefix
-        const ancient = createMonster('cave_troll', 20, 'overworld', { forcePrefix: 'ancient' });
+        const ancient = createMonster('cave-troll', 20, 'overworld', { forcePrefix: 'ancient' });
         expect(ancient!.name).toContain('Ancient');
         expect(ancient!.prefix).toBe('ancient');
     });

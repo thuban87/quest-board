@@ -1336,14 +1336,68 @@ Key files to reference:
 - ✅ Chests no longer block room exits
 
 **Design Notes:**
-- Current convention: Monster IDs use underscores (`rogue_dwarf`), sprite folders use hyphens (`rogue-dwarf/`), filenames use underscores (`rogue_dwarf.gif`)
-- `SpriteService.toFolderName()` handles the underscore→hyphen conversion for folder paths
-- This mixed convention should be unified to all-kebab in a future session (see: `Kebab Case Migration Scope.md`)
+- ✅ **Convention unified** - All monster IDs, sprite folders, and filenames now use kebab-case
+- `SpriteService` no longer needs `toFolderName()` conversion - IDs directly match paths
 
 **Next Steps:**
-- Standardize all monster IDs and sprite files to kebab-case (separate session)
+- ~~Standardize all monster IDs and sprite files to kebab-case (separate session)~~ ✅ Done (see below)
 - Continue with Step 13: Dungeon Selection UI
 - Add more dungeon templates
+
+---
+
+## 2026-01-27 - Kebab Case Migration
+
+**Focus:** Standardizing all monster identifiers to kebab-case format to resolve sprite loading issues
+
+**Completed:**
+- ✅ **Sprite File Renaming** - Renamed 54 sprite files from underscore to kebab-case
+  - PowerShell bulk rename: `cave_troll.gif` → `cave-troll.gif`, etc.
+  - Created `giant-rat/` folder with 9 placeholder files
+- ✅ **SpriteService.ts Refactor** - Removed `toFolderName()` workaround
+  - Monster IDs now directly match folder and file names
+  - Simplified path resolution: `{monsterId}/{monsterId}.gif`
+- ✅ **monsters.ts Updates** - Changed 7 monster IDs to kebab-case
+  - `giant_rat` → `giant-rat`
+  - `cave_troll` → `cave-troll`
+  - `river_troll` → `river-troll`
+  - `shadow_elf` → `shadow-elf`
+  - `dark_ranger` → `dark-ranger`
+  - `rogue_dwarf` → `rogue-dwarf`
+  - `eye_beast` → `eye-beast`
+- ✅ **dungeonTemplates.ts Updates** - Updated 24 monster pool references
+- ✅ **BountyService.ts Updates** - Updated `HINT_TO_MONSTERS` mapping (with quoted keys)
+- ✅ **UserDungeonLoader.ts Updates** - Updated documentation strings
+- ✅ **EliteEncounterModal.ts Sprite Support** - Added sprite loading logic (was emoji-only)
+  - Added `manifestDir` option, `getMonsterGifPath` call, emoji fallback on error
+  - Updated `main.ts` to pass `manifestDir` when showing modal
+- ✅ **Unit Tests** - Updated `test/monster.test.ts` to use kebab-case IDs
+
+**Files Changed:**
+- `src/services/SpriteService.ts` - Removed `toFolderName()`, direct ID usage
+- `src/data/monsters.ts` - 7 monster ID updates
+- `src/data/dungeonTemplates.ts` - 24 monster pool updates
+- `src/services/BountyService.ts` - HINT_TO_MONSTERS mapping updates
+- `src/services/UserDungeonLoader.ts` - Documentation string updates
+- `src/modals/EliteEncounterModal.ts` - Added sprite support
+- `main.ts` - Added `manifestDir` to elite modal call
+- `test/monster.test.ts` - Updated test IDs
+- `assets/sprites/monsters/*/` - 54 files renamed
+
+**Testing Notes:**
+- ✅ All dungeons load and display monster sprites correctly
+- ✅ Bounty preview shows sprites (after cache clears)
+- ✅ Elite monsters in bounties show sprites
+- ⚠️ Elite warning modal for random battles may show emoji for cached pre-migration monsters (cache issue)
+- ✅ Build passes, deployed to test vault
+
+**Known Issues:**
+- `giant-rat/` folder has placeholder files - need real sprites
+
+**Convention Established:**
+- Monster IDs: kebab-case (`shadow-elf`)
+- Sprite folders: kebab-case (`shadow-elf/`)
+- Sprite files: kebab-case with direction suffix (`shadow-elf_south-west.png`)
 
 ---
 
