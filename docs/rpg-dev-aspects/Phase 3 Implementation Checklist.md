@@ -1,6 +1,6 @@
 # Phase 3 Implementation Checklist
 
-> **Status:** ⚡ Phase 3C In Progress (Steps 1-11 ✅, Step 12-13 Remaining)  
+> **Status:** ⚡ Phase 3C In Progress (Steps 1-11 ✅, Step 14 ✅, Steps 12-13/15-17 Remaining)  
 > **Estimated Time:** 17-24 days  
 > **Purpose:** Shorthand reference with links to full documentation
 
@@ -429,12 +429,19 @@ Complete these BEFORE starting any Phase 3 work:
 - [ ] Key counter display
 - [ ] Random dungeon option
 
-### Step 14: Minimap
+### Step 14: Dungeon Map ✅
 
-- [ ] 3x3 corner view
+- [x] Full map modal (rooms as colored rectangles)
   - See: [Exploration Doc → Minimap & Full Map](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Exploration%20System.md#minimap--full-map)
-- [ ] Full map modal (rooms as colored rectangles)
-- [ ] Fog of war with CSS `filter: brightness(0)`
+- [x] BFS room position calculation via `DungeonMapService`
+- [x] Connection lines between rooms (SVG overlay)
+- [x] Fog of war - only visited rooms displayed (true fog)
+- [x] Current room pulsing glow effect
+- [x] Boss room skull icon 💀
+- [x] M key toggle open/close map
+- [x] Map button in dungeon header
+- [x] Exploration history persistence per dungeon (saved to character data)
+- [x] *(Minimap scrapped - mobile responsiveness issues)*
 
 ### Step 15: Additional Dungeons ✅
 

@@ -20,8 +20,9 @@ import { getMonsterGifPath } from '../services/SpriteService';
 import { BattleView } from './BattleView';
 import { DungeonDeathModal, calculateRescueCost } from '../modals/DungeonDeathModal';
 import { InventoryModal } from '../modals/InventoryModal';
+import { DungeonMapModal } from '../modals/DungeonMapModal';
 import { useUIStore } from '../store/uiStore';
-import type { Direction, RoomTemplate, TileSet } from '../models/Dungeon';
+import type { Direction, RoomTemplate, TileSet, DungeonTemplate } from '../models/Dungeon';
 import type { LootDrop } from '../models/Gear';
 
 // =====================
@@ -33,6 +34,7 @@ interface DungeonViewProps {
     adapter: DataAdapter;
     app: App;
     onClose: () => void;
+    onSave?: () => void;
 }
 
 // =====================
@@ -292,6 +294,7 @@ interface DungeonHeaderProps {
     onExit: () => void;
     onAvatarClick: () => void;
     onInventoryClick: () => void;
+    onMapClick: () => void;
     currentHP: number;
     maxHP: number;
     currentMana: number;
@@ -313,6 +316,7 @@ function DungeonHeader({
     onExit,
     onAvatarClick,
     onInventoryClick,
+    onMapClick,
     currentHP,
     maxHP,
     currentMana,
@@ -382,6 +386,13 @@ function DungeonHeader({
 
             {/* Right: Actions */}
             <div className="qb-dungeon-header-right">
+                <button
+                    className="qb-map-button"
+                    onClick={onMapClick}
+                    title="Open Map (M)"
+                >
+                    🗺️ Map
+                </button>
                 <button
                     className="qb-dungeon-inventory-btn"
                     onClick={onInventoryClick}
@@ -599,7 +610,7 @@ interface TransitionState {
     phase: 'exiting' | 'entering' | 'none';
 }
 
-export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, app, onClose }) => {
+export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, app, onClose, onSave }) => {
     // Container ref for keyboard focus
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -656,6 +667,21 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
         : null;
     const room = template?.rooms.find(r => r.id === currentRoomId);
     const roomState = roomStates[currentRoomId];
+
+    /**
+     * Open the full dungeon map modal.
+     */
+    const openMapModal = useCallback(() => {
+        if (!template) return;
+
+        new DungeonMapModal({
+            app,
+            template,
+            currentRoomId,
+            visitedRooms,
+            playerPosition,
+        }).open();
+    }, [app, template, currentRoomId, visitedRooms, playerPosition, dungeonTemplateId]);
 
     // Auto-focus container on mount for keyboard controls
     useEffect(() => {
@@ -1089,6 +1115,11 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                     e.preventDefault();
                     handleInteract();
                     break;
+                case 'm':
+                case 'M':
+                    e.preventDefault();
+                    openMapModal();
+                    break;
                 case 'Escape':
                     e.preventDefault();
                     // Could show exit confirmation here
@@ -1098,7 +1129,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
 
         container.addEventListener('keydown', handleKeyDown);
         return () => container.removeEventListener('keydown', handleKeyDown);
-    }, [isAnimating, handleDirectionalMove, handleInteract]);
+    }, [isAnimating, handleDirectionalMove, handleInteract, openMapModal]);
 
     // =====================
     // EXIT HANDLER
@@ -1106,8 +1137,12 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
 
     const handleExit = useCallback(() => {
         exitDungeon();
+        // Persist exploration history to disk
+        if (onSave) {
+            onSave();
+        }
         onClose();
-    }, [exitDungeon, onClose]);
+    }, [exitDungeon, onClose, onSave]);
 
     // =====================
     // COMBAT HANDLERS
@@ -1275,6 +1310,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                     // Open the proper inventory modal (same as character sheet)
                     new InventoryModal(app).open();
                 }}
+                onMapClick={openMapModal}
                 currentHP={character.currentHP ?? character.maxHP ?? 100}
                 maxHP={character.maxHP ?? 100}
                 currentMana={character.currentMana ?? character.maxMana ?? 50}

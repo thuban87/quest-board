@@ -51,6 +51,13 @@ export class DungeonItemView extends ItemView {
                     // Close the dungeon view
                     this.leaf.detach();
                 }}
+                onSave={async () => {
+                    // Save character data (including exploration history)
+                    const { useCharacterStore } = await import('../store/characterStore');
+                    this.plugin.settings.character = useCharacterStore.getState().character;
+                    this.plugin.settings.inventory = useCharacterStore.getState().inventory;
+                    await this.plugin.saveSettings();
+                }}
             />
         );
     }
