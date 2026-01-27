@@ -1167,6 +1167,85 @@ Key files to reference:
 
 ---
 
+## 2026-01-26 - Player Movement Controls (Steps 4-5) ✅
+
+**Focus:** Implement A* pathfinding, keyboard controls (WASD/arrows), click-to-move, and mobile D-pad
+
+**Completed:**
+- ✅ Created `src/utils/pathfinding.ts` with A* algorithm
+  - 500 iteration timeout with fallback single step
+  - Manhattan distance heuristic for 4-directional movement
+  - `findPath()`, `getFacingDirection()`, `getStepPosition()`, `canWalkTo()` helpers
+- ✅ Created `test/pathfinding.test.ts` with 20 unit tests
+- ✅ Updated `DungeonView.tsx` with full movement controls:
+  - Click-to-move with animated path (200ms per tile)
+  - Door clicks pathfind to door first, then transition
+  - WASD + Arrow keys for single-step movement
+  - E/Enter key for interact (placeholder Notice)
+  - 180ms cooldown for WASD spam prevention
+  - Auto-focus on mount with `tabIndex={0}`
+- ✅ Created mobile D-pad controls (moved from Step 16):
+  - Centered at `bottom: 80px`, 56px buttons
+  - `onTouchStart` for immediate response (no 300ms delay)
+  - Interact button in center
+- ✅ Fixed mobile tile sizing (40px) for better visibility (~9-10 tiles width)
+- ✅ Fixed wall clipping bug (walkability check before movement)
+
+**Files Created:**
+- `src/utils/pathfinding.ts` - A* pathfinding algorithm
+- `test/pathfinding.test.ts` - 20 unit tests for pathfinding
+
+**Files Changed:**
+- `src/components/DungeonView.tsx` - Added DpadControls, keyboard handlers, animated pathfinding
+- `styles.css` - Added D-pad CSS, updated mobile responsive tiles (40px)
+
+**Testing Notes:**
+- ✅ 20 pathfinding tests passing
+- ✅ Click-to-move animates through path smoothly
+- ✅ Doors work via click (run to door) and WASD (step through)
+- ✅ WASD movement feels controlled (not too fast)
+- ✅ Mobile D-pad positioned above Obsidian nav bar
+- ✅ Mobile tiles fit better on screen
+- ✅ No more wall clipping on mobile
+
+**Next Steps:**
+- Step 6: Room transitions (already partially working via doors)
+- Step 7: Fog of war / visibility
+- Step 8: Minimap
+- Step 9: Monster spawn points
+
+---
+
+## 2026-01-26 - Phase 3C Steps 6-9 Complete (Transitions, Dungeon, Chests)
+
+**Focus:** Room transitions, Forest Ruins dungeon, room state tracking, and chest loot interaction
+
+**Completed:**
+- ✅ **Step 6: Room Transitions** - Zelda-style screen slide (200ms), CSS keyframes for 4 directions, input blocking during animation
+- ✅ **Step 7: Forest Ruins Dungeon** - 8-room meandering layout with E/W doors, treasure branches, boss lair
+- ✅ **Step 8: Room State Tracking** - `chestsOpened`/`monstersKilled` per room, visual feedback for opened chests
+- ✅ **Step 9: Chest Interaction** - Immediate loot award via `LootGenerationService.generateChestLoot()`, open sprite display
+- ✅ **Bug Fixes** - Chest sprite path, south_combat room layout width consistency
+
+**Files Changed:**
+- `main.ts` - DungeonSelectModal, dungeon selection in preview command
+- `src/components/DungeonView.tsx` - Transition state, handleInteract with loot awarding
+- `src/data/dungeonTemplates.ts` - Added FOREST_RUINS template (8 rooms)
+- `src/data/TileRegistry.ts` - Added openSprite property, getChestSpritePath()
+- `styles.css` - Room transition CSS animations
+- `assets/environment/_interactive/` - Renamed chest sprites
+
+**Testing Notes:**
+- ✅ Dungeon selector, room transitions, chest loot, room state persistence all verified
+
+**Next Steps:**
+- Step 10: Monster combat integration
+- Step 11: Death handling
+- Step 12: Portal exit & rewards
+
+---
+
+
 *Template for future entries:*
 
 ```markdown

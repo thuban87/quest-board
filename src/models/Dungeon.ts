@@ -51,6 +51,7 @@ export interface TileDefinition {
     sprite: string | null;     // Path relative to assets/environment/
     emoji: string;             // Fallback display
     isOverlay?: boolean;       // If true, renders on top of floor tile
+    openSprite?: string;       // Alternate sprite for opened state (chests)
 }
 
 /**
