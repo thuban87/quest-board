@@ -1,0 +1,38 @@
+﻿/* Quest Board - Global Styles */
+
+/* ===========================================
+   CSS Variables (Theme-aware)
+   =========================================== */
+:root {
+  /* Class Colors */
+  --qb-warrior-color: #dc3545;
+  --qb-paladin-color: #ffc107;
+  --qb-technomancer-color: #28a745;
+  --qb-scholar-color: #6f42c1;
+  --qb-rogue-color: #343a40;
+  --qb-cleric-color: #17a2b8;
+  --qb-bard-color: #e83e8c;
+
+  /* UI Colors */
+  --qb-card-bg: var(--background-secondary);
+  --qb-card-border: var(--background-modifier-border);
+  --qb-card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --qb-xp-bar-bg: var(--background-modifier-border);
+  --qb-xp-bar-fill: var(--interactive-accent);
+
+  /* Spacing */
+  --qb-spacing-xs: 4px;
+  --qb-spacing-sm: 8px;
+  --qb-spacing-md: 16px;
+  --qb-spacing-lg: 24px;
+  --qb-spacing-xl: 32px;
+
+  /* Border Radius */
+  --qb-radius-sm: 4px;
+  --qb-radius-md: 8px;
+  --qb-radius-lg: 12px;
+
+  /* Transitions */
+  --qb-transition-fast: 150ms ease;
+  --qb-transition-normal: 250ms ease;
+}

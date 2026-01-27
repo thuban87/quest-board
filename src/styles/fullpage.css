@@ -1,0 +1,805 @@
+﻿/* ===========================================
+   Full-Page Kanban View
+   =========================================== */
+.qb-fullpage-container {
+  height: 100%;
+  overflow: auto;
+}
+
+.qb-fullpage-board {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--qb-spacing-md);
+  background: var(--background-primary);
+}
+
+.qb-fullpage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--qb-spacing-md);
+  margin-bottom: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.qb-fp-header-left h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.qb-fp-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+}
+
+.qb-fp-class {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.qb-fp-level {
+  font-weight: bold;
+  padding: 4px 10px;
+  background: var(--background-primary-alt);
+  border-radius: var(--qb-radius-sm);
+}
+
+.qb-fp-xp-bar {
+  width: 150px;
+  height: 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.qb-fp-xp-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.qb-fp-xp-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.qb-fullpage-columns {
+  display: flex;
+  gap: var(--qb-spacing-md);
+  flex: 1;
+  overflow: hidden;
+}
+
+.qb-fp-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  border: 2px solid var(--background-modifier-border);
+  overflow: hidden;
+  transition: flex 0.2s ease, min-width 0.2s ease, max-width 0.2s ease;
+}
+
+/* RPG-themed column borders */
+.qb-fp-column.qb-col-available {
+  border-color: rgba(100, 149, 237, 0.5);
+}
+
+.qb-fp-column.qb-col-active {
+  border-color: rgba(255, 193, 7, 0.5);
+}
+
+.qb-fp-column.qb-col-progress {
+  border-color: rgba(255, 152, 0, 0.5);
+}
+
+.qb-fp-column.qb-col-completed {
+  border-color: rgba(40, 167, 69, 0.5);
+}
+
+.qb-fp-column-header {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  background: var(--background-secondary-alt);
+  border-bottom: 1px solid var(--background-modifier-border);
+  font-weight: 600;
+}
+
+.qb-fp-column-emoji {
+  font-size: 1.2rem;
+}
+
+.qb-fp-column-title {
+  flex: 1;
+}
+
+.qb-fp-column-count {
+  background: var(--background-primary);
+  padding: 2px 8px;
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.85rem;
+}
+
+.qb-fp-column-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--qb-spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-fp-column-empty {
+  padding: var(--qb-spacing-lg);
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.qb-fullpage-empty,
+.qb-fullpage-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+}
+
+/* Collapsed Column */
+.qb-fp-column.collapsed {
+  flex: 0 0 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  cursor: pointer;
+}
+
+.qb-fp-column.collapsed .qb-fp-column-header {
+  flex-direction: column;
+  padding: var(--qb-spacing-md) var(--qb-spacing-xs);
+  height: 100%;
+  justify-content: flex-start;
+  gap: var(--qb-spacing-md);
+}
+
+.qb-fp-col-collapsed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+  height: 100%;
+}
+
+.qb-fp-col-vertical-title {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* Card Wrapper with toggle */
+.qb-fp-card-wrapper {
+  display: flex;
+  gap: var(--qb-spacing-xs);
+}
+
+.qb-fp-card-toggle {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: var(--qb-spacing-sm);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.qb-fp-card-toggle:hover {
+  color: var(--text-normal);
+}
+
+/* Collapsed Card */
+.qb-fp-card-collapsed {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.qb-fp-card-collapsed:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-fp-card-name {
+  font-weight: 500;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qb-fp-card-xp {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Make QuestCard take remaining space */
+.qb-fp-card-wrapper .qb-quest-card {
+  flex: 1;
+}
+
+/* ===========================================
+   Focused Sidebar View
+   =========================================== */
+
+/* Target the Obsidian view container directly */
+.workspace-leaf-content[data-type="quest-sidebar"] {
+  overflow: hidden !important;
+}
+
+.workspace-leaf-content[data-type="quest-sidebar"]>.view-content {
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.qb-sidebar-container {
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.qb-sidebar-quests {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0 !important;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Tab Navigation */
+.qb-sb-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-sm);
+  background: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.qb-sb-tab {
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  background: transparent;
+  border: none;
+  border-radius: var(--qb-radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.qb-sb-tab:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.qb-sb-tab.active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.qb-sb-header-xp {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+  margin-left: auto;
+  font-size: 0.85rem;
+}
+
+.qb-sb-level {
+  font-weight: 600;
+}
+
+/* Content wrapper - takes remaining space after tabs (~48px for tabs) */
+.qb-sb-content-wrapper {
+  height: calc(100% - 48px);
+  overflow: hidden;
+}
+
+.qb-sb-content {
+  height: 100%;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: var(--qb-spacing-sm);
+}
+
+/* Force visible scrollbar */
+.qb-sb-content::-webkit-scrollbar {
+  width: 8px;
+  display: block !important;
+}
+
+.qb-sb-content::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+}
+
+.qb-sb-content::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+}
+
+.qb-sb-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+.qb-sb-title {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.qb-sb-level {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+  font-size: 0.9rem;
+}
+
+.qb-sb-xp-bar {
+  width: 60px;
+  height: 6px;
+  background: var(--background-modifier-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.qb-sb-xp-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.qb-sb-section {
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-sm);
+  overflow: hidden;
+}
+
+.qb-sb-section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.qb-sb-section-header:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-sb-collapse-icon {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  width: 12px;
+}
+
+.qb-sb-section-emoji {
+  font-size: 1rem;
+}
+
+.qb-sb-section-title {
+  flex: 1;
+  font-weight: 600;
+}
+
+.qb-sb-section-count {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.qb-sb-section-content {
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm) var(--qb-spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-xs);
+}
+
+.qb-sb-empty {
+  padding: var(--qb-spacing-sm);
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.qb-sb-character-link {
+  padding: var(--qb-spacing-sm);
+}
+
+.qb-sb-char-btn {
+  width: 100%;
+  padding: var(--qb-spacing-sm);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-sm);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s ease;
+}
+
+.qb-sb-char-btn:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-sb-character-sheet {
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-sm);
+  padding: var(--qb-spacing-md);
+  margin: 0 var(--qb-spacing-sm) var(--qb-spacing-sm);
+}
+
+.qb-sb-character-sheet h4 {
+  margin: 0 0 var(--qb-spacing-xs) 0;
+}
+
+.qb-sb-char-class {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 var(--qb-spacing-sm) 0;
+}
+
+.qb-sb-char-perk {
+  font-size: 0.85rem;
+  margin-bottom: var(--qb-spacing-sm);
+}
+
+.qb-sb-char-perk p {
+  margin: var(--qb-spacing-xs) 0 0 0;
+  color: var(--text-muted);
+}
+
+.qb-sb-char-xp {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.qb-sidebar-empty,
+.qb-sidebar-loading {
+  padding: var(--qb-spacing-lg);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* ===========================================
+   Create Quest Modal
+   =========================================== */
+.qb-create-modal {
+  padding: var(--qb-spacing-md);
+}
+
+.qb-create-modal h2 {
+  margin-top: 0;
+  margin-bottom: var(--qb-spacing-md);
+  color: var(--text-normal);
+}
+
+.qb-create-modal h3 {
+  margin-top: var(--qb-spacing-lg);
+  margin-bottom: var(--qb-spacing-sm);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qb-create-modal .setting-item {
+  border-top: none;
+  padding-top: var(--qb-spacing-xs);
+}
+
+.qb-input-wide {
+  width: 100% !important;
+  min-width: 250px;
+}
+
+.qb-input-narrow {
+  width: 80px !important;
+}
+
+.qb-textarea {
+  width: 100% !important;
+  min-width: 300px;
+  resize: vertical;
+}
+
+.qb-xp-row {
+  display: flex;
+  gap: var(--qb-spacing-md);
+}
+
+.qb-xp-row .setting-item {
+  flex: 1;
+}
+
+.qb-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--qb-spacing-sm);
+  margin-top: var(--qb-spacing-lg);
+  padding-top: var(--qb-spacing-md);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.qb-modal-buttons button {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+}
+
+.qb-category-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-xs);
+}
+
+.qb-new-category-input {
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-sm);
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+/* ===========================================
+   Character Sheet Sprite & Gear Slots
+   =========================================== */
+.qb-sheet-sprite-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+}
+
+.qb-sheet-sprite {
+  width: 128px;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-secondary);
+  border: 3px solid var(--interactive-accent);
+  border-radius: var(--qb-radius-md);
+  overflow: hidden;
+}
+
+.qb-sprite-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.qb-sprite-shadow {
+  width: 80px;
+  height: 12px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.3) 0%, transparent 70%);
+  margin-top: -4px;
+}
+
+/* Gear Slots */
+.qb-sheet-gear {
+  margin-top: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+}
+
+.qb-sheet-gear h3 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 1rem;
+  color: var(--text-normal);
+}
+
+.qb-gear-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-gear-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--qb-spacing-sm);
+  background: var(--background-primary);
+  border: 2px dashed var(--background-modifier-border);
+  border-radius: var(--qb-radius-sm);
+  cursor: pointer;
+  transition: border-color var(--qb-transition-fast);
+}
+
+.qb-gear-slot:hover {
+  border-color: var(--interactive-accent);
+}
+
+.qb-gear-slot-icon {
+  font-size: 1.5rem;
+  margin-bottom: var(--qb-spacing-xs);
+}
+
+.qb-gear-slot-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.qb-gear-slot-empty {
+  font-size: 0.65rem;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.qb-sprite-placeholder {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.qb-sprite-placeholder.hidden {
+  display: none;
+}
+
+/* ==================================================
+   Level-Up Modal
+   ================================================== */
+.qb-levelup-modal {
+  text-align: center;
+  padding: var(--qb-spacing-lg);
+}
+
+.qb-levelup-emoji {
+  font-size: 4rem;
+  margin-bottom: var(--qb-spacing-md);
+  animation: qb-bounce 0.6s ease-out;
+}
+
+.qb-levelup-title {
+  font-size: 1.75rem;
+  margin: 0 0 var(--qb-spacing-md) 0;
+  color: var(--text-normal);
+}
+
+.qb-levelup-message {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin: 0 0 var(--qb-spacing-sm) 0;
+}
+
+.qb-levelup-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-faint);
+  margin: 0 0 var(--qb-spacing-lg) 0;
+}
+
+.qb-levelup-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--qb-spacing-md);
+}
+
+@keyframes qb-bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ==================================================
+   Full Page Kanban Board
+   ================================================== */
+.qb-fullpage-board {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--qb-spacing-md);
+  overflow: hidden;
+}
+
+.qb-fullpage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--qb-spacing-md);
+  flex-shrink: 0;
+}
+
+/* ==================================================
+   Full Page Kanban Columns
+   ================================================== */
+.qb-fullpage-columns {
+  display: flex;
+  gap: var(--qb-spacing-md);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.qb-fp-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-lg);
+  min-width: 200px;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* DnD droppable wrapper inside column - exclude header */
+.qb-fp-column>div:not(.qb-fp-column-header) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.qb-fp-column.collapsed {
+  flex: 0;
+  min-width: 50px;
+  max-width: 50px;
+}
+
+.qb-fp-column-header {
+  padding: var(--qb-spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  cursor: pointer;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.qb-fp-toggle-all {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--qb-radius-sm);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+.qb-fp-toggle-all:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.qb-fp-column-header:hover {
+  background: var(--background-modifier-hover);
+}

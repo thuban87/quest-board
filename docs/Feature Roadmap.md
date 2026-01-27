@@ -362,4 +362,4 @@ enemies.json           - Monster stats, boss definitions, loot tables
 
 ---
 
-**Last Updated:** 2026-01-26
+**Last Updated:** 2026-01-27

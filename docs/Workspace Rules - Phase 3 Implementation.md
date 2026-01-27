@@ -178,6 +178,7 @@ function Icon({ spriteId, emoji }: { spriteId?: string; emoji: string }) {
 
 | Type | Location |
 |------|----------|
+| **CSS modules** | `src/styles/*.css` |
 | Gear models | `src/models/Gear.ts` |
 | Combat models | `src/models/Combat.ts` |
 | Dungeon models | `src/models/Dungeon.ts` |
@@ -190,6 +191,20 @@ function Icon({ spriteId, emoji }: { spriteId?: string; emoji: string }) {
 | Monsters | `src/data/monsters.ts` |
 | Dungeons | `src/data/dungeons.ts` |
 | Unit tests | `src/**/__tests__/*.test.ts` |
+
+> ⚠️ **CSS IMPORTANT:** The root `styles.css` is GENERATED. Edit files in `src/styles/` instead!
+
+### CSS Module Reference
+
+| When adding... | Edit this file |
+|----------------|----------------|
+| Modal styles | `src/styles/modals.css` |
+| Combat/battle styles | `src/styles/combat.css` |
+| Dungeon/exploration | `src/styles/dungeons.css` |
+| Character sheet | `src/styles/character.css` |
+| Animations | `src/styles/animations.css` |
+| Mobile fixes | `src/styles/mobile.css` |
+| CSS variables | `src/styles/variables.css` |
 
 ---
 
@@ -236,4 +251,4 @@ At end of each session:
 
 ---
 
-*Last Updated: 2026-01-23*
+*Last Updated: 2026-01-27*

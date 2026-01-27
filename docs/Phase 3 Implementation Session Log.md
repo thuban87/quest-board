@@ -1443,6 +1443,68 @@ Key files to reference:
 
 ---
 
+## 2026-01-27 - CSS Modularization Complete
+
+**Focus:** Split 8000+ line `styles.css` into 13 modular CSS files with PostCSS build pipeline
+
+**Completed:**
+- ✅ Installed PostCSS dependencies (`postcss`, `postcss-import`, `postcss-cli`)
+- ✅ Created `postcss.config.cjs` with `postcss-import` plugin
+- ✅ Created 13 CSS module files in `src/styles/`:
+
+| Module | Size | Content |
+|--------|------|---------|
+| `index.css` | Entry | Imports all modules |
+| `variables.css` | 1KB | CSS custom properties |
+| `base.css` | 6KB | Container, header, empty states |
+| `kanban.css` | 5KB | Kanban board columns/cards |
+| `character.css` | 5KB | Character sheet, gear slots |
+| `modals.css` | 5KB | Modal base styles, forms |
+| `sidebar.css` | 13KB | Sidebar view, tabs, sections |
+| `fullpage.css` | 17KB | Full-page kanban view |
+| `power-ups.css` | 23KB | Power-ups, achievements, recurring |
+| `inventory.css` | 45KB | Inventory, gear, blacksmith |
+| `combat.css` | 34KB | Combat UI, battle view, store |
+| `dungeons.css` | 27KB | Dungeon view, tiles, D-pad |
+| `animations.css` | ~0KB | Placeholder for keyframes |
+| `mobile.css` | ~0KB | Placeholder for media queries |
+
+- ✅ Added `css:build` and `css:watch` npm scripts
+- ✅ Updated `build` script to include CSS bundling step
+- ✅ Fixed 5 truncated CSS rules at file boundaries during extraction
+- ✅ Kept `all-styles.css` as backup (can be deleted after verification)
+
+**Files Created:**
+- `postcss.config.cjs` - PostCSS configuration
+- `src/styles/index.css` - CSS entry point with imports
+- `src/styles/*.css` - 13 modular CSS files
+
+**Files Changed:**
+- `package.json` - Added `css:build`, `css:watch` scripts, updated `build` script
+- `package-lock.json` - Added PostCSS dependencies
+
+**Build Commands:**
+```bash
+npm run css:build    # Build CSS bundle once
+npm run css:watch    # Watch mode for CSS changes
+npm run build        # Full build (CSS + TypeScript + esbuild)
+```
+
+**Testing Notes:**
+- ✅ Build passes with all module imports
+- ✅ Deployed to test vault successfully
+- ⏳ Manual testing pending full UI verification
+
+**Architecture Decision:**
+CSS is now modular for easier maintenance. The `src/styles/index.css` is the entry point that imports all modules. PostCSS bundles them into `styles.css` at build time. Future CSS work should go in the appropriate module file.
+
+**Next Steps:**
+- Monitor for any CSS issues in production
+- Incrementally populate `animations.css` and `mobile.css` placeholders
+- Remove `all-styles.css` backup after full verification
+
+---
+
 
 *Template for future entries:*
 

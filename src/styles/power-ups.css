@@ -1,0 +1,1105 @@
+﻿/* ===========================================
+   Power-Ups and Status CSS
+   =========================================== */
+/* Note: Some fullpage-kanban column styles included for context */
+.qb-fp-column-header:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-fp-column-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--qb-spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-fp-column-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: var(--qb-spacing-lg);
+}
+
+.qb-fp-col-collapsed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-fp-col-vertical-title {
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  font-weight: 600;
+}
+
+.qb-fp-column-emoji {
+  font-size: 1.1rem;
+}
+
+.qb-fp-column-title {
+  flex: 1;
+  font-weight: 600;
+}
+
+.qb-fp-column-count {
+  background: var(--background-modifier-border);
+  padding: 2px 8px;
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.8rem;
+}
+
+.qb-fp-card-wrapper {
+  position: relative;
+}
+
+.qb-fp-card-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  background: var(--qb-card-bg);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  cursor: pointer;
+}
+
+.qb-fp-card-collapsed:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-fp-card-name {
+  font-weight: 500;
+}
+
+.qb-fp-card-xp {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* ==================================================
+   XP Bar Styles (Header bars with smooth animation)
+   ================================================== */
+.qb-sb-xp-bar,
+.qb-fp-xp-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0 var(--qb-spacing-sm);
+}
+
+.qb-sb-xp-fill,
+.qb-fp-xp-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease-out;
+}
+
+.qb-sb-header-xp,
+.qb-fp-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-sb-level,
+.qb-fp-level {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.qb-fp-xp-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Character Sheet XP bar animation */
+.qb-xp-fill {
+  transition: width 0.5s ease-out;
+}
+
+/* ==================================================
+   Confetti Animation
+   ================================================== */
+.qb-confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.qb-confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  opacity: 0;
+  animation: qb-confetti-fall 3s ease-out forwards;
+}
+
+@keyframes qb-confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(-10px) rotate(0deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) rotate(720deg);
+  }
+}
+
+/* ==================================================
+   Quest Card Collapse Toggle
+   ================================================== */
+.qb-card-collapse-toggle {
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  opacity: 0.7;
+  transition: opacity var(--qb-transition-fast);
+}
+
+.qb-card-collapse-toggle:hover {
+  opacity: 1;
+  color: var(--text-normal);
+}
+
+/* ==================================================
+   Achievements Sidebar
+   ================================================== */
+.qb-achievements-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--qb-spacing-sm);
+}
+
+.qb-achievements-header {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-sm);
+  border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: var(--qb-spacing-sm);
+}
+
+.qb-achievements-header h2 {
+  margin: 0;
+  flex: 1;
+  font-size: 1.1rem;
+}
+
+.qb-achievements-count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  background: var(--background-secondary);
+  border-radius: 10px;
+}
+
+.qb-back-btn {
+  background: none;
+  border: 1px solid var(--background-modifier-border);
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: var(--qb-radius-sm);
+  color: var(--text-muted);
+}
+
+.qb-back-btn:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+.qb-achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--qb-spacing-sm);
+  overflow-y: auto;
+  padding: var(--qb-spacing-xs);
+}
+
+.qb-achievement-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--qb-spacing-sm);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  border: 1px solid var(--background-modifier-border);
+  text-align: center;
+  transition: transform var(--qb-transition-fast), box-shadow var(--qb-transition-fast);
+}
+
+.qb-achievement-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--qb-card-shadow);
+}
+
+.qb-achievement-card.unlocked {
+  border-color: gold;
+  background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(255, 215, 0, 0.1) 100%);
+}
+
+.qb-achievement-card.locked {
+  opacity: 0.6;
+  filter: grayscale(50%);
+}
+
+.qb-achievement-badge {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--qb-spacing-xs);
+}
+
+.qb-achievement-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qb-badge-locked {
+  filter: grayscale(100%);
+  opacity: 0.5;
+}
+
+.qb-achievement-emoji {
+  font-size: 2rem;
+}
+
+.qb-achievement-name {
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 2px;
+}
+
+.qb-achievement-desc {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.qb-unlocked-date {
+  color: gold;
+  font-style: italic;
+}
+
+.qb-achievement-progress {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.qb-achievement-progress-bar {
+  height: 4px;
+  background: var(--background-modifier-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.qb-achievement-progress-fill {
+  height: 100%;
+  background: var(--interactive-accent);
+  transition: width var(--qb-transition-normal);
+}
+
+.qb-achievement-progress-text {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.qb-achievement-xp {
+  font-size: 0.7rem;
+  color: gold;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* ==================================================
+   Achievement Unlock Modal
+   ================================================== */
+.qb-achievement-unlock-modal .modal-content {
+  text-align: center;
+  padding: var(--qb-spacing-lg);
+}
+
+.qb-unlock-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+}
+
+.qb-unlock-header {
+  color: gold;
+  font-size: 1.5rem;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.qb-unlock-badge-container {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: qb-badge-pulse 1s ease-in-out infinite;
+}
+
+@keyframes qb-badge-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.qb-unlock-badge-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qb-unlock-badge-emoji {
+  font-size: 4rem;
+}
+
+.qb-unlock-name {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.qb-unlock-desc {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.qb-unlock-xp {
+  font-size: 1.2rem;
+  color: gold;
+  font-weight: 600;
+}
+
+.qb-unlock-btn-container {
+  margin-top: var(--qb-spacing-sm);
+}
+
+.qb-unlock-btn {
+  padding: 8px 24px;
+  background: var(--interactive-accent);
+  color: white;
+  border: none;
+  border-radius: var(--qb-radius-md);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.qb-unlock-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* Clickable stat item */
+.qb-stat-item.clickable:hover {
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-sm);
+}
+
+/* ==================================================
+   Achievement Hub Modal
+   ================================================== */
+.qb-achievement-hub-modal .modal-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.qb-hub-section {
+  margin-top: var(--qb-spacing-md);
+}
+
+.qb-hub-section h3 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.qb-hub-achievements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-xs);
+}
+
+.qb-hub-empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.qb-hub-row {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-sm);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-sm);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.qb-hub-row.unlocked {
+  border-left: 3px solid gold;
+}
+
+.qb-hub-row.locked {
+  opacity: 0.7;
+}
+
+.qb-hub-emoji {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.qb-hub-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.qb-hub-info strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.qb-hub-desc {
+  margin: 2px 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.qb-hub-trigger {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.qb-hub-progress {
+  display: block;
+  color: var(--interactive-accent);
+  font-size: 0.75rem;
+}
+
+.qb-hub-xp {
+  color: gold;
+  font-weight: 500;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.qb-hub-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.qb-hub-btn {
+  background: none;
+  border: 1px solid var(--background-modifier-border);
+  padding: 4px 8px;
+  border-radius: var(--qb-radius-sm);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.qb-hub-btn:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-hub-btn-danger:hover {
+  background: rgba(255, 0, 0, 0.2);
+}
+
+/* ===========================================
+   Recurring Quests Dashboard
+   =========================================== */
+.qb-recurring-dashboard {
+  padding: var(--qb-spacing-lg);
+  min-width: 500px;
+}
+
+.qb-dashboard-header {
+  margin-bottom: var(--qb-spacing-lg);
+}
+
+.qb-dashboard-header h2 {
+  margin: 0 0 var(--qb-spacing-xs) 0;
+  font-size: 1.35rem;
+}
+
+.qb-dashboard-folder {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+}
+
+.qb-dashboard-loading {
+  text-align: center;
+  padding: var(--qb-spacing-xl);
+  color: var(--text-muted);
+}
+
+.qb-dashboard-empty {
+  text-align: center;
+  padding: var(--qb-spacing-lg);
+  color: var(--text-muted);
+}
+
+.qb-dashboard-empty code {
+  display: block;
+  margin-top: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-sm);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.85rem;
+}
+
+.qb-dashboard-hint {
+  margin-bottom: var(--qb-spacing-xs) !important;
+}
+
+.qb-dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--qb-spacing-lg);
+}
+
+.qb-dashboard-table th {
+  text-align: left;
+  padding: var(--qb-spacing-sm);
+  border-bottom: 2px solid var(--background-modifier-border);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qb-dashboard-table td {
+  padding: var(--qb-spacing-sm);
+  border-bottom: 1px solid var(--background-modifier-border);
+  vertical-align: middle;
+}
+
+.qb-template-name {
+  font-weight: 500;
+}
+
+.qb-template-name span:first-child {
+  display: block;
+}
+
+.qb-template-category {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.qb-template-schedule {
+  font-size: 0.9rem;
+}
+
+.qb-template-next {
+  font-size: 0.9rem;
+}
+
+.qb-template-next.qb-today {
+  color: var(--interactive-accent);
+  font-weight: 600;
+}
+
+.qb-status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.qb-status-generated {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.qb-status-pending {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.qb-status-not-scheduled {
+  background: var(--background-secondary);
+  color: var(--text-muted);
+}
+
+.qb-dashboard-help {
+  margin-bottom: var(--qb-spacing-lg);
+}
+
+.qb-dashboard-help summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.qb-dashboard-help summary:hover {
+  color: var(--text-normal);
+}
+
+.qb-syntax-help {
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  margin-top: var(--qb-spacing-sm);
+}
+
+.qb-syntax-help h4 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 0.9rem;
+}
+
+.qb-syntax-table {
+  width: 100%;
+}
+
+.qb-syntax-table td {
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  border: none;
+}
+
+.qb-syntax-table code {
+  background: var(--background-primary);
+  padding: 2px 6px;
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.85rem;
+}
+
+.qb-dashboard-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--qb-spacing-sm);
+  padding-top: var(--qb-spacing-md);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.qb-dashboard-btn {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-md);
+  background: transparent;
+  color: var(--text-normal);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.qb-dashboard-btn:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-dashboard-btn.qb-btn-primary {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: white;
+}
+
+.qb-dashboard-btn.qb-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.qb-dashboard-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===========================================
+   Primary Stats Panel
+   =========================================== */
+.qb-sheet-primary-stats {
+  margin-top: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+}
+
+.qb-sheet-primary-stats h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.qb-primary-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-primary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--qb-spacing-sm);
+  background: var(--background-primary);
+  border-radius: var(--qb-radius-sm);
+  border: 1px solid var(--background-modifier-border);
+  cursor: help;
+}
+
+.qb-primary-stat.primary {
+  border-color: var(--interactive-accent);
+  background: rgba(var(--interactive-accent-rgb), 0.1);
+}
+
+.qb-stat-abbr {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qb-stat-total {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+
+.qb-stat-bonus {
+  font-size: 0.7rem;
+  color: var(--interactive-accent);
+  font-weight: 600;
+}
+
+/* ===========================================
+   Derived Stats Panel (Combat Stats)
+   =========================================== */
+.qb-sheet-derived-stats {
+  margin-top: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+}
+
+.qb-sheet-derived-stats h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.qb-derived-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--qb-spacing-sm);
+}
+
+.qb-derived-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  background: var(--background-primary);
+  border-radius: var(--qb-radius-sm);
+}
+
+.qb-derived-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.qb-derived-value {
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+/* ===========================================
+   Streak Display Section
+   =========================================== */
+.qb-sheet-streak {
+  margin-top: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  background: linear-gradient(135deg, var(--background-secondary), var(--background-secondary-alt));
+  border-radius: var(--qb-radius-md);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.qb-sheet-streak h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+  color: var(--text-normal);
+}
+
+.qb-streak-info {
+  display: flex;
+  gap: var(--qb-spacing-lg);
+  margin-bottom: var(--qb-spacing-md);
+}
+
+.qb-streak-current,
+.qb-streak-best {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+}
+
+.qb-streak-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qb-streak-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+
+.qb-streak-current .qb-streak-value {
+  color: #ff6b35;
+}
+
+.qb-streak-message {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ===========================================
+   Active Buffs Display
+   =========================================== */
+.qb-active-buffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  align-items: flex-start;
+  align-content: flex-start;
+  margin-left: auto;
+}
+
+.qb-buff-icon {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-secondary);
+  border: 2px solid var(--background-modifier-border);
+  border-radius: 6px;
+  cursor: default;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.qb-buff-icon:hover {
+  transform: translateY(-2px);
+  border-color: var(--interactive-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Passive buffs (class perks) have a golden border */
+.qb-buff-passive {
+  border-color: var(--qb-paladin-color);
+  background: linear-gradient(135deg, var(--background-secondary) 0%, #ffc10722 100%);
+}
+
+/* Timed buffs that are expiring soon pulse */
+.qb-buff-expiring {
+  border-color: #ff6b35;
+  animation: buff-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes buff-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 8px 2px rgba(255, 107, 53, 0.4);
+  }
+}
+
+.qb-buff-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Stack count badge */
+.qb-buff-stack {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  background: var(--interactive-accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===========================================
+   Status Bar
+   =========================================== */
+.quest-board-status-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  font-size: 0.85rem;
+  cursor: default;
+}
+
+.quest-board-status-bar:empty {
+  display: none;
+}
+
+/* ===========================================
+   Stat Buff Indicators
+   =========================================== */
+.qb-primary-stat.buffed {
+  background: linear-gradient(135deg, rgba(46, 213, 115, 0.15) 0%, rgba(46, 213, 115, 0.05) 100%);
+  border-color: var(--qb-technomancer-color);
+  box-shadow: 0 0 8px rgba(46, 213, 115, 0.3);
+}
+
+.qb-stat-buff {
+  font-size: 0.7rem;
+  color: var(--qb-technomancer-color);
+  font-weight: 700;
+  margin-left: 2px;
+  animation: stat-buff-pulse 2s ease-in-out infinite;
+}
+
+@keyframes stat-buff-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ===========================================
+   Status Bar Clickable
+   =========================================== */
+.quest-board-status-bar.clickable {
+  cursor: pointer;
+  transition: background var(--qb-transition-fast);
+  padding: 2px 6px;
+  border-radius: var(--qb-radius-sm);
+}
+
+.quest-board-status-bar.clickable:hover {
+  background: var(--background-modifier-hover);
+}
+
+/* ===========================================
+   Buff Tray Popup
+   =========================================== */
+.qb-buff-tray {
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  min-width: 220px;
+  max-width: 300px;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.qb-buff-tray-header {
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.qb-buff-tray-list {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qb-buff-tray-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-sm);
+  transition: background var(--qb-transition-fast);
+}
+
+.qb-buff-tray-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qb-buff-tray-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.qb-buff-tray-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.qb-buff-tray-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.qb-buff-tray-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qb-buff-tray-time {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--interactive-accent);
+  flex-shrink: 0;
+}

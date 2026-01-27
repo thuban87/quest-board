@@ -73,18 +73,39 @@ Instructions for AI assistants working on this project.
 quest-board/
 ├── main.ts                 # THIN entry point (~100 lines max)
 ├── manifest.json
-├── styles.css
+├── styles.css              # GENERATED - do not edit directly!
+├── postcss.config.cjs      # PostCSS configuration
 ├── src/
+│   ├── styles/             # CSS MODULES (edit these!)
+│   │   ├── index.css           # Entry point - imports all modules
+│   │   ├── variables.css       # CSS custom properties
+│   │   ├── base.css            # Container, header, empty states
+│   │   ├── kanban.css          # Kanban board columns/cards
+│   │   ├── character.css       # Character sheet, gear slots
+│   │   ├── modals.css          # Modal base styles, forms
+│   │   ├── sidebar.css         # Sidebar view, tabs, sections
+│   │   ├── fullpage.css        # Full-page kanban view
+│   │   ├── power-ups.css       # Power-ups, achievements, recurring
+│   │   ├── inventory.css       # Inventory, gear, blacksmith
+│   │   ├── combat.css          # Combat UI, battle view, store
+│   │   ├── dungeons.css        # Dungeon view, tiles, D-pad
+│   │   ├── animations.css      # Keyframes and animations
+│   │   └── mobile.css          # Mobile-specific styles
 │   ├── components/         # React UI components
 │   │   ├── FullKanban.tsx      # Full-page Kanban board
 │   │   ├── SidebarQuests.tsx   # Sidebar view
 │   │   ├── QuestCard.tsx       # Individual quest card
 │   │   ├── CharacterSheet.tsx  # Character stats display
+│   │   ├── DungeonView.tsx     # Dungeon exploration view
+│   │   ├── BattleView.tsx      # Combat battle view
 │   │   ├── DnDWrappers.tsx     # Drag-and-drop components
 │   │   └── AchievementsSidebar.tsx
 │   ├── models/             # Data structures
 │   │   ├── Quest.ts
 │   │   ├── Character.ts
+│   │   ├── Gear.ts
+│   │   ├── Monster.ts
+│   │   ├── Dungeon.ts
 │   │   ├── Achievement.ts
 │   │   ├── PowerUp.ts
 │   │   └── QuestStatus.ts
@@ -92,12 +113,16 @@ quest-board/
 │   │   ├── QuestService.ts         # Quest loading/saving
 │   │   ├── QuestActionsService.ts  # Move/complete quests
 │   │   ├── XPSystem.ts             # XP/level calculations
+│   │   ├── CombatService.ts        # Combat stats derivation
+│   │   ├── BattleService.ts        # Battle turn execution
+│   │   ├── MonsterService.ts       # Monster creation/scaling
+│   │   ├── LootGenerationService.ts # Gear/consumable drops
 │   │   ├── PowerUpService.ts       # Buffs and power-ups
 │   │   ├── StreakService.ts        # Daily streak tracking
 │   │   ├── AchievementService.ts   # Achievement unlocks
 │   │   ├── RecurringQuestService.ts
-│   │   ├── StatusBarService.ts
-│   │   └── BuffStatusProvider.ts
+│   │   ├── SpriteService.ts        # Sprite path resolution
+│   │   └── StatusBarService.ts
 │   ├── hooks/              # React hooks (shared logic)
 │   │   ├── useQuestLoader.ts      # Quest loading + file watching
 │   │   ├── useQuestActions.ts     # Move/toggle quest actions
@@ -108,23 +133,35 @@ quest-board/
 │   ├── modals/             # Obsidian modals
 │   │   ├── CreateQuestModal.ts
 │   │   ├── QuestBoardCommandMenu.ts    # Consolidated command menu
+│   │   ├── StoreModal.ts
+│   │   ├── InventoryModal.ts
+│   │   ├── BlacksmithModal.ts
+│   │   ├── BountyModal.ts
 │   │   ├── AchievementHubModal.ts
 │   │   ├── RecurringQuestsDashboardModal.ts
 │   │   └── LevelUpModal.ts
 │   ├── store/              # Zustand state stores
 │   │   ├── questStore.ts
 │   │   ├── characterStore.ts
+│   │   ├── battleStore.ts
+│   │   ├── dungeonStore.ts
 │   │   └── taskSectionsStore.ts
 │   ├── config/             # Configuration
-│   │   └── questStatusConfig.ts
+│   │   ├── questStatusConfig.ts
+│   │   └── combatConfig.ts
+│   ├── data/               # Static data
+│   │   ├── monsters.ts
+│   │   ├── dungeonTemplates.ts
+│   │   └── TileRegistry.ts
 │   ├── utils/              # Pure functions
 │   │   ├── validator.ts
 │   │   ├── safeJson.ts
 │   │   ├── pathValidator.ts
+│   │   ├── pathfinding.ts
 │   │   └── timeFormatters.ts
 │   └── settings.ts         # Settings interface + UI
 └── docs/
-    ├── Session Log.md
+    ├── Phase 3 Implementation Session Log.md
     └── Feature Roadmap.md
 ```
 
@@ -160,9 +197,52 @@ quest-board/
 - Streak Shield effect wiring
 
 ### Future 🔮
-- Filter/search on board
-- AI quest generation (Gemini API)
-- Full pixel art sprites
+- AI quest generation improvements
+- Full pixel art sprites for all classes
+- More dungeon templates
+
+---
+
+## CSS Modularization (IMPORTANT!)
+
+> ⚠️ **The root `styles.css` is GENERATED. Do not edit it directly!**
+
+CSS is now modular. All styles live in `src/styles/` and are bundled at build time.
+
+### CSS Module Files
+
+| Module | Content |
+|--------|---------|
+| `variables.css` | CSS custom properties |
+| `base.css` | Container, header, empty states |
+| `kanban.css` | Kanban board columns/cards |
+| `character.css` | Character sheet, gear slots |
+| `modals.css` | Modal base styles, forms |
+| `sidebar.css` | Sidebar view, tabs, sections |
+| `fullpage.css` | Full-page kanban view |
+| `power-ups.css` | Power-ups, achievements, recurring |
+| `inventory.css` | Inventory, gear, blacksmith |
+| `combat.css` | Combat UI, battle view, store |
+| `dungeons.css` | Dungeon view, tiles, D-pad |
+| `animations.css` | Keyframes and animations |
+| `mobile.css` | Mobile-specific styles |
+
+### CSS Build Commands
+
+```bash
+npm run css:build    # Build CSS once
+npm run css:watch    # Watch for changes
+npm run build        # Full build (includes CSS)
+```
+
+### Which Module to Edit?
+
+- **Adding modal styles?** → `modals.css`
+- **Combat/battle styles?** → `combat.css`
+- **Dungeon/exploration?** → `dungeons.css`
+- **Character sheet?** → `character.css`
+- **New animation?** → `animations.css`
+- **Mobile fix?** → `mobile.css`
 
 ---
 
@@ -245,4 +325,4 @@ quest-board/
 
 ---
 
-**Last Updated:** 2026-01-23
+**Last Updated:** 2026-01-27

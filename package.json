@@ -4,8 +4,10 @@
     "description": "Gamified task tracker with RPG mechanics for Obsidian",
     "main": "main.js",
     "scripts": {
+        "css:build": "postcss src/styles/index.css -o styles.css",
+        "css:watch": "postcss src/styles/index.css -o styles.css --watch",
         "dev": "node esbuild.config.mjs",
-        "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+        "build": "npm run css:build && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
         "deploy:test": "npm run build && node deploy.mjs test",
         "deploy:production": "npm run build && node deploy.mjs production",
         "test": "vitest",
@@ -32,6 +34,9 @@
         "builtin-modules": "^3.3.0",
         "esbuild": "^0.19.0",
         "obsidian": "latest",
+        "postcss": "^8.5.6",
+        "postcss-cli": "^11.0.1",
+        "postcss-import": "^16.1.1",
         "tslib": "^2.6.0",
         "typescript": "^5.3.0",
         "vitest": "^4.0.18"
