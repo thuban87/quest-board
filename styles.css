@@ -7186,27 +7186,109 @@
 /* Mobile Responsive */
 @media (max-width: 600px) {
   .qb-dungeon-grid {
-    grid-template-columns: repeat(var(--room-width), 48px);
-    grid-template-rows: repeat(var(--room-height), 48px);
+    grid-template-columns: repeat(var(--room-width), 40px);
+    grid-template-rows: repeat(var(--room-height), 40px);
   }
 
   .qb-tile {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
   }
 
   .qb-tile-emoji {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
 
   .qb-player-sprite {
-    width: 36px;
-    height: 36px;
-    transform: translate(calc(var(--player-x) * 48px + 6px),
-        calc(var(--player-y) * 48px + 6px));
+    width: 32px;
+    height: 32px;
+    transform: translate(calc(var(--player-x) * 40px + 4px),
+        calc(var(--player-y) * 40px + 4px));
   }
 
   .qb-player-emoji {
     font-size: 1.5rem;
+  }
+}
+
+/* ===========================================
+   D-Pad Controls (Mobile)
+   =========================================== */
+.qb-dpad-container {
+  position: fixed;
+  bottom: 80px;
+  /* Higher to avoid Obsidian nav bar */
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(3, 56px);
+  gap: 6px;
+  z-index: 100;
+}
+
+.qb-dpad-btn {
+  width: 56px;
+  height: 56px;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: var(--qb-radius-md);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s ease, background 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.qb-dpad-btn:active {
+  transform: scale(0.92);
+  background: var(--interactive-accent);
+  color: white;
+}
+
+/* Grid placement */
+.qb-dpad-up {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.qb-dpad-left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.qb-dpad-interact {
+  grid-column: 2;
+  grid-row: 2;
+  background: var(--interactive-accent);
+  color: white;
+}
+
+.qb-dpad-interact:active {
+  background: var(--interactive-accent-hover);
+}
+
+.qb-dpad-right {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.qb-dpad-down {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+/* Desktop: hide D-pad */
+@media (min-width: 601px) {
+  .qb-dpad-container {
+    display: none;
   }
 }

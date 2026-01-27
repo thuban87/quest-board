@@ -1,6 +1,6 @@
 # Phase 3 Implementation Checklist
 
-> **Status:** ⚡ Phase 3C In Progress (Steps 1-3 ✅, Steps 4-13 Remaining)  
+> **Status:** ⚡ Phase 3C In Progress (Steps 1-5 ✅, Steps 6-13 Remaining)  
 > **Estimated Time:** 17-24 days  
 > **Purpose:** Shorthand reference with links to full documentation
 
@@ -345,18 +345,25 @@ Complete these BEFORE starting any Phase 3 work:
 - [x] DungeonView.tsx + DungeonItemView.tsx (Obsidian view wrapper)
 - [x] Scalable tiles (2x default 128px, 1x 64px option)
 
-### Step 4: Click-to-Move
+### Step 4: Click-to-Move ✅
 
-- [ ] A* pathfinding with timeout (500 iterations)
+- [x] A* pathfinding with timeout (500 iterations)
   - See: [Exploration Doc → Click-to-Move with A* Pathfinding](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/rpg-dev-aspects/Exploration%20System.md#click-to-move-with-a-pathfinding)
-- [ ] Validate path before moving (goal walkable check)
-- [ ] Show notification for unreachable tiles
+- [x] Validate path before moving (goal walkable check)
+- [x] Show notification for unreachable tiles
+- [x] Animated step-by-step movement (200ms per tile)
+- [x] Door click pathfinds to door first, then transitions
 
-### Step 5: Keyboard Controls
+### Step 5: Keyboard Controls ✅
 
-- [ ] WASD + arrows for single-step movement
-- [ ] E for interact with adjacent tile
-- [ ] Handle dungeon focus loss
+- [x] WASD + arrows for single-step movement
+- [x] E for interact with adjacent tile (placeholder Notice)
+- [x] Handle dungeon focus loss (auto-focus on mount, tabIndex)
+- [x] 180ms movement cooldown for WASD spam prevention
+- [x] Mobile D-pad controls (moved from Step 16)
+  - Centered at bottom: 80px, 56px buttons
+  - onTouchStart for immediate response
+  - Mobile tile size reduced to 40px for better visibility
 
 ### Step 6: Room Transitions
 

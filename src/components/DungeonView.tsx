@@ -5,12 +5,13 @@
  * player sprite, and click-to-move interaction.
  */
 
-import React, { useCallback, useMemo } from 'react';
-import { Platform, DataAdapter } from 'obsidian';
+import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
+import { Platform, DataAdapter, Notice } from 'obsidian';
 import { useDungeonStore } from '../store/dungeonStore';
 import { useCharacterStore } from '../store/characterStore';
 import { getDungeonTemplate } from '../data/dungeonTemplates';
 import { getTileDefinition, LAYOUT_CHARS } from '../data/TileRegistry';
+import { findPath, getFacingDirection, getStepPosition, canWalkTo } from '../utils/pathfinding';
 import type { Direction, RoomTemplate, TileSet } from '../models/Dungeon';
 
 // =====================
@@ -347,7 +348,93 @@ function RoomGrid({
 // MAIN COMPONENT
 // =====================
 
+// =====================
+// D-PAD COMPONENT (Mobile)
+// =====================
+
+interface DpadControlsProps {
+    onMove: (direction: Direction) => void;
+    onInteract: () => void;
+}
+
+function DpadControls({ onMove, onInteract }: DpadControlsProps) {
+    // Use onTouchStart for immediate response (no 300ms delay)
+    const handleDirection = (dir: Direction) => (e: React.TouchEvent | React.MouseEvent) => {
+        e.preventDefault();
+        onMove(dir);
+    };
+
+    const handleInteract = (e: React.TouchEvent | React.MouseEvent) => {
+        e.preventDefault();
+        onInteract();
+    };
+
+    return (
+        <div className="qb-dpad-container">
+            <button
+                className="qb-dpad-btn qb-dpad-up"
+                onTouchStart={handleDirection('north')}
+                onClick={handleDirection('north')}
+                aria-label="Move up"
+            >
+                ▲
+            </button>
+            <button
+                className="qb-dpad-btn qb-dpad-left"
+                onTouchStart={handleDirection('west')}
+                onClick={handleDirection('west')}
+                aria-label="Move left"
+            >
+                ◀
+            </button>
+            <button
+                className="qb-dpad-btn qb-dpad-interact"
+                onTouchStart={handleInteract}
+                onClick={handleInteract}
+                aria-label="Interact"
+            >
+                ✋
+            </button>
+            <button
+                className="qb-dpad-btn qb-dpad-right"
+                onTouchStart={handleDirection('east')}
+                onClick={handleDirection('east')}
+                aria-label="Move right"
+            >
+                ▶
+            </button>
+            <button
+                className="qb-dpad-btn qb-dpad-down"
+                onTouchStart={handleDirection('south')}
+                onClick={handleDirection('south')}
+                aria-label="Move down"
+            >
+                ▼
+            </button>
+        </div>
+    );
+}
+
+// =====================
+// MAIN COMPONENT
+// =====================
+
+/** Delay between steps during animated pathfinding (ms) */
+const STEP_DELAY_MS = 200;
+
+/** Cooldown between WASD movements (ms) */
+const MOVE_COOLDOWN_MS = 180;
+
 export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, onClose }) => {
+    // Container ref for keyboard focus
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Last movement timestamp for WASD cooldown
+    const lastMoveTimeRef = useRef<number>(0);
+
+    // Animation state - prevents input during movement
+    const [isAnimating, setIsAnimating] = useState(false);
+
     // Use individual selectors for proper reactivity
     const isInDungeon = useDungeonStore(state => state.isInDungeon);
     const isPreviewMode = useDungeonStore(state => state.isPreviewMode);
@@ -361,16 +448,15 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
     const pendingXP = useDungeonStore(state => state.pendingXP);
     const movePlayer = useDungeonStore(state => state.movePlayer);
     const exitDungeon = useDungeonStore(state => state.exitDungeon);
+    const changeRoom = useDungeonStore(state => state.changeRoom);
 
     const character = useCharacterStore(state => state.character);
 
     const isMobile = Platform.isMobile;
 
-    // Scalable tile/sprite sizes - 2x for desktop, 1x for mobile/smaller screens
-    // CSS handles the responsive switch via media query, but we need matching JS values
-    // For simplicity, use 2x by default (128px tiles), 1x for mobile (64px tiles)
-    const tileSize = isMobile ? 64 : 128;
-    const spriteOffset = isMobile ? 8 : 16;
+    // Scalable tile/sprite sizes - desktop: 128px, mobile: 40px (smaller to fit more tiles)
+    const tileSize = isMobile ? 40 : 128;
+    const spriteOffset = isMobile ? 4 : 16;
 
     // Get template and current room
     const template = dungeonTemplateId
@@ -379,49 +465,249 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
     const room = template?.rooms.find(r => r.id === currentRoomId);
     const roomState = roomStates[currentRoomId];
 
-    // Handle tile click - teleport in preview, check for doors
-    const changeRoom = useDungeonStore(state => state.changeRoom);
+    // Auto-focus container on mount for keyboard controls
+    useEffect(() => {
+        containerRef.current?.focus();
+    }, []);
 
+    // =====================
+    // MOVEMENT HANDLERS
+    // =====================
+
+    /**
+     * Move player one step in a direction.
+     * Checks walkability and door transitions.
+     * Has cooldown to prevent too-fast movement.
+     */
+    const handleDirectionalMove = useCallback((direction: Direction) => {
+        if (isAnimating || !room || !template) return;
+
+        // Cooldown check for WASD spam prevention
+        const now = Date.now();
+        if (now - lastMoveTimeRef.current < MOVE_COOLDOWN_MS) return;
+        lastMoveTimeRef.current = now;
+
+        const currentPos = useDungeonStore.getState().playerPosition;
+        const newPos = getStepPosition(currentPos, direction);
+        const [nx, ny] = newPos;
+
+        // Check walkability FIRST
+        if (!canWalkTo(newPos, room, template.tileSet)) {
+            // Just turn to face that direction
+            useDungeonStore.getState().setPlayerFacing(direction);
+            return;
+        }
+
+        // Check for door at new position
+        const doorKey = `${nx},${ny}`;
+        const doorInfo = room.doors[doorKey];
+        if (doorInfo) {
+            console.log(`[DungeonView] Walking through door to ${doorInfo.targetRoom}`);
+            movePlayer(nx, ny, direction);
+            // Small delay before room transition for visual feedback
+            setTimeout(() => {
+                changeRoom(doorInfo.targetRoom, doorInfo.targetEntry);
+            }, 150);
+            return;
+        }
+
+        // Normal movement
+        movePlayer(nx, ny, direction);
+    }, [isAnimating, room, template, movePlayer, changeRoom]);
+
+    /**
+     * Handle interact key - placeholder for chest/monster interaction.
+     */
+    const handleInteract = useCallback(() => {
+        if (isAnimating || !room || !template) return;
+
+        const [px, py] = useDungeonStore.getState().playerPosition;
+        const facing = useDungeonStore.getState().playerFacing;
+        const targetPos = getStepPosition([px, py], facing);
+
+        console.log(`[DungeonView] Interact at [${targetPos[0]}, ${targetPos[1]}]`);
+
+        // Check what's at the target position
+        const [tx, ty] = targetPos;
+        if (ty >= 0 && ty < room.layout.length && tx >= 0 && tx < room.layout[ty].length) {
+            const char = room.layout[ty][tx];
+            if (char === LAYOUT_CHARS.CHEST) {
+                console.log('[DungeonView] Chest interaction - not yet implemented');
+                new Notice('Chest interaction coming soon!');
+            } else if (char === LAYOUT_CHARS.MONSTER) {
+                console.log('[DungeonView] Monster interaction - not yet implemented');
+                new Notice('Monster encounter coming soon!');
+            } else {
+                console.log('[DungeonView] Nothing to interact with here');
+            }
+        }
+    }, [isAnimating, room, template]);
+
+    /**
+     * Animate movement along a path (step by step).
+     */
+    const animateAlongPath = useCallback(async (path: Array<[number, number]>) => {
+        if (path.length === 0) return;
+
+        setIsAnimating(true);
+        const { playerPosition: startPos, movePlayer: move } = useDungeonStore.getState();
+        let prevPos = startPos;
+
+        for (const [x, y] of path) {
+            const facing = getFacingDirection(prevPos, [x, y]);
+            move(x, y, facing);
+            prevPos = [x, y];
+
+            // Wait for CSS transition to complete
+            await new Promise(resolve => setTimeout(resolve, STEP_DELAY_MS));
+
+            // Check for door at this position
+            const doorKey = `${x},${y}`;
+            if (room?.doors[doorKey]) {
+                const doorInfo = room.doors[doorKey];
+                console.log(`[DungeonView] Path reached door, transitioning to ${doorInfo.targetRoom}`);
+                changeRoom(doorInfo.targetRoom, doorInfo.targetEntry);
+                break;
+            }
+        }
+
+        setIsAnimating(false);
+    }, [room, changeRoom]);
+
+    /**
+     * Handle tile click with A* pathfinding.
+     */
     const handleTileClick = useCallback((x: number, y: number) => {
         console.log(`[DungeonView] Tile clicked: [${x}, ${y}]`);
 
-        if (!room || !template) return;
+        if (isAnimating || !room || !template) return;
 
-        // Check if clicking on a door
+        // Check if clicking on a door - pathfind TO the door first
         const doorKey = `${x},${y}`;
         const doorInfo = room.doors[doorKey];
 
         if (doorInfo) {
-            console.log(`[DungeonView] Door clicked! Going to ${doorInfo.targetRoom}`);
-            changeRoom(doorInfo.targetRoom, doorInfo.targetEntry);
+            console.log(`[DungeonView] Door clicked! Pathfinding to door at [${x},${y}]`);
+
+            // Get current player position
+            const currentPos = useDungeonStore.getState().playerPosition;
+
+            // Create path that ends AT the door (we'll handle transition in animateAlongPath)
+            // First find path to an adjacent walkable tile, then add the door as final step
+            const path = findPath(currentPos, [x, y], room, template.tileSet);
+
+            // If no direct path, try to get close
+            if (path === null || path.length === 0) {
+                // Maybe we're already adjacent, just transition
+                const dist = Math.abs(currentPos[0] - x) + Math.abs(currentPos[1] - y);
+                if (dist <= 1) {
+                    const facing = getFacingDirection(currentPos, [x, y]);
+                    movePlayer(x, y, facing);
+                    setTimeout(() => {
+                        changeRoom(doorInfo.targetRoom, doorInfo.targetEntry);
+                    }, 200);
+                    return;
+                }
+                new Notice("Can't reach that door!");
+                return;
+            }
+
+            // Animate to door, then transition
+            animateAlongPath(path);
             return;
         }
 
-        // In preview mode, allow direct teleport for testing
-        if (isPreviewMode) {
-            const tileDef = getTileDefinition(room.layout[y]?.[x] ?? '.', template.tileSet);
-            if (tileDef?.walkable) {
-                // Determine facing based on movement direction
-                const [currentX, currentY] = playerPosition;
-                let facing: Direction = playerFacing;
+        // Get current player position
+        const currentPos = useDungeonStore.getState().playerPosition;
 
-                if (x > currentX) facing = 'east';
-                else if (x < currentX) facing = 'west';
-                else if (y > currentY) facing = 'south';
-                else if (y < currentY) facing = 'north';
+        // Find path using A*
+        const path = findPath(currentPos, [x, y], room, template.tileSet);
 
-                movePlayer(x, y, facing);
-            } else {
-                console.log(`[DungeonView] Tile not walkable`);
-            }
+        if (path === null) {
+            console.log(`[DungeonView] No path to [${x}, ${y}]`);
+            new Notice("Can't reach that tile!");
+            return;
         }
-    }, [isPreviewMode, room, template, playerPosition, playerFacing, movePlayer, changeRoom]);
 
-    // Handle exit
+        if (path.length === 0) {
+            // Already at destination
+            return;
+        }
+
+        // Animate along the path
+        animateAlongPath(path);
+    }, [isAnimating, room, template, changeRoom, animateAlongPath]);
+
+    // =====================
+    // KEYBOARD CONTROLS
+    // =====================
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if animating or if input is focused
+            if (isAnimating) return;
+            if (document.activeElement?.tagName === 'INPUT' ||
+                document.activeElement?.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            switch (e.key) {
+                case 'w':
+                case 'W':
+                case 'ArrowUp':
+                    e.preventDefault();
+                    handleDirectionalMove('north');
+                    break;
+                case 's':
+                case 'S':
+                case 'ArrowDown':
+                    e.preventDefault();
+                    handleDirectionalMove('south');
+                    break;
+                case 'a':
+                case 'A':
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    handleDirectionalMove('west');
+                    break;
+                case 'd':
+                case 'D':
+                case 'ArrowRight':
+                    e.preventDefault();
+                    handleDirectionalMove('east');
+                    break;
+                case 'e':
+                case 'E':
+                case 'Enter':
+                    e.preventDefault();
+                    handleInteract();
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    // Could show exit confirmation here
+                    break;
+            }
+        };
+
+        container.addEventListener('keydown', handleKeyDown);
+        return () => container.removeEventListener('keydown', handleKeyDown);
+    }, [isAnimating, handleDirectionalMove, handleInteract]);
+
+    // =====================
+    // EXIT HANDLER
+    // =====================
+
     const handleExit = useCallback(() => {
         exitDungeon();
         onClose();
     }, [exitDungeon, onClose]);
+
+    // =====================
+    // RENDER
+    // =====================
 
     // Guard: no template or room
     if (!template || !room || !character) {
@@ -439,7 +725,11 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
     }
 
     return (
-        <div className={`qb-dungeon-view ${isMobile ? 'mobile' : ''}`}>
+        <div
+            ref={containerRef}
+            className={`qb-dungeon-view ${isMobile ? 'mobile' : ''}`}
+            tabIndex={0}
+        >
             <DungeonHeader
                 dungeonName={template.name}
                 roomName={room.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
@@ -467,6 +757,14 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                     spriteOffset={spriteOffset}
                 />
             </div>
+
+            {/* Mobile D-Pad Controls */}
+            {isMobile && (
+                <DpadControls
+                    onMove={handleDirectionalMove}
+                    onInteract={handleInteract}
+                />
+            )}
         </div>
     );
 };

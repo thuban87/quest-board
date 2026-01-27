@@ -1167,6 +1167,55 @@ Key files to reference:
 
 ---
 
+## 2026-01-26 - Player Movement Controls (Steps 4-5) ✅
+
+**Focus:** Implement A* pathfinding, keyboard controls (WASD/arrows), click-to-move, and mobile D-pad
+
+**Completed:**
+- ✅ Created `src/utils/pathfinding.ts` with A* algorithm
+  - 500 iteration timeout with fallback single step
+  - Manhattan distance heuristic for 4-directional movement
+  - `findPath()`, `getFacingDirection()`, `getStepPosition()`, `canWalkTo()` helpers
+- ✅ Created `test/pathfinding.test.ts` with 20 unit tests
+- ✅ Updated `DungeonView.tsx` with full movement controls:
+  - Click-to-move with animated path (200ms per tile)
+  - Door clicks pathfind to door first, then transition
+  - WASD + Arrow keys for single-step movement
+  - E/Enter key for interact (placeholder Notice)
+  - 180ms cooldown for WASD spam prevention
+  - Auto-focus on mount with `tabIndex={0}`
+- ✅ Created mobile D-pad controls (moved from Step 16):
+  - Centered at `bottom: 80px`, 56px buttons
+  - `onTouchStart` for immediate response (no 300ms delay)
+  - Interact button in center
+- ✅ Fixed mobile tile sizing (40px) for better visibility (~9-10 tiles width)
+- ✅ Fixed wall clipping bug (walkability check before movement)
+
+**Files Created:**
+- `src/utils/pathfinding.ts` - A* pathfinding algorithm
+- `test/pathfinding.test.ts` - 20 unit tests for pathfinding
+
+**Files Changed:**
+- `src/components/DungeonView.tsx` - Added DpadControls, keyboard handlers, animated pathfinding
+- `styles.css` - Added D-pad CSS, updated mobile responsive tiles (40px)
+
+**Testing Notes:**
+- ✅ 20 pathfinding tests passing
+- ✅ Click-to-move animates through path smoothly
+- ✅ Doors work via click (run to door) and WASD (step through)
+- ✅ WASD movement feels controlled (not too fast)
+- ✅ Mobile D-pad positioned above Obsidian nav bar
+- ✅ Mobile tiles fit better on screen
+- ✅ No more wall clipping on mobile
+
+**Next Steps:**
+- Step 6: Room transitions (already partially working via doors)
+- Step 7: Fog of war / visibility
+- Step 8: Minimap
+- Step 9: Monster spawn points
+
+---
+
 *Template for future entries:*
 
 ```markdown
