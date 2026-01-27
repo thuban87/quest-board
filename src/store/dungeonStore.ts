@@ -38,6 +38,10 @@ interface DungeonState {
     visitedRooms: Set<string>;
     roomStates: Record<string, RoomState>;
 
+    // Combat tracking
+    activeCombatMonsterId: string | null;  // Which monster we're fighting
+    activeCombatRoomId: string | null;     // Which room the combat is in
+
     // Pending rewards (granted on exit)
     pendingLoot: LootReward[];
     pendingGold: number;
@@ -58,6 +62,9 @@ interface DungeonState {
     addPendingLoot: (loot: LootReward[]) => void;
     addPendingGold: (gold: number) => void;
     addPendingXP: (xp: number) => void;
+    startCombat: (roomId: string, monsterId: string) => void;
+    endCombat: () => void;
+    restartDungeonMonsters: () => void;  // Respawn all monsters, reset to room 1
 
     // Persistence
     loadPersistedState: (state: PersistedDungeonState | null) => void;
@@ -118,6 +125,8 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
     playerFacing: 'south',
     visitedRooms: new Set(),
     roomStates: {},
+    activeCombatMonsterId: null,
+    activeCombatRoomId: null,
     pendingLoot: [],
     pendingGold: 0,
     pendingXP: 0,
@@ -273,6 +282,55 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
     addPendingXP: (xp: number) => {
         const state = get();
         set({ pendingXP: state.pendingXP + xp });
+    },
+
+    startCombat: (roomId: string, monsterId: string) => {
+        set({
+            activeCombatMonsterId: monsterId,
+            activeCombatRoomId: roomId,
+            explorationState: 'IN_COMBAT',
+        });
+        console.log(`[DungeonStore] Combat started: ${monsterId} in ${roomId}`);
+    },
+
+    endCombat: () => {
+        set({
+            activeCombatMonsterId: null,
+            activeCombatRoomId: null,
+            explorationState: 'EXPLORING',
+        });
+        console.log('[DungeonStore] Combat ended');
+    },
+
+    restartDungeonMonsters: () => {
+        const state = get();
+        const template = getDungeonTemplate(state.dungeonTemplateId ?? '');
+        if (!template || template.rooms.length === 0) return;
+
+        // Clear monstersKilled from all rooms but keep chestsOpened
+        const newRoomStates: Record<string, RoomState> = {};
+        for (const [roomId, roomState] of Object.entries(state.roomStates)) {
+            newRoomStates[roomId] = {
+                ...roomState,
+                monstersKilled: [], // Clear killed monsters
+            };
+        }
+
+        // Reset to first room
+        const firstRoom = template.rooms[0];
+        const spawnPosition = findSpawnPosition(firstRoom.layout) ?? [4, 3];
+
+        set({
+            currentRoomId: firstRoom.id,
+            playerPosition: spawnPosition,
+            playerFacing: 'south',
+            roomStates: newRoomStates,
+            activeCombatMonsterId: null,
+            activeCombatRoomId: null,
+            explorationState: 'EXPLORING',
+        });
+
+        console.log(`[DungeonStore] Monsters respawned, reset to room: ${firstRoom.id}`);
     },
 
     // Persistence
