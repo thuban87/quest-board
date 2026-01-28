@@ -542,7 +542,22 @@ function handleVictory(): void {
     // End battle
     store.endBattle('victory');
 
-    // Persist character data (XP, gold, HP)
+    // === ACTIVITY LOGGING (Phase 4) ===
+    // Log combat victory for progress tracking (all fights, not just bounties)
+    // IMPORTANT: This must happen BEFORE saveCallback so activity history is persisted
+    const today = new Date();
+    const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    useCharacterStore.getState().logActivity({
+        type: 'bounty_victory',
+        date: dateString,
+        xpGained: monster.xpReward,
+        goldGained: monster.goldReward,
+        monsterId: monster.templateId || monster.id,
+        details: `Defeated ${monster.name}`,
+    });
+
+    // Persist character data (XP, gold, HP, activity history)
     if (saveCallback) {
         saveCallback().catch(err => console.error('[BattleService] Save failed:', err));
     }
@@ -590,7 +605,24 @@ function handleDefeat(): void {
 
     store.endBattle('defeat');
 
-    // Persist character data (gold penalty, HP = 0, unconscious)
+    // === ACTIVITY LOGGING (Phase 4) ===
+    // Log combat defeat for progress tracking
+    // IMPORTANT: This must happen BEFORE saveCallback so activity history is persisted
+    if (store.monster) {
+        const today = new Date();
+        const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        useCharacterStore.getState().logActivity({
+            type: 'bounty_defeat',
+            date: dateString,
+            xpGained: 0,
+            goldGained: -goldLost,
+            monsterId: store.monster.templateId || store.monster.id,
+            details: `Lost to ${store.monster.name}`,
+        });
+    }
+
+    // Persist character data (gold penalty, HP = 0, unconscious, activity history)
     if (saveCallback) {
         saveCallback().catch(err => console.error('[BattleService] Save failed:', err));
     }

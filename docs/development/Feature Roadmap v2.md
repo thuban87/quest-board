@@ -216,9 +216,9 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 
 | Feature | Description | Effort |
 |---------|-------------|--------|
-| **AI Quest Generation** | Convert task lists to quest files via Gemini | Medium |
+| **AI Quest Generation** | Convert task lists to quest files via Gemini | ✅ Complete |
 | **Daily Note Integration** | Log completed quests to daily notes | Low |
-| **Weekly Sprint View** | Visual weekly progress dashboard (includes progress bars) | Medium |
+| ~~**Weekly Sprint View**~~ | ✅ **Progress Dashboard** - Activity history, stats, XP/gold tracking | ✅ Complete |
 | **Quest Preview (Masked)** | Hide quest sections on Kanban until previous complete | Low |
 | **Progressive Section Reveal** | Hide future quest sections in linked task files | Low |
 | **Quest Templates UI** | Better template creation/management | Low |

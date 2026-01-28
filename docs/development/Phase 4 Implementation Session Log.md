@@ -430,3 +430,86 @@ Continuing Phase 4. AI Quest Generation implemented with:
 ```
 
 ---
+
+## 2026-01-28 - Progress Dashboard (Activity History & Stats)
+
+**Focus:** Implement Progress Dashboard with activity tracking, XP/gold summaries, and unit tests
+
+### Completed:
+
+#### Phase 1: Data Model & Service Layer
+- ✅ Added `ActivityEvent` and `ActivityEventType` to `Character.ts`
+- ✅ Added `MAX_ACTIVITY_HISTORY = 1000` constant
+- ✅ Bumped `CHARACTER_SCHEMA_VERSION` to 4 with migration
+- ✅ Added `logActivity` action to `characterStore.ts`
+- ✅ Created `ProgressStatsService.ts` with date filtering and stats calculation
+
+#### Phase 2: Activity Logging Integration
+- ✅ Quest completion logging in `QuestActionsService.ts`
+- ✅ Combat victory/defeat logging in `BattleService.ts` (all fights, not just bounties)
+- ✅ Dungeon completion logging in `dungeonStore.ts`
+- ✅ **Critical fix:** Moved `logActivity` BEFORE `saveCallback` to ensure persistence
+
+#### Phase 3: Modal UI
+- ✅ Created `ProgressDashboardModal.ts` - Full-page modal with:
+  - Date range picker (Today, Week, 30 Days, All Time)
+  - Summary stats (Quests, Fights Won, Dungeons, XP, Gold)
+  - Category breakdown
+  - Daily activity bar chart
+  - Chronological activity log
+- ✅ Created `progress.css` with game-stats aesthetic
+- ✅ Registered command and added to Command Menu
+
+#### Phase 4: Unit Tests
+- ✅ Created `test/progress-stats.test.ts` (27 tests) - filtering, stats calc, date utilities
+- ✅ Created `test/activity-logging.test.ts` (14 tests) - event structure, history cap, validation
+- ✅ All 41 tests passing
+
+#### Command Menu Reorganization (Bonus)
+- ✅ Reorganized categories: Views, Create Quest, Job Hunt (new), Character, Combat (new), Dashboards (new), Utilities
+- ✅ 2-column grid layout with dynamic full-width for odd last items
+- ✅ More compact button styling
+
+### Files Changed:
+
+**New:**
+- `src/modals/ProgressDashboardModal.ts`
+- `src/services/ProgressStatsService.ts`
+- `src/styles/progress.css`
+- `test/progress-stats.test.ts`
+- `test/activity-logging.test.ts`
+
+**Modified:**
+- `src/models/Character.ts` - ActivityEvent type, schema v4
+- `src/store/characterStore.ts` - logActivity action
+- `src/services/BattleService.ts` - Combat logging (victory/defeat)
+- `src/services/QuestActionsService.ts` - Quest completion logging
+- `src/store/dungeonStore.ts` - Dungeon completion logging
+- `src/modals/QuestBoardCommandMenu.ts` - Reorganized categories
+- `src/styles/inventory.css` - Command menu styling
+- `src/styles/index.css` - Added progress.css import
+- `main.ts` - Progress Dashboard command
+
+### Testing Notes:
+
+- Ran all 41 unit tests: ✅ All passing
+- Manual testing: Fights now logging correctly after saveCallback fix
+- Progress Dashboard displays stats correctly for various date ranges
+
+### Next Session Prompt:
+
+```
+Phase 4 Tier 1 progress:
+- ✅ AI Quest Generation (completed earlier)
+- ✅ Progress Dashboard (activity history, stats, unit tests)
+
+Remaining Tier 1:
+- Daily Note Integration
+- Quest Preview (Masked)
+- Progressive Section Reveal
+- Quest Templates UI
+
+Consider starting Tier 2 (Power-Up wiring, Unit Testing) next.
+```
+
+---

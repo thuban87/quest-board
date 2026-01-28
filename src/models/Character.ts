@@ -6,7 +6,7 @@
  */
 
 /** Current character schema version */
-export const CHARACTER_SCHEMA_VERSION = 3;
+export const CHARACTER_SCHEMA_VERSION = 4;
 
 /**
  * Character class types
@@ -24,6 +24,50 @@ export type CharacterClass =
  * Stat types (D&D-inspired)
  */
 export type StatType = 'strength' | 'intelligence' | 'wisdom' | 'constitution' | 'dexterity' | 'charisma';
+
+// ============================================
+// Phase 4: Activity Tracking
+// ============================================
+
+/**
+ * Activity event types for progress tracking
+ */
+export type ActivityEventType =
+    | 'quest_complete'
+    | 'bounty_victory'
+    | 'bounty_defeat'
+    | 'dungeon_complete';
+
+/**
+ * Activity event for progress history tracking
+ */
+export interface ActivityEvent {
+    /** Event type */
+    type: ActivityEventType;
+    /** Date of event (YYYY-MM-DD) */
+    date: string;
+    /** Full ISO timestamp */
+    timestamp: string;
+    /** XP gained from this event */
+    xpGained: number;
+    /** Gold gained from this event */
+    goldGained: number;
+    /** Quest ID (for quest completions) */
+    questId?: string;
+    /** Quest name (for display) */
+    questName?: string;
+    /** Quest category */
+    category?: string;
+    /** Dungeon template ID (for dungeon completions) */
+    dungeonId?: string;
+    /** Monster ID (for bounty fights) */
+    monsterId?: string;
+    /** Human-readable description */
+    details?: string;
+}
+
+/** Maximum number of activity events to keep in history */
+export const MAX_ACTIVITY_HISTORY = 1000;
 
 /**
  * Character stats structure
@@ -445,6 +489,11 @@ export interface Character {
 
     /** ISO timestamp when recovery timer ends (null = no active timer) */
     recoveryTimerEnd: string | null;
+
+    // ========== Phase 4: Activity Tracking ==========
+
+    /** Activity history for progress tracking (capped at MAX_ACTIVITY_HISTORY) */
+    activityHistory: ActivityEvent[];
 }
 
 /**
@@ -545,6 +594,9 @@ export function createCharacter(
         // Phase 3B Step 9: Death Penalty
         status: 'active',
         recoveryTimerEnd: null,
+
+        // Phase 4: Activity Tracking
+        activityHistory: [],
     };
 }
 
@@ -708,13 +760,16 @@ export function migrateCharacterV1toV2(oldData: Record<string, unknown>): Charac
  * @returns Migrated character data conforming to schema v3
  */
 export function migrateCharacterV2toV3(oldData: Record<string, unknown>): Character {
-    // Already v3 or higher? Return as-is
-    if ((oldData.schemaVersion as number) >= 3) {
+    // Already v3 or higher? Chain to next migration
+    if (oldData.schemaVersion === 3) {
+        return migrateCharacterV3toV4(oldData);
+    }
+    if ((oldData.schemaVersion as number) >= 4) {
         return oldData as unknown as Character;
     }
 
     // Build migrated character
-    const migrated: Character = {
+    const migrated: Record<string, unknown> = {
         // Copy all existing fields
         ...(oldData as object),
 
@@ -724,6 +779,35 @@ export function migrateCharacterV2toV3(oldData: Record<string, unknown>): Charac
         // Phase 3B Step 9: Death Penalty defaults
         status: (oldData.status as string) ?? 'active',
         recoveryTimerEnd: (oldData.recoveryTimerEnd as string | null) ?? null,
+    };
+
+    // Chain to v3 → v4 migration
+    return migrateCharacterV3toV4(migrated);
+}
+
+/**
+ * Migrate character data from schema v3 to schema v4.
+ * Adds activityHistory array for progress tracking.
+ * 
+ * @param oldData - Character data at schema v3
+ * @returns Migrated character data conforming to schema v4
+ */
+export function migrateCharacterV3toV4(oldData: Record<string, unknown>): Character {
+    // Already v4 or higher? Return as-is
+    if ((oldData.schemaVersion as number) >= 4) {
+        return oldData as unknown as Character;
+    }
+
+    // Build migrated character
+    const migrated: Character = {
+        // Copy all existing fields
+        ...(oldData as object),
+
+        // Bump schema version
+        schemaVersion: 4,
+
+        // Phase 4: Activity Tracking defaults
+        activityHistory: (oldData.activityHistory as ActivityEvent[]) ?? [],
     } as Character;
 
     return migrated;

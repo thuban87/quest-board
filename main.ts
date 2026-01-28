@@ -50,6 +50,7 @@ import { ELITE_LEVEL_UNLOCK, ELITE_OVERWORLD_CHANCE, ELITE_NAME_PREFIXES } from 
 import { GearSlot } from './src/models/Gear';
 import { LevelUpModal } from './src/modals/LevelUpModal';
 import { CharacterClass } from './src/models/Character';
+import { showProgressDashboardModal } from './src/modals/ProgressDashboardModal';
 
 
 
@@ -464,6 +465,18 @@ export default class QuestBoardPlugin extends Plugin {
                     this.recurringQuestService,
                     () => this.app.workspace.trigger('quest-board:refresh')
                 ).open();
+            },
+        });
+
+        // Add command to open progress dashboard (Phase 4)
+        this.addCommand({
+            id: 'open-progress-dashboard',
+            name: 'View Progress Dashboard',
+            callback: () => {
+                showProgressDashboardModal(this.app, async () => {
+                    this.settings.character = useCharacterStore.getState().character;
+                    await this.saveSettings();
+                });
             },
         });
 

@@ -41,7 +41,7 @@
 
 .qb-menu-buttons {
   display: grid;
-  gap: var(--qb-spacing-sm);
+  gap: var(--qb-spacing-xs);
 }
 
 .qb-buttons-1 {
@@ -60,18 +60,28 @@
   grid-template-columns: repeat(2, 1fr);
 }
 
-/* Center the last button if it's alone on its row (odd child count) */
+/* New 2-column layout - used by all sections */
+.qb-buttons-2col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Center the last button if it's alone on its row (odd child count) - old style */
 .qb-buttons-2x2>.qb-menu-btn:last-child:nth-child(odd) {
   grid-column: 1 / -1;
   max-width: 50%;
   justify-self: center;
 }
 
+/* Full width button for odd last item */
+.qb-menu-btn-full {
+  grid-column: 1 / -1;
+}
+
 .qb-menu-btn {
   display: flex;
   align-items: center;
-  gap: var(--qb-spacing-sm);
-  padding: var(--qb-spacing-md);
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-sm);
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--qb-radius-md);
@@ -82,8 +92,8 @@
 .qb-menu-btn:hover {
   background: var(--background-modifier-hover);
   border-color: var(--interactive-accent);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .qb-menu-btn:active {
@@ -91,7 +101,7 @@
 }
 
 .qb-menu-btn-icon {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   flex-shrink: 0;
 }
 
@@ -103,11 +113,11 @@
 
 .qb-menu-btn-label {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
 .qb-menu-btn-desc {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;

@@ -3140,7 +3140,7 @@
 }
 .qb-menu-buttons {
   display: grid;
-  gap: var(--qb-spacing-sm);
+  gap: var(--qb-spacing-xs);
 }
 .qb-buttons-1 {
   grid-template-columns: 1fr;
@@ -3154,17 +3154,25 @@
 .qb-buttons-2x2 {
   grid-template-columns: repeat(2, 1fr);
 }
-/* Center the last button if it's alone on its row (odd child count) */
+/* New 2-column layout - used by all sections */
+.qb-buttons-2col {
+  grid-template-columns: repeat(2, 1fr);
+}
+/* Center the last button if it's alone on its row (odd child count) - old style */
 .qb-buttons-2x2>.qb-menu-btn:last-child:nth-child(odd) {
   grid-column: 1 / -1;
   max-width: 50%;
   justify-self: center;
 }
+/* Full width button for odd last item */
+.qb-menu-btn-full {
+  grid-column: 1 / -1;
+}
 .qb-menu-btn {
   display: flex;
   align-items: center;
-  gap: var(--qb-spacing-sm);
-  padding: var(--qb-spacing-md);
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-sm);
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--qb-radius-md);
@@ -3174,14 +3182,14 @@
 .qb-menu-btn:hover {
   background: var(--background-modifier-hover);
   border-color: var(--interactive-accent);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 .qb-menu-btn:active {
   transform: translateY(0);
 }
 .qb-menu-btn-icon {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   flex-shrink: 0;
 }
 .qb-menu-btn-text {
@@ -3191,10 +3199,10 @@
 }
 .qb-menu-btn-label {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 .qb-menu-btn-desc {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -7415,6 +7423,284 @@
 /* Animations - placeholder */
 /* Keyframes are currently embedded in other modules */
 /* Future: Extract all @keyframes here */
+/**
+ * Progress Dashboard Styles
+ * 
+ * Phase 4: Styling for the progress analytics modal.
+ * Game stats screen aesthetic with progress bars and icons.
+ */
+/* Modal Container */
+.qb-progress-dashboard-modal {
+    padding: var(--size-4-6);
+    max-width: 800px;
+    min-height: 500px;
+}
+.qb-progress-dashboard-modal .modal-content {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+/* Header */
+.qb-progress-header {
+    text-align: center;
+    margin-bottom: var(--size-4-4);
+    padding-bottom: var(--size-4-3);
+    border-bottom: 2px solid var(--background-modifier-border);
+}
+.qb-progress-header h2 {
+    margin: 0 0 var(--size-4-2) 0;
+    font-size: 1.5em;
+    color: var(--text-accent);
+}
+.qb-progress-subtitle {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+/* Date Picker */
+.qb-progress-date-picker {
+    margin-bottom: var(--size-4-4);
+}
+.qb-progress-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--size-4-2);
+    margin-bottom: var(--size-4-2);
+    justify-content: center;
+}
+.qb-progress-preset-btn {
+    padding: var(--size-4-1) var(--size-4-3);
+    border-radius: var(--radius-s);
+    background: var(--background-modifier-hover);
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-normal);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85em;
+}
+.qb-progress-preset-btn:hover {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+.qb-progress-preset-btn.active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    font-weight: 600;
+}
+.qb-progress-custom-dates {
+    display: flex;
+    gap: var(--size-4-3);
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.qb-progress-custom-dates label {
+    display: flex;
+    align-items: center;
+    gap: var(--size-4-1);
+    color: var(--text-muted);
+    font-size: 0.85em;
+}
+.qb-progress-custom-dates input[type="date"] {
+    padding: var(--size-4-1) var(--size-4-2);
+    border-radius: var(--radius-s);
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+/* Stats Grid */
+.qb-progress-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--size-4-3);
+    margin-bottom: var(--size-4-4);
+}
+.qb-progress-stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--size-4-1);
+    padding: var(--size-4-3);
+    background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-modifier-hover) 100%);
+    border-radius: var(--radius-m);
+    border: 1px solid var(--background-modifier-border);
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+.qb-progress-stat-card:hover {
+    transform: translateY(-2px);
+}
+.qb-progress-stat-icon {
+    font-size: 1.5em;
+}
+.qb-progress-stat-value {
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--text-accent);
+}
+.qb-progress-stat-label {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+/* Section Headers */
+.qb-progress-section {
+    margin-bottom: var(--size-4-4);
+}
+.qb-progress-section h3 {
+    margin: 0 0 var(--size-4-2) 0;
+    font-size: 1em;
+    color: var(--text-normal);
+    padding-bottom: var(--size-4-1);
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+.qb-progress-empty {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: var(--size-4-3);
+}
+/* Category Breakdown */
+.qb-progress-category-bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-4-2);
+}
+.qb-progress-category-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 40px;
+    gap: var(--size-4-2);
+    align-items: center;
+}
+.qb-progress-category-label {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.qb-progress-bar-container {
+    height: 16px;
+    background: var(--background-modifier-hover);
+    border-radius: var(--radius-s);
+    overflow: hidden;
+}
+.qb-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--interactive-accent) 0%, var(--text-accent) 100%);
+    border-radius: var(--radius-s);
+    transition: width 0.3s ease;
+}
+.qb-progress-category-count {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--text-normal);
+    text-align: right;
+}
+/* Daily Activity Chart */
+.qb-progress-daily-chart {
+    display: flex;
+    gap: 2px;
+    height: 100px;
+    align-items: flex-end;
+    padding: var(--size-4-2);
+    background: var(--background-secondary);
+    border-radius: var(--radius-m);
+    margin-bottom: var(--size-4-2);
+}
+.qb-progress-day-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+    min-width: 8px;
+}
+.qb-progress-day-bar {
+    width: 100%;
+    background: linear-gradient(180deg, var(--interactive-accent) 0%, var(--text-accent) 100%);
+    border-radius: var(--radius-s) var(--radius-s) 0 0;
+    min-height: 4px;
+    transition: height 0.3s ease;
+}
+.qb-progress-day-bar:hover {
+    opacity: 0.8;
+}
+.qb-progress-day-label {
+    font-size: 0.6em;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.qb-progress-best-day {
+    font-size: 0.9em;
+    color: var(--text-accent);
+    text-align: center;
+    padding: var(--size-4-2);
+    background: var(--background-modifier-hover);
+    border-radius: var(--radius-s);
+}
+/* Activity Log */
+.qb-progress-log-list {
+    max-height: 250px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-4-1);
+}
+.qb-progress-log-entry {
+    display: flex;
+    gap: var(--size-4-2);
+    padding: var(--size-4-2);
+    background: var(--background-secondary);
+    border-radius: var(--radius-s);
+    align-items: flex-start;
+}
+.qb-progress-log-entry:hover {
+    background: var(--background-modifier-hover);
+}
+.qb-progress-log-icon {
+    font-size: 1.1em;
+    flex-shrink: 0;
+}
+.qb-progress-log-details {
+    flex: 1;
+    min-width: 0;
+}
+.qb-progress-log-title {
+    font-size: 0.9em;
+    color: var(--text-normal);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.qb-progress-log-meta {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.qb-progress-log-more {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: var(--size-4-2);
+    margin: 0;
+}
+/* Responsive */
+@media (max-width: 600px) {
+    .qb-progress-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .qb-progress-category-row {
+        grid-template-columns: 80px 1fr 30px;
+    }
+
+    .qb-progress-daily-chart {
+        height: 60px;
+    }
+}
 /* ===========================================
    Mobile CSS Module - Kanban Mobile View
    =========================================== */
