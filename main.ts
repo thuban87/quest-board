@@ -41,12 +41,14 @@ import { lootGenerationService } from './src/services/LootGenerationService';
 import { setBonusService } from './src/services/SetBonusService';
 import { bountyService } from './src/services/BountyService';
 import { monsterService, createRandomMonster } from './src/services/MonsterService';
-import { battleService, setSaveCallback as setBattleSaveCallback } from './src/services/BattleService';
+import { battleService, setSaveCallback as setBattleSaveCallback, setLevelUpCallback } from './src/services/BattleService';
 import { startRecoveryTimerCheck, stopRecoveryTimerCheck } from './src/services/RecoveryTimerService';
 import { showEliteEncounterModal } from './src/modals/EliteEncounterModal';
 import { showDungeonSelectionModal } from './src/modals/DungeonSelectionModal';
 import { ELITE_LEVEL_UNLOCK, ELITE_OVERWORLD_CHANCE, ELITE_NAME_PREFIXES } from './src/config/combatConfig';
 import { GearSlot } from './src/models/Gear';
+import { LevelUpModal } from './src/modals/LevelUpModal';
+import { CharacterClass } from './src/models/Character';
 
 
 
@@ -95,6 +97,19 @@ export default class QuestBoardPlugin extends Plugin {
             this.settings.character = currentCharacter;
             this.settings.inventory = currentInventory;
             await this.saveSettings();
+        });
+
+        // Set up level-up callback for battle XP gains (shows LevelUpModal)
+        setLevelUpCallback((options) => {
+            const modal = new LevelUpModal(
+                this.app,
+                options.characterClass as CharacterClass,
+                options.newLevel,
+                options.tierChanged,
+                options.isTrainingMode,
+                options.onGraduate ?? (() => { })
+            );
+            modal.open();
         });
 
         // Sync cache with current folders after vault is ready (remove deleted folder entries)

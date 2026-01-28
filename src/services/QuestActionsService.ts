@@ -235,9 +235,11 @@ export async function moveQuest(
     const showPendingBounty = () => {
         if (!pendingBounty || !options.app) return;
 
-        // Check if player is unconscious
+        // Check if player is actually unconscious (status AND HP check to prevent false positives)
         const currentChar = useCharacterStore.getState().character;
-        if (currentChar?.status === 'unconscious') {
+        const isActuallyUnconscious = currentChar?.status === 'unconscious' && (currentChar?.currentHP ?? 0) <= 0;
+
+        if (isActuallyUnconscious) {
             // Show revive pre-modal
             showBountyReviveModal(options.app, pendingBounty, {
                 onSave: async () => {

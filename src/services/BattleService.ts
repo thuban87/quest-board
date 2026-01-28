@@ -26,6 +26,7 @@ import {
     ELITE_OVERWORLD_CHANCE,
     ELITE_NAME_PREFIXES,
 } from '../config/combatConfig';
+import { checkLevelUp, LevelUpResult } from './XPSystem';
 
 // =====================
 // SAVE CALLBACK (set by main.ts)
@@ -43,6 +44,57 @@ let saveCallback: (() => Promise<void>) | null = null;
  */
 export function setSaveCallback(callback: () => Promise<void>): void {
     saveCallback = callback;
+}
+
+// =====================
+// LEVEL-UP CALLBACK (set by main.ts)
+// =====================
+
+/**
+ * Level-up callback options for showing the level-up modal.
+ */
+export interface LevelUpCallbackOptions {
+    characterClass: string;
+    newLevel: number;
+    tierChanged: boolean;
+    isTrainingMode: boolean;
+    onGraduate?: () => void;
+}
+
+/**
+ * Module-level level-up callback for showing level-up modal after battle.
+ * Set via setLevelUpCallback from main.ts plugin initialization.
+ */
+let levelUpCallback: ((options: LevelUpCallbackOptions) => void) | null = null;
+
+/**
+ * Set the level-up callback for battle XP gains.
+ * Called from main.ts during plugin initialization.
+ */
+export function setLevelUpCallback(callback: (options: LevelUpCallbackOptions) => void): void {
+    levelUpCallback = callback;
+}
+
+/**
+ * Trigger the level-up modal if a level-up occurred.
+ * Used by handleVictory and can be called from other XP sources.
+ */
+export function triggerLevelUpIfNeeded(oldXP: number, newXP: number, isTrainingMode: boolean): void {
+    const result = checkLevelUp(oldXP, newXP, isTrainingMode);
+    if (result.didLevelUp && levelUpCallback) {
+        const character = useCharacterStore.getState().character;
+        if (character) {
+            levelUpCallback({
+                characterClass: character.class,
+                newLevel: result.newLevel,
+                tierChanged: result.tierChanged,
+                isTrainingMode,
+                onGraduate: isTrainingMode && result.newLevel >= 10 ? () => {
+                    useCharacterStore.getState().graduate();
+                } : undefined,
+            });
+        }
+    }
 }
 
 // =====================
@@ -454,11 +506,20 @@ function handleVictory(): void {
     const store = useBattleStore.getState();
     const characterStore = useCharacterStore.getState();
     const { monster, lootBonus } = store;
+    const character = characterStore.character;
 
-    if (!monster) return;
+    if (!monster || !character) return;
+
+    // Capture old XP for level-up check
+    const oldXP = character.isTrainingMode ? character.trainingXP : character.totalXP;
+    const isTrainingMode = character.isTrainingMode;
 
     // Award XP
     characterStore.addXP(monster.xpReward);
+
+    // Get new XP after award
+    const updatedChar = useCharacterStore.getState().character;
+    const newXP = updatedChar?.isTrainingMode ? updatedChar.trainingXP : updatedChar?.totalXP ?? 0;
 
     // Award gold
     characterStore.updateGold(monster.goldReward);
@@ -485,6 +546,9 @@ function handleVictory(): void {
     if (saveCallback) {
         saveCallback().catch(err => console.error('[BattleService] Save failed:', err));
     }
+
+    // Check for level-up and show modal if needed
+    triggerLevelUpIfNeeded(oldXP, newXP, isTrainingMode);
 
     // Loot is generated separately when victory modal is shown
     // The lootBonus is stored for the modal to use

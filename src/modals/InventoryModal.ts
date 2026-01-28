@@ -497,6 +497,12 @@ export class InventoryModal extends Modal {
 
         // Check what effect this is
         if (definition.effect === 'hp_restore') {
+            // Block usage when dead (HP = 0) - must use revive potion
+            if (character.currentHP <= 0) {
+                new Notice('💀 You must use a Revive Potion first!', 3000);
+                return;
+            }
+
             // Calculate restored HP
             const newHP = Math.min(character.maxHP, character.currentHP + definition.effectValue);
             const restored = newHP - character.currentHP;

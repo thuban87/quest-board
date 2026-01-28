@@ -10,52 +10,57 @@ import { getXPMultiplierFromPowerUps } from './PowerUpService';
 /**
  * XP thresholds for each level (1-40)
  * 
- * Tier 1 (Levels 1-10):  1,200 XP per level
- * Tier 2 (Levels 11-20): 1,500 XP per level
- * Tier 3 (Levels 21-30): 1,800 XP per level
- * Tier 4 (Levels 31-40): 2,000 XP per level
+ * 5-Tier Progression aligned with getLevelTier():
+ * Tier 1 (Levels 1-8):   Acolyte - Fast progression (tutorial phase)
+ * Tier 2 (Levels 9-16):  Squire - Moderate (habit building)
+ * Tier 3 (Levels 17-24): Knight - Challenging (mastery)
+ * Tier 4 (Levels 25-32): Champion - Hard (late game)
+ * Tier 5 (Levels 33-40): Divine Avatar - Epic (endgame)
+ * 
+ * Timeline: ~6 months of daily play to reach Level 40
+ * Design: Fast early game for dopamine/retention, harder late game for achievement
  */
 export const XP_THRESHOLDS: number[] = [
-    0,       // Level 1 (start)
-    1200,    // Level 2
-    2400,    // Level 3
-    3600,    // Level 4
-    4800,    // Level 5
-    6000,    // Level 6
-    7200,    // Level 7
-    8400,    // Level 8
-    9600,    // Level 9
-    10800,   // Level 10
-    12300,   // Level 11 (tier 2: +1500)
-    13800,   // Level 12
-    15300,   // Level 13
-    16800,   // Level 14
-    18300,   // Level 15
-    19800,   // Level 16
-    21300,   // Level 17
-    22800,   // Level 18
-    24300,   // Level 19
-    25800,   // Level 20
-    27600,   // Level 21 (tier 3: +1800)
-    29400,   // Level 22
-    31200,   // Level 23
-    33000,   // Level 24
-    34800,   // Level 25
-    36600,   // Level 26
-    38400,   // Level 27
-    40200,   // Level 28
-    42000,   // Level 29
-    43800,   // Level 30
-    45800,   // Level 31 (tier 4: +2000)
-    47800,   // Level 32
-    49800,   // Level 33
-    51800,   // Level 34
-    53800,   // Level 35
-    55800,   // Level 36
-    57800,   // Level 37
-    59800,   // Level 38
-    61800,   // Level 39
-    63800,   // Level 40 (max)
+    0,       // Level 1
+    500,     // Level 2 (Tier 1: +500)
+    1060,    // Level 3 (+560)
+    1680,    // Level 4 (+620)
+    2360,    // Level 5 (+680)
+    3100,    // Level 6 (+740)
+    3900,    // Level 7 (+800)
+    4760,    // Level 8 (+860)
+    5760,    // Level 9 (Tier 2: +1000)
+    6860,    // Level 10 (+1100)
+    8060,    // Level 11 (+1200)
+    9360,    // Level 12 (+1300)
+    10760,   // Level 13 (+1400)
+    12260,   // Level 14 (+1500)
+    13860,   // Level 15 (+1600)
+    15560,   // Level 16 (+1700)
+    17160,   // Level 17 (Tier 3: +1600)
+    18880,   // Level 18 (+1720)
+    20720,   // Level 19 (+1840)
+    22680,   // Level 20 (+1960)
+    24760,   // Level 21 (+2080)
+    26960,   // Level 22 (+2200)
+    29280,   // Level 23 (+2320)
+    31720,   // Level 24 (+2440)
+    33920,   // Level 25 (Tier 4: +2200)
+    36260,   // Level 26 (+2340)
+    38740,   // Level 27 (+2480)
+    41360,   // Level 28 (+2620)
+    44120,   // Level 29 (+2760)
+    47020,   // Level 30 (+2900)
+    50060,   // Level 31 (+3040)
+    53240,   // Level 32 (+3180)
+    56340,   // Level 33 (Tier 5: +3100)
+    59600,   // Level 34 (+3260)
+    63020,   // Level 35 (+3420)
+    66600,   // Level 36 (+3580)
+    70340,   // Level 37 (+3740)
+    74240,   // Level 38 (+3900)
+    78300,   // Level 39 (+4060)
+    82520,   // Level 40 (+4220) - Max Level
 ];
 
 /**
