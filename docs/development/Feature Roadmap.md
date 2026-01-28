@@ -1,3 +1,5 @@
+# OLD DOCUMENT - DO NOT USE. New roadmap at Feature Roadmap v2.md
+
 # Quest Board - Feature Roadmap
 
 **Goal:** Complete fully-functional personal plugin in ~2 weeks (1/22 - early Feb)
