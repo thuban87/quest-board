@@ -170,7 +170,6 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
 
     exitDungeon: () => {
         const state = get();
-        console.log(`[DungeonStore] Exiting dungeon. Session: ${state.sessionGold}g, ${state.sessionXP}xp, ${state.pendingLoot.length} items`);
 
         // Save exploration history for map persistence
         if (state.dungeonTemplateId && state.visitedRooms.size > 0) {
@@ -239,8 +238,6 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             visitedRooms: newVisitedRooms,
             roomStates: newRoomStates,
         });
-
-        console.log(`[DungeonStore] Changed to room: ${roomId}, entry from ${entryDirection}`);
     },
 
     setExplorationState: (state: ExplorationState) => {
@@ -302,7 +299,6 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             activeCombatRoomId: roomId,
             explorationState: 'IN_COMBAT',
         });
-        console.log(`[DungeonStore] Combat started: ${monsterId} in ${roomId}`);
     },
 
     endCombat: () => {
@@ -311,7 +307,6 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             activeCombatRoomId: null,
             explorationState: 'EXPLORING',
         });
-        console.log('[DungeonStore] Combat ended');
     },
 
     restartDungeonMonsters: () => {
@@ -341,8 +336,6 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             activeCombatRoomId: null,
             explorationState: 'EXPLORING',
         });
-
-        console.log(`[DungeonStore] Monsters respawned, reset to room: ${firstRoom.id}`);
     },
 
     // Persistence
@@ -379,8 +372,6 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             sessionXP: persisted.sessionXP,
             explorationState: 'EXPLORING',
         });
-
-        console.log(`[DungeonStore] Restored dungeon state for: ${template.name}`);
     },
 
     getPersistedState: (): PersistedDungeonState | null => {

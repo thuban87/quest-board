@@ -1,40 +1,46 @@
 ---
-description: Deploy to development vault for testing Phase 3 features
+description: Deploy to development/staging vault for testing
 ---
 
-# Deploy to Dev Vault
+# Deploy to Dev/Staging Vault
 
-Use this workflow when testing Phase 3 features (Gear, Combat, Exploration).
+Use this workflow when testing features in isolated vaults.
 
-## Prerequisites
+## Environments
 
-- Dev vault exists at `C:\Quest-Board-Test-Vault\`
-- The vault has `.obsidian\plugins\quest-board\` folder
+| Target | Path | Use Case |
+|--------|------|----------|
+| **test** | `C:\Quest-Board-Test-Vault\` | Isolated testing, safe to break |
+| **staging** | `C:\Quest-Board-Staging-Vault\Staging Vault\` | Real files/settings, pre-production |
+| **production** | Google Drive vault | Brad's main vault (requires confirmation) |
 
 ## Steps
 
 // turbo
-1. Build the project:
-```bash
-npm run build
-```
-
-2. If build succeeds, deploy to dev vault:
+1. Build and deploy to **test** vault:
 ```bash
 npm run deploy:test
 ```
 
-3. Open the dev vault in Obsidian and test your changes
+// turbo
+2. Or deploy to **staging** vault (real files, pre-production):
+```bash
+npm run deploy:staging
+```
 
-4. If changes work, get Brad's approval before deploying to main vault
+3. Open the target vault in Obsidian and test your changes
 
-5. Deploy to main vault (ONLY after approval):
+4. If changes work, get Brad's approval before deploying to production
+
+// turbo
+5. Deploy to **production** vault (ONLY after approval):
 ```bash
 npm run deploy:production
 ```
 
 ## Notes
 
-- **NEVER deploy to main vault** during Phase 3 development without Brad's explicit approval
-- The dev vault is isolated from Brad's real data
-- Break things freely in the dev vault - that's what it's for!
+- **NEVER deploy to production** without Brad's explicit approval
+- **Staging** uses real vault files - ideal for final validation before production
+- **Test** vault is isolated - break things freely!
+- Character schema migrations (v1→v2→v3) happen automatically on load

@@ -568,7 +568,6 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
 
         // Check class can equip this item type
         if (!canEquipGear(character.class, item)) {
-            console.log(`[CharacterStore] Cannot equip ${item.name} - class ${character.class} lacks proficiency`);
             return false;
         }
 
@@ -735,15 +734,6 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         if (!character) return;
 
         const newHP = Math.max(0, Math.min(character.currentHP + delta, character.maxHP));
-
-        // DEBUG: Log HP changes with stack trace to find mystery HP drops
-        console.log('[CharacterStore] updateHP called:', {
-            oldHP: character.currentHP,
-            delta: delta,
-            newHP: newHP,
-            maxHP: character.maxHP,
-            stack: new Error().stack?.split('\n').slice(1, 4).join(' -> ')
-        });
 
         set({
             character: {

@@ -325,7 +325,6 @@ class BountyServiceClass {
             // Save the updated cache
             this.saveCache();
 
-            console.log(`[BountyService] Used cached template for "${folderName}" (${cachedTemplates.length} remaining)`);
             return template;
         }
 
@@ -376,8 +375,6 @@ class BountyServiceClass {
             return;
         }
 
-        console.log(`[BountyService] Triggering background generation for "${folderName}"`);
-
         const promise = this.generateDescriptions(folderName)
             .catch(err => console.warn(`[BountyService] Background generation failed for "${folderName}":`, err))
             .finally(() => this.pendingGenerations.delete(folderId));
@@ -393,8 +390,6 @@ class BountyServiceClass {
         if (!apiKey) return;
 
         const folderId = folderName.toLowerCase();
-
-        console.log(`[BountyService] Generating ${DESCRIPTIONS_PER_FOLDER} descriptions for "${folderName}"...`);
 
         try {
             const prompt = `Generate ${DESCRIPTIONS_PER_FOLDER} unique RPG bounty hunt descriptions for the theme "${folderName}".
@@ -499,8 +494,6 @@ Be creative and fun! Match monsters to the theme:
                 this.settings.bountyDescriptionCache[folderId] = newCache;
             }
 
-            console.log(`[BountyService] Generated ${validTemplates.length} templates for "${folderName}" (total: ${newCache.length})`);
-
             // Save cache
             await this.saveCache();
 
@@ -590,7 +583,6 @@ Be creative and fun! Match monsters to the theme:
             // Strip any tier namePrefix that may have been added (e.g., 'Elite ', 'Dungeon ')
             const baseName = monster.name.replace(/^(Elite |Dungeon |Boss: |RAID BOSS: )/, '');
             monster.name = `${prefix} ${baseName}`;
-            console.log('[BountyService] Elite monster spawned:', monster.name);
         }
 
         return {
@@ -623,13 +615,6 @@ Be creative and fun! Match monsters to the theme:
         if (!bounty) {
             return { triggered: false };
         }
-
-        console.log('[BountyService] Bounty triggered!', {
-            quest: quest.questName,
-            description: bounty.description,
-            monster: bounty.monster.name,
-            lootBonus: bounty.lootBonus,
-        });
 
         return { triggered: true, bounty };
     }

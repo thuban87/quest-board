@@ -72,15 +72,12 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
     // Track subscriber count for proper cleanup
     useEffect(() => {
         subscriberCount++;
-        console.log('[XP Debug] useXPAward subscriber mounted, count:', subscriberCount);
 
         return () => {
             subscriberCount--;
-            console.log('[XP Debug] useXPAward subscriber unmounted, count:', subscriberCount);
 
             // Only cleanup watchers when the LAST subscriber unmounts
             if (subscriberCount === 0) {
-                console.log('[XP Debug] Last subscriber unmounted, cleaning up all file watchers');
                 for (const unsubscribe of globalFileWatchers.values()) {
                     unsubscribe();
                 }
@@ -129,25 +126,13 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
             taskXP: quest.xpPerTask * newlyCompleted,
         };
 
-        console.log('[PowerUp Debug] Task completion trigger context:', {
-            isFirstTaskOfDay,
-            tasksCompletedToday: currentTaskCount + newlyCompleted,
-            taskCategory: quest.category,
-            existingPowerUps: character.activePowerUps?.length ?? 0,
-            lastTaskDate: character.lastTaskDate,
-            today,
-        });
-
         // Evaluate task_completion triggers
         const taskTriggers = evaluateTriggers('task_completion', taskContext);
-        console.log('[PowerUp Debug] Triggers that fired:', taskTriggers.map(t => t.id));
 
         for (const trigger of taskTriggers) {
             const effectId = trigger.grantsEffect ?? (trigger.grantsTier ? rollFromPool(trigger.grantsTier) : null);
-            console.log('[PowerUp Debug] Processing trigger:', trigger.id, 'effectId:', effectId);
             if (effectId) {
                 const result = grantPowerUp(currentPowerUps, effectId, trigger.id);
-                console.log('[PowerUp Debug] Grant result:', { granted: !!result.granted, powerUpsCount: result.powerUps.length });
                 if (result.granted) {
                     currentPowerUps = result.powerUps;
                     const effectDef = EFFECT_DEFINITIONS[effectId];
@@ -160,7 +145,6 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
         }
 
         // Save power-ups if any changed
-        console.log('[PowerUp Debug] Saving power-ups:', currentPowerUps.length);
         if (currentPowerUps !== (character.activePowerUps ?? [])) {
             setPowerUps(currentPowerUps);
             // Trigger immediate status bar update
@@ -177,41 +161,16 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
         const oldXP = character.isTrainingMode ? character.trainingXP : character.totalXP;
         const oldLevel = character.isTrainingMode ? character.trainingLevel : character.level;
 
-        console.log('[XP Debug] Task XP award:', {
-            baseXP,
-            totalXP,
-            xpPerTask: quest.xpPerTask,
-            newlyCompleted,
-            oldXP,
-            oldLevel,
-            isTrainingMode: character.isTrainingMode,
-        });
-
         // Award XP (this updates the store)
         addXP(totalXP);
-        console.log('[XP Debug] Called addXP for tasks:', totalXP);
 
         // Process stat gains from XP (only if not in training mode)
         // IMPORTANT: Get the updated character AFTER addXP to avoid overwriting XP changes
         if (!character.isTrainingMode) {
             const updatedCharacter = useCharacterStore.getState().character;
-            console.log('[Stats Debug] Processing stat gains:', {
-                category: quest.category,
-                xpGained: totalXP,
-                isTrainingMode: character.isTrainingMode,
-                hasUpdatedCharacter: !!updatedCharacter,
-                customMappings: customStatMappings,
-            });
 
             if (updatedCharacter) {
                 const statResult = processXPForStats(updatedCharacter, quest.category, totalXP, customStatMappings);
-                console.log('[Stats Debug] Stat result:', {
-                    statGained: statResult.statGained,
-                    newStatValue: statResult.newStatValue,
-                    characterChanged: statResult.character !== updatedCharacter,
-                    categoryAccum: statResult.character.categoryXPAccumulator,
-                    statBonuses: statResult.character.statBonuses,
-                });
 
                 if (statResult.statGained) {
                     // Update character with new stat bonuses (preserves XP from addXP)
@@ -222,12 +181,9 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
                     );
                 } else if (statResult.character !== updatedCharacter) {
                     // Accumulator updated, save it
-                    console.log('[Stats Debug] Saving updated accumulator');
                     useCharacterStore.getState().setCharacter(statResult.character);
                 }
             }
-        } else {
-            console.log('[Stats Debug] Skipping stat processing - training mode');
         }
 
         // Track category for autocomplete in settings
@@ -333,17 +289,9 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
         const wasAlreadyComplete = oldSnapshot && oldSnapshot.completion.completed === oldSnapshot.completion.total && oldSnapshot.completion.total > 0;
         const isNowComplete = newCompletion.completed === newCompletion.total && newCompletion.total > 0;
 
-        console.log('[XP Debug] Quest completion check:', {
-            wasAlreadyComplete,
-            isNowComplete,
-            shouldAwardBonus: isNowComplete, // ORIGINAL LOGIC - no wasAlreadyComplete check
-            completionBonus: quest.completionBonus,
-        });
-
         if (isNowComplete) {
             // Award completion bonus (ORIGINAL LOGIC)
             const completionBonus = calculateXPWithBonus(quest.completionBonus, quest.category, character);
-            console.log('[XP Debug] Awarding quest completion bonus:', completionBonus);
             addXP(completionBonus);
             new Notice(`🎉 Quest Complete! +${completionBonus} bonus XP!`, 4000);
 
@@ -356,13 +304,6 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
                 const preCompletionXP = postBonusXP - completionBonus;
                 const bonusLevelResult = checkLevelUp(preCompletionXP, postBonusXP, postBonusChar.isTrainingMode);
 
-                console.log('[XP Debug] Quest completion level-up check:', {
-                    preCompletionXP,
-                    postBonusXP,
-                    didLevelUp: bonusLevelResult.didLevelUp,
-                    oldLevel: bonusLevelResult.oldLevel,
-                    newLevel: bonusLevelResult.newLevel,
-                });
 
                 if (bonusLevelResult.didLevelUp) {
                     // Apply level-up stat gains (non-training only)
@@ -442,7 +383,6 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
 
         // Prevent concurrent processing of the same quest
         if (processingRef.current.has(quest.questId)) {
-            console.log('[XP Debug] Already processing quest:', quest.questId);
             return;
         }
         processingRef.current.add(quest.questId);

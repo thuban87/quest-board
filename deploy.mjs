@@ -13,6 +13,7 @@ import { createInterface } from 'readline';
 // Vault paths
 const VAULTS = {
     test: 'C:\\Quest-Board-Test-Vault\\.obsidian\\plugins\\quest-board',
+    staging: 'C:\\Quest-Board-Staging-Vault\\Staging Vault\\.obsidian\\plugins\\quest-board',
     production: 'G:\\My Drive\\IT\\Obsidian Vault\\My Notebooks\\.obsidian\\plugins\\quest-board'
 };
 
@@ -36,6 +37,7 @@ if (!target || !VAULTS[target]) {
     console.error('');
     console.error('Usage:');
     console.error('  npm run deploy:test        - Deploy to TEST vault (safe)');
+    console.error('  npm run deploy:staging     - Deploy to STAGING vault (real files)');
     console.error('  npm run deploy:production  - Deploy to PRODUCTION vault (dangerous!)');
     console.error('');
     process.exit(1);
@@ -124,7 +126,12 @@ async function deploy() {
     }
 
     // Copy files
-    const label = target === 'production' ? '🚀 PRODUCTION' : '🧪 TEST';
+    const labels = {
+        test: '🧪 TEST',
+        staging: '📦 STAGING',
+        production: '🚀 PRODUCTION'
+    };
+    const label = labels[target] || '🧪 TEST';
     console.log(`\nDeploying to ${label} vault...`);
 
     for (const file of FILES_TO_COPY) {

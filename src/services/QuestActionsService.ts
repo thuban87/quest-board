@@ -105,13 +105,6 @@ export async function moveQuest(
             const isPaladin = currentChar.class === 'paladin';
             streakResult = updateStreak(currentChar, isPaladin);
 
-            console.log('[QuestActionsService] Streak updated:', {
-                newStreak: streakResult.character.currentStreak,
-                streakContinued: streakResult.streakContinued,
-                streakBroken: streakResult.streakBroken,
-                newRecord: streakResult.newRecord,
-            });
-
             useCharacterStore.getState().setCharacter(streakResult.character);
 
             // Notify user of streak updates
@@ -271,12 +264,6 @@ export async function moveQuest(
                 // Generate loot based on quest and character
                 loot = lootGenerationService.generateQuestLoot(updatedQuest, character);
 
-                console.log('[QuestActionsService] Generated loot:', {
-                    questId: updatedQuest.questId,
-                    lootItems: loot.length,
-                    loot,
-                });
-
                 // Separate gold from gear
                 const goldRewards = loot.filter(r => r.type === 'gold');
                 const gearRewards = loot.filter(r => r.type === 'gear') as { type: 'gear'; item: GearItem }[];
@@ -298,7 +285,6 @@ export async function moveQuest(
                 if (gearItems.length > 0 && gearItems.length > freeSlots) {
                     // Inventory full - show management modal
                     if (options.app) {
-                        console.log('[QuestActionsService] Inventory full, showing management modal');
                         setTimeout(() => {
                             showInventoryManagementModal(options.app!, {
                                 pendingLoot: gearItems,
@@ -386,7 +372,6 @@ export async function moveQuest(
     // Award stamina on quest completion (Phase 3B)
     if (newStatus === QuestStatus.COMPLETED) {
         useCharacterStore.getState().awardStamina();
-        console.log('[QuestActionsService] Awarded stamina for quest completion');
     }
 
     // Save to file

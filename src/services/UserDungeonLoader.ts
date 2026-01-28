@@ -397,12 +397,10 @@ export async function loadUserDungeons(
     // Check if folder exists
     const folder = vault.getAbstractFileByPath(folderPath);
     if (!folder) {
-        console.log(`[UserDungeonLoader] Folder not found: ${folderPath}`);
         return { templates, errors: [], warnings: [] };
     }
 
     if (!(folder as any).children) {
-        console.log(`[UserDungeonLoader] Path is not a folder: ${folderPath}`);
         return { templates, errors: [], warnings: [] };
     }
 
@@ -427,7 +425,6 @@ export async function loadUserDungeons(
 
             if (result.template) {
                 templates.push(result.template);
-                console.log(`[UserDungeonLoader] Loaded: ${result.template.name}`);
             }
 
             allErrors.push(...result.errors);
@@ -437,10 +434,7 @@ export async function loadUserDungeons(
         }
     }
 
-    // Log summary
-    if (templates.length > 0) {
-        console.log(`[UserDungeonLoader] Loaded ${templates.length} user dungeon(s)`);
-    }
+    // Log warnings and errors if present
     if (allWarnings.length > 0) {
         console.warn('[UserDungeonLoader] Warnings:', allWarnings);
     }
@@ -644,5 +638,4 @@ doors:
     }
 
     await vault.create(docPath, docContent);
-    console.log(`[UserDungeonLoader] Created template doc at ${docPath}`);
 }

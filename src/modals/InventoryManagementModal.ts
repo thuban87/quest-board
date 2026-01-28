@@ -73,11 +73,6 @@ export class InventoryManagementModal extends Modal {
         // Add class to modal container for width styling
         this.modalEl.addClass('qb-modal-wide');
 
-        console.log('[InventoryManagementModal] Opening with:', {
-            pendingLoot: this.options.pendingLoot.length,
-            pendingItems: this.options.pendingLoot.map(i => i.name),
-        });
-
         const character = useCharacterStore.getState().character;
         if (!character) {
             contentEl.createEl('p', { text: 'No character found.' });
@@ -114,9 +109,7 @@ export class InventoryManagementModal extends Modal {
         leftPane.createEl('h3', { text: `📦 Pending Loot (${pendingCount})` });
         const pendingGrid = leftPane.createEl('div', { cls: 'qb-inventory-grid' });
 
-        console.log('[InventoryManagementModal] Rendering pending items...');
         for (const item of this.options.pendingLoot) {
-            console.log('[InventoryManagementModal] Rendering item:', item.name);
             this.renderPendingItem(pendingGrid, item);
         }
 

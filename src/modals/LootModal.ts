@@ -164,7 +164,8 @@ export class LootModal extends Modal {
      * before this modal is shown. This method just logs the acknowledgment.
      */
     private collectLoot() {
-        console.log('[LootModal] Loot acknowledged - items already in inventory');
+        // Loot was already added to inventory by the caller (QuestActionsService)
+        // This method is just a placeholder for the button handler
     }
 
     private getConsumableIcon(itemId: string): string {
