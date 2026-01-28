@@ -916,6 +916,32 @@
 .qb-btn-secondary:hover {
   background: var(--background-secondary);
 }
+/* AI Quest Preview Modal */
+.qb-ai-preview-modal {
+  min-width: 550px;
+}
+.qb-preview-textarea {
+  width: 500px;
+  min-height: 400px;
+  font-family: var(--font-monospace);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  padding: var(--qb-spacing-md);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  resize: vertical;
+}
+.qb-modal-subtitle {
+  color: var(--text-muted);
+  margin-top: 0;
+}
+.qb-modal-tip {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: var(--qb-spacing-md);
+}
 /* ===========================================
    Task List on Quest Cards
    =========================================== */

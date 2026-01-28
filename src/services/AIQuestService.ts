@@ -97,7 +97,7 @@ class AIQuestServiceClass {
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: prompt }] }],
                         generationConfig: {
-                            temperature: 0.8,
+                            temperature: 0.7,  // Lower = more consistent formatting, less creative variation
                         },
                     }),
                 }
@@ -118,8 +118,10 @@ class AIQuestServiceClass {
             // Extract markdown from response (strip any code blocks if present)
             const markdown = this.extractMarkdown(text);
 
-            if (!markdown.includes('---')) {
-                return { success: false, error: 'Invalid quest format generated. Please try again.' };
+            // Validate frontmatter structure
+            const validationError = this.validateQuestMarkdown(markdown);
+            if (validationError) {
+                return { success: false, error: validationError };
             }
 
             return { success: true, markdown };
@@ -171,7 +173,46 @@ class AIQuestServiceClass {
                 .trim();
         }
 
+        // FIX: Repair missing opening frontmatter delimiter
+        // If markdown has frontmatter content but is missing opening ---
+        if (!markdown.startsWith('---') && markdown.includes('\n---')) {
+            // Check if it looks like frontmatter (starts with schemaVersion, questId, etc.)
+            if (/^(schemaVersion|questId|questName):/m.test(markdown)) {
+                markdown = '---\n' + markdown;
+            }
+        }
+
         return markdown;
+    }
+
+    /**
+     * Validate quest markdown structure
+     * Returns error message if invalid, null if valid
+     */
+    private validateQuestMarkdown(markdown: string): string | null {
+        // Check for opening ---
+        if (!markdown.startsWith('---')) {
+            return 'Invalid format: Quest must start with frontmatter delimiter (---).';
+        }
+
+        // Check for closing ---
+        const lines = markdown.split('\n');
+        const closingDelimiterIndex = lines.findIndex((line, idx) => idx > 0 && line.trim() === '---');
+        if (closingDelimiterIndex === -1) {
+            return 'Invalid format: Missing closing frontmatter delimiter (---).';
+        }
+
+        // Check for required frontmatter fields
+        const frontmatter = lines.slice(1, closingDelimiterIndex).join('\n');
+        const requiredFields = ['schemaVersion', 'questId', 'questName', 'questType', 'category'];
+
+        for (const field of requiredFields) {
+            if (!frontmatter.includes(`${field}:`)) {
+                return `Invalid format: Missing required field "${field}" in frontmatter.`;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -191,7 +232,7 @@ class AIQuestServiceClass {
 4. **Smart Organization**: Group related tasks into logical phases/sections
 
 ## USER INPUT
-Quest Name: ${input.questName}
+Quest Name: ${input.questName} || 'None provided - generate appropriate quest name based on description/tasks'
 Description/Context: ${input.description || 'None provided'}
 Tasks (raw):
 ${input.tasks || 'None provided - generate appropriate tasks based on quest name'}
@@ -209,13 +250,19 @@ ${availableCategories.join(', ')}
 
 ## DIFFICULTY & XP SCALING (choose based on task count)
 - **trivial** (1-2 tasks): 3-5 XP/task, 10-20 bonus
-- **easy** (3-5 tasks): 5-8 XP/task, 20-40 bonus  
+- **easy** (3-5 tasks): 5-8 XP/task, 20-40 bonus
 - **medium** (6-10 tasks): 8-12 XP/task, 40-80 bonus
 - **hard** (11-15 tasks): 12-16 XP/task, 80-120 bonus
 - **epic** (16+ tasks): 15-20 XP/task, 120-200 bonus
 
-## OUTPUT FORMAT
-Generate ONLY the markdown file content below. No extra commentary or explanation.
+## OUTPUT INSTRUCTIONS
+Generate a complete markdown quest file. Start your response with the opening delimiter (---) and follow the exact structure below.
+
+CRITICAL: Your response must begin with THREE DASHES (---) on the first line. Do not add any text before the opening ---.
+
+## EXACT FORMAT TO FOLLOW
+
+The file MUST start with this exact structure:
 
 ---
 schemaVersion: ${QUEST_SCHEMA_VERSION}
@@ -279,13 +326,16 @@ difficulty: DETERMINE_FROM_TASK_COUNT
 **Bad**: "Clean the kitchen"
 **Good**: "The sacred kitchen has fallen into disarray! Ancient food vessels lie unwashed. Reclaim your culinary domain!"
 
-**Bad**: "Finish project report"  
+**Bad**: "Finish project report"
 **Good**: "The deadline looms! Your report must be forged in the fires of focus and delivered to the Client Lords!"
 
 **Bad**: "Go to gym"
 **Good**: "The Iron Temple calls! Your training montage begins now. Gains await the dedicated!"
 
-Now generate the quest markdown file:`;
+## FINAL REMINDER
+Your output must be ONLY the markdown file content. Start with --- on the very first line. Do not include any explanatory text, commentary, or markdown code blocks. Just output the raw quest file content.
+
+Generate the quest file now:`;
     }
 
     /**
