@@ -89,6 +89,9 @@ export interface QuestBoardSettings {
     // Mobile Kanban settings
     mobileKanbanMode: 'swipe' | 'checkbox';  // 'swipe' = single column with nav, 'checkbox' = multi-select columns
     mobileDefaultColumn: 'available' | 'active' | 'in_progress' | 'completed';  // Default visible column on mobile
+
+    // AI Quest generation settings
+    aiQuestSkipPreview: boolean;  // Skip the preview modal when generating quests
 }
 
 /**
@@ -137,6 +140,7 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     userDungeonFolder: 'Quest Board/dungeons',  // Default dungeon folder
     mobileKanbanMode: 'swipe',  // Default to swipe single-column mode
     mobileDefaultColumn: 'active',  // Default to Active column on mobile
+    aiQuestSkipPreview: false,  // Default to showing preview
 };
 
 /**
@@ -187,6 +191,16 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 text.inputEl.type = 'password';
                 return text;
             });
+
+        new Setting(containerEl)
+            .setName('Skip AI Quest Preview')
+            .setDesc('When enabled, AI-generated quests save directly without a preview/edit step')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.aiQuestSkipPreview ?? false)
+                .onChange(async (value) => {
+                    this.plugin.settings.aiQuestSkipPreview = value;
+                    await this.plugin.saveSettings();
+                }));
 
         // Storage Section
         containerEl.createEl('h3', { text: 'Storage' });

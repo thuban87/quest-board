@@ -22,6 +22,7 @@ import { getAllDungeonTemplates, registerUserDungeons, clearUserDungeons, getRan
 import { loadUserDungeons, createDungeonTemplateDoc } from './src/services/UserDungeonLoader';
 import type { DungeonTemplate } from './src/models/Dungeon';
 import { CreateQuestModal } from './src/modals/CreateQuestModal';
+import { AIQuestGeneratorModal } from './src/modals/AIQuestGeneratorModal';
 import { ApplicationGauntletModal, InterviewArenaModal } from './src/modals/JobHuntModal';
 import { openSmartTemplateModal } from './src/modals/SmartTemplateModal';
 import { CreateAchievementModal } from './src/modals/CreateAchievementModal';
@@ -236,6 +237,17 @@ export default class QuestBoardPlugin extends Plugin {
             callback: () => {
                 new CreateQuestModal(this.app, this, () => {
                     // Refresh views after quest creation
+                    this.app.workspace.trigger('quest-board:refresh');
+                }).open();
+            },
+        });
+
+        // Add command for AI quest generation
+        this.addCommand({
+            id: 'ai-generate-quest',
+            name: 'Generate Quest with AI',
+            callback: () => {
+                new AIQuestGeneratorModal(this.app, this, () => {
                     this.app.workspace.trigger('quest-board:refresh');
                 }).open();
             },

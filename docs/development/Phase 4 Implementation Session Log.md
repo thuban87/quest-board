@@ -400,3 +400,33 @@ fix: bug fixes and XP system overhaul
 ```
 
 ---
+
+## 2026-01-28 - AI Quest Generation
+
+**Focus:** Implement AI-powered quest generation using Gemini API
+
+### Completed:
+
+- ✅ Created `AIQuestService.ts` with Gemini 2.5 Flash integration
+  - Epic, ADHD-friendly prompts with category-specific themes
+  - Error parsing for rate limits, invalid keys, server errors
+- ✅ Created `AIQuestGeneratorModal.ts` - Input modal with skip-preview toggle
+- ✅ Created `AIQuestPreviewModal.ts` - Editable markdown preview
+- ✅ Added `aiQuestSkipPreview` setting with toggle UI
+- ✅ Registered command and added to command menu
+
+### Files Changed:
+
+**New:** `src/services/AIQuestService.ts`, `src/modals/AIQuestGeneratorModal.ts`, `src/modals/AIQuestPreviewModal.ts`  
+**Modified:** `src/settings.ts`, `main.ts`, `src/modals/QuestBoardCommandMenu.ts`
+
+### Next Session Prompt:
+
+```
+Continuing Phase 4. AI Quest Generation implemented with:
+- AIQuestService.ts using gemini-2.5-flash
+- Input modal → Preview modal → Save workflow
+- Skip-preview option available
+```
+
+---
