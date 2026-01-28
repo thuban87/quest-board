@@ -287,3 +287,116 @@ Files: settings.ts, FilterBar.tsx, FullKanban.tsx, mobile.css
 ```
 
 ---
+
+## 2026-01-27 (Late Night) - Bug Fixes & XP System Overhaul
+
+**Focus:** Fixing gameplay bugs and implementing new 5-tier XP progression system
+
+### Completed:
+
+#### Bug Fixes
+
+1. **Level-up Modal Not Appearing After Battles**
+   - ✅ Added `triggerLevelUpIfNeeded()` function to `BattleService.ts`
+   - ✅ Added `setLevelUpCallback()` for `main.ts` to wire up the modal
+   - ✅ `handleVictory()` now checks for level-up and triggers modal
+
+2. **HP Potions Blocked at 0 HP**
+   - ✅ Added check in `InventoryModal.useConsumable()` 
+   - ✅ Shows "💀 You must use a Revive Potion first!" message
+   - ✅ Prevents bypassing death/unconscious mechanic
+
+3. **False Unconscious Warning from Bounty System**
+   - ✅ Fixed in `QuestActionsService.showPendingBounty()`
+   - ✅ Now validates BOTH `status === 'unconscious'` AND `currentHP <= 0`
+   - ✅ Prevents false positives when status is stale but HP is fine
+
+4. **HP Potions Disappear on Reload**
+   - ✅ Verified: `StoreModal.buyItem()` correctly calls `onSave` callback
+   - ✅ Verified: `main.ts` command passes save callback properly
+   - No code changes needed - was already working correctly
+
+#### 5-Tier XP System Overhaul
+
+Replaced entire XP progression system to align with `getLevelTier()` (5 tiers, 8 levels each):
+
+| Tier | Levels | Title | XP per Level | Design Goal |
+|------|--------|-------|--------------|-------------|
+| 1 | 1-8 | Acolyte | 500-860 | Fast progression (tutorial) |
+| 2 | 9-16 | Squire | 1,000-1,700 | Moderate (habit building) |
+| 3 | 17-24 | Knight | 1,600-2,440 | Challenging (mastery) |
+| 4 | 25-32 | Champion | 2,200-3,180 | Hard (late game) |
+| 5 | 33-40 | Divine Avatar | 3,100-4,220 | Epic (endgame) |
+
+**Key Changes:**
+- L2: 500 XP (was 1,200) → 58% faster early game
+- L40: 82,520 total (was 63,800) → 29% harder endgame
+- Timeline: ~6 months daily play to max (was ~4.5 months)
+- Crossover point: ~L25-26 (existing users unaffected)
+
+### Files Changed:
+
+**Services:**
+- `src/services/BattleService.ts` - Added level-up callback pattern, updated `handleVictory()`
+- `src/services/QuestActionsService.ts` - Fixed unconscious check
+- `src/services/XPSystem.ts` - New 5-tier XP thresholds
+
+**Modals:**
+- `src/modals/InventoryModal.ts` - Blocked HP potions at 0 HP
+
+**Core:**
+- `main.ts` - Wired level-up callback with `LevelUpModal`
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Level-up modal shows after battle victory
+- ✅ HP potion blocked at 0 HP with message
+- ✅ Unconscious warning only shows when actually unconscious
+- ✅ Store purchases persist correctly
+
+### Blockers/Issues:
+- None
+
+### Design Notes:
+
+**XP Migration:** Existing characters preserve their `totalXP` value. The `calculateLevel()` function recalculates level from XP using new thresholds. Users around L25-26 see no change (crossover point). Lower levels get slight boost, higher levels need slightly more XP for next level.
+
+---
+
+## Next Session Prompt
+
+```
+Bug fixes and XP system complete. Phase 4 ready to continue.
+
+What was done this session:
+- ✅ Level-up modal now shows after battle victories
+- ✅ HP potions blocked at 0 HP (must use revive)
+- ✅ Unconscious bounty check validates both status AND HP
+- ✅ New 5-tier XP progression aligned with getLevelTier()
+
+Continue with Phase 4 priorities from Feature Roadmap v2:
+1. Power-Up Wiring - Complete remaining triggers (Hat Trick, Blitz, etc.)
+2. AI Quest Generation - Wire up Gemini for quest creation
+3. Unit Testing - Start with achievement triggers
+
+Key files to reference:
+- docs/development/Feature Roadmap v2.md - Current priorities
+- src/services/XPSystem.ts - New 5-tier thresholds
+- src/services/BattleService.ts - Level-up callback pattern
+```
+
+---
+
+## Git Commit Message
+
+```
+fix: bug fixes and XP system overhaul
+
+- Level-up modal now shows after battle victories
+- HP potions blocked at 0 HP (must use revive)
+- Unconscious check validates both status AND HP
+- New 5-tier XP progression aligned with getLevelTier()
+```
+
+---

@@ -68,12 +68,12 @@ This document reflects the **actual state of implementation** based on a deep co
 
 ### XP & Leveling
 | Feature | Location | Notes |
-|---------|----------|-------|
-| Level 1-40 | `XPSystem.ts` | Age-based thresholds |
+|---------|----------|---------|
+| Level 1-40 | `XPSystem.ts` | 5-tier progressive thresholds aligned with `getLevelTier()` |
 | XP per task | `useXPAward.ts` | Configurable per quest |
 | Completion bonus | Quest frontmatter | Extra XP for finishing quest |
 | Class XP bonus | `XPSystem.ts` | Applied in `calculateXPWithBonus` |
-| Level-up modal | `LevelUpModal.ts` | Celebration with confetti |
+| Level-up modal | `LevelUpModal.ts` | Celebration with confetti (now triggers from battles too) |
 | Category → stat | `CLASS_INFO.categoryStatMap` | XP growth feeds stats |
 
 ### Combat System
@@ -375,4 +375,4 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-01-27
+**Last Updated:** 2026-01-27 (Late - XP system overhaul, bug fixes)
