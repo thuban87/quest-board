@@ -85,6 +85,10 @@ export interface QuestBoardSettings {
 
     // Dungeon system configuration
     userDungeonFolder: string;  // Folder for user-created dungeon markdown files
+
+    // Mobile Kanban settings
+    mobileKanbanMode: 'swipe' | 'checkbox';  // 'swipe' = single column with nav, 'checkbox' = multi-select columns
+    mobileDefaultColumn: 'available' | 'active' | 'in_progress' | 'completed';  // Default visible column on mobile
 }
 
 /**
@@ -131,6 +135,8 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     bountyChance: 10,  // 10% chance by default
     bountyDescriptionCache: {},  // AI-generated bounty descriptions
     userDungeonFolder: 'Quest Board/dungeons',  // Default dungeon folder
+    mobileKanbanMode: 'swipe',  // Default to swipe single-column mode
+    mobileDefaultColumn: 'active',  // Default to Active column on mobile
 };
 
 /**
@@ -395,6 +401,35 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 .setDynamicTooltip()
                 .onChange(async (value) => {
                     this.plugin.settings.bountyChance = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        // Mobile Settings Section
+        containerEl.createEl('h3', { text: 'Mobile Settings' });
+
+        new Setting(containerEl)
+            .setName('Mobile Kanban Mode')
+            .setDesc('How columns are displayed on mobile devices')
+            .addDropdown(dropdown => dropdown
+                .addOption('swipe', 'Single Column (one column at a time, arrows to navigate)')
+                .addOption('checkbox', 'Checkbox Multi-Select (toggle column visibility with chips)')
+                .setValue(this.plugin.settings.mobileKanbanMode || 'swipe')
+                .onChange(async (value) => {
+                    this.plugin.settings.mobileKanbanMode = value as 'swipe' | 'checkbox';
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Default Mobile Column')
+            .setDesc('Which column to show by default when opening the Kanban on mobile')
+            .addDropdown(dropdown => dropdown
+                .addOption('available', '📋 Available')
+                .addOption('active', '⚔️ Active')
+                .addOption('in_progress', '🔨 In Progress')
+                .addOption('completed', '✅ Completed')
+                .setValue(this.plugin.settings.mobileDefaultColumn || 'active')
+                .onChange(async (value) => {
+                    this.plugin.settings.mobileDefaultColumn = value as 'available' | 'active' | 'in_progress' | 'completed';
                     await this.plugin.saveSettings();
                 }));
 
