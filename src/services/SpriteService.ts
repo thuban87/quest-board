@@ -49,7 +49,7 @@ export function getPlayerGifPath(
 ): string {
     const basePath = getBasePath(manifestDir);
     const classLower = className.toLowerCase();
-    const filePath = `${basePath}/player/${classLower}/tier${tier}/${classLower}_tier_${tier}.gif`;
+    const filePath = `${basePath}/player/${classLower}/tier${tier}/${classLower}-tier-${tier}.gif`;
     return adapter.getResourcePath(filePath);
 }
 
@@ -66,7 +66,7 @@ export function getPlayerSpritePath(
 ): string {
     const basePath = getBasePath(manifestDir);
     const classLower = className.toLowerCase();
-    const filePath = `${basePath}/player/${classLower}/tier${tier}/${classLower}_tier_${tier}_${direction}.png`;
+    const filePath = `${basePath}/player/${classLower}/tier${tier}/${classLower}-tier-${tier}_${direction}.png`;
     return adapter.getResourcePath(filePath);
 }
 
