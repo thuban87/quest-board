@@ -53,6 +53,7 @@ export class QuestBoardCommandMenu extends Modal {
                 icon: '✨',
                 commands: [
                     { label: 'New Quest', icon: '⚔️', commandId: 'quest-board:create-quest', description: 'Start a new adventure' },
+                    { label: 'AI Quest', icon: '🤖', commandId: 'quest-board:ai-generate-quest', description: 'Create quest with AI' },
                     { label: 'From Template', icon: '📜', commandId: 'quest-board:create-quest-from-template', description: 'Use a quest template' },
                     { label: 'Application', icon: '📄', commandId: 'quest-board:create-application-gauntlet', description: 'Job application tracker' },
                     { label: 'Interview', icon: '🎤', commandId: 'quest-board:create-interview-arena', description: 'Interview prep workflow' },

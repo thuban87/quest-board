@@ -182,7 +182,7 @@ This document reflects the **actual state of implementation** based on a deep co
 | Feature | Current State | Needed |
 |---------|---------------|--------|
 | **Progressive Quest Reveal** | Task limits per section exist | Option to hide future sections |
-| **Gemini API Integration** | Key setting exists, bounty/set generation works | Quest generation not wired |
+| **Gemini API Integration** | Key setting exists, bounty/set/quest generation works | ✅ Complete |
 | **Dual-Class Unlock** | Store action exists | No UI trigger at L25 |
 | **Class Change** | Store action exists | No modal/UI |
 
