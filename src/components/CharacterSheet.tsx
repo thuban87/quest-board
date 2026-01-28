@@ -131,7 +131,6 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                                 alt={`${character.name} sprite`}
                                 className="qb-sprite-image"
                                 onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                                    console.log('Sprite failed to load:', spriteResourcePath);
                                     e.currentTarget.style.display = 'none';
                                     e.currentTarget.nextElementSibling?.classList.remove('hidden');
                                 }}

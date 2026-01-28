@@ -53,7 +53,6 @@ export function checkAndProcessRecoveryTimer(): boolean {
         new Notice('🛏️ Rest complete! Time to get back to work.', 3000);
     }
 
-    console.log('[RecoveryTimerService] Timer expired, player revived');
     return true;
 }
 
@@ -99,8 +98,6 @@ export function startRecoveryTimerCheck(): void {
     checkIntervalId = setInterval(() => {
         checkAndProcessRecoveryTimer();
     }, CHECK_INTERVAL_MS);
-
-    console.log('[RecoveryTimerService] Started timer check interval');
 }
 
 /**
@@ -111,7 +108,6 @@ export function stopRecoveryTimerCheck(): void {
     if (checkIntervalId) {
         clearInterval(checkIntervalId);
         checkIntervalId = null;
-        console.log('[RecoveryTimerService] Stopped timer check interval');
     }
 }
 

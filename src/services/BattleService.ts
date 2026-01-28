@@ -104,7 +104,6 @@ export function startRandomBattle(
     if (tier === 'overworld' && character.level >= ELITE_LEVEL_UNLOCK) {
         if (Math.random() < ELITE_OVERWORLD_CHANCE) {
             effectiveTier = 'elite';
-            console.log('[BattleService] Elite overworld spawn!');
         }
     }
 
@@ -167,14 +166,6 @@ export function startBattleWithMonster(
     // Start battle in store
     const battleMonster = monsterToBattleMonster(monster);
     useBattleStore.getState().startBattle(playerStats, battleMonster, options);
-
-    console.log('[BattleService] Battle started:', {
-        player: character.name,
-        playerHP: playerStats.currentHP,
-        monster: monster.name,
-        monsterHP: monster.maxHP,
-        tier: monster.tier,
-    });
 
     return true;
 }
@@ -240,8 +231,6 @@ function executePlayerAttack(): void {
         result,
         newHP: newMonsterHP,
     });
-
-    console.log(`[BattleService] Player ${playerStats.attackName}: ${damage} damage (${result})`);
 
     // Transition to animation, then check outcome
     store.advanceState('ANIMATING_PLAYER');
@@ -324,8 +313,6 @@ function executePlayerDefend(): void {
         result: 'hit',
     });
 
-    console.log('[BattleService] Player defending');
-
     // Skip to enemy turn
     store.advanceState('ENEMY_TURN');
     executeMonsterTurn();
@@ -354,7 +341,6 @@ function executePlayerRetreat(): void {
             result: 'hit',
         });
 
-        console.log('[BattleService] Retreat successful');
         store.endBattle('retreat');
     } else {
         // Failed retreat - take 15% HP damage
@@ -370,8 +356,6 @@ function executePlayerRetreat(): void {
             result: 'hit',
             newHP,
         });
-
-        console.log(`[BattleService] Retreat failed, took ${damage} damage`);
 
         // Check if died from retreat
         if (newHP <= 0) {
@@ -425,8 +409,6 @@ export function executeMonsterTurn(): void {
         newHP,
     });
 
-    console.log(`[BattleService] ${monster.name} attacks: ${damage} damage (${damageResult.result})`);
-
     store.advanceState('ANIMATING_ENEMY');
 
     // After animation, check outcome and advance turn
@@ -474,12 +456,6 @@ function handleVictory(): void {
     const { monster, lootBonus } = store;
 
     if (!monster) return;
-
-    console.log('[BattleService] Victory!', {
-        monster: monster.name,
-        xp: monster.xpReward,
-        gold: monster.goldReward,
-    });
 
     // Award XP
     characterStore.addXP(monster.xpReward);
@@ -547,10 +523,6 @@ function handleDefeat(): void {
             lastModified: new Date().toISOString(),
         });
     }
-
-    console.log('[BattleService] Defeat!', {
-        goldLost,
-    });
 
     store.endBattle('defeat');
 

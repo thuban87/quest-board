@@ -9,6 +9,7 @@
         "dev": "node esbuild.config.mjs",
         "build": "npm run css:build && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
         "deploy:test": "npm run build && node deploy.mjs test",
+        "deploy:staging": "npm run build && node deploy.mjs staging",
         "deploy:production": "npm run build && node deploy.mjs production",
         "test": "vitest",
         "test:ui": "vitest --ui",

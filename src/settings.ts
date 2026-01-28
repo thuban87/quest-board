@@ -98,9 +98,9 @@ export function getQuestFolderPath(settings: QuestBoardSettings): string {
  */
 export const DEFAULT_SETTINGS: QuestBoardSettings = {
     geminiApiKey: '',
-    storageFolder: 'Life/Quest Board',
-    spriteFolder: 'Life/Quest Board/assets/sprites/paladin',
-    badgeFolder: 'Life/Quest Board/assets/badges',
+    storageFolder: 'Quest Board',
+    spriteFolder: 'Quest Board/assets',
+    badgeFolder: 'Quest Board/assets',
     weeklyGoal: 8,
     enableTrainingMode: true,
     character: null,
@@ -115,7 +115,7 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     streakMode: 'quest',
     excludedFolders: [],
     templateFolder: 'Quest Board/templates',
-    archiveFolder: 'quests/archive',
+    archiveFolder: 'Quest Board/quests/archive',
     defaultQuestTags: [],
     enableDailyNoteLogging: true,
     questSlotMapping: {
@@ -130,7 +130,7 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     setBonusCache: {},
     bountyChance: 10,  // 10% chance by default
     bountyDescriptionCache: {},  // AI-generated bounty descriptions
-    userDungeonFolder: 'Life/Quest Board/dungeons',  // Default dungeon folder
+    userDungeonFolder: 'Quest Board/dungeons',  // Default dungeon folder
 };
 
 /**
@@ -490,7 +490,6 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     .setButtonText('Edit Character')
                     .onClick(() => {
                         // TODO: Open character edit modal
-                        console.log('Edit character modal - coming soon');
                     }));
 
             new Setting(containerEl)

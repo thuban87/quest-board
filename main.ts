@@ -58,8 +58,6 @@ export default class QuestBoardPlugin extends Plugin {
     private lastRecurrenceCheckHour: number = -1;
 
     async onload(): Promise<void> {
-        console.log('Loading Quest Board plugin');
-
         // Load settings
         await this.loadSettings();
 
@@ -122,11 +120,6 @@ export default class QuestBoardPlugin extends Plugin {
             const streakResult = checkStreakOnLoad(this.settings.character, isPaladin);
 
             if (streakResult.changed) {
-                console.log('[QuestBoard] Streak check on load:', {
-                    streakWasReset: streakResult.streakWasReset,
-                    shieldWasReset: streakResult.shieldWasReset,
-                    currentStreak: streakResult.character.currentStreak,
-                });
                 this.settings.character = streakResult.character;
                 await this.saveSettings();
             }
@@ -500,14 +493,11 @@ export default class QuestBoardPlugin extends Plugin {
 
         // Start recovery timer check (Phase 3B Step 9: Death Penalty)
         startRecoveryTimerCheck();
-
-        console.log('Quest Board plugin loaded successfully');
     }
 
     onunload(): void {
         stopRecoveryTimerCheck();
         statusBarService.destroy();
-        console.log('Unloading Quest Board plugin');
     }
 
     async loadSettings(): Promise<void> {

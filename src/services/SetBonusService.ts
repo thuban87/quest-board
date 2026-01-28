@@ -82,7 +82,6 @@ class SetBonusServiceClass {
             for (const [setId, bonuses] of Object.entries(savedCache)) {
                 this.bonusCache.set(setId, bonuses);
             }
-            console.log(`[SetBonusService] Loaded ${this.bonusCache.size} cached sets from storage`);
         }
     }
 
@@ -113,7 +112,7 @@ class SetBonusServiceClass {
         }
 
         if (removed > 0) {
-            console.log(`[SetBonusService] Removed ${removed} stale cache entries for deleted folders`);
+            // Stale cache entries were removed
         }
     }
 
@@ -273,8 +272,6 @@ class SetBonusServiceClass {
             return;
         }
 
-        console.log(`[SetBonusService] Batch generating bonuses for ${folders.length} folders:`, folders.map(f => f.name));
-
         try {
             const folderList = folders.map(f => f.name).join('", "');
             const prompt = `Generate RPG set bonuses for ${folders.length} gear sets. Each set needs 3 bonuses (2pc, 4pc, 6pc).
@@ -363,11 +360,9 @@ Be creative! Match stats to themes (fitness→strength, study→wisdom, work→i
                     if (bonuses.length > 3) bonuses = bonuses.slice(0, 3);
 
                     this.bonusCache.set(folder.id, bonuses);
-                    console.log(`[SetBonusService] Cached AI bonuses for "${folder.name}"`);
                 } else {
                     // Fallback to defaults for this folder
                     this.bonusCache.set(folder.id, this.generateDefaultBonuses(folder.name));
-                    console.log(`[SetBonusService] Using defaults for "${folder.name}" (not in API response)`);
                 }
             }
         } catch (error) {
@@ -382,10 +377,7 @@ Be creative! Match stats to themes (fitness→strength, study→wisdom, work→i
 
         // Persist cache to settings
         if (this.saveCallback) {
-            console.log('[SetBonusService] Saving cache with', this.bonusCache.size, 'entries');
             this.saveCallback().catch(err => console.warn('[SetBonusService] Failed to save cache:', err));
-        } else {
-            console.warn('[SetBonusService] No save callback registered');
         }
     }
 

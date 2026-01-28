@@ -1329,7 +1329,6 @@ export function registerUserDungeons(templates: DungeonTemplate[]): void {
     for (const template of templates) {
         userTemplates[template.id] = template;
     }
-    console.log(`[DungeonRegistry] Registered ${templates.length} user dungeon(s)`);
 }
 
 /**

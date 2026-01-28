@@ -213,12 +213,6 @@ export class SmeltingService {
                 },
             });
 
-            console.log('[SmeltingService] Smelt successful:', {
-                inputs: items.map(i => `${i.name} (${i.tier})`),
-                output: `${outputItem.name} (${outputItem.tier})`,
-                goldCost,
-            });
-
             return {
                 success: true,
                 outputItem,

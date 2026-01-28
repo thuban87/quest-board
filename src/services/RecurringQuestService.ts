@@ -69,8 +69,6 @@ export class RecurringQuestService {
      * Called on plugin load and at 1am daily
      */
     async processRecurrence(): Promise<void> {
-        console.log('[RecurringQuestService] Processing recurring quests...');
-
         // Ensure folders exist
         await this.ensureFolders();
 
@@ -79,8 +77,6 @@ export class RecurringQuestService {
 
         // Generate today's quests from templates
         await this.generateTodaysQuests();
-
-        console.log('[RecurringQuestService] Recurring quest processing complete.');
     }
 
     /**
@@ -97,7 +93,6 @@ export class RecurringQuestService {
             const folder = this.vault.getAbstractFileByPath(normalizePath(folderPath));
             if (!folder) {
                 await this.vault.createFolder(normalizePath(folderPath));
-                console.log(`[RecurringQuestService] Created folder: ${folderPath}`);
             }
         }
     }
@@ -279,7 +274,6 @@ export class RecurringQuestService {
         const folder = this.vault.getAbstractFileByPath(normalizePath(RECURRING_TEMPLATES_FOLDER));
 
         if (!folder || !(folder instanceof TFolder)) {
-            console.log('[RecurringQuestService] Templates folder not found.');
             return templates;
         }
 
@@ -354,7 +348,6 @@ export class RecurringQuestService {
 
             // Validate required fields
             if (!frontmatter.recurrence || !frontmatter.questName) {
-                console.log(`[RecurringQuestService] Template ${file.name} missing required fields.`);
                 return null;
             }
 
@@ -414,14 +407,12 @@ export class RecurringQuestService {
         for (const template of templates) {
             // Check if this template should generate today
             if (!this.shouldGenerateToday(template.recurrenceRaw)) {
-                console.log(`[RecurringQuestService] Skipping ${template.questName} - not scheduled for today`);
                 continue;
             }
 
             // Check if instance already exists
             const templateId = this.getTemplateId(template.file);
             if (await this.instanceExists(templateId, today)) {
-                console.log(`[RecurringQuestService] Instance already exists for ${template.questName} on ${today}`);
                 continue;
             }
 
@@ -478,7 +469,6 @@ instanceDate: ${date}
 
         // Create the file
         await this.vault.create(filePath, fullContent);
-        console.log(`[RecurringQuestService] Generated quest: ${fileName}`);
 
         return filePath;
     }
@@ -513,7 +503,6 @@ instanceDate: ${date}
 
                 const newPath = normalizePath(`${archiveFolderPath}/${file.name}`);
                 await this.vault.rename(file, newPath);
-                console.log(`[RecurringQuestService] Archived: ${file.name} -> ${newPath}`);
             }
         }
     }

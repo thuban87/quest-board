@@ -639,7 +639,6 @@ export async function updateQuestSortOrder(
                     sortOrder,
                 });
                 await vault.modify(file, updatedContent);
-                console.log(`[QuestService] Updated sortOrder for ${questId}: ${sortOrder}`);
                 return true;
             }
         }
@@ -653,7 +652,6 @@ export async function updateQuestSortOrder(
                 sortOrder,
             });
             await vault.modify(baseFile, updatedContent);
-            console.log(`[QuestService] Updated sortOrder for ${questId}: ${sortOrder}`);
             return true;
         }
 

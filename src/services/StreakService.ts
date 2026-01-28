@@ -202,7 +202,6 @@ export function checkStreakOnLoad(character: Character, isPaladin: boolean = fal
             updatedCharacter.shieldUsedThisWeek = false;
             shieldWasReset = true;
             changed = true;
-            console.log('[StreakService] Weekly shield reset - new week started');
         }
     }
 
@@ -229,7 +228,6 @@ export function checkStreakOnLoad(character: Character, isPaladin: boolean = fal
 
     // Streak should be reset
     if (character.currentStreak > 0) {
-        console.log('[StreakService] Streak reset on load - missed too many days');
         updatedCharacter.currentStreak = 0;
         streakWasReset = true;
         changed = true;

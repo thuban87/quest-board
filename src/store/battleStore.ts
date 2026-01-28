@@ -222,24 +222,10 @@ export const useBattleStore = create<BattleStore>()(
                     sourceQuestId: options.questId ?? null,
                     lastUpdated: Date.now(),
                 });
-
-                console.log('[BattleStore] Battle started:', {
-                    player: playerStats.maxHP,
-                    monster: monster.name,
-                    monsterHP: monster.maxHP,
-                    isBounty: options.isBounty,
-                });
             },
 
             endBattle: (outcome) => {
                 const { monster, log, lootBonus, sourceQuestId } = get();
-
-                console.log('[BattleStore] Battle ended:', {
-                    outcome,
-                    monster: monster?.name,
-                    turns: log.length,
-                    lootBonus,
-                });
 
                 // Don't fully reset - leave some data for reward processing
                 set({
@@ -336,12 +322,6 @@ export const useBattleStore = create<BattleStore>()(
                     const isRecent = timeSinceUpdate < 60 * 60 * 1000; // 1 hour
 
                     if (isRecent && state.playerCurrentHP > 0 && state.monster.currentHP > 0) {
-                        console.log('[BattleStore] Recovered combat state:', {
-                            turn: state.turnNumber,
-                            playerHP: state.playerCurrentHP,
-                            monsterHP: state.monster.currentHP,
-                        });
-
                         // Resume at player input
                         set({ state: 'PLAYER_INPUT' });
                         return true;

@@ -748,7 +748,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
         const doorKey = `${nx},${ny}`;
         const doorInfo = room.doors[doorKey];
         if (doorInfo) {
-            console.log(`[DungeonView] Walking through door to ${doorInfo.targetRoom}`);
             movePlayer(nx, ny, direction);
             // Trigger animated room transition
             handleRoomTransition(doorInfo.targetRoom, doorInfo.targetEntry, direction);
@@ -782,8 +781,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                     // Create the monster instance
                     const monster = monsterService.createMonster(templateId, monsterLevel, tier);
                     if (monster) {
-                        console.log('[DungeonView] Step-on combat with:', monster.name, 'Lv.', monster.level);
-
                         // Start battle
                         const battleStarted = startBattleWithMonster(monster);
                         if (battleStarted) {
@@ -817,8 +814,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
         const facing = useDungeonStore.getState().playerFacing;
         const targetPos = getStepPosition([px, py], facing);
         const [tx, ty] = targetPos;
-
-        console.log(`[DungeonView] Interact at [${tx}, ${ty}]`);
 
         // Bounds check
         if (ty < 0 || ty >= room.layout.length || tx < 0 || tx >= room.layout[ty].length) {
@@ -877,7 +872,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
             if (consumables.length > 0) lootParts.push(`🧪 ${consumables.join(', ')}`);
 
             new Notice(`📜 Chest opened!\n${lootParts.join('\n')}`, 4000);
-            console.log('[DungeonView] Chest opened:', { chestId, loot });
             return;
         }
 
@@ -917,8 +911,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                 return;
             }
 
-            console.log('[DungeonView] Starting combat with:', monster.name, 'Lv.', monster.level);
-
             // Start battle
             const battleStarted = startBattleWithMonster(monster);
             if (battleStarted) {
@@ -930,12 +922,9 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
 
         // Handle PORTAL interaction
         if (char === LAYOUT_CHARS.PORTAL) {
-            console.log('[DungeonView] Portal interaction - showing exit summary');
             setShowExitSummary(true);
             return;
         }
-
-        console.log('[DungeonView] Nothing to interact with here');
     }, [isAnimating, transition.active, room, template, currentRoomId]);
 
     /**
@@ -959,7 +948,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
             const doorKey = `${x},${y}`;
             if (room?.doors[doorKey]) {
                 const doorInfo = room.doors[doorKey];
-                console.log(`[DungeonView] Path reached door, transitioning to ${doorInfo.targetRoom}`);
                 // Use animated transition, don't setIsAnimating(false) here as handleRoomTransition will
                 await handleRoomTransition(doorInfo.targetRoom, doorInfo.targetEntry, facing);
                 return; // handleRoomTransition sets isAnimating to false
@@ -986,7 +974,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
 
                         const monster = monsterService.createMonster(templateId, monsterLevel, tier);
                         if (monster) {
-                            console.log('[DungeonView] Click-to-move combat with:', monster.name);
                             const battleStarted = startBattleWithMonster(monster);
                             if (battleStarted) {
                                 useDungeonStore.getState().startCombat(currentRoomId, monsterId);
@@ -1008,8 +995,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
      * Handle tile click with A* pathfinding.
      */
     const handleTileClick = useCallback((x: number, y: number) => {
-        console.log(`[DungeonView] Tile clicked: [${x}, ${y}]`);
-
         if (isAnimating || !room || !template) return;
 
         // Check if clicking on a door - pathfind TO the door first
@@ -1017,8 +1002,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
         const doorInfo = room.doors[doorKey];
 
         if (doorInfo) {
-            console.log(`[DungeonView] Door clicked! Pathfinding to door at [${x},${y}]`);
-
             // Get current player position
             const currentPos = useDungeonStore.getState().playerPosition;
 
@@ -1054,7 +1037,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
         const path = findPath(currentPos, [x, y], room, template.tileSet);
 
         if (path === null) {
-            console.log(`[DungeonView] No path to [${x}, ${y}]`);
             new Notice("Can't reach that tile!");
             return;
         }
@@ -1159,10 +1141,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
         if (battleState === 'VICTORY' && activeCombatMonsterId && activeCombatRoomId) {
             // Mark monster as killed
             markMonsterKilled(activeCombatRoomId, activeCombatMonsterId);
-            console.log('[DungeonView] Monster defeated:', activeCombatMonsterId);
-        } else if (battleState === 'RETREATED') {
-            // Retreat = monster still alive, but player can try again
-            console.log('[DungeonView] Player retreated from combat');
         }
 
         // End combat state (resume exploring)
@@ -1180,7 +1158,6 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
      * Called by BattleView via onDefeat prop
      */
     const handleDefeat = useCallback(() => {
-        console.log('[DungeonView] Player defeated - showing death modal');
         new DungeonDeathModal(app, {
             onRestart: () => {
                 resetBattle();
