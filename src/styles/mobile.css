@@ -1,3 +1,259 @@
-/* Mobile/Responsive - placeholder */
-/* Media queries are currently embedded in other modules */
-/* Future: Consolidate @media queries here */
+/* ===========================================
+   Mobile CSS Module - Kanban Mobile View
+   =========================================== */
+
+/* ===========================================
+   Mobile Filter Bar
+   =========================================== */
+.qb-filter-bar-mobile {
+    padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+    gap: var(--qb-spacing-sm);
+    flex-wrap: nowrap;
+}
+
+.qb-mobile-filter-buttons {
+    flex-shrink: 0;
+}
+
+.qb-mobile-filter-toggle {
+    padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* Mobile filter dropdown - takes full width, scrollable */
+.qb-mobile-filter-dropdown {
+    position: fixed;
+    left: var(--qb-spacing-sm);
+    right: var(--qb-spacing-sm);
+    top: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+    background: var(--background-primary);
+    border: 1px solid var(--qb-card-border);
+    border-radius: var(--qb-radius-lg);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    padding: var(--qb-spacing-sm);
+}
+
+.qb-mobile-filter-section {
+    margin-bottom: var(--qb-spacing-md);
+    padding-bottom: var(--qb-spacing-sm);
+    border-bottom: 1px solid var(--qb-card-border);
+}
+
+.qb-mobile-filter-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.qb-mobile-filter-section-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-normal);
+    padding: var(--qb-spacing-sm) var(--qb-spacing-xs);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: var(--qb-radius-sm);
+    transition: background var(--qb-transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.qb-mobile-filter-section-title:active {
+    background: var(--background-modifier-hover);
+}
+
+.qb-mobile-filter-section-title.expanded {
+    margin-bottom: var(--qb-spacing-xs);
+}
+
+.qb-section-arrow {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-left: var(--qb-spacing-sm);
+}
+
+.qb-mobile-filter-clear {
+    width: 100%;
+    padding: var(--qb-spacing-sm);
+    margin-top: var(--qb-spacing-sm);
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--qb-radius-md);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--qb-transition-fast);
+}
+
+.qb-mobile-filter-clear:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* ===========================================
+   Mobile Column Selector
+   =========================================== */
+.qb-mobile-column-selector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+    background: var(--background-secondary);
+    border-bottom: 1px solid var(--qb-card-border);
+}
+
+/* Swipe navigation mode */
+.qb-mobile-swipe-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--qb-spacing-md);
+    width: 100%;
+    justify-content: space-between;
+}
+
+.qb-mobile-nav-btn {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--qb-card-border);
+    border-radius: var(--qb-radius-md);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--qb-transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.qb-mobile-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.qb-mobile-nav-btn:not(:disabled):active {
+    transform: scale(0.95);
+    background: var(--interactive-accent);
+    color: white;
+}
+
+.qb-mobile-column-label {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-normal);
+}
+
+.qb-mobile-count {
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-left: var(--qb-spacing-xs);
+}
+
+/* Checkbox chips mode */
+.qb-mobile-column-chips {
+    display: flex;
+    gap: var(--qb-spacing-xs);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.qb-mobile-column-chip {
+    padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+    border: 1px solid var(--qb-card-border);
+    border-radius: var(--qb-radius-lg);
+    background: var(--background-primary);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--qb-transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.qb-mobile-column-chip.active {
+    background: var(--interactive-accent);
+    color: white;
+    border-color: var(--interactive-accent);
+}
+
+.qb-mobile-column-chip:active {
+    transform: scale(0.95);
+}
+
+/* ===========================================
+   Mobile Columns Layout
+   =========================================== */
+.qb-mobile-view {
+    /* Ensure full height usage */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.qb-mobile-columns {
+    flex-direction: column;
+    gap: 0;
+}
+
+.qb-mobile-column {
+    /* Single column takes full width */
+    flex: 1;
+    min-height: 0;
+    max-width: 100%;
+}
+
+/* Allow column header but not column collapse on mobile */
+.qb-mobile-column .qb-fp-column-header {
+    cursor: default;
+}
+
+/* But enable the toggle-all button specifically */
+.qb-mobile-column .qb-fp-toggle-all {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* Make column body scrollable in mobile single-column mode */
+.qb-mobile-column .qb-fp-column-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: var(--qb-spacing-xl);
+}
+
+/* Quest cards in mobile view */
+.qb-mobile-column .qb-quest-card {
+    margin: var(--qb-spacing-sm);
+}
+
+/* ===========================================
+   Additional Mobile Responsiveness
+   =========================================== */
+@media (max-width: 600px) {
+
+    /* Ensure filter bar stays compact */
+    .qb-filter-bar-mobile .qb-filter-search {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .qb-filter-bar-mobile .qb-filter-search-input {
+        font-size: 16px;
+        /* Prevents iOS zoom on focus */
+    }
+
+    .qb-filter-bar-mobile .qb-filter-divider {
+        display: none;
+    }
+
+    /* Column chips become smaller on very small screens */
+    .qb-mobile-column-chip {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+}

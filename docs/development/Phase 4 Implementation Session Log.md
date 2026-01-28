@@ -171,3 +171,119 @@ Files: main.ts, settings.ts, and 18+ service/component files
 ```
 
 ---
+
+## 2026-01-27 (Evening) - Mobile Kanban Optimization
+
+**Focus:** Making the Kanban board usable on mobile devices by optimizing screen real estate
+
+### Completed:
+
+#### Mobile Settings
+- ✅ Added `mobileKanbanMode: 'swipe' | 'checkbox'` setting (default: swipe)
+- ✅ Added `mobileDefaultColumn` setting (available, active, in_progress, completed)
+- ✅ Created Mobile Settings UI section in plugin settings
+
+#### Header Hidden on Mobile
+- ✅ Full-page header (`qb-fullpage-header`) hidden when `Platform.isMobile` is true
+- ✅ Reclaims ~15-20% of screen height
+
+#### Condensed Filter Bar
+- ✅ All filter options consolidated into single "⚙️ Filters" dropdown on mobile
+- ✅ Filter sections are **collapsible** - tap section title to expand/collapse
+- ✅ Active filter counts shown in parentheses (e.g., "📜 Type (2)")
+- ✅ Arrow indicators (▶ collapsed, ▼ expanded)
+- ✅ Search bar remains visible on same line
+
+#### Column Selector
+- ✅ **Single Column mode** (default): Arrow navigation (◀/▶) with column name/count
+- ✅ **Checkbox mode**: Toggleable chips to show/hide multiple columns
+- ✅ Default column configurable in settings
+- ✅ Renamed "Swipe Single Column" → "Single Column" (no actual swiping in Obsidian mobile)
+
+#### Mobile Column Display
+- ✅ Single column takes full width/height
+- ✅ Toggle-all button (expand/collapse cards) works on mobile
+- ✅ Column header click doesn't collapse column on mobile (only useful on desktop)
+
+### Files Changed:
+
+**Settings:**
+- `src/settings.ts` - Added mobileKanbanMode, mobileDefaultColumn, UI section
+
+**Components:**
+- `src/components/FilterBar.tsx` - Added isMobile prop, collapsible filter sections
+- `src/components/FullKanban.tsx` - Mobile detection, column selector, visibility logic
+
+**CSS:**
+- `src/styles/mobile.css` - Complete rewrite with mobile Kanban styles
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault on mobile device
+- ✅ Header hidden, filter dropdown collapsible, column navigation works
+- ✅ Settings persist correctly
+- ✅ Desktop view unaffected
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Mobile Kanban optimization complete. Phase 4 ready to continue.
+
+What was done this session:
+- ✅ Hidden header on mobile (saves 15-20% screen space)
+- ✅ Condensed filter bar with collapsible sections
+- ✅ Added column selector with Single Column and Checkbox modes
+- ✅ Added mobile settings (mode and default column)
+- ✅ Fixed toggle-all button working on mobile
+
+Continue with Phase 4 priorities from Feature Roadmap v2:
+1. Power-Up Wiring - Complete remaining triggers (Hat Trick, Blitz, etc.)
+2. AI Quest Generation - Wire up Gemini for quest creation
+3. Unit Testing - Start with achievement triggers
+
+Key files to reference:
+- docs/development/Feature Roadmap v2.md - Current priorities
+- src/styles/mobile.css - Mobile-specific styles
+- src/components/FullKanban.tsx - Mobile column visibility logic
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(mobile): optimize Kanban board for mobile devices
+
+Mobile Settings:
+- Add mobileKanbanMode setting (Single Column vs Checkbox modes)
+- Add mobileDefaultColumn setting (choose which column shows first)
+- Add Mobile Settings section in plugin settings UI
+
+Header:
+- Hide full-page header on mobile (saves ~15-20% screen height)
+
+Filter Bar:
+- Consolidate all filters into single "⚙️ Filters" dropdown on mobile
+- Each filter section is collapsible (tap title to expand/collapse)
+- Show active filter counts in section titles
+- Arrow indicators for expand/collapse state
+
+Column Navigation:
+- Single Column mode: Arrow nav (◀/▶) with column name and quest count
+- Checkbox mode: Toggleable chips to show/hide multiple columns
+- Default column configurable in settings
+
+Column Display:
+- Single column takes full width on mobile
+- Toggle-all button (expand/collapse cards) enabled on mobile
+- Renamed 'Swipe Single Column' to 'Single Column'
+
+Files: settings.ts, FilterBar.tsx, FullKanban.tsx, mobile.css
+```
+
+---

@@ -7,7 +7,7 @@
  */
 
 import React, { useEffect, useCallback, useState, useMemo } from 'react';
-import { App as ObsidianApp } from 'obsidian';
+import { App as ObsidianApp, Platform } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { QuestStatus } from '../models/QuestStatus';
 import { Quest, isManualQuest } from '../models/Quest';
@@ -102,6 +102,34 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         [QuestStatus.COMPLETED]: false,
     });
 
+    // Mobile column visibility state
+    const isMobile = Platform.isMobile;
+    const mobileMode = plugin.settings.mobileKanbanMode || 'swipe';
+
+    // For swipe mode: track current column index
+    const [mobileColumnIndex, setMobileColumnIndex] = useState<number>(() => {
+        const defaultCol = plugin.settings.mobileDefaultColumn || 'active';
+        const statusMap: Record<string, number> = {
+            'available': 0,
+            'active': 1,
+            'in_progress': 2,
+            'completed': 3
+        };
+        return statusMap[defaultCol] ?? 1;
+    });
+
+    // For checkbox mode: track which columns are visible
+    const [mobileVisibleColumns, setMobileVisibleColumns] = useState<QuestStatus[]>(() => {
+        const defaultCol = plugin.settings.mobileDefaultColumn || 'active';
+        const statusMap: Record<string, QuestStatus> = {
+            'available': QuestStatus.AVAILABLE,
+            'active': QuestStatus.ACTIVE,
+            'in_progress': QuestStatus.IN_PROGRESS,
+            'completed': QuestStatus.COMPLETED
+        };
+        return [statusMap[defaultCol] || QuestStatus.ACTIVE];
+    });
+
     // Collapsed cards state (uses consolidated hook)
     const {
         isCollapsed: isCardCollapsed,
@@ -132,6 +160,36 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
             .map(q => q.questId);
         return questIds.length > 0 && questIds.every(id => isCardCollapsed(id));
     };
+
+    // Mobile navigation - swipe mode
+    const goToPrevColumn = useCallback(() => {
+        setMobileColumnIndex(prev => Math.max(0, prev - 1));
+    }, []);
+
+    const goToNextColumn = useCallback(() => {
+        setMobileColumnIndex(prev => Math.min(KANBAN_STATUSES.length - 1, prev + 1));
+    }, []);
+
+    // Mobile toggle column visibility - checkbox mode
+    const toggleMobileColumn = useCallback((status: QuestStatus) => {
+        setMobileVisibleColumns(prev => {
+            if (prev.includes(status)) {
+                // Don't allow removing the last visible column
+                if (prev.length <= 1) return prev;
+                return prev.filter(s => s !== status);
+            }
+            return [...prev, status];
+        });
+    }, []);
+
+    // Check if a column should be visible on mobile
+    const isColumnVisibleOnMobile = useCallback((status: QuestStatus, index: number): boolean => {
+        if (!isMobile) return true;
+        if (mobileMode === 'swipe') {
+            return index === mobileColumnIndex;
+        }
+        return mobileVisibleColumns.includes(status);
+    }, [isMobile, mobileMode, mobileColumnIndex, mobileVisibleColumns]);
 
     // Load character on mount
     useEffect(() => {
@@ -226,42 +284,44 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     }
 
     return (
-        <div className="qb-fullpage-board">
-            {/* Header */}
-            <header className="qb-fullpage-header">
-                <div className="qb-fp-header-left">
-                    <h1>⚔️ {character.name}'s Quest Board</h1>
-                </div>
-                <div className="qb-fp-header-right">
-                    <span className="qb-fp-class">{classInfo.emoji} {classInfo.name}</span>
-                    <span className="qb-fp-level">
-                        {character.isTrainingMode
-                            ? `Training ${getTrainingLevelDisplay(character.trainingLevel)}`
-                            : `Level ${character.level}`
-                        }
-                    </span>
-                    <div className="qb-fp-xp-bar">
-                        <div
-                            className="qb-fp-xp-fill"
-                            style={{
-                                width: `${xpProgress * 100}%`,
-                                backgroundColor: classInfo.primaryColor
-                            }}
-                        />
+        <div className={`qb-fullpage-board ${isMobile ? 'qb-mobile-view' : ''}`}>
+            {/* Header - hidden on mobile */}
+            {!isMobile && (
+                <header className="qb-fullpage-header">
+                    <div className="qb-fp-header-left">
+                        <h1>⚔️ {character.name}'s Quest Board</h1>
                     </div>
-                    <span className="qb-fp-xp-text">
-                        {(() => {
-                            if (character.isTrainingMode) {
-                                const currentThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel - 1] || 0;
-                                const nextThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel] || TRAINING_XP_THRESHOLDS[9];
-                                return `${character.trainingXP - currentThreshold} / ${nextThreshold - currentThreshold} XP`;
-                            } else {
-                                return `${character.totalXP} XP`;
+                    <div className="qb-fp-header-right">
+                        <span className="qb-fp-class">{classInfo.emoji} {classInfo.name}</span>
+                        <span className="qb-fp-level">
+                            {character.isTrainingMode
+                                ? `Training ${getTrainingLevelDisplay(character.trainingLevel)}`
+                                : `Level ${character.level}`
                             }
-                        })()}
-                    </span>
-                </div>
-            </header>
+                        </span>
+                        <div className="qb-fp-xp-bar">
+                            <div
+                                className="qb-fp-xp-fill"
+                                style={{
+                                    width: `${xpProgress * 100}%`,
+                                    backgroundColor: classInfo.primaryColor
+                                }}
+                            />
+                        </div>
+                        <span className="qb-fp-xp-text">
+                            {(() => {
+                                if (character.isTrainingMode) {
+                                    const currentThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel - 1] || 0;
+                                    const nextThreshold = TRAINING_XP_THRESHOLDS[character.trainingLevel] || TRAINING_XP_THRESHOLDS[9];
+                                    return `${character.trainingXP - currentThreshold} / ${nextThreshold - currentThreshold} XP`;
+                                } else {
+                                    return `${character.totalXP} XP`;
+                                }
+                            })()}
+                        </span>
+                    </div>
+                </header>
+            )}
 
             {/* Filter Bar */}
             <FilterBar
@@ -269,19 +329,69 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                 availableCategories={availableCategories}
                 availableTags={availableTags}
                 availableTypes={availableTypes}
+                isMobile={isMobile}
             />
+
+            {/* Mobile Column Selector */}
+            {isMobile && (
+                <div className="qb-mobile-column-selector">
+                    {mobileMode === 'swipe' ? (
+                        // Swipe mode: show nav arrows and current column name
+                        <div className="qb-mobile-swipe-nav">
+                            <button
+                                className="qb-mobile-nav-btn"
+                                onClick={goToPrevColumn}
+                                disabled={mobileColumnIndex === 0}
+                            >
+                                ◀
+                            </button>
+                            <span className="qb-mobile-column-label">
+                                {KANBAN_STATUSES[mobileColumnIndex].emoji} {KANBAN_STATUSES[mobileColumnIndex].title}
+                                <span className="qb-mobile-count">
+                                    ({getQuestsForColumn(KANBAN_STATUSES[mobileColumnIndex].status).length})
+                                </span>
+                            </span>
+                            <button
+                                className="qb-mobile-nav-btn"
+                                onClick={goToNextColumn}
+                                disabled={mobileColumnIndex === KANBAN_STATUSES.length - 1}
+                            >
+                                ▶
+                            </button>
+                        </div>
+                    ) : (
+                        // Checkbox mode: show toggleable chips
+                        <div className="qb-mobile-column-chips">
+                            {KANBAN_STATUSES.map(({ status, title, emoji }) => (
+                                <button
+                                    key={status}
+                                    className={`qb-mobile-column-chip ${mobileVisibleColumns.includes(status) ? 'active' : ''}`}
+                                    onClick={() => toggleMobileColumn(status)}
+                                >
+                                    {emoji} {title}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Columns */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <div className="qb-fullpage-columns">
-                    {KANBAN_STATUSES.map(({ status, title, emoji, themeClass }) => {
+                <div className={`qb-fullpage-columns ${isMobile ? 'qb-mobile-columns' : ''}`}>
+                    {KANBAN_STATUSES.map(({ status, title, emoji, themeClass }, index) => {
                         const quests = getQuestsForColumn(status);
                         const isCollapsed = collapsedColumns[status];
+
+                        // On mobile, only render visible columns
+                        if (!isColumnVisibleOnMobile(status, index)) {
+                            return null;
+                        }
 
                         return (
                             <div
                                 key={status}
-                                className={`qb-fp-column ${themeClass} ${isCollapsed ? 'collapsed' : ''}`}
+                                className={`qb-fp-column ${themeClass} ${isCollapsed ? 'collapsed' : ''} ${isMobile ? 'qb-mobile-column' : ''}`}
                             >
                                 {/* Column Header - clickable to toggle */}
                                 <div
