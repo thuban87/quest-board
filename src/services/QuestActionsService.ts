@@ -34,6 +34,7 @@ import {
 import { checkBountyTrigger } from './BountyService';
 import { showBountyModal } from '../modals/BountyModal';
 import { showBountyReviveModal } from '../modals/BountyReviveModal';
+import { dailyNoteService } from './DailyNoteService';
 
 /**
  * Result of moving a quest
@@ -68,6 +69,8 @@ export interface MoveQuestOptions {
     onBattleStart?: () => void;
     /** Plugin manifest directory for sprite resolution */
     manifestDir?: string;
+    /** XP awarded for the quest (for daily note logging) */
+    xpAwarded?: number;
 }
 
 /**
@@ -374,6 +377,29 @@ export async function moveQuest(
     // Award stamina on quest completion (Phase 3B)
     if (newStatus === QuestStatus.COMPLETED) {
         useCharacterStore.getState().awardStamina();
+
+        // === ACTIVITY LOGGING ===
+        // Log quest completion for progress tracking (Phase 4)
+        const today = new Date();
+        const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        useCharacterStore.getState().logActivity({
+            type: 'quest_complete',
+            date: dateString,
+            xpGained: isManualQuest(updatedQuest) ? updatedQuest.completionBonus : 0,
+            goldGained: 0, // Gold is tracked separately in loot
+            questId: updatedQuest.questId,
+            questName: updatedQuest.questName,
+            category: updatedQuest.category,
+            details: `Completed: ${updatedQuest.questName}`,
+        });
+
+        // === DAILY NOTE LOGGING ===
+        // Log quest completion to daily note (if enabled)
+        if (dailyNoteService) {
+            const xpForLog = options.xpAwarded ?? (isManualQuest(updatedQuest) ? updatedQuest.completionBonus : 0);
+            await dailyNoteService.logQuestCompletion(updatedQuest, xpForLog);
+        }
     }
 
     // Save to file

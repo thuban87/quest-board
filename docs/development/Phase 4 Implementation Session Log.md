@@ -430,3 +430,212 @@ Continuing Phase 4. AI Quest Generation implemented with:
 ```
 
 ---
+
+## 2026-01-28 - Progress Dashboard (Activity History & Stats)
+
+**Focus:** Implement Progress Dashboard with activity tracking, XP/gold summaries, and unit tests
+
+### Completed:
+
+#### Phase 1: Data Model & Service Layer
+- ✅ Added `ActivityEvent` and `ActivityEventType` to `Character.ts`
+- ✅ Added `MAX_ACTIVITY_HISTORY = 1000` constant
+- ✅ Bumped `CHARACTER_SCHEMA_VERSION` to 4 with migration
+- ✅ Added `logActivity` action to `characterStore.ts`
+- ✅ Created `ProgressStatsService.ts` with date filtering and stats calculation
+
+#### Phase 2: Activity Logging Integration
+- ✅ Quest completion logging in `QuestActionsService.ts`
+- ✅ Combat victory/defeat logging in `BattleService.ts` (all fights, not just bounties)
+- ✅ Dungeon completion logging in `dungeonStore.ts`
+- ✅ **Critical fix:** Moved `logActivity` BEFORE `saveCallback` to ensure persistence
+
+#### Phase 3: Modal UI
+- ✅ Created `ProgressDashboardModal.ts` - Full-page modal with:
+  - Date range picker (Today, Week, 30 Days, All Time)
+  - Summary stats (Quests, Fights Won, Dungeons, XP, Gold)
+  - Category breakdown
+  - Daily activity bar chart
+  - Chronological activity log
+- ✅ Created `progress.css` with game-stats aesthetic
+- ✅ Registered command and added to Command Menu
+
+#### Phase 4: Unit Tests
+- ✅ Created `test/progress-stats.test.ts` (27 tests) - filtering, stats calc, date utilities
+- ✅ Created `test/activity-logging.test.ts` (14 tests) - event structure, history cap, validation
+- ✅ All 41 tests passing
+
+#### Command Menu Reorganization (Bonus)
+- ✅ Reorganized categories: Views, Create Quest, Job Hunt (new), Character, Combat (new), Dashboards (new), Utilities
+- ✅ 2-column grid layout with dynamic full-width for odd last items
+- ✅ More compact button styling
+
+### Files Changed:
+
+**New:**
+- `src/modals/ProgressDashboardModal.ts`
+- `src/services/ProgressStatsService.ts`
+- `src/styles/progress.css`
+- `test/progress-stats.test.ts`
+- `test/activity-logging.test.ts`
+
+**Modified:**
+- `src/models/Character.ts` - ActivityEvent type, schema v4
+- `src/store/characterStore.ts` - logActivity action
+- `src/services/BattleService.ts` - Combat logging (victory/defeat)
+- `src/services/QuestActionsService.ts` - Quest completion logging
+- `src/store/dungeonStore.ts` - Dungeon completion logging
+- `src/modals/QuestBoardCommandMenu.ts` - Reorganized categories
+- `src/styles/inventory.css` - Command menu styling
+- `src/styles/index.css` - Added progress.css import
+- `main.ts` - Progress Dashboard command
+
+### Testing Notes:
+
+- Ran all 41 unit tests: ✅ All passing
+- Manual testing: Fights now logging correctly after saveCallback fix
+- Progress Dashboard displays stats correctly for various date ranges
+
+### Next Session Prompt:
+
+```
+Phase 4 Tier 1 progress:
+- ✅ AI Quest Generation (completed earlier)
+- ✅ Progress Dashboard (activity history, stats, unit tests)
+
+Remaining Tier 1:
+- Daily Note Integration
+- Quest Preview (Masked)
+- Progressive Section Reveal
+- Quest Templates UI
+
+Consider starting Tier 2 (Power-Up wiring, Unit Testing) next.
+```
+
+---
+
+## 2026-01-28 (Evening) - Daily Note Integration & Quest Templates UI
+
+**Focus:** Implement Daily Note logging and build the Scrivener's Desk template management system
+
+### Completed:
+
+#### Daily Note Integration
+- ✅ Created `DailyNoteService.ts` - Handles quest completion logging to daily notes
+- ✅ Detects heading position and inserts entries directly after the heading
+- ✅ Configurable format: `- [time] Completed: QuestName (+XP XP, +Gold gold)`
+- ✅ Added folder autocomplete for Daily Note Folder setting
+- ✅ Separated into own "Daily Notes Integration" settings section
+
+#### Quest Templates UI ("The Scrivener's Desk")
+- ✅ Created `TemplateService.ts` - Parses templates, extracts placeholders, generates quests
+- ✅ Created `TemplateStatsService.ts` - Tracks template usage stats (times used, last used)
+- ✅ Created `ScrollLibraryModal.ts` - Template gallery with search, stats, and context menu
+- ✅ Created `ScrivenersQuillModal.ts` - Full template builder with:
+  - Template name, quest type, category fields
+  - Recurrence options when "Recurring" type selected
+  - Placeholder detection (auto vs manual)
+  - Body content editor
+  - Live markdown preview
+- ✅ Created `SmartTemplateModal.ts` - Dynamic form for creating quests from templates
+- ✅ Fixed EBUSY errors by loading templates sequentially
+- ✅ Fixed modal sizing (Scroll Library: 62vw, Scrivener's Quill: 800px)
+- ✅ Context menu on templates: "Revise the Contract", "Copy the Scroll", "Burn the Scroll"
+
+#### Save as Template Feature
+- ✅ Added right-click context menu to `QuestCard.tsx`
+- ✅ Options: Save as Template, Open Quest File, Open Linked File
+- ✅ Wired up in both `FullKanban.tsx` and `SidebarQuests.tsx`
+
+### Files Changed:
+
+**New:**
+- `src/services/DailyNoteService.ts`
+- `src/services/TemplateService.ts`
+- `src/services/TemplateStatsService.ts`
+- `src/modals/ScrollLibraryModal.ts`
+- `src/modals/ScrivenersQuillModal.ts`
+- `src/modals/SmartTemplateModal.ts`
+- `src/styles/scrivener.css`
+
+**Modified:**
+- `src/settings.ts` - Daily Note settings section, folder autocomplete
+- `src/components/QuestCard.tsx` - Context menu with Save as Template
+- `src/components/FullKanban.tsx` - onSaveAsTemplate handler
+- `src/components/SidebarQuests.tsx` - onSaveAsTemplate handler
+- `main.ts` - Registered new commands
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Daily note logging works, entries appear under correct heading
+- ✅ Scroll Library loads templates without EBUSY errors
+- ✅ Template context menu (Revise, Copy, Burn) all working
+- ✅ Save as Template context menu working on quest cards
+- ✅ Modal sizing correct (62vw for Scroll Library, 800px for Scrivener's Quill)
+
+### Deferred:
+- Rendered Preview Component (live Kanban card preview from template)
+- Settings menu comprehensive cleanup
+
+---
+
+## Next Session Prompt
+
+```
+Phase 4 Tier 1 progress:
+- ✅ AI Quest Generation (completed)
+- ✅ Progress Dashboard (completed)
+- ✅ Daily Note Integration (completed)
+- ✅ Quest Templates UI (completed)
+
+What was done this session:
+- Daily Notes Integration with folder autocomplete and heading-aware insertion
+- Scroll Library modal for template gallery with usage stats
+- Scrivener's Quill modal for template building with recurrence options
+- Smart Template modal for quest creation from templates
+- Save as Template context menu on quest cards
+
+Tier 1 complete! Continue with Tier 2:
+- Power-Up Wiring (Hat Trick, Blitz, etc.)
+- Achievement Unit Testing
+- Power-Up Unit Testing
+- Gear Click → Inventory Filter
+
+Key files to reference:
+- docs/development/Feature Roadmap v2.md - Current priorities
+- src/services/TemplateService.ts - Template parsing
+- src/modals/ScrivenersQuillModal.ts - Template builder
+```
+
+---
+
+## Git Commit Message
+
+```
+feat: Daily Note Integration and Quest Templates UI
+
+Daily Notes:
+- Log completed quests to daily notes with XP/gold
+- Heading-aware insertion (after specified heading)
+- Folder autocomplete in settings
+- Separate "Daily Notes Integration" settings section
+
+Quest Templates ("The Scrivener's Desk"):
+- Scroll Library modal - template gallery with search and stats
+- Scrivener's Quill modal - full template builder
+- Smart Template modal - dynamic form for quest creation
+- Template usage tracking (times used, last used)
+- Recurrence options for recurring quest templates
+- Context menu: Revise, Copy, Burn templates
+
+Save as Template:
+- Right-click context menu on quest cards
+- Opens Scrivener's Quill pre-populated with quest data
+
+Files: DailyNoteService.ts, TemplateService.ts, TemplateStatsService.ts,
+ScrollLibraryModal.ts, ScrivenersQuillModal.ts, SmartTemplateModal.ts,
+QuestCard.tsx, FullKanban.tsx, SidebarQuests.tsx, settings.ts
+```
+
+---

@@ -49,14 +49,20 @@ export class QuestBoardCommandMenu extends Modal {
                 ]
             },
             {
-                name: 'Create',
+                name: 'Create Quest',
                 icon: '✨',
                 commands: [
                     { label: 'New Quest', icon: '⚔️', commandId: 'quest-board:create-quest', description: 'Start a new adventure' },
-                    { label: 'AI Quest', icon: '🤖', commandId: 'quest-board:ai-generate-quest', description: 'Create quest with AI' },
-                    { label: 'From Template', icon: '📜', commandId: 'quest-board:create-quest-from-template', description: 'Use a quest template' },
-                    { label: 'Application', icon: '📄', commandId: 'quest-board:create-application-gauntlet', description: 'Job application tracker' },
-                    { label: 'Interview', icon: '🎤', commandId: 'quest-board:create-interview-arena', description: 'Interview prep workflow' },
+                    { label: 'AI Quest', icon: '🤖', commandId: 'quest-board:ai-generate-quest', description: 'Generate with AI' },
+                    { label: 'From Template', icon: '📜', commandId: 'quest-board:create-quest-from-template', description: 'Use a template' },
+                ]
+            },
+            {
+                name: 'Job Hunt',
+                icon: '💼',
+                commands: [
+                    { label: 'Application', icon: '📄', commandId: 'quest-board:create-application-gauntlet', description: 'Track applications' },
+                    { label: 'Interview', icon: '🎤', commandId: 'quest-board:create-interview-arena', description: 'Interview prep' },
                 ]
             },
             {
@@ -64,27 +70,34 @@ export class QuestBoardCommandMenu extends Modal {
                 icon: '🧙',
                 commands: [
                     { label: 'Edit Character', icon: '👤', commandId: 'quest-board:create-edit-character', description: 'Modify your hero' },
-                    { label: 'Inventory', icon: '🎒', commandId: 'quest-board:open-inventory', description: 'Manage your gear' },
-                    { label: 'Store', icon: '🏪', commandId: 'quest-board:open-store', description: 'Buy potions' },
-                    { label: 'Fight', icon: '⚔️', commandId: 'quest-board:start-fight', description: 'Random encounter' },
-                    { label: 'Long Rest', icon: '🏨', commandId: 'quest-board:long-rest', description: 'Restore HP & Mana' },
-                    { label: 'Achievements', icon: '🏆', commandId: 'quest-board:view-achievements', description: 'View trophy case' },
+                    { label: 'Inventory', icon: '🎒', commandId: 'quest-board:open-inventory', description: 'Manage gear' },
+                    { label: 'Achievements', icon: '🏆', commandId: 'quest-board:view-achievements', description: 'Trophy case' },
                 ]
             },
             {
-                name: 'Quests',
-                icon: '🗓️',
+                name: 'Combat',
+                icon: '⚔️',
                 commands: [
-                    { label: 'Recurring Dashboard', icon: '🔄', commandId: 'quest-board:recurring-quests-dashboard', description: 'Manage recurring quests' },
-                    { label: 'Process Recurring', icon: '⏰', commandId: 'quest-board:process-recurring-quests', description: 'Generate due instances' },
+                    { label: 'Fight', icon: '👹', commandId: 'quest-board:start-fight', description: 'Random encounter' },
+                    { label: 'Store', icon: '🏪', commandId: 'quest-board:open-store', description: 'Buy potions' },
+                    { label: 'Long Rest', icon: '🏨', commandId: 'quest-board:long-rest', description: 'Restore HP & Mana' },
+                    { label: 'Dungeon', icon: '🗺️', commandId: 'quest-board:preview-dungeon', description: 'Explore dungeon' },
+                ]
+            },
+            {
+                name: 'Dashboards',
+                icon: '📊',
+                commands: [
+                    { label: 'Progress', icon: '📈', commandId: 'quest-board:open-progress-dashboard', description: 'View stats' },
+                    { label: 'Recurring', icon: '🔄', commandId: 'quest-board:recurring-quests-dashboard', description: 'Manage recurring' },
                 ]
             },
             {
                 name: 'Utilities',
                 icon: '🔧',
                 commands: [
-                    { label: 'Settings', icon: '⚙️', commandId: '__settings__', description: 'Configure Quest Board' },
-                    { label: 'Preview Dungeon', icon: '🗺️', commandId: 'quest-board:preview-dungeon', description: 'Dev: Test dungeon view' },
+                    { label: 'Settings', icon: '⚙️', commandId: '__settings__', description: 'Configure plugin' },
+                    { label: 'Process Recurring', icon: '⏰', commandId: 'quest-board:process-recurring-quests', description: 'Generate instances' },
                 ]
             },
         ];
@@ -96,21 +109,19 @@ export class QuestBoardCommandMenu extends Modal {
             section.createEl('h3', { text: `${category.icon} ${category.name}` });
 
             const buttonsGrid = section.createDiv('qb-menu-buttons');
+            // Always use 2-column grid
+            buttonsGrid.addClass('qb-buttons-2col');
 
-            // Set grid class based on command count
-            if (category.commands.length === 4) {
-                buttonsGrid.addClass('qb-buttons-2x2');
-            } else if (category.commands.length === 3) {
-                // 2 on top, 1 centered below
-                buttonsGrid.addClass('qb-buttons-2x2');
-            } else if (category.commands.length === 2) {
-                buttonsGrid.addClass('qb-buttons-2');
-            } else {
-                buttonsGrid.addClass('qb-buttons-1');
-            }
-
-            for (const cmd of category.commands) {
+            for (let i = 0; i < category.commands.length; i++) {
+                const cmd = category.commands[i];
                 const btn = buttonsGrid.createDiv('qb-menu-btn');
+
+                // If odd number of commands and this is the last one, make it full width
+                const isLastAndOdd = (category.commands.length % 2 === 1) && (i === category.commands.length - 1);
+                if (isLastAndOdd) {
+                    btn.addClass('qb-menu-btn-full');
+                }
+
                 btn.createSpan({ cls: 'qb-menu-btn-icon', text: cmd.icon });
 
                 const textContainer = btn.createDiv('qb-menu-btn-text');

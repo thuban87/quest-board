@@ -179,6 +179,23 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             );
         }
 
+        // === ACTIVITY LOGGING (Phase 4) ===
+        // Log dungeon completion for progress tracking
+        // Log on any dungeon exit where we visited rooms
+        if (state.visitedRooms.size > 0) {
+            const today = new Date();
+            const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+            useCharacterStore.getState().logActivity({
+                type: 'dungeon_complete',
+                date: dateString,
+                xpGained: state.sessionXP,
+                goldGained: state.sessionGold,
+                dungeonId: state.dungeonTemplateId ?? undefined,
+                details: `Completed dungeon (${state.visitedRooms.size} rooms explored)`,
+            });
+        }
+
         set({
             isInDungeon: false,
             isPreviewMode: false,

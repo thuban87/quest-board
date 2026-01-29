@@ -7,7 +7,7 @@
  */
 
 import React, { memo, useState } from 'react';
-import { App as ObsidianApp } from 'obsidian';
+import { App as ObsidianApp, Menu } from 'obsidian';
 import { Quest, isManualQuest } from '../models/Quest';
 import { QuestStatus, QuestPriority } from '../models/QuestStatus';
 import { CLASS_INFO } from '../models/Character';
@@ -32,6 +32,8 @@ interface QuestCardProps {
     app?: ObsidianApp;
     /** Storage folder path for locating quest files */
     storageFolder?: string;
+    /** Callback to save quest as template */
+    onSaveAsTemplate?: (quest: Quest) => void;
 }
 
 /**
@@ -76,6 +78,7 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
     onToggleCollapse,
     app,
     storageFolder,
+    onSaveAsTemplate,
 }) => {
     const character = useCharacterStore((state) => state.character);
 
@@ -116,6 +119,46 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
 
     // Get available moves for this quest
     const availableMoves = STATUS_TRANSITIONS[quest.status] || [];
+
+    // Handle right-click context menu
+    const handleContextMenu = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const menu = new Menu();
+
+        // Save as Template option
+        if (onSaveAsTemplate && isManualQuest(quest)) {
+            menu.addItem((item) => {
+                item
+                    .setTitle('📜 Save as Template')
+                    .setIcon('scroll')
+                    .onClick(() => onSaveAsTemplate(quest));
+            });
+        }
+
+        // Open Quest File
+        if (app && isManualQuest(quest) && storageFolder) {
+            menu.addItem((item) => {
+                item
+                    .setTitle('📄 Open Quest File')
+                    .setIcon('file-text')
+                    .onClick(() => handleOpenQuestFile());
+            });
+        }
+
+        // Open Linked Task File
+        if (app && isManualQuest(quest) && getLinkedFileIsDifferent()) {
+            menu.addItem((item) => {
+                item
+                    .setTitle('🔗 Open Linked File')
+                    .setIcon('link')
+                    .onClick(() => handleOpenLinkedTaskFile());
+            });
+        }
+
+        menu.showAtMouseEvent(e.nativeEvent);
+    };
 
     // Toggle section collapse
     const toggleSection = (headerText: string) => {
@@ -221,6 +264,7 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
     return (
         <div
             className="qb-quest-card"
+            onContextMenu={handleContextMenu}
             style={{
                 borderLeftColor: hasClassBonus ? CLASS_INFO[character!.class].primaryColor : undefined,
                 borderLeftWidth: hasClassBonus ? '3px' : undefined,

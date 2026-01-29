@@ -12,6 +12,8 @@ import {
     CLASS_INFO,
     CharacterAppearance,
     ActivePowerUp,
+    ActivityEvent,
+    MAX_ACTIVITY_HISTORY,
     migrateCharacterV1toV2,
     CHARACTER_SCHEMA_VERSION,
 } from '../models';
@@ -157,6 +159,11 @@ interface CharacterActions {
 
     /** Use revive potion: consume from inventory, set HP to 25% max, clear unconscious */
     useRevivePotion: () => boolean;
+
+    // ========== Phase 4: Activity Tracking ==========
+
+    /** Log an activity event (quest completion, bounty, dungeon, etc.) */
+    logActivity: (event: Omit<ActivityEvent, 'timestamp'>) => void;
 }
 
 type CharacterStore = CharacterState & CharacterActions;
@@ -279,6 +286,9 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             // Phase 3B Step 9: Death Penalty
             status: 'active',
             recoveryTimerEnd: null,
+
+            // Phase 4: Activity Tracking
+            activityHistory: [],
         };
 
         set({ character });
@@ -934,6 +944,36 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         const { character } = get();
         if (!character) return [];
         return character.dungeonExplorationHistory?.[templateId] || [];
+    },
+
+    // ========== Phase 4: Activity Tracking ==========
+
+    logActivity: (event) => {
+        const { character } = get();
+        if (!character) return;
+
+        // Create full event with timestamp
+        const fullEvent: ActivityEvent = {
+            ...event,
+            timestamp: new Date().toISOString(),
+        };
+
+        // Append to history and trim if over limit
+        // Defensive: initialize activityHistory if undefined (pre-v4 characters)
+        const currentHistory = character.activityHistory ?? [];
+        let newHistory = [...currentHistory, fullEvent];
+        if (newHistory.length > MAX_ACTIVITY_HISTORY) {
+            // Keep most recent events
+            newHistory = newHistory.slice(-MAX_ACTIVITY_HISTORY);
+        }
+
+        set({
+            character: {
+                ...character,
+                activityHistory: newHistory,
+                lastModified: new Date().toISOString(),
+            },
+        });
     },
 }));
 
