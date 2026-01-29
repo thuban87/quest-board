@@ -31,6 +31,8 @@ import { useFilteredQuests, collectAllCategories, collectAllTags, collectAllType
 import { Droppable, SortableCard } from './DnDWrappers';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { ScrivenersQuillModal } from '../modals/ScrivenersQuillModal';
+import { Quest as QuestModel } from '../models/Quest';
 
 interface FullKanbanProps {
     plugin: QuestBoardPlugin;
@@ -261,6 +263,19 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         getQuestsForStatus: getQuestsForColumn,
     });
 
+    // Handle save quest as template
+    const handleSaveAsTemplate = useCallback((quest: QuestModel) => {
+        // Create a parsed template from the quest
+        const mockTemplate = {
+            name: quest.questName,
+            path: '',
+            questType: (quest as any).questType || 'side',
+            category: quest.category,
+            placeholders: [],
+        };
+        new ScrivenersQuillModal(app, plugin, mockTemplate as any).open();
+    }, [app, plugin]);
+
     if (!character) {
         return (
             <div className="qb-fullpage-empty">
@@ -480,6 +495,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                                                                             visibleTaskCount={isManualQuest(quest) ? quest.visibleTasks : 4}
                                                                             app={app}
                                                                             storageFolder={plugin.settings.storageFolder}
+                                                                            onSaveAsTemplate={handleSaveAsTemplate}
                                                                         />
                                                                     )}
                                                                 </div>

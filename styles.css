@@ -7712,9 +7712,9 @@
 /* ===========================
    Scroll Library Modal
    =========================== */
+/* Target the .modal container when our class is added to modalEl */
 .qb-scroll-library-modal.modal {
     width: 62vw;
-    max-width: 95vw;
     min-height: 500px;
     max-height: 85vh;
 }
@@ -7855,7 +7855,7 @@
    Scrivener's Quill Modal
    =========================== */
 .qb-scrivenersquill-modal.modal {
-    width: 62vw;
+    width: 800px;
     max-width: 95vw;
     max-height: 90vh;
 }

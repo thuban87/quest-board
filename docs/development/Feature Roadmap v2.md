@@ -217,9 +217,9 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | Feature | Description | Effort |
 |---------|-------------|--------|
 | **AI Quest Generation** | Convert task lists to quest files via Gemini | ✅ Complete |
-| **Daily Note Integration** | Log completed quests to daily notes | Low |
+| **Daily Note Integration** | Log completed quests to daily notes | ✅ Complete |
 | ~~**Weekly Sprint View**~~ | ✅ **Progress Dashboard** - Activity history, stats, XP/gold tracking | ✅ Complete |
-| **Quest Templates UI** | "The Scrivener's Desk" - Template gallery, builder, usage stats, quest-to-template conversion | Medium |
+| **Quest Templates UI** | "The Scrivener's Desk" - Template gallery, builder, usage stats, quest-to-template conversion | ✅ Complete |
 
 #### Tier 2: Power-Ups & Testing (Early Phase 4)
 

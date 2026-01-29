@@ -37,6 +37,8 @@ import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { showInventoryModal } from '../modals/InventoryModal';
 import { showBlacksmithModal } from '../modals/BlacksmithModal';
+import { ScrivenersQuillModal } from '../modals/ScrivenersQuillModal';
+import { Quest as QuestModel } from '../models/Quest';
 
 interface SidebarQuestsProps {
     plugin: QuestBoardPlugin;
@@ -214,6 +216,19 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         getQuestsForStatus: getQuestsForSection,
     });
 
+    // Handle save quest as template
+    const handleSaveAsTemplate = useCallback((quest: QuestModel) => {
+        // Create a parsed template from the quest
+        const mockTemplate = {
+            name: quest.questName,
+            path: '',
+            questType: (quest as any).questType || 'side',
+            category: quest.category,
+            placeholders: [],
+        };
+        new ScrivenersQuillModal(app, plugin, mockTemplate as any).open();
+    }, [app, plugin]);
+
     if (!character) {
         return (
             <div className="qb-sidebar-empty">
@@ -325,6 +340,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                                                                             onToggleCollapse={() => toggleQuestCollapse(quest.questId)}
                                                                             app={app}
                                                                             storageFolder={plugin.settings.storageFolder}
+                                                                            onSaveAsTemplate={handleSaveAsTemplate}
                                                                         />
                                                                     </SortableCard>
                                                                 ))
