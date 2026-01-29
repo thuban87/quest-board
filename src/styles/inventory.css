@@ -2116,3 +2116,168 @@
 .qb-consumable-btn:hover {
   background: var(--background-modifier-hover);
 }
+
+/* ===========================================
+   Gear Comparison Tooltip
+   WoW-style dual-panel tooltip for comparing items
+   =========================================== */
+
+/* Wrapper - positioned by JavaScript */
+.qb-gear-tooltip-wrapper {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+/* Main tooltip container */
+.qb-gear-tooltip {
+  background: var(--background-primary);
+  border: 2px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  padding: var(--qb-spacing-sm);
+  min-width: 200px;
+  max-width: 600px;
+  font-size: 0.85rem;
+}
+
+/* Side-by-side comparison layout */
+.qb-gear-tooltip.qb-tt-comparison {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qb-spacing-sm);
+}
+
+/* Individual panel (left=new item, right=equipped) */
+.qb-tt-panel {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-sm);
+  padding: var(--qb-spacing-sm);
+  min-width: 180px;
+  flex: 1;
+}
+
+/* Single item (no comparison) */
+.qb-tt-single {
+  min-width: 200px;
+}
+
+/* Panel headers */
+.qb-tt-panel-header {
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: var(--qb-spacing-xs);
+  padding-bottom: var(--qb-spacing-xs);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* New item panel highlight */
+.qb-tt-new {
+  border-color: var(--interactive-accent);
+}
+
+.qb-tt-new .qb-tt-panel-header {
+  color: var(--interactive-accent);
+}
+
+/* Equipped item panel */
+.qb-tt-equipped {
+  border-color: rgba(100, 149, 237, 0.5);
+}
+
+.qb-tt-equipped .qb-tt-panel-header {
+  color: rgba(100, 149, 237, 1);
+}
+
+/* Item name (colored by tier) */
+.qb-tt-name {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+/* Tier label with emoji */
+.qb-tt-tier {
+  font-size: 0.8rem;
+  margin-bottom: 2px;
+}
+
+/* Level and slot info */
+.qb-tt-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+/* Armor/weapon type */
+.qb-tt-type {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* Divider line between sections */
+.qb-tt-divider {
+  height: 1px;
+  background: var(--background-modifier-border);
+  margin: var(--qb-spacing-xs) 0;
+}
+
+/* Individual stat line */
+.qb-tt-stat {
+  color: var(--text-normal);
+  margin-bottom: 2px;
+}
+
+/* Set info */
+.qb-tt-set {
+  color: #22cc44;
+  font-weight: 600;
+}
+
+/* Sell value */
+.qb-tt-sell {
+  color: #ffd700;
+  font-size: 0.8rem;
+}
+
+/* Comparison summary panel (spans full width) */
+.qb-tt-summary {
+  width: 100%;
+  background: var(--background-secondary-alt);
+  border: 1px solid rgba(var(--interactive-accent-rgb), 0.3);
+  border-radius: var(--qb-radius-sm);
+  padding: var(--qb-spacing-sm);
+  margin-top: var(--qb-spacing-xs);
+}
+
+/* Summary header */
+.qb-tt-comparison-header {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-normal);
+  margin-bottom: var(--qb-spacing-xs);
+  padding-bottom: var(--qb-spacing-xs);
+  border-bottom: 1px dashed var(--background-modifier-border);
+}
+
+/* Upgrade stat (green) */
+.qb-stat-upgrade {
+  color: #22cc44;
+  font-weight: 600;
+}
+
+/* Downgrade stat (red) */
+.qb-stat-downgrade {
+  color: #cc4422;
+  font-weight: 600;
+}
+
+/* Neutral stat */
+.qb-stat-neutral {
+  color: var(--text-muted);
+}

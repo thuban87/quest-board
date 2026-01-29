@@ -21,6 +21,8 @@ interface CharacterSheetProps {
     onBack: () => void;
     onViewAchievements?: () => void;
     onOpenInventory?: () => void;
+    /** Open inventory filtered to a specific gear slot */
+    onOpenInventoryForSlot?: (slot: GearSlot) => void;
     onOpenBlacksmith?: () => void;
     spriteFolder?: string;
     spriteResourcePath?: string;  // Pre-computed resource path from vault
@@ -71,7 +73,7 @@ function getGearTooltip(item: GearItem): string {
     return lines.join('\n');
 }
 
-export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAchievements, onOpenInventory, onOpenBlacksmith, spriteFolder, spriteResourcePath }) => {
+export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAchievements, onOpenInventory, onOpenInventoryForSlot, onOpenBlacksmith, spriteFolder, spriteResourcePath }) => {
     const character = useCharacterStore((state) => state.character);
     const achievements = useCharacterStore((state) => state.achievements);
     const activeSetBonuses = useCharacterStore(selectActiveSetBonuses);
@@ -281,12 +283,20 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                 <div className="qb-gear-grid">
                     {GEAR_SLOTS_CONFIG.map(({ slot, label, emoji }) => {
                         const equippedItem = character.equippedGear?.[slot];
+                        const handleSlotClick = () => {
+                            if (onOpenInventoryForSlot) {
+                                onOpenInventoryForSlot(slot);
+                            } else if (onOpenInventory) {
+                                onOpenInventory();
+                            }
+                        };
 
                         return (
                             <div
                                 key={slot}
                                 className={`qb-gear-slot ${equippedItem ? `qb-tier-${equippedItem.tier}` : ''}`}
-                                title={equippedItem ? getGearTooltip(equippedItem) : `${label} - Empty`}
+                                title={equippedItem ? getGearTooltip(equippedItem) : `${label} - Click to equip`}
+                                onClick={handleSlotClick}
                             >
                                 <div
                                     className="qb-gear-slot-icon"

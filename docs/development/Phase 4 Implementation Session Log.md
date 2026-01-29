@@ -764,3 +764,96 @@ test/power-up-effects.test.ts, test/power-up-triggers.test.ts
 ```
 
 ---
+
+## 2026-01-29 (Evening) - Inventory UX Improvements
+
+**Focus:** Three quality-of-life improvements to the inventory and gear management systems
+
+### Completed:
+
+#### Gear Slot Click → Inventory Filter
+- ✅ Added `initialSlotFilter` option to `InventoryModalOptions`
+- ✅ Gear slots in CharacterSheet now clickable
+- ✅ Opens inventory pre-filtered to that slot type
+- ✅ CSS hover effects already existed in `fullpage.css`
+
+#### WoW-Style Gear Comparison Tooltips
+- ✅ Created `attachGearTooltip` function in `gearFormatters.ts`
+- ✅ Dual-panel layout: "📦 In Inventory" (left) + "⚔️ Currently Equipped" (right)
+- ✅ Full stat display: name, tier, level, slot, armor/weapon type, all stats, set info
+- ✅ "If you equip this:" comparison summary with color-coded differences
+- ✅ Green for upgrades, red for downgrades
+- ✅ Dynamic positioning (above or below item)
+- ✅ Added 165 lines of CSS in `inventory.css`
+
+#### Recent Acquisition Sort
+- ✅ Added 'recent' to `SortField` type
+- ✅ Sorts by `acquiredAt` timestamp (newest first when descending)
+- ✅ Uses existing `acquiredAt` field on GearItem model
+
+### Files Changed:
+
+**Modified:**
+- `src/utils/gearFormatters.ts` - Added `attachGearTooltip`, `createGearComparisonTooltip`, helper functions
+- `src/modals/InventoryModal.ts` - Added `initialSlotFilter` option, 'recent' sort, replaced title with rich tooltip
+- `src/components/CharacterSheet.tsx` - Added `onOpenInventoryForSlot` callback, made gear slots clickable
+- `src/components/SidebarQuests.tsx` - Wired up `onOpenInventoryForSlot` callback
+- `src/styles/inventory.css` - Added 165 lines for gear comparison tooltip styling
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ All three features manually tested and working
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Phase 4 Tier 2 progress:
+- ✅ Power-Up Wiring (18 new triggers + TDD tests)
+- ✅ Gear Click → Inventory Filter
+- ✅ Gear Comparison Tooltips (WoW-style)
+- ✅ Recent Acquisition Sort
+
+Continue with remaining Phase 4 items or start Tier 3.
+
+Key files to reference:
+- docs/development/Feature Roadmap v2.md - Current priorities
+- src/utils/gearFormatters.ts - Tooltip functions
+- src/modals/InventoryModal.ts - Sort/filter logic
+```
+
+---
+
+## Git Commit Message
+
+```
+feat: Inventory UX improvements (slot filter, comparison tooltips, recent sort)
+
+Gear Click → Filter:
+- Click gear slot in Character Sheet opens inventory pre-filtered
+- Added initialSlotFilter option to InventoryModalOptions
+- Added onOpenInventoryForSlot callback to CharacterSheet
+
+WoW-Style Comparison Tooltips:
+- Dual-panel layout showing inventory item vs equipped item
+- Full stat display (name, tier, level, slot, all stats, set info)
+- "If you equip this" summary with color-coded differences
+- Green for upgrades, red for downgrades
+- 165 lines of styled CSS
+
+Recent Acquisition Sort:
+- Added 'recent' sort option to inventory
+- Sorts by acquiredAt timestamp (newest first)
+- Makes finding newly acquired items easy
+
+Files: gearFormatters.ts, InventoryModal.ts, CharacterSheet.tsx,
+SidebarQuests.tsx, inventory.css
+```
+
+---
+

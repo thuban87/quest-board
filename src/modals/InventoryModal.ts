@@ -25,15 +25,17 @@ import {
 } from '../models/Gear';
 import { CONSUMABLES, ConsumableDefinition, InventoryItem } from '../models/Consumable';
 import { useCharacterStore } from '../store/characterStore';
-import { formatGearTooltip, isSetItem } from '../utils/gearFormatters';
+import { formatGearTooltip, isSetItem, attachGearTooltip } from '../utils/gearFormatters';
 
 interface InventoryModalOptions {
     /** Callback when character data changes */
     onSave?: () => Promise<void>;
+    /** Optional initial slot filter - opens inventory filtered to this slot */
+    initialSlotFilter?: GearSlot;
 }
 
 type InventoryTab = 'gear' | 'consumables';
-type SortField = 'tier' | 'level' | 'slot' | 'name';
+type SortField = 'tier' | 'level' | 'slot' | 'name' | 'recent';
 type SortDirection = 'asc' | 'desc';
 
 export class InventoryModal extends Modal {
@@ -45,13 +47,17 @@ export class InventoryModal extends Modal {
     private sortBy: SortField = 'tier';
     private sortDir: SortDirection = 'desc'; // Highest tier first by default
 
-    // Filtering state
-    private slotFilters: Set<GearSlot> = new Set();
+    // Filtering state (initialized in constructor from options)
+    private slotFilters: Set<GearSlot>;
     private tierFilters: Set<GearTier> = new Set();
 
     constructor(app: App, options: InventoryModalOptions = {}) {
         super(app);
         this.options = options;
+        // Apply initial slot filter if provided
+        this.slotFilters = options.initialSlotFilter
+            ? new Set([options.initialSlotFilter])
+            : new Set();
     }
 
     onOpen() {
@@ -180,6 +186,7 @@ export class InventoryModal extends Modal {
             { field: 'level', label: 'Level' },
             { field: 'slot', label: 'Slot' },
             { field: 'name', label: 'Name' },
+            { field: 'recent', label: 'Recent' },
         ];
 
         for (const { field, label } of sortFields) {
@@ -239,9 +246,9 @@ export class InventoryModal extends Modal {
             // Toggle direction
             this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
         } else {
-            // New field, default to descending for tier/level, ascending for name/slot
+            // New field, default to descending for tier/level/recent, ascending for name/slot
             this.sortBy = field;
-            this.sortDir = (field === 'tier' || field === 'level') ? 'desc' : 'asc';
+            this.sortDir = (field === 'tier' || field === 'level' || field === 'recent') ? 'desc' : 'asc';
         }
         this.renderContent();
     }
@@ -304,6 +311,12 @@ export class InventoryModal extends Modal {
                 case 'name':
                     comparison = a.name.localeCompare(b.name);
                     break;
+                case 'recent':
+                    // Sort by acquiredAt timestamp (newest first when desc)
+                    const aTime = a.acquiredAt ? new Date(a.acquiredAt).getTime() : 0;
+                    const bTime = b.acquiredAt ? new Date(b.acquiredAt).getTime() : 0;
+                    comparison = aTime - bTime;
+                    break;
             }
 
             return this.sortDir === 'asc' ? comparison : -comparison;
@@ -355,10 +368,9 @@ export class InventoryModal extends Modal {
             });
         }
 
-        // Use shared tooltip (includes comparison if equipped item exists)
+        // Rich comparison tooltip (WoW-style dual-panel)
         const currentlyEquipped = character?.equippedGear?.[item.slot];
-        const tooltip = formatGearTooltip(item, currentlyEquipped);
-        itemEl.setAttribute('title', tooltip);
+        attachGearTooltip(itemEl, item, currentlyEquipped);
 
         // Check if class can equip this item
         const canEquip = character ? canEquipGear(character.class, item) : true;

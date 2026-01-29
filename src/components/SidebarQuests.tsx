@@ -363,6 +363,10 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                         onOpenInventory={() => showInventoryModal(app, {
                             onSave: handleSaveCharacter
                         })}
+                        onOpenInventoryForSlot={(slot) => showInventoryModal(app, {
+                            onSave: handleSaveCharacter,
+                            initialSlotFilter: slot
+                        })}
                         onOpenBlacksmith={() => showBlacksmithModal(app, {
                             onSmelt: handleSaveCharacter
                         })}

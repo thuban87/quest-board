@@ -225,10 +225,12 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 
 | Feature | Description | Effort |
 |---------|-------------|--------|
-| **Complete Power-Up Wiring** | Wire up remaining triggers: Hat Trick, Blitz, etc. | Medium |
-| **Unit Testing (Achievements)** | Automated tests to verify achievement triggers | Medium |
-| **Unit Testing (Power-Ups)** | Event-dependent testing framework for buffs | Medium |
-| **Gear Click → Inventory Filter** | Click slot in CharacterSheet → open inventory filtered to slot | Low |
+| **Complete Power-Up Wiring** | Wire up remaining triggers: Hat Trick, Blitz, etc. | ✅ Complete |
+| **Unit Testing (Achievements)** | Automated tests to verify achievement triggers | ✅ Complete |
+| **Unit Testing (Power-Ups)** | Event-dependent testing framework for buffs | ✅ Complete |
+| **Gear Click → Inventory Filter** | Click slot in CharacterSheet → open inventory filtered to slot | ✅ Complete |
+| **Gear Comparison Tooltips** | WoW-style dual-panel tooltips showing item vs equipped stats | ✅ Complete |
+| **Recent Acquisition Sort** | Sort inventory by "Recent" to find newly acquired items | ✅ Complete |
 
 #### Tier 3: Game Systems (Enhance Motivation)
 
