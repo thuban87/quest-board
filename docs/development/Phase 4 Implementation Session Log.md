@@ -857,3 +857,113 @@ SidebarQuests.tsx, inventory.css
 
 ---
 
+## 2026-01-29 (Morning) - Battle Screen & Mobile Improvements
+
+**Focus:** Battle screen auto-attack, avatar sizing, mobile battle layout, and mobile tooltip UX
+
+### Completed:
+
+#### Auto-Attack Feature
+- ✅ Added 500ms delayed auto-attack toggle
+- ✅ Attack button shows "⚔️ Stop" with pulsing red glow when active
+- ✅ Other action buttons disabled during auto-attack
+- ✅ Auto-stops on battle end (victory, defeat, retreat)
+- ✅ State managed via `isAutoAttacking` flag and `autoAttackRef`
+
+#### Avatar Sizing (Desktop)
+- ✅ Settled on 2x sprites: 240x240 containers with 192x192 images
+- ✅ Fixed CSS specificity issue where `dungeons.css` was overriding battle sprite styles
+- ✅ Scoped battle player sprite styles to `.qb-battle-player .qb-player-sprite`
+- ✅ Reordered player display elements: Info → Sprite → HP/Mana bars
+
+#### Mobile Battle Layout (Complete Rewrite)
+- ✅ Responsive grid: `1fr 1fr` columns with overflow containment
+- ✅ Smaller sprites for mobile: 100x100 containers, 80x80 images
+- ✅ HP/Mana text displayed ABOVE bars (not inside) via `position: static`
+- ✅ Monster info pushed to top of grid cell
+- ✅ Action buttons in equal 2x2 grid
+- ✅ Added 30px bottom padding for Obsidian mobile nav bar
+
+#### Mobile Tooltip Close Button
+- ✅ Added Platform.isMobile check to `attachGearTooltip`
+- ✅ Creates close button (✕) in top-right corner of tooltip
+- ✅ Tap gear item to open, tap X to dismiss
+- ✅ Added CSS styling for close button (28px circle with shadow)
+
+### Files Changed:
+
+**Components:**
+- `src/components/BattleView.tsx` - Auto-attack state, handlers, element reordering
+
+**Styles:**
+- `src/styles/combat.css` - Desktop avatar sizing, complete mobile battle rewrite (~130 lines)
+- `src/styles/inventory.css` - Mobile tooltip close button CSS (~35 lines)
+
+**Utils:**
+- `src/utils/gearFormatters.ts` - Platform import, mobile close button logic, touch event handling
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Auto-attack tested on desktop
+- ✅ Mobile layout tested on Android device
+- ✅ Tooltip close button working on mobile
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Phase 4 Tier 2 complete! Battle screen polished for both desktop and mobile.
+
+What was done this session:
+- ✅ Auto-attack feature with toggle and visual feedback
+- ✅ Avatar sizing finalized at 2x (240x240)
+- ✅ Mobile battle layout completely rewritten for proper sizing
+- ✅ Mobile tooltip close button added
+
+Continue with Phase 4 Tier 3 (Game Systems) or address any remaining polish items.
+
+Key files to reference:
+- docs/development/Feature Roadmap v2.md - Current priorities
+- src/styles/combat.css - Mobile battle styles (lines 896-1030)
+- src/components/BattleView.tsx - Auto-attack logic
+```
+
+---
+
+## Git Commit Message
+
+```
+feat: Battle screen improvements & mobile polish
+
+Auto-Attack:
+- 500ms delayed auto-attack with toggle button
+- Visual feedback: "⚔️ Stop" text + pulsing red glow
+- Disables other action buttons during auto-attack
+- Auto-stops on battle end
+
+Desktop Battle View:
+- 2x sprite sizing (240x240 containers, 192x192 images)
+- Fixed CSS specificity issue with dungeons.css override
+- Reordered player elements: Info → Sprite → Bars
+
+Mobile Battle View (Complete Rewrite):
+- Responsive 1fr 1fr grid with overflow containment
+- Smaller sprites (100x100 containers, 80x80 images)
+- HP/Mana text above bars instead of inside
+- 30px bottom padding for Obsidian nav bar
+- 2x2 action button grid
+
+Mobile Tooltip UX:
+- Added close button (X) to gear tooltips on mobile
+- Tap to open, tap X to dismiss
+
+Files: BattleView.tsx, combat.css, inventory.css, gearFormatters.ts
+```
+
+---
+
