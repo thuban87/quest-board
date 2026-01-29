@@ -185,10 +185,46 @@ export async function moveQuest(
         if (character) {
             // Detect "One-Shot" = Available → Completed directly (not via In Progress)
             const wasOneShot = quest.status === QuestStatus.AVAILABLE;
+            const now = new Date();
+            const dayOfWeek = now.getDay();  // 0=Sun, 1=Mon, ... 6=Sat
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+            // Check if this is first quest of day
+            const today = now.toLocaleDateString('en-CA');
+            const isFirstTaskOfDay = character.lastTaskDate !== today;
+
+            // Count quests still in In Progress (excluding the one we just completed)
+            const allQuests = useQuestStore.getState().quests;
+            let inProgressCount = 0;
+            for (const [, q] of allQuests) {
+                if (q.questId !== questId && q.status === QuestStatus.IN_PROGRESS) {
+                    inProgressCount++;
+                }
+            }
+
+            // Check if quest was completed early (24h+ before expected)
+            // For recurring quests with instanceDate, compare to that
+            // Otherwise, this trigger won't fire (no due date)
+            let questCompletedEarly = false;
+            let questCompletedOnDueDate = false;
+
+            if (isManualQuest(quest) && quest.instanceDate) {
+                const dueDate = new Date(quest.instanceDate + 'T23:59:59');
+                const msUntilDue = dueDate.getTime() - now.getTime();
+                const hoursUntilDue = msUntilDue / (1000 * 60 * 60);
+                questCompletedEarly = hoursUntilDue >= 24;  // 24h+ before due
+                questCompletedOnDueDate = hoursUntilDue >= 0 && hoursUntilDue < 24;  // On due date
+            }
 
             const questContext: TriggerContext = {
                 questCompleted: true,
                 questWasOneShot: wasOneShot,
+                isWeekend,      // For Weekend Warrior
+                dayOfWeek,      // For Fresh Start (Monday = 1)
+                isFirstTaskOfDay,  // For Fresh Start
+                inProgressCount,   // For Inbox Zero
+                questCompletedEarly,  // For Speedrunner
+                questCompletedOnDueDate, // For Clutch
             };
 
             const questTriggers = evaluateTriggers('quest_completion', questContext);

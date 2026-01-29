@@ -639,3 +639,128 @@ QuestCard.tsx, FullKanban.tsx, SidebarQuests.tsx, settings.ts
 ```
 
 ---
+
+## 2026-01-29 - TDD Power-Ups & Achievements
+
+**Focus:** Strict TDD implementation for power-up triggers and achievement unit testing
+
+### Completed:
+
+#### Test Files Created (168 tests total)
+
+| File | Tests | Description |
+|------|-------|-------------|
+| `test/achievements.test.ts` | 52 | Achievement unlocking, progress, sorting, initialization |
+| `test/power-up-effects.test.ts` | 62 | XP multipliers, stat boosts, collision policies, expiration |
+| `test/power-up-triggers.test.ts` | 54 | Existing and new trigger conditions |
+
+#### New Power-Up Triggers Implemented (18 total)
+
+**Speed & Momentum:**
+- ✅ Hat Trick (3 tasks in 1h) → T1 pool
+- ✅ Blitz (10 tasks in a day) → T2 pool
+- ✅ Combo Breaker (5+ same category) → T1 pool
+- ✅ Speedrunner (quest 24h+ early) → flow_state
+- ✅ Inbox Zero (clear In Progress) → flow_state
+
+**Timing:**
+- ✅ Early Riser (before 8 AM) → T1 pool
+- ✅ Night Owl (after 10 PM) → T1 pool
+- ✅ Weekend Warrior (quest on Sat/Sun) → T1 pool
+- ✅ Fresh Start (first quest on Monday) → T1 pool
+- ✅ Streak Keeper 14 → T2 pool
+- ✅ Streak Keeper 30 → limit_break
+
+**Category Mastery:**
+- ✅ Gym Rat (3 Health/Fitness) → adrenaline_rush
+- ✅ Deep Work (3 Dev/Study) → genius_mode
+- ✅ Social Butterfly (3 Social) → T1 pool
+- ✅ Admin Slayer (5 Chore/Admin) → flow_state
+- ✅ Multitasker (3+ categories) → T1 pool
+
+**Difficulty:**
+- ✅ Big Fish (>50 XP task) → T1 pool
+- ✅ Clutch (quest on due date) → T1 pool
+
+**RNG:**
+- ✅ Critical Success (5% chance) → T2 pool
+
+#### TriggerContext Extended
+
+Added new context fields:
+- `tasksInLastHour` - For Hat Trick trigger
+- `questCompletedOnDueDate` - For Clutch trigger
+- `inProgressCount` - For Inbox Zero trigger
+
+### Files Changed:
+
+- `src/services/PowerUpService.ts` - 18 new trigger definitions, extended TriggerContext
+- `test/achievements.test.ts` - New file (52 tests)
+- `test/power-up-effects.test.ts` - New file (62 tests)
+- `test/power-up-triggers.test.ts` - New file (54 tests)
+
+### Testing Notes:
+
+- All 168 tests pass
+- Build succeeds with no TypeScript errors
+- Deployed to test vault
+
+### Known Issues:
+
+- "First Quest" achievement may trigger repeatedly - needs manual verification
+- Investigated persistence flow, appears correct but may be race condition
+
+### Next Steps:
+
+1. Manually test new power-up triggers in test vault
+2. Verify First Quest achievement persists correctly after plugin reload
+3. Wire up new TriggerContext fields at task/quest completion points
+4. Continue with Phase 4 Tier 2 remaining items
+
+---
+
+## Next Session Prompt
+
+```
+Continue Phase 4 Tier 2:
+1. Wire up new trigger context fields (tasksInLastHour, questCompletedOnDueDate, inProgressCount) 
+   in useXPAward.ts and QuestActionsService.ts
+2. Test new power-ups manually (Hat Trick, Blitz, etc.)
+3. Investigate and fix "First Quest" achievement bug thoroughly
+4. Gear Click → Inventory Filter feature
+
+Key files to reference:
+- src/services/PowerUpService.ts - New trigger definitions
+- src/hooks/useXPAward.ts - Where trigger context is built
+- src/services/QuestActionsService.ts - Quest completion handling
+- test/*.test.ts - Reference tests for expected behavior
+```
+
+---
+
+## Git Commit Message
+
+```
+feat: TDD Power-Ups & Achievements Unit Testing
+
+Tests:
+- 168 unit tests across 3 new test files
+- Achievement unlocking, progress, sorting tests
+- Power-up effect, collision, expiration tests
+- Power-up trigger condition tests
+
+New Triggers (18):
+- Speed: Hat Trick, Blitz, Combo Breaker, Speedrunner, Inbox Zero
+- Timing: Early Riser, Night Owl, Weekend Warrior, Fresh Start, Streak 14/30
+- Category: Gym Rat, Deep Work, Social Butterfly, Admin Slayer, Multitasker
+- Difficulty: Big Fish, Clutch
+- RNG: Critical Success
+
+Extended TriggerContext with:
+- tasksInLastHour, questCompletedOnDueDate, inProgressCount
+
+Files: PowerUpService.ts, test/achievements.test.ts, 
+test/power-up-effects.test.ts, test/power-up-triggers.test.ts
+```
+
+---

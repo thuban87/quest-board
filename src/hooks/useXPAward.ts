@@ -119,11 +119,60 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
         let currentPowerUps = expirePowerUps(character.activePowerUps ?? []);
 
         // Build context for trigger evaluation
+        const now = new Date();
+
+        // Calculate days inactive (difference between last task date and today)
+        let daysInactive = 0;
+        if (character.lastTaskDate) {
+            const lastDate = new Date(character.lastTaskDate + 'T00:00:00');
+            const todayDate = new Date(today + 'T00:00:00');
+            daysInactive = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+        }
+
+        // Build category count for today from activity history
+        const categoryCountToday: Record<string, number> = {};
+        const categoriesSet = new Set<string>();
+        let tasksInLastHour = 0;
+        const oneHourAgo = now.getTime() - (60 * 60 * 1000);
+
+        // Scan activity history for today's stats
+        for (const event of character.activityHistory || []) {
+            if (event.date === today && event.type === 'quest_complete') {
+                // Count categories
+                if (event.category) {
+                    const cat = event.category.toLowerCase();
+                    categoryCountToday[cat] = (categoryCountToday[cat] || 0) + 1;
+                    categoriesSet.add(cat);
+                }
+
+                // Count tasks in last hour
+                if (event.timestamp) {
+                    const eventTime = new Date(event.timestamp).getTime();
+                    if (eventTime >= oneHourAgo) {
+                        tasksInLastHour++;
+                    }
+                }
+            }
+        }
+
+        // Add current task to counts (it's about to be completed)
+        const currentCategory = quest.category?.toLowerCase();
+        if (currentCategory) {
+            categoryCountToday[currentCategory] = (categoryCountToday[currentCategory] || 0) + newlyCompleted;
+            categoriesSet.add(currentCategory);
+        }
+        tasksInLastHour += newlyCompleted;  // Current task counts toward hat trick
+
         const taskContext: TriggerContext = {
             isFirstTaskOfDay,
             tasksCompletedToday: currentTaskCount + newlyCompleted,
             taskCategory: quest.category,
             taskXP: quest.xpPerTask * newlyCompleted,
+            currentHour: now.getHours(),  // For Early Riser (<8) and Night Owl (>=22)
+            categoryCountToday,           // For Gym Rat, Deep Work, etc.
+            categoriesCompletedToday: Array.from(categoriesSet), // For Multitasker
+            tasksInLastHour,              // For Hat Trick
+            daysInactive,                 // For Phoenix
         };
 
         // Evaluate task_completion triggers
