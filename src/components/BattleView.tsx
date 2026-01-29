@@ -290,6 +290,8 @@ function ConsumablePicker({ onSelect, onCancel }: ConsumablePickerProps) {
 
 /**
  * Action buttons for combat
+ * Supports main menu (3x2: Attack, Skills, Defend, Run, Meditate, Item)
+ * and skills submenu (2x3: 5 skill slots + Back)
  */
 interface ActionButtonsProps {
     onAction: (action: PlayerAction) => void;
@@ -299,11 +301,77 @@ interface ActionButtonsProps {
     onToggleAutoAttack: () => void;
 }
 
+type ActionMenu = 'main' | 'skills';
+
 function ActionButtons({ onAction, onItemClick, disabled, isAutoAttacking, onToggleAutoAttack }: ActionButtonsProps) {
+    const [currentMenu, setCurrentMenu] = useState<ActionMenu>('main');
     const isMobile = Platform.isMobile;
 
+    // Placeholder handlers
+    const handleMeditate = () => {
+        // TODO: Implement mana regen logic
+        console.log('[Battle] Meditate action triggered - mana regen placeholder');
+        // For now, just log - will be wired to actual effect later
+    };
+
+    const handleSkillUse = (skillNum: number) => {
+        // TODO: Wire to actual skill system
+        console.log(`[Battle] Skill ${skillNum} used - placeholder`);
+    };
+
+    // Skills submenu
+    if (currentMenu === 'skills') {
+        return (
+            <div className={`qb-battle-actions qb-skills-menu ${isMobile ? 'mobile' : ''}`}>
+                <button
+                    className="qb-action-btn qb-action-skill"
+                    onClick={() => handleSkillUse(1)}
+                    disabled={disabled}
+                >
+                    ✨ Skill 1
+                </button>
+                <button
+                    className="qb-action-btn qb-action-skill"
+                    onClick={() => handleSkillUse(2)}
+                    disabled={disabled}
+                >
+                    ✨ Skill 2
+                </button>
+                <button
+                    className="qb-action-btn qb-action-skill"
+                    onClick={() => handleSkillUse(3)}
+                    disabled={disabled}
+                >
+                    ✨ Skill 3
+                </button>
+                <button
+                    className="qb-action-btn qb-action-skill"
+                    onClick={() => handleSkillUse(4)}
+                    disabled={disabled}
+                >
+                    ✨ Skill 4
+                </button>
+                <button
+                    className="qb-action-btn qb-action-skill"
+                    onClick={() => handleSkillUse(5)}
+                    disabled={disabled}
+                >
+                    ✨ Skill 5
+                </button>
+                <button
+                    className="qb-action-btn qb-action-back"
+                    onClick={() => setCurrentMenu('main')}
+                >
+                    ← Back
+                </button>
+            </div>
+        );
+    }
+
+    // Main menu (3x2 grid)
     return (
         <div className={`qb-battle-actions ${isMobile ? 'mobile' : ''}`}>
+            {/* Row 1: Attack, Skills, Defend */}
             <button
                 className={`qb-action-btn qb-action-attack ${isAutoAttacking ? 'qb-auto-attacking' : ''}`}
                 onClick={onToggleAutoAttack}
@@ -312,18 +380,33 @@ function ActionButtons({ onAction, onItemClick, disabled, isAutoAttacking, onTog
                 {isAutoAttacking ? '⚔️ Stop' : '⚔️ Attack'}
             </button>
             <button
+                className="qb-action-btn qb-action-skills"
+                onClick={() => setCurrentMenu('skills')}
+                disabled={disabled || isAutoAttacking}
+            >
+                🔥 Skills
+            </button>
+            <button
                 className="qb-action-btn qb-action-defend"
                 onClick={() => onAction('defend')}
                 disabled={disabled || isAutoAttacking}
             >
                 🛡️ Defend
             </button>
+            {/* Row 2: Run, Meditate, Item */}
             <button
                 className="qb-action-btn qb-action-run"
                 onClick={() => onAction('retreat')}
                 disabled={disabled || isAutoAttacking}
             >
                 🏃 Run
+            </button>
+            <button
+                className="qb-action-btn qb-action-meditate"
+                onClick={handleMeditate}
+                disabled={disabled || isAutoAttacking}
+            >
+                🧘 Meditate
             </button>
             <button
                 className="qb-action-btn qb-action-item"
@@ -335,6 +418,7 @@ function ActionButtons({ onAction, onItemClick, disabled, isAutoAttacking, onTog
         </div>
     );
 }
+
 
 /**
  * Victory screen
