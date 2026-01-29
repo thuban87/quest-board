@@ -5,6 +5,7 @@
  * Ensures consistent tooltips, stat displays, and set info.
  */
 
+import { Platform } from 'obsidian';
 import {
     GearItem,
     TIER_INFO,
@@ -356,6 +357,7 @@ export function createGearComparisonTooltip(
 /**
  * Attach a rich comparison tooltip to an element.
  * Replaces the default title attribute with a custom floating tooltip.
+ * On mobile, adds a close button since there's no mouseleave event.
  */
 export function attachGearTooltip(
     element: HTMLElement,
@@ -364,7 +366,7 @@ export function attachGearTooltip(
 ): void {
     let tooltip: HTMLElement | null = null;
 
-    element.addEventListener('mouseenter', () => {
+    const showTooltip = () => {
         // Remove any existing tooltip
         if (tooltip) {
             tooltip.remove();
@@ -372,6 +374,23 @@ export function attachGearTooltip(
 
         // Create tooltip in body for proper positioning
         tooltip = document.body.createEl('div', { cls: 'qb-gear-tooltip-wrapper' });
+
+        // On mobile, add close button
+        if (Platform.isMobile) {
+            tooltip.addClass('qb-gear-tooltip-mobile');
+            const closeBtn = tooltip.createEl('button', {
+                cls: 'qb-tooltip-close-btn',
+                text: '✕'
+            });
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (tooltip) {
+                    tooltip.remove();
+                    tooltip = null;
+                }
+            });
+        }
+
         createGearComparisonTooltip(tooltip, item, equipped);
 
         // Position near element
@@ -395,20 +414,31 @@ export function attachGearTooltip(
             window.innerWidth - 420
         ));
         tooltip.style.left = `${left}px`;
-    });
+    };
 
-    element.addEventListener('mouseleave', () => {
+    const hideTooltip = () => {
         if (tooltip) {
             tooltip.remove();
             tooltip = null;
         }
-    });
+    };
+
+    // Desktop: mouse events
+    element.addEventListener('mouseenter', showTooltip);
+    element.addEventListener('mouseleave', hideTooltip);
+
+    // Mobile: tap to show (tap elsewhere to close via the close button)
+    if (Platform.isMobile) {
+        element.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (tooltip) {
+                hideTooltip();
+            } else {
+                showTooltip();
+            }
+        });
+    }
 
     // Also remove on scroll to prevent orphaned tooltips
-    element.addEventListener('scroll', () => {
-        if (tooltip) {
-            tooltip.remove();
-            tooltip = null;
-        }
-    }, { capture: true });
+    element.addEventListener('scroll', hideTooltip, { capture: true });
 }

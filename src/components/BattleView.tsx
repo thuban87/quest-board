@@ -113,6 +113,10 @@ function PlayerDisplay({ spritePath }: { spritePath?: string }) {
 
     return (
         <div className="qb-battle-player">
+            <div className="qb-player-info">
+                <span className="qb-player-name">{character.name}</span>
+                <span className="qb-player-class">Lv. {character.level} {classInfo.name}</span>
+            </div>
             <div className={`qb-player-sprite ${animClass}`}>
                 {spritePath ? (
                     <img
@@ -127,10 +131,6 @@ function PlayerDisplay({ spritePath }: { spritePath?: string }) {
                 ) : null}
                 <span className={`qb-sprite-emoji ${spritePath ? 'hidden' : ''}`}>{classInfo.emoji}</span>
                 {isDefending && <span className="qb-defending-indicator">🛡️</span>}
-            </div>
-            <div className="qb-player-info">
-                <span className="qb-player-name">{character.name}</span>
-                <span className="qb-player-class">Lv. {character.level} {classInfo.name}</span>
             </div>
             <div className="qb-player-bars">
                 <div className="qb-hp-bar qb-player-hp">
@@ -295,38 +295,40 @@ interface ActionButtonsProps {
     onAction: (action: PlayerAction) => void;
     onItemClick: () => void;
     disabled: boolean;
+    isAutoAttacking: boolean;
+    onToggleAutoAttack: () => void;
 }
 
-function ActionButtons({ onAction, onItemClick, disabled }: ActionButtonsProps) {
+function ActionButtons({ onAction, onItemClick, disabled, isAutoAttacking, onToggleAutoAttack }: ActionButtonsProps) {
     const isMobile = Platform.isMobile;
 
     return (
         <div className={`qb-battle-actions ${isMobile ? 'mobile' : ''}`}>
             <button
-                className="qb-action-btn qb-action-attack"
-                onClick={() => onAction('attack')}
-                disabled={disabled}
+                className={`qb-action-btn qb-action-attack ${isAutoAttacking ? 'qb-auto-attacking' : ''}`}
+                onClick={onToggleAutoAttack}
+                disabled={disabled && !isAutoAttacking}
             >
-                ⚔️ Attack
+                {isAutoAttacking ? '⚔️ Stop' : '⚔️ Attack'}
             </button>
             <button
                 className="qb-action-btn qb-action-defend"
                 onClick={() => onAction('defend')}
-                disabled={disabled}
+                disabled={disabled || isAutoAttacking}
             >
                 🛡️ Defend
             </button>
             <button
                 className="qb-action-btn qb-action-run"
                 onClick={() => onAction('retreat')}
-                disabled={disabled}
+                disabled={disabled || isAutoAttacking}
             >
                 🏃 Run
             </button>
             <button
                 className="qb-action-btn qb-action-item"
                 onClick={onItemClick}
-                disabled={disabled}
+                disabled={disabled || isAutoAttacking}
             >
                 🧪 Item
             </button>
@@ -440,7 +442,42 @@ export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot,
     const removeInventoryItem = useCharacterStore(state => state.removeInventoryItem);
 
     const [showItemPicker, setShowItemPicker] = useState(false);
+    const [isAutoAttacking, setIsAutoAttacking] = useState(false);
+    const autoAttackRef = useRef<number | null>(null);
     const isMobile = Platform.isMobile;
+
+    // Auto-attack interval effect
+    useEffect(() => {
+        if (isAutoAttacking && combatState === 'PLAYER_INPUT') {
+            // Start auto-attack loop
+            autoAttackRef.current = window.setInterval(() => {
+                const currentState = useBattleStore.getState().state;
+                if (currentState === 'PLAYER_INPUT') {
+                    battleService.executePlayerTurn('attack');
+                }
+            }, 500);
+        } else {
+            // Clear interval when not auto-attacking or combat ended
+            if (autoAttackRef.current) {
+                clearInterval(autoAttackRef.current);
+                autoAttackRef.current = null;
+            }
+        }
+
+        return () => {
+            if (autoAttackRef.current) {
+                clearInterval(autoAttackRef.current);
+                autoAttackRef.current = null;
+            }
+        };
+    }, [isAutoAttacking, combatState]);
+
+    // Stop auto-attack when battle ends
+    useEffect(() => {
+        if (combatState === 'VICTORY' || combatState === 'DEFEAT' || combatState === 'RETREATED') {
+            setIsAutoAttacking(false);
+        }
+    }, [combatState]);
 
     // Call onDefeat when state becomes DEFEAT (for dungeon death modal)
     const hasCalledDefeat = useRef(false);
@@ -464,6 +501,17 @@ export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot,
             setShowItemPicker(true);
         } else {
             battleService.executePlayerTurn(action);
+        }
+    };
+
+    // Toggle auto-attack mode
+    const handleToggleAutoAttack = () => {
+        if (isAutoAttacking) {
+            setIsAutoAttacking(false);
+        } else {
+            // Start auto-attack by doing immediate attack then enabling loop
+            battleService.executePlayerTurn('attack');
+            setIsAutoAttacking(true);
         }
     };
 
@@ -576,6 +624,8 @@ export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot,
                 onAction={handleAction}
                 onItemClick={() => setShowItemPicker(true)}
                 disabled={actionsDisabled}
+                isAutoAttacking={isAutoAttacking}
+                onToggleAutoAttack={handleToggleAutoAttack}
             />
 
             {showItemPicker && (

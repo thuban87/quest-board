@@ -314,8 +314,8 @@
 }
 
 .qb-monster-sprite {
-  width: 120px;
-  height: 120px;
+  width: 240px;
+  height: 240px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -326,7 +326,7 @@
 }
 
 .qb-monster-sprite .qb-sprite-emoji {
-  font-size: 4rem;
+  font-size: 6rem;
 }
 
 /* Monster tints for prefixes */
@@ -351,7 +351,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: var(--qb-spacing-sm);
   padding: var(--qb-spacing-md);
   background: rgba(0, 0, 0, 0.4);
@@ -360,10 +360,10 @@
   overflow: visible;
 }
 
-.qb-player-sprite {
+.qb-battle-player .qb-player-sprite {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 240px;
+  height: 240px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -375,13 +375,13 @@
   flex-shrink: 0;
 }
 
-.qb-player-sprite .qb-sprite-emoji {
-  font-size: 4rem;
+.qb-battle-player .qb-player-sprite .qb-sprite-emoji {
+  font-size: 6rem;
 }
 
-.qb-player-sprite .qb-sprite-image {
-  width: 96px;
-  height: 96px;
+.qb-battle-player .qb-player-sprite .qb-sprite-image {
+  width: 192px;
+  height: 192px;
   image-rendering: pixelated;
   object-fit: contain;
 }
@@ -589,6 +589,26 @@
 
 .qb-action-attack:hover:not(:disabled) {
   background: rgba(220, 53, 69, 0.1);
+}
+
+/* Auto-attack active state - pulsing glow effect */
+.qb-action-attack.qb-auto-attacking {
+  background: rgba(220, 53, 69, 0.2);
+  animation: qb-auto-attack-pulse 1s ease-in-out infinite;
+}
+
+@keyframes qb-auto-attack-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px 2px rgba(220, 53, 69, 0.4);
+    border-color: var(--qb-warrior-color);
+  }
+
+  50% {
+    box-shadow: 0 0 16px 4px rgba(220, 53, 69, 0.8);
+    border-color: #ff6b6b;
+  }
 }
 
 .qb-action-defend {
@@ -875,44 +895,149 @@
 
 /* Mobile Adjustments */
 .qb-battle-view.mobile {
-  padding: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-xs);
+  padding-bottom: 30px;
+  /* Compensate for Obsidian mobile nav bar */
+  grid-template-columns: 1fr 1fr;
+  gap: var(--qb-spacing-xs);
+  overflow: hidden;
 }
 
+/* All grid cells should contain overflow */
+.qb-battle-view.mobile .qb-battle-monster,
+.qb-battle-view.mobile .qb-battle-player,
+.qb-battle-view.mobile .qb-battle-actions,
+.qb-battle-view.mobile .qb-combat-log-container {
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Action buttons - equal grid */
 .qb-battle-view.mobile .qb-battle-actions {
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-xs);
 }
 
 .qb-battle-view.mobile .qb-action-btn {
-  min-height: 60px;
-  font-size: 1.1rem;
+  min-height: 50px;
+  font-size: 0.9rem;
+  padding: var(--qb-spacing-xs);
   touch-action: manipulation;
 }
 
+/* Monster section - push info to top */
+.qb-battle-view.mobile .qb-battle-monster {
+  justify-content: flex-start;
+  padding: var(--qb-spacing-xs);
+  gap: var(--qb-spacing-xs);
+}
+
+/* Monster sprite - smaller for mobile */
 .qb-battle-view.mobile .qb-monster-sprite {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
+  max-width: 100%;
 }
 
 .qb-battle-view.mobile .qb-monster-sprite .qb-sprite-emoji {
-  font-size: 2.5rem;
+  font-size: 3rem;
 }
 
-.qb-battle-view.mobile .qb-player-sprite {
-  width: 64px;
-  height: 64px;
+.qb-battle-view.mobile .qb-monster-sprite .qb-sprite-image {
+  width: 80px;
+  height: 80px;
+  max-width: 100%;
 }
 
-.qb-battle-view.mobile .qb-player-sprite .qb-sprite-emoji {
-  font-size: 2rem;
+/* Monster info responsive */
+.qb-battle-view.mobile .qb-monster-name {
+  font-size: 0.95rem;
+}
+
+.qb-battle-view.mobile .qb-monster-level {
+  font-size: 0.75rem;
+}
+
+.qb-battle-view.mobile .qb-monster-hp {
+  max-width: 100%;
+}
+
+/* Player section */
+.qb-battle-view.mobile .qb-battle-player {
+  padding: var(--qb-spacing-xs);
+  gap: var(--qb-spacing-xs);
+}
+
+/* Player info */
+.qb-battle-view.mobile .qb-player-name {
+  font-size: 0.95rem;
+}
+
+.qb-battle-view.mobile .qb-player-class {
+  font-size: 0.75rem;
+}
+
+/* Player sprite - smaller for mobile */
+.qb-battle-view.mobile .qb-battle-player .qb-player-sprite {
+  width: 100px;
+  height: 100px;
+  max-width: 100%;
+}
+
+.qb-battle-view.mobile .qb-battle-player .qb-player-sprite .qb-sprite-emoji {
+  font-size: 3rem;
+}
+
+.qb-battle-view.mobile .qb-battle-player .qb-player-sprite .qb-sprite-image {
+  width: 80px;
+  height: 80px;
+  max-width: 100%;
+}
+
+/* Player HP/Mana bars - text ABOVE the bar */
+.qb-battle-view.mobile .qb-player-bars {
+  width: 100%;
+  max-width: 100%;
+  gap: 2px;
+}
+
+.qb-battle-view.mobile .qb-hp-bar,
+.qb-battle-view.mobile .qb-mana-bar {
+  height: 14px;
+  position: relative;
+}
+
+/* Move text above the bar on mobile */
+.qb-battle-view.mobile .qb-hp-text,
+.qb-battle-view.mobile .qb-mana-text {
+  position: static;
+  transform: none;
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-normal);
+  text-shadow: none;
+  margin-bottom: 2px;
+}
+
+/* Combat log container - fill the space */
+.qb-battle-view.mobile .qb-combat-log-container {
+  padding: var(--qb-spacing-xs);
 }
 
 .qb-battle-view.mobile .qb-combat-latest {
-  font-size: 1rem;
-  padding: var(--qb-spacing-sm);
+  font-size: 0.85rem;
+  padding: var(--qb-spacing-xs);
+}
+
+.qb-battle-view.mobile .qb-combat-log {
+  font-size: 0.7rem;
 }
 
 .qb-battle-view.mobile .qb-combat-log-container {
-  max-height: 120px;
+  max-height: none;
 }
 
 /* ===========================================
@@ -1039,9 +1164,9 @@
   object-fit: contain;
 }
 
-.qb-player-sprite .qb-sprite-image {
-  width: 96px;
-  height: 96px;
+.qb-battle-player .qb-player-sprite .qb-sprite-image {
+  width: 192px;
+  height: 192px;
 }
 
 .qb-sheet-sprite .qb-sprite-image {
@@ -1077,8 +1202,8 @@
 
 /* Monster sprite in battle view */
 .qb-monster-sprite .qb-sprite-image {
-  width: 80px;
-  height: 80px;
+  width: 192px;
+  height: 192px;
 }
 
 /* ===========================================

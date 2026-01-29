@@ -380,4 +380,4 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-01-27 (Late - XP system overhaul, bug fixes)
+**Last Updated:** 2026-01-29 (Battle screen improvements, mobile polish)
