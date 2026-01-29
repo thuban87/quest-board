@@ -219,9 +219,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | **AI Quest Generation** | Convert task lists to quest files via Gemini | ✅ Complete |
 | **Daily Note Integration** | Log completed quests to daily notes | Low |
 | ~~**Weekly Sprint View**~~ | ✅ **Progress Dashboard** - Activity history, stats, XP/gold tracking | ✅ Complete |
-| **Quest Preview (Masked)** | Hide quest sections on Kanban until previous complete | Low |
-| **Progressive Section Reveal** | Hide future quest sections in linked task files | Low |
-| **Quest Templates UI** | Better template creation/management | Low |
+| **Quest Templates UI** | "The Scrivener's Desk" - Template gallery, builder, usage stats, quest-to-template conversion | Medium |
 
 #### Tier 2: Power-Ups & Testing (Early Phase 4)
 
@@ -298,6 +296,11 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 ---
 
 ## Future Vision (Beyond Phase 5)
+
+### Progressive Quest Reveal
+- Hide quest sections on Kanban until previous complete
+- Hide future quest sections in linked task files
+- "Fog of war" style reveal as tasks complete
 
 ### Tavern View
 - Rest area UI for recovery and buffs

@@ -51,6 +51,8 @@ import { GearSlot } from './src/models/Gear';
 import { LevelUpModal } from './src/modals/LevelUpModal';
 import { CharacterClass } from './src/models/Character';
 import { showProgressDashboardModal } from './src/modals/ProgressDashboardModal';
+import { initDailyNoteService, dailyNoteService } from './src/services/DailyNoteService';
+import { initTemplateStatsService } from './src/services/TemplateStatsService';
 
 
 
@@ -73,6 +75,12 @@ export default class QuestBoardPlugin extends Plugin {
             }
             lootGenerationService.setCustomSlotMapping(typedMapping);
         }
+
+        // Initialize daily note service
+        initDailyNoteService(this.app.vault, this.settings);
+
+        // Initialize template stats service (for smart suggestions)
+        initTemplateStatsService(this);
 
         // Initialize set bonus service with settings
         setBonusService.initialize(this.app, this.settings);

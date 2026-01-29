@@ -34,6 +34,7 @@ import {
 import { checkBountyTrigger } from './BountyService';
 import { showBountyModal } from '../modals/BountyModal';
 import { showBountyReviveModal } from '../modals/BountyReviveModal';
+import { dailyNoteService } from './DailyNoteService';
 
 /**
  * Result of moving a quest
@@ -68,6 +69,8 @@ export interface MoveQuestOptions {
     onBattleStart?: () => void;
     /** Plugin manifest directory for sprite resolution */
     manifestDir?: string;
+    /** XP awarded for the quest (for daily note logging) */
+    xpAwarded?: number;
 }
 
 /**
@@ -390,6 +393,13 @@ export async function moveQuest(
             category: updatedQuest.category,
             details: `Completed: ${updatedQuest.questName}`,
         });
+
+        // === DAILY NOTE LOGGING ===
+        // Log quest completion to daily note (if enabled)
+        if (dailyNoteService) {
+            const xpForLog = options.xpAwarded ?? (isManualQuest(updatedQuest) ? updatedQuest.completionBonus : 0);
+            await dailyNoteService.logQuestCompletion(updatedQuest, xpForLog);
+        }
     }
 
     // Save to file

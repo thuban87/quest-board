@@ -7,6 +7,7 @@
 
 import { App, Modal, Notice, Setting, FuzzySuggestModal, TFile } from 'obsidian';
 import { TemplateService, ParsedTemplate, PlaceholderInfo } from '../services/TemplateService';
+import { getTemplateStatsService } from '../services/TemplateStatsService';
 import type QuestBoardPlugin from '../../main';
 
 /**
@@ -21,7 +22,7 @@ const STORAGE_FOLDER = 'Life/Quest Board';
 const WORK_TYPE_OPTIONS = ['', 'Remote', 'Hybrid', 'Onsite'];
 
 /**
- * Template Picker - FuzzySuggestModal to select a template
+ * Template Picker - FuzzySuggestModal to select a template (legacy fallback)
  */
 export class TemplatePickerModal extends FuzzySuggestModal<TFile> {
     private templates: TFile[];
@@ -194,6 +195,16 @@ export class DynamicTemplateModal extends Modal {
             const fileName = outputPath.split('/').pop();
             new Notice(`Created: ${fileName}`);
 
+            // Record template usage for smart suggestions
+            const statsService = getTemplateStatsService();
+            if (statsService) {
+                await statsService.recordUsage(
+                    this.parsedTemplate.path,
+                    this.parsedTemplate.name,
+                    this.parsedTemplate.category
+                );
+            }
+
             // Trigger refresh
             this.app.workspace.trigger('quest-board:refresh');
             this.close();
@@ -209,31 +220,11 @@ export class DynamicTemplateModal extends Modal {
 }
 
 /**
- * Main entry point - opens picker then dynamic form
+ * Main entry point - opens The Scroll Library
  */
 export async function openSmartTemplateModal(app: App, plugin: QuestBoardPlugin): Promise<void> {
-    const templateService = new TemplateService(app.vault);
-
-    // Preload templates (required because FuzzySuggestModal.getItems is synchronous)
-    const templates = await templateService.getTemplatesInFolder(TEMPLATE_FOLDER);
-
-    if (templates.length === 0) {
-        new Notice(`No templates found in ${TEMPLATE_FOLDER}`);
-        return;
-    }
-
-    const picker = new TemplatePickerModal(app, templates, async (templateFile: TFile) => {
-        // Parse the selected template
-        const parsed = await templateService.parseTemplate(templateFile.path);
-
-        if (!parsed) {
-            new Notice('Failed to parse template');
-            return;
-        }
-
-        // Open dynamic form
-        new DynamicTemplateModal(app, plugin, parsed).open();
-    });
-
-    picker.open();
+    // Use the new ScrollLibraryModal as the primary entry point
+    const { openScrollLibraryModal } = await import('./ScrollLibraryModal');
+    openScrollLibraryModal(app, plugin);
 }
+

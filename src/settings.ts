@@ -71,6 +71,10 @@ export interface QuestBoardSettings {
     archiveFolder: string;          // Folder for archived/completed quests
     defaultQuestTags: string[];     // Tags to add by default when creating quests
     enableDailyNoteLogging: boolean; // Log quest completions to daily notes
+    dailyNoteFolder: string;        // Folder where daily notes are stored
+    dailyNoteFormat: string;        // Date format for daily note filenames (e.g., YYYY-MM-DD)
+    dailyNoteHeading: string;       // Heading to append quest logs under
+    createDailyNoteIfMissing: boolean; // Create daily note if it doesn't exist
 
     // Loot configuration - custom quest type to gear slot mapping
     questSlotMapping: Record<string, string[]>;
@@ -125,6 +129,10 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     archiveFolder: 'Quest Board/quests/archive',
     defaultQuestTags: [],
     enableDailyNoteLogging: true,
+    dailyNoteFolder: 'Daily',
+    dailyNoteFormat: 'YYYY-MM-DD',
+    dailyNoteHeading: '## Quest Board Activity',
+    createDailyNoteIfMissing: false,
     questSlotMapping: {
         main: ['chest', 'weapon', 'head'],
         side: ['legs', 'boots', 'shield'],
@@ -329,6 +337,9 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
+        // Daily Notes Integration Section
+        containerEl.createEl('h3', { text: 'Daily Notes Integration' });
+
         new Setting(containerEl)
             .setName('Enable Daily Note Logging')
             .setDesc('Log quest completions to your daily notes')
@@ -337,7 +348,61 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.enableDailyNoteLogging = value;
                     await this.plugin.saveSettings();
+                    this.display(); // Refresh to show/hide dependent settings
                 }));
+
+        // Only show these settings if daily note logging is enabled
+        if (this.plugin.settings.enableDailyNoteLogging) {
+            const folderSetting = new Setting(containerEl)
+                .setName('Daily Note Folder')
+                .setDesc('Folder where your daily notes are stored');
+
+            folderSetting.addText(text => {
+                text.setPlaceholder('Daily')
+                    .setValue(this.plugin.settings.dailyNoteFolder || 'Daily')
+                    .onChange(async (value) => {
+                        this.plugin.settings.dailyNoteFolder = value;
+                        await this.plugin.saveSettings();
+                    });
+
+                // Add folder autocomplete
+                import('./utils/FolderSuggest').then(({ FolderSuggest }) => {
+                    new FolderSuggest(this.app, text.inputEl);
+                });
+            });
+
+            new Setting(containerEl)
+                .setName('Daily Note Format')
+                .setDesc('Date format for daily note filenames (YYYY-MM-DD, YYYY-MM-DD ddd, etc.)')
+                .addText(text => text
+                    .setPlaceholder('YYYY-MM-DD')
+                    .setValue(this.plugin.settings.dailyNoteFormat || 'YYYY-MM-DD')
+                    .onChange(async (value) => {
+                        this.plugin.settings.dailyNoteFormat = value;
+                        await this.plugin.saveSettings();
+                    }));
+
+            new Setting(containerEl)
+                .setName('Log Heading')
+                .setDesc('Heading to append quest completion logs under')
+                .addText(text => text
+                    .setPlaceholder('## Quest Board Activity')
+                    .setValue(this.plugin.settings.dailyNoteHeading || '## Quest Board Activity')
+                    .onChange(async (value) => {
+                        this.plugin.settings.dailyNoteHeading = value;
+                        await this.plugin.saveSettings();
+                    }));
+
+            new Setting(containerEl)
+                .setName('Create Daily Note If Missing')
+                .setDesc('Create a new daily note if one doesn\'t exist. Disable if you use another daily notes plugin.')
+                .addToggle(toggle => toggle
+                    .setValue(this.plugin.settings.createDailyNoteIfMissing ?? false)
+                    .onChange(async (value) => {
+                        this.plugin.settings.createDailyNoteIfMissing = value;
+                        await this.plugin.saveSettings();
+                    }));
+        }
 
         // Game Settings Section
         containerEl.createEl('h3', { text: 'Game Settings' });
