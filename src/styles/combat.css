@@ -535,11 +535,11 @@
   flex: 1;
 }
 
-/* Action Buttons - Bottom Right */
+/* Action Buttons - Bottom Right (3x2 main grid) */
 .qb-battle-actions {
   grid-area: actions;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, 1fr);
   gap: var(--qb-spacing-sm);
   padding: var(--qb-spacing-md);
@@ -548,6 +548,12 @@
   backdrop-filter: blur(4px);
   align-content: stretch;
   justify-content: stretch;
+}
+
+/* Skills Submenu (2x3 grid) */
+.qb-battle-actions.qb-skills-menu {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
 }
 
 .qb-action-btn {
@@ -633,6 +639,42 @@
 
 .qb-action-item:hover:not(:disabled) {
   background: rgba(40, 167, 69, 0.1);
+}
+
+/* Skills button - orange/red */
+.qb-action-skills {
+  border-color: #ff6b35;
+}
+
+.qb-action-skills:hover:not(:disabled) {
+  background: rgba(255, 107, 53, 0.1);
+}
+
+/* Meditate button - teal/mana blue */
+.qb-action-meditate {
+  border-color: #17a2b8;
+}
+
+.qb-action-meditate:hover:not(:disabled) {
+  background: rgba(23, 162, 184, 0.1);
+}
+
+/* Skill placeholder buttons - orange like skills button */
+.qb-action-skill {
+  border-color: #ff6b35;
+}
+
+.qb-action-skill:hover:not(:disabled) {
+  background: rgba(255, 107, 53, 0.1);
+}
+
+/* Back button */
+.qb-action-back {
+  border-color: var(--text-muted);
+}
+
+.qb-action-back:hover:not(:disabled) {
+  background: rgba(128, 128, 128, 0.1);
 }
 
 /* Consumable Picker */
@@ -912,17 +954,23 @@
   min-width: 0;
 }
 
-/* Action buttons - equal grid */
+/* Action buttons - 2x3 grid on mobile (same for main and skills) */
 .qb-battle-view.mobile .qb-battle-actions {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
   gap: var(--qb-spacing-xs);
   padding: var(--qb-spacing-xs);
 }
 
+/* Skills submenu - same 2x3 grid on mobile */
+.qb-battle-view.mobile .qb-battle-actions.qb-skills-menu {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+
 .qb-battle-view.mobile .qb-action-btn {
-  min-height: 50px;
-  font-size: 0.9rem;
+  min-height: 40px;
+  font-size: 0.75rem;
   padding: var(--qb-spacing-xs);
   touch-action: manipulation;
 }

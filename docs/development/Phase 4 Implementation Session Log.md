@@ -967,3 +967,104 @@ Files: BattleView.tsx, combat.css, inventory.css, gearFormatters.ts
 
 ---
 
+## 2026-01-29 (Afternoon) - Battle Actions Expansion
+
+**Focus:** Expand battle action grid with Skills and Meditate buttons, Pokémon Gen 1 style menu system
+
+### Completed:
+
+#### New Action Layout
+
+**Desktop (3x2 grid):**
+| Attack | Skills | Defend |
+| Run | Meditate | Item |
+
+**Mobile (2x3 grid):**
+| Attack | Skills |
+| Defend | Run |
+| Meditate | Item |
+
+#### Skills Submenu (2x3 grid)
+- ✅ Clicking Skills opens submenu that replaces action buttons
+- ✅ 5 placeholder skill buttons (Skill 1-5)
+- ✅ Back button always in bottom-right
+- ✅ Console logs for debugging
+
+#### New Button Styles
+- ✅ Skills button: orange border (#ff6b35)
+- ✅ Meditate button: teal border (#17a2b8)
+- ✅ Skill placeholders: orange border (matching Skills button)
+- ✅ Back button: muted gray border
+
+#### Placeholders Wired
+- ✅ Meditate logs to console (mana regen TBD)
+- ✅ Skill buttons log skill number to console
+- ✅ Back button returns to main menu
+
+### Files Changed:
+
+**Components:**
+- `src/components/BattleView.tsx` - ActionButtons rewrite with menu state, new buttons
+
+**Styles:**
+- `src/styles/combat.css` - 3x2 desktop grid, 2x3 mobile grid, new button styles
+
+### Testing Notes:
+- ✅ Build passes
+- ✅ Desktop: 3x2 layout works, Skills submenu works, Back returns to main
+- ✅ Mobile: 2x3 layout for both menus, touch targets sized properly
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Battle actions UI scaffolding complete. Skills and Meditate are placeholders.
+
+Next steps for skills system:
+1. Create Skill model (id, name, manaCost, effect, cooldown, unlockLevel)
+2. Create SkillService for skill definitions and availability
+3. Wire Meditate to restore mana (amount TBD)
+4. Wire skills to actual effects
+5. Add skill unlock logic based on level/class
+
+Key files to reference:
+- src/components/BattleView.tsx - ActionButtons component with menu state
+- src/styles/combat.css - Action grid layouts
+- docs/development/Skills Implementation Guide.md - Full skill system design
+```
+
+---
+
+## Git Commit Message
+
+```
+feat: Battle actions expansion - Skills & Meditate buttons
+
+New Action Layout:
+- Desktop: 3x2 grid (Attack, Skills, Defend / Run, Meditate, Item)
+- Mobile: 2x3 grid for better touch targets
+
+Skills Submenu:
+- Pokémon Gen 1 style - replaces action buttons when opened
+- 5 placeholder skill slots + Back button
+- Back button always in bottom-right corner
+
+Placeholders:
+- Skills and Meditate log to console for debugging
+- Actual effects to be wired in future session
+
+Button Styling:
+- Skills: orange border (#ff6b35)
+- Meditate: teal border (#17a2b8)
+- Skill placeholders: orange border
+- Back: muted gray border
+
+Files: BattleView.tsx, combat.css
+```
+
+---
+
