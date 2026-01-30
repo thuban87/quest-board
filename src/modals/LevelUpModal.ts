@@ -2,12 +2,27 @@
  * Level Up Modal
  * 
  * Celebratory modal shown when player levels up.
- * Shows class-themed message and celebration.
+ * Shows class-themed message, celebration, and newly unlocked skills.
  */
 
 import { Modal, App } from 'obsidian';
 import { CharacterClass, CLASS_INFO } from '../models/Character';
 import { getLevelUpMessage, canGraduate, MAX_TRAINING_LEVEL } from '../services/XPSystem';
+import { Skill } from '../models/Skill';
+
+/**
+ * Options for LevelUpModal constructor
+ */
+export interface LevelUpModalOptions {
+    app: App;
+    characterClass: CharacterClass;
+    newLevel: number;
+    tierChanged: boolean;
+    isTraining: boolean;
+    onGraduate?: () => void;
+    /** Skills that were unlocked at this level (Phase 7) */
+    unlockedSkills?: Skill[];
+}
 
 export class LevelUpModal extends Modal {
     private characterClass: CharacterClass;
@@ -15,21 +30,47 @@ export class LevelUpModal extends Modal {
     private tierChanged: boolean;
     private isTraining: boolean;
     private onGraduate?: () => void;
+    private unlockedSkills: Skill[];
 
+    constructor(options: LevelUpModalOptions);
     constructor(
         app: App,
         characterClass: CharacterClass,
         newLevel: number,
         tierChanged: boolean,
         isTraining: boolean,
-        onGraduate?: () => void
+        onGraduate?: () => void,
+        unlockedSkills?: Skill[]
+    );
+    constructor(
+        appOrOptions: App | LevelUpModalOptions,
+        characterClass?: CharacterClass,
+        newLevel?: number,
+        tierChanged?: boolean,
+        isTraining?: boolean,
+        onGraduate?: () => void,
+        unlockedSkills?: Skill[]
     ) {
-        super(app);
-        this.characterClass = characterClass;
-        this.newLevel = newLevel;
-        this.tierChanged = tierChanged;
-        this.isTraining = isTraining;
-        this.onGraduate = onGraduate;
+        // Handle both constructor signatures
+        if ('app' in appOrOptions && 'characterClass' in appOrOptions) {
+            // Options object
+            super(appOrOptions.app);
+            this.characterClass = appOrOptions.characterClass;
+            this.newLevel = appOrOptions.newLevel;
+            this.tierChanged = appOrOptions.tierChanged;
+            this.isTraining = appOrOptions.isTraining;
+            this.onGraduate = appOrOptions.onGraduate;
+            this.unlockedSkills = appOrOptions.unlockedSkills ?? [];
+        } else {
+            // Legacy positional arguments
+            super(appOrOptions as App);
+            this.characterClass = characterClass!;
+            this.newLevel = newLevel!;
+            this.tierChanged = tierChanged!;
+            this.isTraining = isTraining!;
+            this.onGraduate = onGraduate;
+            this.unlockedSkills = unlockedSkills ?? [];
+        }
     }
 
     onOpen() {
@@ -102,11 +143,52 @@ export class LevelUpModal extends Modal {
                 });
             }
 
+            // Phase 7: Show unlocked skills
+            if (this.unlockedSkills.length > 0) {
+                this.renderUnlockedSkills(contentEl);
+            }
+
             const closeBtn = contentEl.createEl('button', {
                 cls: 'mod-cta',
                 text: 'Continue'
             });
             closeBtn.addEventListener('click', () => this.close());
+        }
+    }
+
+    /**
+     * Render the unlocked skills section (Phase 7)
+     */
+    private renderUnlockedSkills(container: HTMLElement): void {
+        const skillsSection = container.createEl('div', { cls: 'qb-levelup-skills' });
+
+        skillsSection.createEl('h3', {
+            cls: 'qb-levelup-skills-title',
+            text: this.unlockedSkills.length === 1 ? '⚔️ New Skill Unlocked!' : '⚔️ New Skills Unlocked!'
+        });
+
+        const skillsGrid = skillsSection.createEl('div', { cls: 'qb-levelup-skills-grid' });
+
+        for (const skill of this.unlockedSkills) {
+            const skillCard = skillsGrid.createEl('div', { cls: 'qb-levelup-skill-card' });
+
+            // Icon and name
+            const header = skillCard.createEl('div', { cls: 'qb-levelup-skill-header' });
+            header.createEl('span', { cls: 'qb-levelup-skill-icon', text: skill.icon });
+            header.createEl('span', { cls: 'qb-levelup-skill-name', text: skill.name });
+
+            // Mana cost badge
+            if (skill.manaCost > 0) {
+                header.createEl('span', { cls: 'qb-levelup-skill-mana', text: `${skill.manaCost} MP` });
+            }
+
+            // Description
+            skillCard.createEl('p', { cls: 'qb-levelup-skill-desc', text: skill.description });
+
+            // Once per battle indicator
+            if (skill.usesPerBattle !== undefined) {
+                skillCard.createEl('span', { cls: 'qb-levelup-skill-once', text: '⭐ Ultimate' });
+            }
         }
     }
 

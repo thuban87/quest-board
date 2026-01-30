@@ -17,6 +17,7 @@ import { processXPForStats, applyLevelUpStats, STAT_NAMES } from '../services/St
 import { AchievementService } from '../services/AchievementService';
 import { showAchievementUnlock } from '../modals/AchievementUnlockModal';
 import { LevelUpModal } from '../modals/LevelUpModal';
+import { checkAndUnlockSkills } from '../services/SkillService';
 import {
     evaluateTriggers,
     grantPowerUp,
@@ -67,6 +68,7 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
     const graduate = useCharacterStore((state) => state.graduate);
     const setPowerUps = useCharacterStore((state) => state.setPowerUps);
     const incrementTasksToday = useCharacterStore((state) => state.incrementTasksToday);
+    const unlockSkills = useCharacterStore((state) => state.unlockSkills);
     const quests = useQuestStore((state) => state.quests);
 
     // Track subscriber count for proper cleanup
@@ -295,6 +297,25 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
                 setPowerUps(lvlPowerUps);
             }
 
+            // Phase 7: Check for skill unlocks (non-training only)
+            let unlockedSkills: import('../models/Skill').Skill[] = [];
+            if (!character.isTrainingMode) {
+                const currentChar = useCharacterStore.getState().character;
+                if (currentChar) {
+                    const skillResult = checkAndUnlockSkills(
+                        currentChar.class,
+                        levelResult.oldLevel,
+                        levelResult.newLevel,
+                        currentChar.skills?.unlocked ?? []
+                    );
+                    if (skillResult.newlyUnlocked.length > 0) {
+                        unlockSkills(skillResult.newlyUnlocked.map(s => s.id));
+                        onSaveCharacter();
+                        unlockedSkills = skillResult.newlyUnlocked;
+                    }
+                }
+            }
+
             // Show level-up modal
             const modal = new LevelUpModal(
                 app,
@@ -307,7 +328,8 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
                     graduate();
                     onSaveCharacter();
                     new Notice('🎓 Congratulations! You are now Level 1!', 5000);
-                }
+                },
+                unlockedSkills  // Pass unlocked skills to modal
             );
             modal.open();
 
@@ -365,6 +387,25 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
                         }
                     }
 
+                    // Phase 7: Check for skill unlocks (non-training only)
+                    let bonusUnlockedSkills: import('../models/Skill').Skill[] = [];
+                    if (!postBonusChar.isTrainingMode) {
+                        const currentChar = useCharacterStore.getState().character;
+                        if (currentChar) {
+                            const skillResult = checkAndUnlockSkills(
+                                currentChar.class,
+                                bonusLevelResult.oldLevel,
+                                bonusLevelResult.newLevel,
+                                currentChar.skills?.unlocked ?? []
+                            );
+                            if (skillResult.newlyUnlocked.length > 0) {
+                                unlockSkills(skillResult.newlyUnlocked.map(s => s.id));
+                                onSaveCharacter();
+                                bonusUnlockedSkills = skillResult.newlyUnlocked;
+                            }
+                        }
+                    }
+
                     // Show level-up modal
                     const modal = new LevelUpModal(
                         app,
@@ -376,7 +417,8 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
                             graduate();
                             onSaveCharacter();
                             new Notice('🎓 Congratulations! You are now Level 1!', 5000);
-                        }
+                        },
+                        bonusUnlockedSkills  // Pass unlocked skills to modal
                     );
                     modal.open();
                 }

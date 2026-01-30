@@ -37,6 +37,7 @@ import { RecoveryTimerStatusProvider } from './src/services/RecoveryTimerStatusP
 import { QuestBoardCommandMenu } from './src/modals/QuestBoardCommandMenu';
 import { WelcomeModal } from './src/modals/WelcomeModal';
 import { showInventoryModal } from './src/modals/InventoryModal';
+import { showSkillLoadoutModal } from './src/modals/SkillLoadoutModal';
 import { openStoreModal } from './src/modals/StoreModal';
 import { lootGenerationService } from './src/services/LootGenerationService';
 import { setBonusService } from './src/services/SetBonusService';
@@ -117,7 +118,8 @@ export default class QuestBoardPlugin extends Plugin {
                 options.newLevel,
                 options.tierChanged,
                 options.isTrainingMode,
-                options.onGraduate ?? (() => { })
+                options.onGraduate ?? (() => { }),
+                options.unlockedSkills ?? []  // Phase 7: Pass unlocked skills
             );
             modal.open();
         });
@@ -311,6 +313,20 @@ export default class QuestBoardPlugin extends Plugin {
             name: 'Open Inventory',
             callback: () => {
                 showInventoryModal(this.app, {
+                    onSave: async () => {
+                        this.settings.character = useCharacterStore.getState().character;
+                        await this.saveSettings();
+                    }
+                });
+            },
+        });
+
+        // Add manage skills command (Phase 6)
+        this.addCommand({
+            id: 'manage-skills',
+            name: 'Manage Skills',
+            callback: () => {
+                showSkillLoadoutModal(this.app, {
                     onSave: async () => {
                         this.settings.character = useCharacterStore.getState().character;
                         await this.saveSettings();

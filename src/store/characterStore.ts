@@ -172,6 +172,14 @@ interface CharacterActions {
 
     /** Log an activity event (quest completion, bounty, dungeon, etc.) */
     logActivity: (event: Omit<ActivityEvent, 'timestamp'>) => void;
+
+    // ========== Phase 6: Skills System ==========
+
+    /** Update equipped skill loadout (includes Meditate + up to 5 class skills) */
+    updateSkillLoadout: (equippedSkillIds: string[]) => void;
+
+    /** Unlock new skills and auto-equip if < 5 equipped (Phase 7) */
+    unlockSkills: (newSkillIds: string[]) => void;
 }
 
 type CharacterStore = CharacterState & CharacterActions;
@@ -1014,6 +1022,56 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             character: {
                 ...character,
                 activityHistory: newHistory,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    // ========== Phase 6: Skills System ==========
+
+    updateSkillLoadout: (equippedSkillIds: string[]) => {
+        const { character } = get();
+        if (!character) return;
+
+        set({
+            character: {
+                ...character,
+                skills: {
+                    ...character.skills,
+                    equipped: equippedSkillIds,
+                },
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    unlockSkills: (newSkillIds: string[]) => {
+        const { character } = get();
+        if (!character || newSkillIds.length === 0) return;
+
+        // Dedupe with existing unlocked skills
+        const existingUnlocked = character.skills?.unlocked ?? [];
+        const allUnlocked = [...new Set([...existingUnlocked, ...newSkillIds])];
+
+        // Auto-equip if < 5 equipped (max loadout is 5 skills)
+        const existingEquipped = character.skills?.equipped ?? [];
+        let newEquipped = [...existingEquipped];
+
+        // Add new skills until we have 5 equipped
+        for (const skillId of newSkillIds) {
+            if (newEquipped.length >= 5) break;
+            if (!newEquipped.includes(skillId)) {
+                newEquipped.push(skillId);
+            }
+        }
+
+        set({
+            character: {
+                ...character,
+                skills: {
+                    unlocked: allUnlocked,
+                    equipped: newEquipped,
+                },
                 lastModified: new Date().toISOString(),
             },
         });

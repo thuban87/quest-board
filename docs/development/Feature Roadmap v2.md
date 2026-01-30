@@ -254,6 +254,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | **Gear Reward Planning** | Define loot tables for raids and special quests | Medium |
 | **Enrage System** | Penalty for stale quests | Low |
 | **Export Stats** | Share progress | Low |
+| **Character Edit Modal** | Edit existing character (name, appearance) without resetting progress | Low |
 
 ---
 

@@ -26,7 +26,7 @@ This guide provides a comprehensive, step-by-step plan for adding the Pokemon Ge
     - [Phase 4C: Monster Skill Pools](#phase-4c-monster-skill-pools)
     - [Phase 5: Battle UI](#phase-5-battle-ui-integration)
     - [Phase 6: Character Sheet](#phase-6-character-sheet-integration)
-    - [Phase 7: Skill Unlocking](#phase-7-skill-unlocking--notifications)
+    - [Phase 7: Skill Unlocking](#phase-7-skill-unlocking--notifications---complete)
     - [Phase 8: Balance Testing](#phase-8-balance-testing--tuning)
     - [Phase 9: Polish](#phase-9-polish--edge-cases)
     - [Phase 10: Deployment](#phase-10-deployment--migration)
@@ -3868,7 +3868,7 @@ Ordered by dependencies. Each phase builds on the previous.
 
 ---
 
-### Phase 5: Battle UI Integration ⏳ PARTIAL
+### Phase 5: Battle UI Integration ✅ COMPLETE
 
 **Goal:** Add skill selection to battle UI, show stages/status
 
@@ -3876,12 +3876,15 @@ Ordered by dependencies. Each phase builds on the previous.
 1. ✅ Add "Skills" button to `BattleView.tsx`
 2. ✅ Create skills submenu (inline, not modal)
 3. ✅ Add stage indicators to battle UI
-4. [ ] Add status effect icons row under HP bars
-5. [ ] Add type effectiveness messages ("It's super effective!")
+4. ✅ Add status effect icons row under stage indicators
+5. ✅ Add type effectiveness messages ("It's super effective!")
 6. ✅ Style skill buttons and stage indicators
+7. ✅ Wire shouldSkipTurn for hard CC action blocking (critical fix!)
 
 **Files Changed:**
 - `src/components/BattleView.tsx`
+- `src/services/BattleService.ts`
+- `src/services/StatusEffectService.ts`
 - `src/styles/combat.css`
 
 **Success Criteria:**
@@ -3889,56 +3892,75 @@ Ordered by dependencies. Each phase builds on the previous.
 - ✅ Skills show mana cost, "USED" badge for once-per-battle
 - ✅ Disabled skills when insufficient mana
 - ✅ Stages display as ⚔️ ATK / 🛡️ DEF / ⚡ SPD badges
-- [ ] Status icons appear on combatants
-- [ ] "Super Effective!" message shows on 2x hits
+- ✅ Status icons appear on combatants with tooltips
+- ✅ "Super Effective!" message shows on 2x hits
+- ✅ Hard CC (stun/freeze/sleep) actually blocks actions
 
 ---
 
-### Phase 6: Character Sheet Integration
+### Phase 6: Character Sheet Integration ✅ COMPLETE
 
 **Goal:** Add skill management to character sheet
 
 **Tasks:**
-1. [ ] Add "Skills" tab to `CharacterSheet.tsx`
-2. [ ] Create `SkillLoadoutModal.tsx`
-3. [ ] Show unlocked skills with descriptions
-4. [ ] Show next skill preview (unlock at level X)
-5. [ ] Allow skill loadout editing (drag-drop or click)
-6. [ ] Save loadout to character data
+1. [x] Add "⚔️ Manage Skills" button to `CharacterSheet.tsx`
+2. [x] Create `SkillLoadoutModal.ts` (Obsidian Modal, not React)
+3. [x] Show unlocked skills with descriptions
+4. [x] Show locked skills with unlock level preview
+5. [x] Allow skill loadout editing (click to equip/unequip)
+6. [x] Auto-Fill and Clear All buttons
+7. [x] Save loadout to character data via `updateSkillLoadout()`
+8. [x] Register `manage-skills` command in main.ts
+9. [x] Add Skills to QuestBoardCommandMenu Character category
+10. [x] Update BattleView to use `character.skills.equipped`
 
 **Files Changed:**
-- `src/components/CharacterSheet.tsx`
-- `src/components/SkillLoadoutModal.tsx` (NEW)
-- `src/styles/character.css`
+- `src/components/CharacterSheet.tsx` - Added `onOpenSkillLoadout` prop, "Manage Skills" button
+- `src/modals/SkillLoadoutModal.ts` (NEW) - Full skill management modal
+- `src/store/characterStore.ts` - Added `updateSkillLoadout()` action
+- `src/components/BattleView.tsx` - Use equipped skills in submenu
+- `src/components/SidebarQuests.tsx` - Wire modal to CharacterSheet
+- `src/modals/QuestBoardCommandMenu.ts` - Add Skills to Character category
+- `main.ts` - Register `manage-skills` command
+- `src/styles/modals.css` - Skill loadout modal CSS
 
 **Success Criteria:**
-- Skills tab shows all unlocked skills
-- Loadout editor allows equipping up to 5 skills
-- Changes save correctly
-- Next skill preview accurate
+- ✅ "Manage Skills" button in Character Sheet
+- ✅ Skill Loadout Modal shows 5 equipped slots
+- ✅ Modal shows all class skills (locked/unlocked)
+- ✅ Click to equip/unequip skills
+- ✅ Auto-Fill fills with highest-level unlocked skills
+- ✅ Changes save correctly via store
+- ✅ Battle View shows only equipped skills
 
 ---
 
-### Phase 7: Skill Unlocking & Notifications
+### Phase 7: Skill Unlocking & Notifications ✅ COMPLETE
 
 **Goal:** Auto-unlock skills on level up, notify user
 
 **Tasks:**
-1. [ ] Hook into level-up logic in `XPSystem.ts`
-2. [ ] Call `SkillService.checkAndUnlockSkills()`
-3. [ ] Show notification for new skills unlocked
-4. [ ] Auto-equip first skill if < 4 equipped
-5. [ ] Test level-up from 4→5, 12→13, 37→38
+1. [x] Hook into level-up logic in `useXPAward.ts`, `BattleService.ts`, `AchievementHubModal.ts`
+2. [x] Add `SkillService.checkAndUnlockSkills()` function
+3. [x] Update `LevelUpModal` with skill card display for new unlocks
+4. [x] Auto-equip skills if < 5 equipped via `characterStore.unlockSkills()`
+5. [x] Test level-up scenarios (task XP, battle XP, achievement XP)
 
 **Files Changed:**
-- `src/services/XPSystem.ts`
-- `src/services/SkillService.ts`
+- `src/services/SkillService.ts` - checkAndUnlockSkills, getUnlockedSkillIdsForLevel
+- `src/hooks/useXPAward.ts` - Wire skill unlocking to task completion
+- `src/services/BattleService.ts` - Wire skill unlocking to battle XP
+- `src/modals/AchievementHubModal.ts` - Wire skill unlocking to achievement XP
+- `src/modals/LevelUpModal.ts` - Display skill cards for new unlocks
+- `src/store/characterStore.ts` - unlockSkills action with auto-equip
+- `src/styles/fullpage.css` - Skill unlock card CSS
+- `main.ts` - Pass unlockedSkills to LevelUpModal
 
 **Success Criteria:**
-- Skills unlock at correct levels
-- Notification shows skill name + level
-- Auto-equip works for first 4 skills
-- No skills missed on rapid level-ups
+- ✅ Skills unlock at correct levels
+- ✅ Notification shows skill name, icon, description, mana cost
+- ✅ Auto-equip works for first 5 skills
+- ✅ Multi-level jumps handled correctly
 
 ---
 
@@ -4085,7 +4107,7 @@ Use this checklist to track implementation progress across sessions.
 - [x] Update MonsterService for Elite/Boss scaling
 - [x] Test monster skill spawning
 
-### Phase 5: Battle UI ⏳ PARTIAL
+### Phase 5: Battle UI ✅ COMPLETE
 
 - [x] Add "Skills" button to BattleView action bar
 - [x] Create skills submenu (inline, not modal)
@@ -4096,8 +4118,9 @@ Use this checklist to track implementation progress across sessions.
   - [x] Cancel/back button to return to action selection
 - [x] On skill select → call BattleService.executePlayerSkill()
 - [x] Add stage indicators (ATK/DEF/SPD arrows) to player/monster panels
-- [ ] Add status effect icons row under HP bars
-- [ ] Add type effectiveness messages ("It's super effective!")
+- [x] Add status effect icons row under stage indicators
+- [x] Add type effectiveness messages ("It's super effective!")
+- [x] **Critical fix:** Wire shouldSkipTurn for hard CC action blocking
 - [x] Style skill buttons and stage indicators
 
 
@@ -4122,13 +4145,13 @@ Use this checklist to track implementation progress across sessions.
 
 
 
-### Phase 7: Skill Unlocking ❌
+### Phase 7: Skill Unlocking ✅
 
-- [ ] Hook into level-up
-- [ ] Auto-unlock skills
-- [ ] Show notification
-- [ ] Auto-equip logic
-- [ ] Test level-up scenarios
+- [x] Hook into level-up (useXPAward, BattleService, AchievementHubModal)
+- [x] Auto-unlock skills (SkillService.checkAndUnlockSkills)
+- [x] Show notification (LevelUpModal with skill cards)
+- [x] Auto-equip logic (characterStore.unlockSkills)
+- [x] Test level-up scenarios
 
 ### Phase 8: Balance Testing ❌
 

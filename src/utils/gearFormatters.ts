@@ -367,7 +367,10 @@ export function attachGearTooltip(
     let tooltip: HTMLElement | null = null;
 
     const showTooltip = () => {
-        // Remove any existing tooltip
+        // GLOBAL CLEANUP: Remove any existing tooltips (prevents stickiness when moving between items)
+        document.querySelectorAll('.qb-gear-tooltip-wrapper').forEach(el => el.remove());
+
+        // Remove local reference if exists
         if (tooltip) {
             tooltip.remove();
         }

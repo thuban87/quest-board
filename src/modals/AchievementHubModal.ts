@@ -279,6 +279,13 @@ export class AchievementHubModal extends Modal {
 
     private async manualUnlock(achievement: Achievement) {
         const achievements = useCharacterStore.getState().achievements;
+        const character = useCharacterStore.getState().character;
+        if (!character) return;
+
+        // Capture old XP for level-up check
+        const oldXP = character.isTrainingMode ? character.trainingXP : character.totalXP;
+        const isTrainingMode = character.isTrainingMode;
+
         const updated = achievements.map(a =>
             a.id === achievement.id
                 ? { ...a, unlockedAt: new Date().toISOString() }
@@ -289,6 +296,50 @@ export class AchievementHubModal extends Modal {
         // Award XP
         const addXP = useCharacterStore.getState().addXP;
         addXP(achievement.xpBonus);
+
+        // Check for level-up
+        const newChar = useCharacterStore.getState().character;
+        if (newChar) {
+            const newXP = newChar.isTrainingMode ? newChar.trainingXP : newChar.totalXP;
+            const { checkLevelUp } = await import('../services/XPSystem');
+            const result = checkLevelUp(oldXP, newXP, isTrainingMode);
+
+            if (result.didLevelUp) {
+                // Phase 7: Check for skill unlocks (non-training only)
+                let unlockedSkills: import('../models/Skill').Skill[] = [];
+                if (!isTrainingMode) {
+                    const { checkAndUnlockSkills } = await import('../services/SkillService');
+                    const skillResult = checkAndUnlockSkills(
+                        newChar.class,
+                        result.oldLevel,
+                        result.newLevel,
+                        newChar.skills?.unlocked ?? []
+                    );
+                    if (skillResult.newlyUnlocked.length > 0) {
+                        useCharacterStore.getState().unlockSkills(
+                            skillResult.newlyUnlocked.map(s => s.id)
+                        );
+                        unlockedSkills = skillResult.newlyUnlocked;
+                    }
+                }
+
+                // Show level-up modal
+                const { LevelUpModal } = await import('./LevelUpModal');
+                const modal = new LevelUpModal(
+                    this.app,
+                    newChar.class,
+                    result.newLevel,
+                    result.tierChanged,
+                    isTrainingMode,
+                    () => {
+                        useCharacterStore.getState().graduate();
+                        this.onSave();
+                    },
+                    unlockedSkills
+                );
+                modal.open();
+            }
+        }
 
         await this.onSave();
         this.render();

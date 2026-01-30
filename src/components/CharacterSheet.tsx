@@ -24,6 +24,8 @@ interface CharacterSheetProps {
     /** Open inventory filtered to a specific gear slot */
     onOpenInventoryForSlot?: (slot: GearSlot) => void;
     onOpenBlacksmith?: () => void;
+    /** Open skill loadout modal */
+    onOpenSkillLoadout?: () => void;
     spriteFolder?: string;
     spriteResourcePath?: string;  // Pre-computed resource path from vault
 }
@@ -73,7 +75,7 @@ function getGearTooltip(item: GearItem): string {
     return lines.join('\n');
 }
 
-export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAchievements, onOpenInventory, onOpenInventoryForSlot, onOpenBlacksmith, spriteFolder, spriteResourcePath }) => {
+export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAchievements, onOpenInventory, onOpenInventoryForSlot, onOpenBlacksmith, onOpenSkillLoadout, spriteFolder, spriteResourcePath }) => {
     const character = useCharacterStore((state) => state.character);
     const achievements = useCharacterStore((state) => state.achievements);
     const activeSetBonuses = useCharacterStore(selectActiveSetBonuses);
@@ -333,6 +335,14 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
                         onClick={onOpenBlacksmith}
                     >
                         🔨 Blacksmith
+                    </button>
+                )}
+                {onOpenSkillLoadout && (
+                    <button
+                        className="qb-skills-btn-main"
+                        onClick={onOpenSkillLoadout}
+                    >
+                        ⚔️ Manage Skills
                     </button>
                 )}
             </div>

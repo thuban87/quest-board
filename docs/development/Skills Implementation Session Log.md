@@ -1189,3 +1189,450 @@ Base Attack Names (conflict fix):
 Files: monsterSkills.ts, Skill.ts, monsters.ts, MonsterService.ts,
 BattleService.ts, battleStore.ts, combatConfig.ts
 ```
+
+---
+
+## 2026-01-30 - Phase 5 Battle UI Integration Complete
+
+**Focus:** Completing remaining Phase 5 tasks: status effect icons, type effectiveness messages, and wiring hard CC to actually block actions
+
+### Completed:
+
+#### Status Effect Icons (BattleView.tsx)
+- ✅ Created `StatusIndicators` component to display status effect icons
+- ✅ Positioned below StageIndicators for both player and monster
+- ✅ Compact mode for monster display, regular for player
+- ✅ Hover tooltips show effect name and remaining duration
+- ✅ Icons use `getStatusIcon()` from StatusEffect model
+
+#### Status Effect CSS (combat.css)
+- ✅ Added `.qb-status-indicators` container with flexbox layout
+- ✅ Added `.qb-status-indicator` with circular design and pulse animation
+- ✅ Type-specific colors (burn=orange, poison=purple, freeze=cyan, etc.)
+- ✅ Compact variant for monster display
+
+#### Type Effectiveness Messages
+- ✅ Already implemented in `SkillService.executeSkill()` - generates "It's super effective!" / "It's not very effective..."
+- ✅ Fixed `formatLogEntry` in BattleView to display these without "You used" prefix
+- ✅ Added pattern matching for `startsWithPatterns` and `containsPatterns`
+
+#### Hard CC Action Blocking (Critical Bug Fix!)
+- ✅ Added `shouldSkipTurn` import from `StatusEffectService`
+- ✅ **Player turn**: Checks CC before processing action, logs "You are stunned!" and skips to enemy turn
+- ✅ **Monster turn**: Checks CC before skill selection, logs "[Monster] is stunned!" and returns to player
+- ✅ Ticks status effects when skipped (decrements duration, clears stun, applies DoT)
+- ✅ Persists updated effect arrays back to store
+- ✅ Handles death from DoT during skip
+
+#### Status Effect Log Message Fixes
+- ✅ Updated `tickStatusEffects` to use generic messages without `combatant.name` (BattlePlayer has no name field)
+- ✅ DoT damage: `"Took 68 bleeding damage!"` (uses `getStatusDisplayName`)
+- ✅ Effect expired: `"Bleeding wore off!"`
+- ✅ Stun cleared: `"No longer stunned!"`
+- ✅ Updated `formatLogEntry` patterns to recognize these as system messages
+
+### Files Changed:
+
+**Components:**
+- `src/components/BattleView.tsx` - StatusIndicators component, formatLogEntry pattern fixes
+
+**Services:**
+- `src/services/BattleService.ts` - shouldSkipTurn integration, CC action blocking, effect tick on skip
+- `src/services/StatusEffectService.ts` - Generic log messages, getStatusDisplayName import
+
+**Styles:**
+- `src/styles/combat.css` - Status indicator styles with type-specific colors
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Status icons display correctly under stage indicators
+- ✅ Stun/CC effects now actually prevent actions
+- ✅ DoT damage logs correctly as "Took X bleeding damage!"
+- ✅ Effects tick and clear properly
+
+### Phase 5 Status:
+
+| Task | Status |
+|------|--------|
+| A. Add "Skills" button to BattleView.tsx | ✅ Complete |
+| B. Create skills submenu (inline) | ✅ Complete |
+| C. Add stage indicators | ✅ Complete |
+| D. Add status effect icons row | ✅ Complete |
+| E. Add type effectiveness messages | ✅ Complete |
+| F. Style skill buttons and indicators | ✅ Complete |
+
+**Phase 5: Battle UI Integration is now COMPLETE!**
+
+---
+
+## Next Session Prompt
+
+```
+Phase 5 Battle UI Integration COMPLETE.
+
+What was done this session:
+- Status effect icons (🔥💤❄️ etc.) display below stage indicators
+- Type effectiveness messages work correctly
+- Hard CC (stun/freeze/sleep/paralyze) now actually blocks actions
+- Fixed log messages for DoT/effect expiration (no more "undefined")
+
+Ready for Phase 6: Character Sheet Integration
+- Add "Skills" tab to CharacterSheet.tsx
+- Create SkillLoadoutModal.tsx
+- Show unlocked skills with descriptions
+- Allow skill loadout editing (5 slots)
+
+Key files:
+- docs/development/Skills Implementation Guide.md - Phase 6 spec
+- src/components/CharacterSheet.tsx - Where to add Skills tab
+- src/data/skills.ts - Skill definitions for display
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 5 - complete Battle UI integration
+
+Status Effect Icons:
+- Created StatusIndicators component for player and monster
+- Positioned below StageIndicators with hover tooltips
+- Type-specific colors (burn=orange, poison=purple, etc.)
+- Pulse animation and compact mode for monster display
+
+Type Effectiveness Messages:
+- "It's super effective!" / "It's not very effective..." now display correctly
+- Fixed formatLogEntry pattern matching for system messages
+
+Hard CC Action Blocking (Bug Fix):
+- Stun/freeze/sleep/paralyze now actually prevent actions
+- Player: Logs "You are stunned!" and skips to enemy turn
+- Monster: Logs "[Monster] is stunned!" and returns to player
+- Status effects tick during skip (durations decrement, DoT applies)
+- Persists updated effects to store
+
+Log Message Fixes:
+- DoT: "Took X bleeding damage!" (was "undefined took X bleed damage")
+- Expired: "Bleeding wore off!" (was "undefined's bleed wore off")
+- Stun clear: "No longer stunned!" (was "undefined is no longer stunned")
+
+Files: BattleView.tsx, BattleService.ts, StatusEffectService.ts, combat.css
+```
+
+---
+
+## 2026-01-30 - Phase 6: Character Sheet Integration
+
+**Focus:** Implementing the Skill Loadout Modal for skill management from Character Sheet
+
+### Completed:
+
+#### SkillLoadoutModal.ts (NEW)
+- ✅ Created full skill management modal with Obsidian Modal pattern
+- ✅ Equipped Skills section: 5 slots with skill info and remove buttons
+- ✅ Available Skills section: Class skills grid (locked/unlocked with level requirements)
+- ✅ Universal Skills section: Meditate shown with "Always" badge
+- ✅ Action buttons: Auto-Fill (highest-level skills), Clear All
+- ✅ Save/Cancel footer with proper persistence
+- ✅ Skill tooltips with full details (level, mana, type, description)
+
+#### CharacterSheet.tsx Updates
+- ✅ Added `onOpenSkillLoadout` prop to CharacterSheetProps interface
+- ✅ Added "⚔️ Manage Skills" button under Equipment section
+- ✅ Button styled and positioned correctly
+
+#### characterStore.ts Updates
+- ✅ Added `updateSkillLoadout(equippedSkillIds: string[])` to CharacterActions interface
+- ✅ Implemented `updateSkillLoadout()` - updates character.skills.equipped
+
+#### BattleView.tsx Updates
+- ✅ Changed skills submenu to use `character.skills.equipped` instead of `getUnlockedSkills()`
+- ✅ Fixed type guard for `getSkillById()` to handle undefined/null
+- ✅ Removed unused `getUnlockedSkills` import
+
+#### Command Registration
+- ✅ Added `manage-skills` command to main.ts
+- ✅ Added Skills item to QuestBoardCommandMenu Character category
+
+#### SidebarQuests.tsx Updates
+- ✅ Imported `showSkillLoadoutModal`
+- ✅ Wired `onOpenSkillLoadout` prop to CharacterSheet
+
+#### modals.css Updates
+- ✅ Added comprehensive skill loadout modal styles (~240 lines)
+- ✅ Equipped slots, skill cards, action buttons, universal section
+- ✅ "Manage Skills" button styling for Character Sheet
+
+### Files Changed:
+
+**New:**
+- `src/modals/SkillLoadoutModal.ts` - Skill management modal
+
+**Modified:**
+- `src/components/CharacterSheet.tsx` - onOpenSkillLoadout prop, button
+- `src/components/BattleView.tsx` - Use equipped skills in submenu
+- `src/components/SidebarQuests.tsx` - Wire modal to CharacterSheet
+- `src/store/characterStore.ts` - updateSkillLoadout action
+- `src/modals/QuestBoardCommandMenu.ts` - Add Skills to Character category
+- `main.ts` - Register manage-skills command
+- `src/styles/modals.css` - Skill loadout modal CSS
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Skill Loadout Modal opens from Character Sheet
+- ✅ Equip/unequip skills by clicking
+- ✅ Auto-Fill fills with highest-level unlocked skills
+- ✅ Clear All empties all slots
+- ✅ Save persists changes to character data
+- ✅ Battle View shows only equipped skills in submenu
+- ✅ Command Menu shows Skills in Character category
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 6 Complete ✅
+
+Phase 6: Character Sheet Integration is now COMPLETE!
+
+---
+
+## Next Session Prompt
+
+```
+Phase 6 Character Sheet Integration COMPLETE.
+
+What was done this session:
+- Created SkillLoadoutModal.ts with full skill management UI
+- Added "Manage Skills" button to CharacterSheet
+- Added updateSkillLoadout() action to characterStore
+- Updated BattleView to use character.skills.equipped
+- Registered manage-skills command
+- Added Skills to QuestBoardCommandMenu
+
+Ready for Phase 7: Skill Unlocking & Notifications
+- Hook into level-up logic in XPSystem.ts
+- Call SkillService.checkAndUnlockSkills()
+- Show notification for new skills unlocked
+- Auto-equip first skill if < 5 equipped
+
+Key files:
+- docs/development/Skills Implementation Guide.md - Phase 7 spec
+- src/services/XPSystem.ts - Level-up hook point
+- src/modals/SkillLoadoutModal.ts - Reference for skill display
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 6 - Character Sheet integration complete
+
+SkillLoadoutModal.ts (NEW):
+- Full skill management modal with 5 equipped slots
+- Available skills grid (locked/unlocked by level)
+- Universal skills section (Meditate always equipped)
+- Auto-Fill and Clear All buttons
+- Save/Cancel with proper persistence
+- Rich tooltips with skill details
+
+CharacterSheet.tsx:
+- Add onOpenSkillLoadout prop
+- Add "⚔️ Manage Skills" button under Equipment section
+
+characterStore.ts:
+- Add updateSkillLoadout(equippedSkillIds) action
+
+BattleView.tsx:
+- Change skills submenu to use character.skills.equipped
+- Fix type guard for getSkillById()
+
+Command Registration:
+- Add manage-skills command to main.ts
+- Add Skills to QuestBoardCommandMenu Character category
+
+SidebarQuests.tsx:
+- Wire showSkillLoadoutModal to CharacterSheet
+
+modals.css:
+- Add ~240 lines of skill loadout modal styles
+
+Files: SkillLoadoutModal.ts, CharacterSheet.tsx, BattleView.tsx,
+characterStore.ts, SidebarQuests.tsx, QuestBoardCommandMenu.ts,
+main.ts, modals.css
+```
+
+---
+
+## 2026-01-30 (Afternoon) - Phase 7: Skill Unlocking & Bug Fixes
+
+**Focus:** Completing Phase 7 (Skill Unlocking on Level-Up) and fixing critical combat bugs
+
+### Completed:
+
+#### Phase 7: Skill Unlocking & Notifications
+
+##### SkillService.ts Updates
+- ✅ Added `checkAndUnlockSkills()` function - identifies skills unlocking between old and new levels
+- ✅ Added `getUnlockedSkillIdsForLevel()` helper function
+- ✅ Handles multi-level jumps correctly
+
+##### characterStore.ts Updates
+- ✅ Added `unlockSkills(newSkillIds)` action
+  - Appends new skills to `character.skills.unlocked` (dedupes)
+  - Auto-equips new skills if character has < 5 equipped
+
+##### useXPAward.ts Updates
+- ✅ Integrated skill unlocking into task completion level-up flow
+- ✅ Passes `unlockedSkills` to LevelUpModal
+
+##### BattleService.ts Updates
+- ✅ Updated `triggerLevelUpIfNeeded()` to include skill unlocking for battle XP
+- ✅ Updated `LevelUpCallbackOptions` interface with `unlockedSkills` field
+
+##### main.ts Updates
+- ✅ Updated `setLevelUpCallback` to pass `unlockedSkills` to LevelUpModal
+
+##### AchievementHubModal.ts Updates
+- ✅ Added level-up + skill unlock checks to `manualUnlock()` function
+
+##### LevelUpModal.ts Updates
+- ✅ Updated constructor to accept optional `unlockedSkills` array
+- ✅ Added `renderUnlockedSkills()` method with skill card UI
+- ✅ Displays skill icon, name, mana cost, description, and Ultimate badge
+
+##### fullpage.css Updates
+- ✅ Added CSS for `.qb-levelup-skills`, `.qb-levelup-skills-title`, `.qb-levelup-skill-card`
+
+---
+
+#### Bug Fix: Paladin Heal Skill (100% Heal → 40% Heal)
+
+**Root Cause:** In `BattleService.ts` line 1208, heal was using `player.currentHP` which is set at battle start and never updated during combat. When player took damage then healed, it added healing to the ORIGINAL HP, always restoring to max.
+
+**Fix:** Changed to use `store.playerCurrentHP` which is correctly updated when damage is taken:
+```typescript
+// BUG FIX: Use store.playerCurrentHP, not player.currentHP (which is stale from battle start)
+const currentHP = store.playerCurrentHP;
+const newHP = Math.min(player.maxHP, currentHP + result.healing);
+```
+
+---
+
+#### Bug Fix: Sticky Gear Comparison Tooltip
+
+**Root Cause:** Each tooltip had its own closure-scoped reference. When rapidly moving between items, the old tooltip's `mouseleave` event could fire after the new item's `mouseenter`, causing orphaned tooltips.
+
+**Fix:** Added global cleanup in `gearFormatters.ts` - removes ALL existing `.qb-gear-tooltip-wrapper` elements before showing a new tooltip:
+```typescript
+document.querySelectorAll('.qb-gear-tooltip-wrapper').forEach(el => el.remove());
+```
+
+---
+
+#### Feature Roadmap v2 Update
+- ✅ Added "Character Edit Modal" to Tier 4: Polish & UI section
+
+### Files Changed:
+
+**Services:**
+- `src/services/SkillService.ts` - checkAndUnlockSkills, getUnlockedSkillIdsForLevel
+- `src/services/BattleService.ts` - LevelUpCallbackOptions, heal bug fix
+
+**Stores:**
+- `src/store/characterStore.ts` - unlockSkills action
+
+**Hooks:**
+- `src/hooks/useXPAward.ts` - Skill unlock integration
+
+**Modals:**
+- `src/modals/LevelUpModal.ts` - Skill unlock notifications
+- `src/modals/AchievementHubModal.ts` - Level-up check after manual unlock
+
+**Components:**
+- `main.ts` - Pass unlockedSkills to LevelUpModal
+
+**Styles:**
+- `src/styles/fullpage.css` - Skill unlock display CSS
+
+**Utils:**
+- `src/utils/gearFormatters.ts` - Tooltip global cleanup
+
+**Docs:**
+- `docs/development/Feature Roadmap v2.md` - Character Edit Modal added
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Skills unlock on level-up (tested via task completion XP)
+- ✅ Paladin Heal now correctly heals 40% max HP
+- ✅ Gear tooltips no longer stick when moving between items
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 7 Complete ✅
+
+Phase 7: Skill Unlocking & Notifications is now COMPLETE!
+
+---
+
+## Next Session Prompt
+
+```
+Phase 7 Skill Unlocking & Bug Fixes COMPLETE.
+
+What was done this session:
+- Implemented skill unlocking on level-up (task XP, battle XP, achievement XP)
+- Added checkAndUnlockSkills() to SkillService
+- Added unlockSkills() action with auto-equip (< 5 slots)
+- Updated LevelUpModal with skill card display
+- FIXED: Paladin Heal was healing 100% instead of 40% (stale HP reference)
+- FIXED: Gear comparison tooltip was sticky (global cleanup added)
+
+Ready for Phase 8: Balance Testing & Tuning
+- Test skill damage values across all classes
+- Verify status effect durations
+- Check mana costs are balanced
+- Confirm type effectiveness multipliers
+
+Key files:
+- docs/development/Skills Implementation Guide.md - Full spec
+- src/services/SkillService.ts - Skill execution and unlocking
+- src/services/BattleService.ts - Combat integration
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 7 complete - skill unlocking & bug fixes
+
+Phase 7 Skill Unlocking:
+- Add checkAndUnlockSkills() to SkillService.ts
+- Add unlockSkills() action to characterStore (auto-equips if < 5 slots)
+- Wire skill unlocking to useXPAward (task completion XP)
+- Wire skill unlocking to BattleService (battle XP)
+- Wire skill unlocking to AchievementHubModal (achievement XP)
+- Update LevelUpModal with skill card display for new unlocks
+- Add CSS for skill unlock cards in fullpage.css
+
+Bug Fixes:
+- Fix Paladin Heal healing 100% instead of 40% (used stale player.currentHP)
+- Fix sticky gear tooltip (add global cleanup before showing new tooltip)
+
+Documentation:
+- Add Character Edit Modal to Feature Roadmap v2 Tier 4
+
+Files: SkillService.ts, BattleService.ts, characterStore.ts, useXPAward.ts,
+LevelUpModal.ts, AchievementHubModal.ts, main.ts, gearFormatters.ts,
+fullpage.css, Feature Roadmap v2.md
+```

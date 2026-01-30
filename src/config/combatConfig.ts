@@ -471,3 +471,13 @@ export const PAID_LONG_REST_PER_LEVEL = 35;
 export function getPaidLongRestCost(level: number): number {
     return PAID_LONG_REST_BASE + (level * PAID_LONG_REST_PER_LEVEL);
 }
+
+// =====================
+// SKILL LOADOUT (Phase 6)
+// =====================
+
+/** Maximum user-configurable skill slots (excludes Meditate which is always equipped) */
+export const MAX_EQUIPPED_SKILLS = 5;
+
+/** Universal skill ID for Meditate (always equipped, shown on main battle menu) */
+export const MEDITATE_SKILL_ID = 'universal_meditate';
