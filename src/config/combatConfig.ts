@@ -31,13 +31,13 @@ export const CLASS_COMBAT_CONFIG: Record<CharacterClass, ClassCombatConfig> = {
         attackStyle: 'physical',
         damageModifier: 1.0,
         hpModifier: 1.1,
-        attackName: 'Slash',
+        attackName: 'Strike',
     },
     paladin: {
         attackStyle: 'hybrid_physical',
         damageModifier: 1.1,
         hpModifier: 1.05,
-        attackName: 'Holy Strike',
+        attackName: 'Righteous Blow',
     },
     technomancer: {
         attackStyle: 'magic',
@@ -55,13 +55,13 @@ export const CLASS_COMBAT_CONFIG: Record<CharacterClass, ClassCombatConfig> = {
         attackStyle: 'physical',
         damageModifier: 1.15,
         hpModifier: 1.0,
-        attackName: 'Backstab',
+        attackName: 'Quick Stab',
     },
     cleric: {
         attackStyle: 'magic',
         damageModifier: 1.0,
         hpModifier: 1.1,
-        attackName: 'Smite',
+        attackName: 'Divine Strike',
     },
     bard: {
         attackStyle: 'hybrid_magic',

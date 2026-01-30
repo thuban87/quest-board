@@ -9,7 +9,7 @@ This guide provides a comprehensive, step-by-step plan for adding the Pokemon Ge
 ## Table of Contents
 
 1. [Overview & Goals](#overview--goals)
-2. [Pre-Implementation Checklist](#pre-implementation-checklist) <!-- NEW -->
+2. [Pre-Implementation Checklist](#pre-implementation-checklist)
 3. [Design Decisions Reference](#design-decisions-reference)
 4. [Current System Audit](#current-system-audit)
 5. [Schema Changes & Migrations](#schema-changes--migrations)
@@ -18,6 +18,18 @@ This guide provides a comprehensive, step-by-step plan for adding the Pokemon Ge
 8. [Data Creation](#data-creation)
 9. [Testing & Balance](#testing--balance)
 10. [Implementation Phases](#implementation-phases)
+    - [Phase 1: Foundation](#phase-1-foundation-data-models--migrations--complete)
+    - [Phase 2: Resource Management](#phase-2-resource-management-updates---complete)
+    - [Phase 3: Core Combat Logic](#phase-3-core-combat-logic-services--complete)
+    - [Phase 4A: Meditate + Warrior Skills](#phase-4a-meditate--warrior-skills-end-to-end-testing)
+    - [Phase 4B: Remaining Class Skills](#phase-4b-remaining-class-skills)
+    - [Phase 4C: Monster Skill Pools](#phase-4c-monster-skill-pools)
+    - [Phase 5: Battle UI](#phase-5-battle-ui-integration)
+    - [Phase 6: Character Sheet](#phase-6-character-sheet-integration)
+    - [Phase 7: Skill Unlocking](#phase-7-skill-unlocking--notifications)
+    - [Phase 8: Balance Testing](#phase-8-balance-testing--tuning)
+    - [Phase 9: Polish](#phase-9-polish--edge-cases)
+    - [Phase 10: Deployment](#phase-10-deployment--migration)
 11. [Progress Tracking](#progress-tracking)
 
 ---
@@ -3779,7 +3791,7 @@ Ordered by dependencies. Each phase builds on the previous.
 
 ---
 
-### Phase 4A: Meditate + Warrior Skills (End-to-End Testing)
+### Phase 4A: Meditate + Warrior Skills (End-to-End Testing) ✅ COMPLETE
 
 **Goal:** Implement Meditate and one class's skills to validate full skill pipeline
 
@@ -3791,13 +3803,13 @@ Ordered by dependencies. Each phase builds on the previous.
 - ✅ One class gives real feedback before transcribing 56 more skills
 
 **Tasks:**
-1. [ ] Create `src/data/skills.ts` with `universal_meditate` skill
-2. [ ] Add `restoreManaPercent` to `SkillEffect` interface
-3. [ ] Add mana restoration logic to `SkillService.executeSkill()`
-4. [ ] Test Meditate in battle (all 7 classes)
-5. [ ] Add all 8 Warrior skills to `skills.ts`
-6. [ ] Test Warrior skills end-to-end (damage, buffs, status)
-7. [ ] Validate skill unlock on level-up
+1. ✅ Create `src/data/skills.ts` with `universal_meditate` skill
+2. ✅ Add `restoreManaPercent` to `SkillEffect` interface
+3. ✅ Add mana restoration logic to `SkillService.executeSkill()`
+4. ✅ Test Meditate in battle (all 7 classes)
+5. ✅ Add all 8 Warrior skills to `skills.ts`
+6. ✅ Test Warrior skills end-to-end (damage, buffs, status)
+7. ✅ Validate skill unlock on level-up
 
 **Success Criteria:**
 - ✅ Meditate restores 33% mana, costs 0, works every turn
@@ -3807,77 +3819,78 @@ Ordered by dependencies. Each phase builds on the previous.
 
 ---
 
-### Phase 4B: Remaining Class Skills
+### Phase 4B: Remaining Class Skills ✅ COMPLETE
 
 **Goal:** Transcribe remaining 48 skills (6 classes × 8 skills)
 
 **Tasks:**
-1. [ ] Add Paladin skills (8) to `skills.ts`
-2. [ ] Add Technomancer skills (8) to `skills.ts`
-3. [ ] Add Scholar skills (8) to `skills.ts`
-4. [ ] Add Rogue skills (8) to `skills.ts`
-5. [ ] Add Cleric skills (8) to `skills.ts`
-6. [ ] Add Bard skills (8) to `skills.ts`
-7. [ ] Test each class's ultimate (once-per-battle) skill
-8. [ ] Verify type effectiveness for each class's skill types
+1. ✅ Add Paladin skills (8) to `skills.ts`
+2. ✅ Add Technomancer skills (8) to `skills.ts`
+3. ✅ Add Scholar skills (8) to `skills.ts`
+4. ✅ Add Rogue skills (8) to `skills.ts`
+5. ✅ Add Cleric skills (8) to `skills.ts`
+6. ✅ Add Bard skills (8) to `skills.ts`
+7. ✅ Test each class's ultimate (once-per-battle) skill
+8. ✅ Verify type effectiveness for each class's skill types
 
 **Files Changed:**
 - `src/data/skills.ts`
 
 **Success Criteria:**
-- All 57 skills defined (56 class + Meditate)
-- Each class has correct skills at correct levels
-- Type chart interactions work for all elemental skills
+- ✅ All 57 skills defined (56 class + Meditate)
+- ✅ Each class has correct skills at correct levels
+- ✅ Type chart interactions work for all elemental skills
 
 ---
 
-### Phase 4C: Monster Skill Pools
+### Phase 4C: Monster Skill Pools ✅ COMPLETE
 
 **Goal:** Create skill pools for all 19 monster templates
 
 **Tasks:**
-1. [ ] Create `src/data/monsterSkills.ts`
-2. [ ] Define 3-4 skills per monster template (19 templates)
-3. [ ] Update `MonsterService.ts` to assign skills on creation
-4. [ ] Update `MonsterService.ts` to scale skills for Elite/Boss tiers
-5. [ ] Test monster skill assignment (variety, correct count)
-6. [ ] Test monster AI skill selection (weighted random)
+1. ✅ Create `src/data/monsterSkills.ts` (41 skills across 5 affinity pools)
+2. ✅ Define skills for all 19 monster templates
+3. ✅ Update `MonsterService.ts` to assign skills on creation (2-4 based on tier)
+4. ✅ Update `MonsterService.ts` to scale skills for Elite/Boss tiers
+5. ✅ Test monster skill assignment (variety, correct count)
+6. ✅ Test monster AI skill selection (weighted random)
 
 **Files Changed:**
-- `src/data/monsterSkills.ts` (NEW)
+- `src/data/monsterSkills.ts` (NEW) - 41 monster skills
 - `src/services/MonsterService.ts`
+- `src/services/BattleService.ts` - Monster skill AI and execution
+- `src/store/battleStore.ts` - updateMonster action
 
 **Success Criteria:**
-- All 19 monster templates have skill pools
-- Monsters spawn with 2 skills (normal), 3-4 skills (elite/boss)
-- Elite/Boss get stronger skill versions (+10-20% damage)
+- ✅ All 19 monster templates have skill pools
+- ✅ Monsters spawn with 2 skills (normal), 3-4 skills (elite/boss)
+- ✅ Monster AI selects skills based on weight and conditions
 
 ---
 
-### Phase 5: Battle UI Integration
+### Phase 5: Battle UI Integration ⏳ PARTIAL
 
 **Goal:** Add skill selection to battle UI, show stages/status
 
 **Tasks:**
 1. ✅ Add "Skills" button to `BattleView.tsx`
-2. ✅ Create `SkillPickerModal.tsx`
+2. ✅ Create skills submenu (inline, not modal)
 3. ✅ Add stage indicators to battle UI
-4. ✅ Add status effect icons to battle UI
-5. ✅ Add type effectiveness messages
-6. ✅ Style all new UI elements
+4. [ ] Add status effect icons row under HP bars
+5. [ ] Add type effectiveness messages ("It's super effective!")
+6. ✅ Style skill buttons and stage indicators
 
 **Files Changed:**
 - `src/components/BattleView.tsx`
-- `src/components/SkillPickerModal.tsx` (NEW)
 - `src/styles/combat.css`
 
 **Success Criteria:**
-- Skills button opens picker modal
-- Modal shows equipped skills with mana costs
-- Disabled skills show error reason
-- Stages display as +2 ATK, -1 DEF badges
-- Status icons appear on combatants
-- "SUPER EFFECTIVE!" message shows on 2x hits
+- ✅ Skills button shows inline submenu with equipped skills
+- ✅ Skills show mana cost, "USED" badge for once-per-battle
+- ✅ Disabled skills when insufficient mana
+- ✅ Stages display as ⚔️ ATK / 🛡️ DEF / ⚡ SPD badges
+- [ ] Status icons appear on combatants
+- [ ] "Super Effective!" message shows on 2x hits
 
 ---
 
@@ -3886,12 +3899,12 @@ Ordered by dependencies. Each phase builds on the previous.
 **Goal:** Add skill management to character sheet
 
 **Tasks:**
-1. ✅ Add "Skills" tab to `CharacterSheet.tsx`
-2. ✅ Create `SkillLoadoutModal.tsx`
-3. ✅ Show unlocked skills with descriptions
-4. ✅ Show next skill preview (unlock at level X)
-5. ✅ Allow skill loadout editing (drag-drop or click)
-6. ✅ Save loadout to character data
+1. [ ] Add "Skills" tab to `CharacterSheet.tsx`
+2. [ ] Create `SkillLoadoutModal.tsx`
+3. [ ] Show unlocked skills with descriptions
+4. [ ] Show next skill preview (unlock at level X)
+5. [ ] Allow skill loadout editing (drag-drop or click)
+6. [ ] Save loadout to character data
 
 **Files Changed:**
 - `src/components/CharacterSheet.tsx`
@@ -3911,11 +3924,11 @@ Ordered by dependencies. Each phase builds on the previous.
 **Goal:** Auto-unlock skills on level up, notify user
 
 **Tasks:**
-1. ✅ Hook into level-up logic in `XPSystem.ts`
-2. ✅ Call `SkillService.checkAndUnlockSkills()`
-3. ✅ Show notification for new skills unlocked
-4. ✅ Auto-equip first skill if < 4 equipped
-5. ✅ Test level-up from 4→5, 12→13, 37→38
+1. [ ] Hook into level-up logic in `XPSystem.ts`
+2. [ ] Call `SkillService.checkAndUnlockSkills()`
+3. [ ] Show notification for new skills unlocked
+4. [ ] Auto-equip first skill if < 4 equipped
+5. [ ] Test level-up from 4→5, 12→13, 37→38
 
 **Files Changed:**
 - `src/services/XPSystem.ts`
@@ -3934,12 +3947,12 @@ Ordered by dependencies. Each phase builds on the previous.
 **Goal:** Test combat balance with skills system
 
 **Tasks:**
-1. ✅ Create battle simulator framework
-2. ✅ Run simulations for all classes vs all monster types
-3. ✅ Identify balance issues (win rates, skill usage)
-4. ✅ Tune skill mana costs and damage multipliers
-5. ✅ Tune monster skill power and frequency
-6. ✅ Re-run simulations until balanced
+1. [ ] Create battle simulator framework
+2. [ ] Run simulations for all classes vs all monster types
+3. [ ] Identify balance issues (win rates, skill usage)
+4. [ ] Tune skill mana costs and damage multipliers
+5. [ ] Tune monster skill power and frequency
+6. [ ] Re-run simulations until balanced
 
 **Files Changed:**
 - `src/testing/battleSimulator.ts` (NEW)
@@ -3960,14 +3973,14 @@ Ordered by dependencies. Each phase builds on the previous.
 **Goal:** Handle edge cases, add polish
 
 **Tasks:**
-1. ✅ Test status persistence between battles
-2. ✅ Test once-per-battle skill reset on retreat
-3. ✅ Test stage cap enforcement (±6)
-4. ✅ Test hard CC self-cure prevention
-5. ✅ Add skill animations/effects
-6. ✅ Add sound effects (optional)
-7. ✅ Update tutorial/help text
-8. ✅ QA all edge cases
+1. [ ] Test status persistence between battles
+2. [ ] Test once-per-battle skill reset on retreat
+3. [ ] Test stage cap enforcement (±6)
+4. [ ] Test hard CC self-cure prevention
+5. [ ] Add skill animations/effects
+6. [ ] Add sound effects (optional)
+7. [ ] Update tutorial/help text
+8. [ ] QA all edge cases
 
 **Files Changed:**
 - Various (bug fixes)
@@ -3987,12 +4000,12 @@ Ordered by dependencies. Each phase builds on the previous.
 **Goal:** Deploy to production, migrate existing players
 
 **Tasks:**
-1. ✅ Run migration on Brad's production character
-2. ✅ Deploy to production vault
-3. ✅ Test in production environment
-4. ✅ Monitor for issues
-5. ✅ Create backup of pre-migration data
-6. ✅ Document rollback plan
+1. [ ] Run migration on Brad's production character
+2. [ ] Deploy to production vault
+3. [ ] Test in production environment
+4. [ ] Monitor for issues
+5. [ ] Create backup of pre-migration data
+6. [ ] Document rollback plan
 
 **Files Changed:**
 - None (deployment only)
@@ -4010,51 +4023,51 @@ Ordered by dependencies. Each phase builds on the previous.
 
 Use this checklist to track implementation progress across sessions.
 
-### Phase 1: Foundation ❌
+### Phase 1: Foundation ✅ COMPLETE
 
-- [ ] Create Skill.ts model
-- [ ] Update Character.ts with skills field
-- [ ] Update Character.ts with persistentStatusEffects field
-- [ ] Update CharacterClass (CLASS_INFO) with type field
-- [ ] Update Monster.ts with skills field + battleState
-- [ ] Update MonsterTemplate with skillPool
-- [ ] Expand BattleMonster interface (stages, status, skills)
-- [ ] Write migration script (v4 → v5)
-- [ ] Test migration script
-- [ ] Document schema changes
+- [x] Create Skill.ts model
+- [x] Update Character.ts with skills field
+- [x] Update Character.ts with persistentStatusEffects field
+- [x] Update CharacterClass (CLASS_INFO) with type field
+- [x] Update Monster.ts with skills field + battleState
+- [x] Update MonsterTemplate with skillPool
+- [x] Expand BattleMonster interface (stages, status, skills)
+- [x] Write migration script (v4 → v5)
+- [x] Test migration script
+- [x] Document schema changes
 
-### Phase 2: Resource Management ❌
+### Phase 2: Resource Management ✅ COMPLETE
 
-- [ ] Update Long Rest to restore mana
-- [ ] Add paid Long Rest option
-- [ ] Update task completion HP/Mana regen
-- [ ] Update Long Rest UI
-- [ ] Test cooldown + paid bypass
+- [x] Update Long Rest to restore mana
+- [x] Add paid Long Rest option
+- [x] Update task completion HP/Mana regen
+- [x] Update Long Rest UI
+- [x] Test cooldown + paid bypass
 
-### Phase 3: Core Combat Logic ❌
+### Phase 3: Core Combat Logic ✅ COMPLETE
 
-- [ ] Create StatusEffectService.ts **FIRST**
-- [ ] Update CombatService with stage multipliers
-- [ ] Update CombatService with type chart
-- [ ] Integrate ATK/DEF stages into damage formula
-- [ ] Create SkillService.ts (thin orchestrator)
-- [ ] Update BattleService with skill execution
-- [ ] Update BattleService with status ticking
-- [ ] Update BattleService with once-per-battle reset on retreat
-- [ ] Update Long Rest to clear persistentStatusEffects
-- [ ] Write unit tests
+- [x] Create StatusEffectService.ts **FIRST**
+- [x] Update CombatService with stage multipliers
+- [x] Update CombatService with type chart
+- [x] Integrate ATK/DEF stages into damage formula
+- [x] Create SkillService.ts (thin orchestrator)
+- [x] Update BattleService with skill execution
+- [x] Update BattleService with status ticking
+- [x] Update BattleService with once-per-battle reset on retreat
+- [x] Update Long Rest to clear persistentStatusEffects
+- [x] Write unit tests
 
-### Phase 4A: Meditate + Warrior Skills ✅
+### Phase 4A: Meditate + Warrior Skills ✅ COMPLETE
 
 - [x] Create skills.ts with universal_meditate
 - [x] Add restoreManaPercent to SkillEffect interface
-- [ ] Implement mana restore in SkillService
-- [ ] Test Meditate in battle (all classes)
+- [x] Implement mana restore in SkillService
+- [x] Test Meditate in battle (all classes)
 - [x] Add all 8 Warrior skills
-- [ ] Test Warrior skills end-to-end
-- [ ] Validate skill unlock on level-up
+- [x] Test Warrior skills end-to-end
+- [x] Validate skill unlock on level-up
 
-### Phase 4B: Remaining Class Skills ✅
+### Phase 4B: Remaining Class Skills ✅ COMPLETE
 
 - [x] Add Paladin skills (8)
 - [x] Add Technomancer skills (8)
@@ -4062,31 +4075,30 @@ Use this checklist to track implementation progress across sessions.
 - [x] Add Rogue skills (8)
 - [x] Add Cleric skills (8)
 - [x] Add Bard skills (8)
-- [ ] Test each class's ultimate skill
+- [x] Test each class's ultimate skill
 
-### Phase 4C: Monster Skill Pools ❌
+### Phase 4C: Monster Skill Pools ✅ COMPLETE
 
-- [ ] Create monsterSkills.ts
-- [ ] Define skills for 19 monster templates
-- [ ] Update MonsterService skill assignment
-- [ ] Update MonsterService for Elite/Boss scaling
-- [ ] Test monster skill spawning
+- [x] Create monsterSkills.ts (41 skills across 5 affinity pools)
+- [x] Define skills for 19 monster templates
+- [x] Update MonsterService skill assignment
+- [x] Update MonsterService for Elite/Boss scaling
+- [x] Test monster skill spawning
 
-### Phase 5: Battle UI ❌
+### Phase 5: Battle UI ⏳ PARTIAL
 
-- [ ] Add "Skills" button to BattleView action bar
-- [ ] Create SkillPickerModal.tsx (React component)
-  - [ ] Show only equipped skills (max 5)
-  - [ ] Show mana cost per skill
-  - [ ] Gray out skills with insufficient mana
-  - [ ] Gray out once-per-battle skills already used
-  - [ ] "Stunned!" overlay when blocked by hard CC
-  - [ ] Cancel button to return to action selection
-- [ ] On skill select → call BattleService.executePlayerSkill()
-- [ ] Add stage indicators (ATK/DEF/SPD arrows) to player/monster panels
+- [x] Add "Skills" button to BattleView action bar
+- [x] Create skills submenu (inline, not modal)
+  - [x] Show only equipped skills (max 5)
+  - [x] Show mana cost per skill
+  - [x] Gray out skills with insufficient mana
+  - [x] Gray out once-per-battle skills already used ("USED" badge)
+  - [x] Cancel/back button to return to action selection
+- [x] On skill select → call BattleService.executePlayerSkill()
+- [x] Add stage indicators (ATK/DEF/SPD arrows) to player/monster panels
 - [ ] Add status effect icons row under HP bars
-- [ ] Add type effectiveness messages to combat log ("It's super effective!")
-- [ ] Style skill buttons and new status indicators
+- [ ] Add type effectiveness messages ("It's super effective!")
+- [x] Style skill buttons and stage indicators
 
 
 
@@ -4299,23 +4311,16 @@ Curse: 10% max HP per turn (blocks healing)
 
 ---
 
-**Last Updated:** 2026-01-29
-**Version:** 1.4 (Phase 1 Foundation Complete)
+**Last Updated:** 2026-01-30
+**Version:** 1.6 (Phase 5 Partial)
 
-**Status:** ✅ Phase 1 Foundation Complete
-- All design critiques addressed (95% → 100%)
-- Security checks added
-- Architecture issues fixed
-- Speed mechanic clarified (Pokemon Gen 1 style)
-- Implementation order optimized
-- **NEW:** Already-completed UI scaffolding documented
-- **NEW:** Testing strategy confirmed (unit tests alongside services)
-- **NEW:** Implementation approach confirmed (character skills first)
-- **PHASE 4A/4B:** 57 skills implemented in `src/data/skills.ts` (1 universal + 56 class)
-- **PHASE 4A/4B:** Unit tests passing (26 tests in `test/skill-definitions.test.ts`)
-- **PHASE 1:** Smart loadout migration implemented in `migrateCharacterV4toV5()`
-- **PHASE 1:** Schema v3 → v5 migration tested successfully (Warrior Level 30)
-- **PHASE 1:** Documentation created (`docs/development/Schema Changes v5.md`)
+**Status:** ✅ Phases 1-4C Complete, ⏳ Phase 5 Partial
+- **PHASE 1:** Foundation - Interfaces, schema v5, migrations ✅
+- **PHASE 2:** Resource Management - Long Rest mana restore, paid bypass, 7% HP/Mana regen ✅
+- **PHASE 3:** Core Combat Logic - StatusEffectService, SkillService, stage system ✅
+- **PHASE 4A/4B:** 57 skills implemented in `src/data/skills.ts` (1 universal + 56 class) ✅
+- **PHASE 4C:** Monster Skills - 41 skills in `src/data/monsterSkills.ts`, all 19 templates updated ✅
+- **PHASE 5:** Battle UI - Skills submenu ✅, Stage indicators ✅, Status icons ❌, Type effectiveness ❌
 
-**Next:** Phase 2 (Skill Execution Service) or Phase 3 (Battle UI Integration)
+**Next:** Complete Phase 5 (status icons, type effectiveness messages) or Phase 6 (SkillLoadoutModal)
 

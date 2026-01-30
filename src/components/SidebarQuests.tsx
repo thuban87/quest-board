@@ -24,6 +24,7 @@ import { CharacterSheet } from './CharacterSheet';
 import { AchievementsSidebar } from './AchievementsSidebar';
 import { CLASS_INFO, getTrainingLevelDisplay } from '../models/Character';
 import { useXPAward } from '../hooks/useXPAward';
+import { useResourceRegen } from '../hooks/useResourceRegen';
 import { useTaskSectionsStore } from '../store/taskSectionsStore';
 import { useQuestLoader } from '../hooks/useQuestLoader';
 import { useQuestActions } from '../hooks/useQuestActions';
@@ -127,6 +128,9 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         },
         onSaveCharacter: handleSaveCharacter,
     });
+
+    // Resource regen hook - restores HP/Mana on task completion (7% per task)
+    useResourceRegen({ onSave: handleSaveCharacter });
 
     // Load character on mount (run once)
     // NOTE: Streak check happens in main.ts at plugin load

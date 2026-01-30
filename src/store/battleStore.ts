@@ -162,6 +162,7 @@ interface BattleActions {
     updatePlayerHP: (newHP: number) => void;
     updatePlayerMana: (newMana: number) => void;
     updateMonsterHP: (newHP: number) => void;
+    updateMonster: (updates: Partial<BattleMonster>) => void;
     setPlayerDefending: (isDefending: boolean) => void;
 
     // Phase 5: Player battle state management
@@ -333,6 +334,16 @@ export const useBattleStore = create<BattleStore>()(
                         ...monster,
                         currentHP: Math.max(0, newHP),
                     },
+                    lastUpdated: Date.now(),
+                });
+            },
+
+            // Phase 4C: Update monster properties (statStages, statusEffects, etc.)
+            updateMonster: (updates) => {
+                const { monster } = get();
+                if (!monster) return;
+                set({
+                    monster: { ...monster, ...updates },
                     lastUpdated: Date.now(),
                 });
             },

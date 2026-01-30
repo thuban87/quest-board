@@ -207,7 +207,7 @@ export interface MonsterSkill {
     /** Elemental type */
     elementalType: ElementalType;
 
-    /** Damage power (percentage of ATK) */
+    /** Damage power (percentage of ATK, 100 = 1.0x) */
     power: number;
 
     /** Physical or magic damage */
@@ -230,6 +230,22 @@ export interface MonsterSkill {
 
     /** AI weight for skill selection (higher = more likely) */
     weight: number;
+
+    // =====================
+    // Phase 4C Additions
+    // =====================
+
+    /** Skill category for AI behavior hints */
+    category?: 'damage' | 'buff' | 'debuff' | 'status' | 'hybrid' | 'utility';
+
+    /** Use condition for AI (defaults to 'always') */
+    useCondition?: 'always' | 'low_hp';
+
+    /** If true, removes all debuffs from self (for dispel skills) */
+    selfCure?: boolean;
+
+    /** Lifesteal percentage (0-1.0) for life drain skills */
+    lifesteal?: number;
 }
 
 // =====================
