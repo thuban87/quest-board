@@ -445,7 +445,7 @@ combatant.battleState.statusEffects =
 - Cleaner code
 - Works with any order
 
-### Lazy Loading Skill Definitions
+### Lazy Loading Skill Definitions ✅ (Completed 2026-01-29)
 
 **All platforms benefit** (not just mobile):
 - Faster initial load (skills only loaded when needed)
@@ -468,7 +468,7 @@ export function getSkillDefinitions(): Skill[] {
 }
 ```
 
-### Once-Per-Battle Reset on Retreat
+### Once-Per-Battle Reset on Retreat ✅ (Completed 2026-01-29)
 
 **Add to BattleService.executePlayerRetreat():**
 ```typescript
@@ -486,7 +486,7 @@ if (roll < runChance) {
 
 **Note:** Battle initialization already resets `skillsUsedThisBattle` in BattleStore, but retreat explicitly copies volatile status effects back to persistent storage.
 
-### Configuration Centralization
+### Configuration Centralization ✅ (Completed 2026-01-29)
 
 > [!IMPORTANT]
 > **All "magic numbers" for combat must live in `combatConfig.ts`.**
@@ -571,7 +571,7 @@ export const CONFUSION_SELF_HIT_CHANCE = 0.33;
 export const BURN_DAMAGE_REDUCTION = 0.25;
 ```
 
-### Task Completion Resource Regeneration
+### Task Completion Resource Regeneration ✅ (Completed 2026-01-29)
 
 > [!NOTE]
 > Task completion grants 7% HP and Mana regeneration.
@@ -4040,24 +4040,24 @@ Use this checklist to track implementation progress across sessions.
 - [ ] Update Long Rest to clear persistentStatusEffects
 - [ ] Write unit tests
 
-### Phase 4A: Meditate + Warrior Skills ❌
+### Phase 4A: Meditate + Warrior Skills ✅
 
-- [ ] Create skills.ts with universal_meditate
-- [ ] Add restoreManaPercent to SkillEffect interface
+- [x] Create skills.ts with universal_meditate
+- [x] Add restoreManaPercent to SkillEffect interface
 - [ ] Implement mana restore in SkillService
 - [ ] Test Meditate in battle (all classes)
-- [ ] Add all 8 Warrior skills
+- [x] Add all 8 Warrior skills
 - [ ] Test Warrior skills end-to-end
 - [ ] Validate skill unlock on level-up
 
-### Phase 4B: Remaining Class Skills ❌
+### Phase 4B: Remaining Class Skills ✅
 
-- [ ] Add Paladin skills (8)
-- [ ] Add Technomancer skills (8)
-- [ ] Add Scholar skills (8)
-- [ ] Add Rogue skills (8)
-- [ ] Add Cleric skills (8)
-- [ ] Add Bard skills (8)
+- [x] Add Paladin skills (8)
+- [x] Add Technomancer skills (8)
+- [x] Add Scholar skills (8)
+- [x] Add Rogue skills (8)
+- [x] Add Cleric skills (8)
+- [x] Add Bard skills (8)
 - [ ] Test each class's ultimate skill
 
 ### Phase 4C: Monster Skill Pools ❌
@@ -4296,9 +4296,9 @@ Curse: 10% max HP per turn (blocks healing)
 ---
 
 **Last Updated:** 2026-01-29
-**Version:** 1.2 (Pre-Implementation Review Updates)
+**Version:** 1.3 (Phase 4A/4B Skill Data Complete)
 
-**Status:** ✅ Ready for Implementation
+**Status:** ✅ Skill Data Creation Complete
 - All design critiques addressed (95% → 100%)
 - Security checks added
 - Architecture issues fixed
@@ -4307,4 +4307,8 @@ Curse: 10% max HP per turn (blocks healing)
 - **NEW:** Already-completed UI scaffolding documented
 - **NEW:** Testing strategy confirmed (unit tests alongside services)
 - **NEW:** Implementation approach confirmed (character skills first)
+- **PHASE 4A/4B:** 57 skills implemented in `src/data/skills.ts` (1 universal + 56 class)
+- **PHASE 4A/4B:** Unit tests passing (26 tests in `test/skill-definitions.test.ts`)
+
+
 

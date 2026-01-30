@@ -395,3 +395,264 @@ Files: combatConfig.ts, CombatService.ts, BattleService.ts
 ```
 
 ---
+
+## 2026-01-29 (Night Cont.) - Skills Pre-Implementation Part 4: Combatant Type Handling
+
+**Focus:** Documenting and implementing helper functions for BattlePlayer vs BattleMonster type differences in SkillService
+
+### Completed:
+
+#### Skills Implementation Guide Updates
+- ✅ Added "Combatant Type Handling" section (lines 348-388)
+  - Documented the `BattlePlayer` vs `BattleMonster` stat structure difference
+  - `BattlePlayer` has `physicalAttack` and `magicAttack` (derived from STR/INT + gear)
+  - `BattleMonster` has single `attack` value (simpler design)
+  - Documented `isBattlePlayer()` type guard
+  - Documented `getAttackPower(combatant, damageType)` helper pattern
+
+### Files Changed:
+
+**Docs:**
+- `docs/development/Skills Implementation Guide.md` - Added Combatant Type Handling section
+
+### Testing Notes:
+- ✅ `npm run build` passes
+
+### Blockers/Issues:
+- ⚠️ **Clarification:** The Pre-Implementation Checklist contains design pattern documentation (Orchestrator Pattern, SkillResult Interface, etc.) that serves as **reference for Phase 3 implementation**, not code to build now
+- ⚠️ **Remaining Pre-Implementation Steps:**
+  1. Lazy Loading Skill Definitions (pattern setup)
+  2. Once-Per-Battle Reset on Retreat (BattleService code)
+  3. Configuration Centralization (add constants to combatConfig.ts)
+  4. Task Completion Resource Regeneration (create useResourceRegen.ts hook)
+
+### Design Notes:
+
+**Attack Power Resolution:**
+```typescript
+function getAttackPower(combatant: Combatant, damageType: 'physical' | 'magic'): number {
+    if (isBattlePlayer(combatant)) {
+        return damageType === 'physical' 
+            ? combatant.physicalAttack 
+            : combatant.magicAttack;
+    }
+    // Monsters use single attack value for all damage types
+    return combatant.attack;
+}
+```
+
+---
+
+## Next Session Prompt
+
+```
+Skills Pre-Implementation Parts 1-4 complete:
+1. ✅ Interface Updates (Skill.ts, StatusEffect.ts, schema v5)
+2. ✅ Status Persistence Architecture (battle start/end flows)
+3. ✅ ATK/DEF Stages in Damage Formula (getStageMultiplier)
+4. ✅ Combatant Type Handling (documented in Implementation Guide)
+
+Remaining Pre-Implementation Steps (from Guide lines 448-636):
+1. [ ] Lazy Loading Skill Definitions - pattern for src/data/skills.ts
+2. [ ] Once-Per-Battle Reset on Retreat - update BattleService.executePlayerRetreat()
+3. [ ] Configuration Centralization - add TYPE_CHART, status DoT constants to combatConfig.ts
+4. [ ] Task Completion Resource Regeneration - create useResourceRegen.ts hook
+
+⚠️ NOTE: Design pattern sections (Orchestrator Pattern, SkillResult Interface, etc.) are
+REFERENCE documentation for Phase 3 implementation, not code to build in pre-implementation.
+
+After pre-implementation: Phase 1-10 work begins with skills data creation and service implementation.
+```
+
+---
+
+## Git Commit Message
+
+```
+docs(skills): add Combatant Type Handling section to Implementation Guide
+
+Pre-Implementation Part 4: Documented the design pattern for handling
+BattlePlayer vs BattleMonster stat structure differences.
+
+Key difference:
+- BattlePlayer has physicalAttack/magicAttack (from STR/INT + gear)
+- BattleMonster has single attack value (simpler design)
+
+Resolution: getAttackPower(combatant, damageType) helper function
+- Players: returns physicalAttack or magicAttack based on skill type
+- Monsters: returns single attack value (damageType determines defense used)
+
+Also documented isBattlePlayer() type guard for TypeScript safety.
+
+Files: docs/development/Skills Implementation Guide.md
+```
+
+---
+
+## 2026-01-29 (Night Cont.) - Skills Pre-Implementation Part 5: Remaining Steps
+
+**Focus:** Completing final pre-implementation tasks: Configuration Centralization, Lazy Loading Pattern, and Resource Regeneration Hook
+
+### Completed:
+
+#### combatConfig.ts Updates (Configuration Centralization)
+- ✅ Added `ElementalType` type (11 elemental types)
+- ✅ Added `TYPE_CHART` - full type effectiveness record (2x/0.5x damage)
+- ✅ Added `getTypeEffectiveness(attackerType, defenderType)` helper function
+- ✅ Added `STATUS_DOT_PERCENT` - DoT % per turn (burn/poison/bleed/curse)
+- ✅ Added `PARALYZE_SKIP_CHANCE = 0.25` (25% chance to lose turn)
+- ✅ Added `CONFUSION_SELF_HIT_CHANCE = 0.33` (33% chance to hit self)
+- ✅ Added `BURN_DAMAGE_REDUCTION = 0.25` (25% less physical damage dealt)
+- ✅ Added `INHERENT_TYPE_RESISTANCE = 0.10` (10% damage reduction vs own type)
+- ✅ Added `TASK_REGEN_PERCENT = 0.07` (7% HP/Mana per task)
+
+#### src/data/skills.ts (Lazy Loading Pattern)
+- ✅ Created `skills.ts` with lazy-loading pattern structure
+- ✅ Added `getSkillDefinitions()` - lazy-loaded frozen array
+- ✅ Added `getSkillById(skillId)` helper
+- ✅ Added `getSkillsForClass(characterClass)` helper
+- ✅ Added `getUnlockedSkills(characterClass, level)` helper
+- ✅ Added `createSkillDefinitions()` stub (Phase 1 will populate)
+
+#### characterStore.ts Updates (Resource Regeneration)
+- ✅ Added `restoreResources(percent)` action to interface
+- ✅ Implemented `restoreResources()` - restores % of max HP/Mana, returns amounts restored
+
+#### src/hooks/useResourceRegen.ts (Resource Regeneration Hook)
+- ✅ Created `useResourceRegen()` hook
+- ✅ Watches `tasksCompletedToday` for changes
+- ✅ Calls `restoreResources(TASK_REGEN_PERCENT)` on task completion
+- ✅ Shows notice: "⚡ Task power! +X HP, +Y Mana"
+
+#### Once-Per-Battle Reset on Retreat
+- ✅ Already implemented in Part 2 - `executePlayerRetreat()` calls `copyVolatileStatusToPersistent()`
+
+### Files Changed:
+
+**Config:**
+- `src/config/combatConfig.ts` - TYPE_CHART, status constants, regen constant
+
+**Data:**
+- `src/data/skills.ts` - NEW - Lazy loading pattern skeleton
+
+**Stores:**
+- `src/store/characterStore.ts` - restoreResources action
+
+**Hooks:**
+- `src/hooks/useResourceRegen.ts` - NEW - Task completion HP/Mana regen
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ⏳ Resource regen testing requires mounting the hook (Phase 1+ integration)
+
+### Blockers/Issues:
+- None
+
+---
+
+## Pre-Implementation Complete ✅
+
+All pre-implementation steps are now complete:
+
+1. ✅ Interface Updates (Skill.ts, StatusEffect.ts, schema v5)
+2. ✅ Status Persistence Architecture (battle start/end flows)
+3. ✅ ATK/DEF Stages in Damage Formula (getStageMultiplier)
+4. ✅ Combatant Type Handling (documented in Guide)
+5. ✅ Lazy Loading Skill Definitions (skills.ts pattern)
+6. ✅ Once-Per-Battle Reset on Retreat (already done in Part 2)
+7. ✅ Configuration Centralization (TYPE_CHART, status constants)
+8. ✅ Task Completion Resource Regeneration (useResourceRegen hook)
+
+**Ready for Phase 1: Skill Data Creation** (56 class skills + universal skills)
+
+---
+
+## Next Session Prompt
+
+```
+Skills Phase 4A/4B COMPLETE. All 57 skill definitions implemented.
+
+Next steps:
+- Create SkillService.executeSkill() to wire skills to battle system
+- Implement migration to populate character.skills for existing characters
+- Wire the Skills button in BattleView to use skill definitions
+
+Key files:
+- src/data/skills.ts - All skill definitions (readonly, lazy-loaded)
+- test/skill-definitions.test.ts - Unit tests for skill helpers
+- src/services/SkillService.ts - TO CREATE
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 4A/4B complete - implement all skill definitions
+
+57 skills created in src/data/skills.ts:
+- 1 universal skill (Meditate: 0 mana, restores 33% max mana)
+- 8 Warrior skills (Slash, Sharpen, Fortify, Battle Hardened, Cleave, Enrage, Reckless Strike, Bloodthirst)
+- 8 Paladin skills (Holy Strike, Heal, Shield of Faith, Divine Cleanse, Smite, Blessing, Judgment, Divine Shield)
+- 8 Technomancer skills (Spark, Weaken Defenses, Flame Burst, Reboot, Frost Bolt, Overcharge, Chain Lightning, Meteor)
+- 8 Scholar skills (Arcane Missile, Analyze, Mana Shield, Clarity, Mind Spike, Exploit Weakness, Meteor Strike, Singularity)
+- 8 Rogue skills (Backstab, Agility, Poison Blade, Nimble Recovery, Shadow Strike, Focus, Fan of Knives, Assassinate)
+- 8 Cleric skills (Holy Light, Bless, Smite Evil, Full Heal, Prayer, Divine Protection, Holy Nova, Resurrection)
+- 8 Bard skills (Power Chord, Inspiring Ballad, Song of Rest, Inspiring Song, Vicious Mockery, War Chant, Lullaby, Symphony)
+
+Helper functions:
+- getSkillDefinitions() - lazy-loaded frozen array
+- getSkillById(id) - lookup by skill ID
+- getSkillsForClass(class) - returns class + universal skills
+- getUnlockedSkills(class, level) - filters by learnLevel
+
+Unit tests (26 tests passing):
+- Data integrity (unique IDs, required fields, 8 skills per class)
+- Learn level pattern verification (5, 8, 13, 18, 23, 28, 33, 38)
+- Lazy loading verification (frozen array, cached reference)
+
+Files: src/data/skills.ts, test/skill-definitions.test.ts
+```
+
+---
+
+## 2026-01-29 (Evening) - Phase 4A/4B: Skill Data Creation
+
+### Summary
+
+Implemented all 57 skill definitions in `src/data/skills.ts`. Created comprehensive unit tests covering data integrity, helper functions, and lazy loading. All tests pass.
+
+### Changes Made
+
+#### src/data/skills.ts (Skill Definitions)
+- ✅ Added 1 universal skill: Meditate (level 1, 0 mana, restores 33% max mana)
+- ✅ Added 8 Warrior skills (Physical type, levels 5-38)
+- ✅ Added 8 Paladin skills (Light type, levels 5-38)
+- ✅ Added 8 Technomancer skills (Lightning/Fire/Ice types, levels 5-38)
+- ✅ Added 8 Scholar skills (Arcane type, levels 5-38)
+- ✅ Added 8 Rogue skills (Physical/Poison/Dark types, levels 5-38)
+- ✅ Added 8 Cleric skills (Light type, levels 5-38)
+- ✅ Added 8 Bard skills (Physical/Arcane types, levels 5-38)
+
+#### test/skill-definitions.test.ts (NEW)
+- ✅ Data integrity tests (unique IDs, required fields, 8 per class)
+- ✅ Learn level pattern verification
+- ✅ Universal skill tests (Meditate at level 1)
+- ✅ Once-per-battle flag verification (7 ultimates at level 38)
+- ✅ getSkillById() tests
+- ✅ getSkillsForClass() tests
+- ✅ getUnlockedSkills() tests
+- ✅ Lazy loading tests (frozen array, cached reference)
+- ✅ Specific skill validation (ignoresStages, cure effects, etc.)
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ 26 unit tests pass
+
+### Blockers/Issues:
+- None
+
+---
+
+
