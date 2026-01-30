@@ -3687,30 +3687,34 @@ main();
 
 Ordered by dependencies. Each phase builds on the previous.
 
-### Phase 1: Foundation (Data Models & Migrations)
+### Phase 1: Foundation (Data Models & Migrations) ✅ COMPLETE
 
 **Goal:** Add new fields to Character/Monster, create Skill model
 
 **Tasks:**
 1. ✅ Create `src/models/Skill.ts`
 2. ✅ Add `skills` field to Character model
-3. ✅ Add `type` field to CharacterClass definitions
+3. ✅ Add `inherentType` field to CharacterClass definitions
 4. ✅ Add `skills` field to Monster model
 5. ✅ Add `skillPool` to MonsterTemplate
-6. ✅ Create migration script `001-add-skills-system.ts`
-7. ✅ Test migration on sample character data
-8. ✅ Document schema changes
+6. ✅ Implement migration in `migrateCharacterV4toV5()` with smart loadout logic
+7. ✅ Test migration on schema v3 character data (Warrior Level 30)
+8. ✅ Document schema changes in `docs/development/Schema Changes v5.md`
 
 **Files Changed:**
-- `src/models/Character.ts`
-- `src/models/Monster.ts`
-- `src/models/Skill.ts` (NEW)
-- `src/migrations/001-add-skills-system.ts` (NEW)
+- `src/models/Character.ts` - Schema v5, `migrateCharacterV4toV5()`, `getDefaultSkillLoadout()`
+- `src/models/Monster.ts` - skills, battleState, skillPool fields
+- `src/models/Skill.ts` (NEW) - ElementalType, SkillCategory, Skill, MonsterSkill
+- `src/models/StatusEffect.ts` (NEW) - StatusEffectType, StatusEffect
+- `src/components/FullKanban.tsx` - Save after migration
+- `src/components/SidebarQuests.tsx` - Save after migration
+- `docs/development/Schema Changes v5.md` (NEW)
 
 **Success Criteria:**
-- Existing characters load without errors
-- Migration adds `skills` field with correct defaults
-- No data loss
+- ✅ Existing characters load without errors
+- ✅ Migration adds `skills` field with smart defaults (unlocked + equipped based on class/level)
+- ✅ No data loss
+- ✅ Migrated data persists to data.json
 
 ---
 
@@ -4296,9 +4300,9 @@ Curse: 10% max HP per turn (blocks healing)
 ---
 
 **Last Updated:** 2026-01-29
-**Version:** 1.3 (Phase 4A/4B Skill Data Complete)
+**Version:** 1.4 (Phase 1 Foundation Complete)
 
-**Status:** ✅ Skill Data Creation Complete
+**Status:** ✅ Phase 1 Foundation Complete
 - All design critiques addressed (95% → 100%)
 - Security checks added
 - Architecture issues fixed
@@ -4309,6 +4313,9 @@ Curse: 10% max HP per turn (blocks healing)
 - **NEW:** Implementation approach confirmed (character skills first)
 - **PHASE 4A/4B:** 57 skills implemented in `src/data/skills.ts` (1 universal + 56 class)
 - **PHASE 4A/4B:** Unit tests passing (26 tests in `test/skill-definitions.test.ts`)
+- **PHASE 1:** Smart loadout migration implemented in `migrateCharacterV4toV5()`
+- **PHASE 1:** Schema v3 → v5 migration tested successfully (Warrior Level 30)
+- **PHASE 1:** Documentation created (`docs/development/Schema Changes v5.md`)
 
-
+**Next:** Phase 2 (Skill Execution Service) or Phase 3 (Battle UI Integration)
 

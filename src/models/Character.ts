@@ -737,11 +737,8 @@ export function calculateMaxMana(character: { baseStats?: CharacterStats; level?
  */
 export function migrateCharacterV1toV2(oldData: Record<string, unknown>): Character {
     // Already v2 or higher? Chain to next migration
-    if (oldData.schemaVersion === 2) {
+    if ((oldData.schemaVersion as number) >= 2) {
         return migrateCharacterV2toV3(oldData);
-    }
-    if ((oldData.schemaVersion as number) >= 3) {
-        return oldData as unknown as Character;
     }
 
     // Calculate HP/Mana based on existing stats
@@ -848,7 +845,7 @@ export function migrateCharacterV3toV4(oldData: Record<string, unknown>): Charac
 
 /**
  * Migrate character data from schema v4 to schema v5.
- * Adds skills system fields.
+ * Adds skills system fields with smart loadout based on class and level.
  * 
  * @param oldData - Character data at schema v4
  * @returns Migrated character data conforming to schema v5
@@ -859,24 +856,95 @@ export function migrateCharacterV4toV5(oldData: Record<string, unknown>): Charac
         return oldData as unknown as Character;
     }
 
-    // Build migrated character
-    const migrated: Character = {
-        // Copy all existing fields
-        ...(oldData as object),
+    // Import skills lazily to avoid circular dependencies
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getUnlockedSkills } = require('../data/skills');
+
+    const characterClass = oldData.class as CharacterClass;
+    const level = (oldData.level as number) ?? 1;
+
+    // Get skills unlocked at current level for this class
+    const unlockedSkills = getUnlockedSkills(characterClass, level) as import('./Skill').Skill[];
+    const unlockedIds = unlockedSkills.map((s: import('./Skill').Skill) => s.id);
+
+    // Build smart default loadout (max 5 skills)
+    const equippedIds = getDefaultSkillLoadout(unlockedSkills, 5);
+
+    // Build migrated character by combining old data with new fields
+    // Use unknown intermediate to satisfy TypeScript's strict type checking
+    const migrated = {
+        ...oldData,
 
         // Bump schema version
         schemaVersion: 5,
 
-        // Phase 5: Skills System defaults
-        skills: (oldData.skills as { unlocked: string[]; equipped: string[] }) ?? {
-            unlocked: [],  // Will be populated on first battle or skill check
-            equipped: [],
+        // Phase 5: Skills System - populated with smart defaults
+        skills: {
+            unlocked: unlockedIds,
+            equipped: equippedIds,
         },
 
         // Persistent status effects (empty for fresh migration)
-        persistentStatusEffects: (oldData.persistentStatusEffects as unknown[]) ?? [],
-    } as Character;
+        persistentStatusEffects: [],
+    } as unknown as Character;
 
     return migrated;
+}
+
+/**
+ * Build a smart default loadout that prioritizes skill variety:
+ * 1. Include highest-level heal (if available)
+ * 2. Include highest-level buff (if available)
+ * 3. Include ultimate skill (if available, usesPerBattle defined)
+ * 4. Fill remaining slots with highest-level damage skills
+ * 
+ * @param skills - Available skills to choose from
+ * @param slots - Maximum number of slots to fill
+ * @returns Array of skill IDs for the loadout
+ */
+function getDefaultSkillLoadout(skills: import('./Skill').Skill[], slots: number): string[] {
+    const result: string[] = [];
+    const used = new Set<string>();
+
+    type SkillType = import('./Skill').Skill;
+
+    // Helper to pick best skill matching criteria
+    const pickBest = (filter: (s: SkillType) => boolean): SkillType | null => {
+        const candidates = skills.filter(s => !used.has(s.id) && filter(s));
+        if (candidates.length === 0) return null;
+        // Sort by learn level descending (highest = strongest)
+        candidates.sort((a, b) => b.learnLevel - a.learnLevel);
+        return candidates[0];
+    };
+
+    // Priority 1: One heal skill (Meditate counts as heal category)
+    const heal = pickBest(s => s.category === 'heal');
+    if (heal) { result.push(heal.id); used.add(heal.id); }
+
+    // Priority 2: One buff skill
+    const buff = pickBest(s => s.category === 'buff');
+    if (buff) { result.push(buff.id); used.add(buff.id); }
+
+    // Priority 3: Ultimate skill (usesPerBattle defined = once per battle)
+    const ultimate = pickBest(s => s.usesPerBattle !== undefined);
+    if (ultimate) { result.push(ultimate.id); used.add(ultimate.id); }
+
+    // Priority 4: Fill remaining with highest-level damage/hybrid skills
+    while (result.length < slots) {
+        const damage = pickBest(s => s.category === 'damage' || s.category === 'hybrid');
+        if (!damage) break;
+        result.push(damage.id);
+        used.add(damage.id);
+    }
+
+    // If still not full, add any remaining skills (debuffs, cures, etc.)
+    while (result.length < slots) {
+        const any = pickBest(() => true);
+        if (!any) break;
+        result.push(any.id);
+        used.add(any.id);
+    }
+
+    return result;
 }
 
