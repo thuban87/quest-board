@@ -36,6 +36,7 @@ const wolf: MonsterTemplate = {
     baseGold: [2, 5],
     baseXP: 10,
     emoji: '🐺',
+    skillPool: ['gen_bite', 'gen_weaken', 'gen_rend', 'gen_frenzy', 'gen_howl'],
 };
 
 const bear: MonsterTemplate = {
@@ -57,6 +58,7 @@ const bear: MonsterTemplate = {
     baseGold: [3, 7],
     baseXP: 14,
     emoji: '🐻',
+    skillPool: ['gen_claw', 'gen_maul', 'gen_enrage', 'gen_slam'],
 };
 
 const giantRat: MonsterTemplate = {
@@ -78,6 +80,7 @@ const giantRat: MonsterTemplate = {
     baseGold: [1, 3],
     baseXP: 6,
     emoji: '🐀',
+    skillPool: ['gen_bite', 'gen_poison_fang', 'gen_charge'],
 };
 
 // =====================
@@ -103,6 +106,7 @@ const skeleton: MonsterTemplate = {
     baseGold: [2, 5],
     baseXP: 9,
     emoji: '💀',
+    skillPool: ['dark_shadow_strike', 'gen_strike', 'dark_fear', 'gen_bash'],
 };
 
 const zombie: MonsterTemplate = {
@@ -124,6 +128,7 @@ const zombie: MonsterTemplate = {
     baseGold: [2, 4],
     baseXP: 8,
     emoji: '🧟',
+    skillPool: ['gen_slam', 'dark_necrotic_touch', 'gen_harden', 'dark_life_drain'],
 };
 
 const ghost: MonsterTemplate = {
@@ -145,6 +150,7 @@ const ghost: MonsterTemplate = {
     baseGold: [3, 6],
     baseXP: 11,
     emoji: '👻',
+    skillPool: ['dark_shadow_bolt', 'dark_curse', 'dark_shadow_strike', 'dark_fear'],
 };
 
 // =====================
@@ -170,6 +176,7 @@ const goblin: MonsterTemplate = {
     baseGold: [2, 6],
     baseXP: 10,
     emoji: '👺',
+    skillPool: ['gen_strike', 'gen_armor_break', 'gen_bash'],
 };
 
 const hobgoblin: MonsterTemplate = {
@@ -191,6 +198,7 @@ const hobgoblin: MonsterTemplate = {
     baseGold: [4, 8],
     baseXP: 14,
     emoji: '👹',
+    skillPool: ['gen_slam', 'gen_weaken', 'gen_crushing_blow', 'gen_focus'],
 };
 
 const bugbear: MonsterTemplate = {
@@ -212,6 +220,7 @@ const bugbear: MonsterTemplate = {
     baseGold: [5, 10],
     baseXP: 16,
     emoji: '🦍',
+    skillPool: ['gen_maul', 'gen_enrage', 'gen_rend', 'gen_charge'],
 };
 
 // =====================
@@ -237,6 +246,7 @@ const caveTroll: MonsterTemplate = {
     baseGold: [5, 12],
     baseXP: 15,
     emoji: '🧌',
+    skillPool: ['gen_slam', 'gen_harden', 'gen_maul', 'gen_bash'],
 };
 
 const riverTroll: MonsterTemplate = {
@@ -258,6 +268,7 @@ const riverTroll: MonsterTemplate = {
     baseGold: [4, 10],
     baseXP: 14,
     emoji: '🧌',
+    skillPool: ['gen_claw', 'gen_slam', 'gen_slow', 'gen_rend'],
 };
 
 // =====================
@@ -283,6 +294,7 @@ const shadowElf: MonsterTemplate = {
     baseGold: [5, 12],
     baseXP: 13,
     emoji: '🧝‍♂️',
+    skillPool: ['dark_shadow_strike', 'gen_charge', 'dark_shadow_bolt', 'gen_slow'],
 };
 
 const darkRanger: MonsterTemplate = {
@@ -304,6 +316,7 @@ const darkRanger: MonsterTemplate = {
     baseGold: [6, 14],
     baseXP: 15,
     emoji: '🏹',
+    skillPool: ['dark_shadow_bolt', 'dark_life_drain', 'gen_armor_break', 'dark_shadow_strike'],
 };
 
 // =====================
@@ -329,6 +342,7 @@ const rogueDwarf: MonsterTemplate = {
     baseGold: [6, 15],
     baseXP: 12,
     emoji: '⛏️',
+    skillPool: ['earth_stone_throw', 'gen_armor_break', 'earth_quake', 'gen_bash'],
 };
 
 const berserker: MonsterTemplate = {
@@ -350,6 +364,7 @@ const berserker: MonsterTemplate = {
     baseGold: [7, 16],
     baseXP: 16,
     emoji: '🪓',
+    skillPool: ['earth_boulder_slam', 'gen_enrage', 'earth_seismic_strike', 'gen_maul'],
 };
 
 // =====================
@@ -375,6 +390,7 @@ const drake: MonsterTemplate = {
     baseGold: [8, 18],
     baseXP: 18,
     emoji: '🦎',
+    skillPool: ['fire_flame_burst', 'fire_breath', 'gen_claw', 'fire_heat_wave'],
 };
 
 const wyvern: MonsterTemplate = {
@@ -396,6 +412,7 @@ const wyvern: MonsterTemplate = {
     baseGold: [10, 22],
     baseXP: 22,
     emoji: '🐉',
+    skillPool: ['fire_breath', 'fire_inferno', 'fire_burning_claw', 'gen_charge'],
 };
 
 // =====================
@@ -422,6 +439,7 @@ const mimic: MonsterTemplate = {
     baseXP: 14,
     emoji: '📦',
     lootTierBonus: 1, // Better loot drops
+    skillPool: ['gen_bash', 'arcane_blast', 'gen_harden', 'arcane_dispel', 'gen_howl'],
 };
 
 const eyeBeast: MonsterTemplate = {
@@ -443,6 +461,7 @@ const eyeBeast: MonsterTemplate = {
     baseGold: [8, 18],
     baseXP: 16,
     emoji: '👁️',
+    skillPool: ['arcane_mind_spike', 'arcane_blast', 'arcane_reality_warp', 'arcane_mana_burn', 'arcane_nullify'],
 };
 
 // =====================

@@ -1066,3 +1066,126 @@ FullKanban.tsx + SidebarQuests.tsx:
 Files: BattleView.tsx, combat.css, useResourceRegen.ts,
 FullKanban.tsx, SidebarQuests.tsx
 ```
+
+---
+
+## 2026-01-30 - Phase 4C: Monster Skill Pools
+
+**Focus:** Implementing monster skill system so monsters use skills with effects instead of basic attacks
+
+### Completed:
+
+#### Interface Updates
+- ✅ Extended `MonsterSkill` interface with `category`, `useCondition`, `selfCure`, `lifesteal` fields
+
+#### New Data Files
+- ✅ Created `src/data/monsterSkills.ts` with 41 monster skills across 5 affinity pools:
+  - General Physical (19): Bite, Claw, Slam, Rend, Maul, Howl, etc.
+  - Dark (6): Shadow Strike, Life Drain, Curse, Fear
+  - Earth (5): Stone Throw, Tremor, Rock Shield, Boulder Slam
+  - Fire (5): Flame Burst, Fire Breath, Inferno
+  - Arcane (6): Arcane Blast, Mind Spike, Dispel
+- ✅ Added helper functions: `getMonsterSkillsFromPool`, `selectSkillsForTier`, `selectMonsterSkillAI`
+
+#### Monster Templates
+- ✅ Added `skillPool` arrays to all 19 monster templates in `monsters.ts`
+
+#### Service Layer Integration
+- ✅ Updated `MonsterService.createMonster()` to populate skills via `selectSkillsForTier()`
+  - Normal: 2 skills, Elite: 3 skills, Boss/Raid: 4 skills
+- ✅ Updated `BattleService.executeMonsterTurn()` with AI skill selection
+- ✅ Created `executeMonsterSkill()` function for damage, status, stage changes, lifesteal, self-cure
+- ✅ Added `executeMonsterBasicAttack()` fallback for skillless monsters
+- ✅ Added `updateMonster()` action to `battleStore.ts`
+
+#### Combat Log Improvements
+- ✅ Fixed status effect messages to use proper display names (e.g., "Bleeding" not "bleed")
+- ✅ Effect messages now log as player-perspective entries (no "Enemy used" prefix)
+
+#### Base Attack Name Conflicts Fixed
+- ✅ Warrior: "Slash" → "Strike"
+- ✅ Paladin: "Holy Strike" → "Righteous Blow"
+- ✅ Rogue: "Backstab" → "Quick Stab"
+- ✅ Cleric: "Smite" → "Divine Strike"
+
+### Files Changed:
+
+**New:**
+- `src/data/monsterSkills.ts` - 41 monster skill definitions
+
+**Modified:**
+- `src/models/Skill.ts` - MonsterSkill interface extensions
+- `src/data/monsters.ts` - skillPool arrays for all 19 templates
+- `src/services/MonsterService.ts` - Skill assignment in createMonster()
+- `src/services/BattleService.ts` - Monster skill AI and execution
+- `src/store/battleStore.ts` - updateMonster action
+- `src/config/combatConfig.ts` - Renamed attack names
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Monsters using named skills appropriately
+- ✅ Status effects applied and logged correctly
+- ✅ Combat log reads naturally
+
+### Deferred:
+- Tier damage scaling (+10/15/20%) code commented out in `monsterSkills.ts` for post-deployment evaluation
+
+---
+
+## Next Session Prompt
+
+```
+Phase 4C (Monster Skill Pools) COMPLETE.
+
+What was done:
+- 41 monster skills across 5 affinity pools
+- All 19 monster templates have skillPool arrays
+- Monster AI selects skills based on weight and conditions
+- Skills execute with damage, status effects, stage changes, lifesteal, self-cure
+- Fixed combat log messaging
+- Fixed base attack name conflicts with player skills
+
+Ready for next feature or Phase 5 completion work.
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 4C - implement monster skill pools
+
+Monster Skills (41 total):
+- General Physical (19): Bite, Claw, Slam, Rend, Maul, Howl, etc.
+- Dark (6): Shadow Strike, Life Drain, Curse, Fear
+- Earth (5): Stone Throw, Tremor, Rock Shield
+- Fire (5): Flame Burst, Fire Breath, Inferno
+- Arcane (6): Arcane Blast, Mind Spike, Dispel
+
+Monster Templates:
+- Added skillPool arrays to all 19 templates
+- Skills assigned based on monster affinity
+
+MonsterService:
+- createMonster() assigns 2-4 skills based on tier
+- Normal: 2, Elite: 3, Boss/Raid: 4
+
+BattleService:
+- Monster AI selects skills based on weight and low_hp conditions
+- executeMonsterSkill() handles damage, status, stages, lifesteal, self-cure
+- Fallback to basic attack for skillless monsters
+
+Combat Log:
+- Fixed status messages (e.g., "Bleeding" not "bleed")
+- Effect messages no longer prefixed with "Enemy used"
+
+Base Attack Names (conflict fix):
+- Warrior: Slash → Strike
+- Paladin: Holy Strike → Righteous Blow
+- Rogue: Backstab → Quick Stab
+- Cleric: Smite → Divine Strike
+
+Files: monsterSkills.ts, Skill.ts, monsters.ts, MonsterService.ts,
+BattleService.ts, battleStore.ts, combatConfig.ts
+```

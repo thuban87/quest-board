@@ -15,6 +15,7 @@ import {
 } from '../models/Monster';
 import { MONSTER_TEMPLATES, getMonsterTemplate } from '../data/monsters';
 import { MonsterTier, MONSTER_TIER_CONFIG, BASE_MONSTER_POWER, getMonsterPowerMultiplier } from '../config/combatConfig';
+import { selectSkillsForTier } from '../data/monsterSkills';
 
 // =====================
 // CONSTANTS
@@ -126,8 +127,8 @@ export function createMonster(
         spriteId: template.spriteId,
         tint: prefixConfig.tint,
 
-        // Phase 5: Skills System (empty defaults - populated by SkillService)
-        skills: [],
+        // Phase 4C: Skills System - select skills from pool based on tier
+        skills: selectSkillsForTier(template.skillPool ?? [], tier),
         battleState: {
             statStages: { atk: 0, def: 0, speed: 0 },
             statusEffects: [],

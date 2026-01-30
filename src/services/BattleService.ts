@@ -26,9 +26,13 @@ import {
     ELITE_OVERWORLD_CHANCE,
     ELITE_NAME_PREFIXES,
     SPEED_BASE,
+    getStageMultiplier,
 } from '../config/combatConfig';
 import { checkLevelUp, LevelUpResult } from './XPSystem';
 import { Character } from '../models/Character';
+import { selectMonsterSkillAI } from '../data/monsterSkills';
+import { MonsterSkill } from '../models/Skill';
+import { getStatusDisplayName } from '../models/StatusEffect';
 
 // =====================
 // SAVE CALLBACK (set by main.ts)
@@ -496,7 +500,8 @@ function executePlayerRetreat(): void {
 // =====================
 
 /**
- * Execute the monster's turn (auto-attack)
+ * Execute the monster's turn using skill AI.
+ * Phase 4C: Monsters now use skills instead of basic attacks.
  */
 export function executeMonsterTurn(): void {
     const store = useBattleStore.getState();
@@ -504,11 +509,187 @@ export function executeMonsterTurn(): void {
 
     if (!monster || !playerStats) return;
 
-    // Phase 5: Get stat stages from BattleMonster and BattlePlayer
+    // Phase 4C: Select a skill using AI
+    const selectedSkill = selectMonsterSkillAI(
+        monster.currentHP,
+        monster.maxHP,
+        monster.skills,
+        monster.skillsUsedThisBattle ?? []
+    );
+
+    // If monster has no skills, fall back to basic attack
+    if (!selectedSkill) {
+        executeMonsterBasicAttack();
+        return;
+    }
+
+    // Execute the selected skill
+    executeMonsterSkill(selectedSkill);
+}
+
+/**
+ * Execute a monster skill with full effect handling.
+ * Handles damage, status effects, stage changes, lifesteal, and self-cure.
+ */
+function executeMonsterSkill(skill: MonsterSkill): void {
+    const store = useBattleStore.getState();
+    const { monster, player, playerStats, playerCurrentHP, isPlayerDefending } = store;
+
+    if (!monster || !playerStats || !player) return;
+
+    let damage = 0;
+    let damageResult: DamageResult = 'hit';
+    const logMessages: string[] = [];
+
+    // Calculate damage if skill has power > 0
+    if (skill.power > 0) {
+        // Get stat stages
+        const monsterAtkStage = monster.statStages?.atk ?? 0;
+        const playerDefStage = player.statStages.def ?? 0;
+
+        // Calculate base attack power with skill multiplier
+        const baseAttack = Math.floor(monster.attack * (skill.power / 100));
+
+        // Determine which defense to use based on damage type
+        const playerDef = skill.damageType === 'magic' ? playerStats.magicDefense : playerStats.defense;
+
+        // Calculate damage
+        const result = calculateDamage(
+            baseAttack,
+            monster.critChance,
+            playerDef,
+            playerStats.dodgeChance,
+            playerStats.blockChance,
+            monsterAtkStage,
+            playerDefStage
+        );
+
+        damage = result.damage;
+        damageResult = result.result;
+
+        // Defending halves damage
+        if (isPlayerDefending) {
+            damage = Math.floor(damage * 0.5);
+        }
+
+        // Apply lifesteal if present
+        if (skill.lifesteal && skill.lifesteal > 0 && damage > 0) {
+            const healAmount = Math.floor(damage * skill.lifesteal);
+            const newMonsterHP = Math.min(monster.maxHP, monster.currentHP + healAmount);
+            store.updateMonsterHP(newMonsterHP);
+            logMessages.push(`Drained ${healAmount} HP!`);
+        }
+    }
+
+    // Apply status effect if present and chance succeeds
+    if (skill.statusEffect && Math.random() * 100 < skill.statusEffect.chance) {
+        const effectId = `monster_${skill.id}_${store.turnNumber}_${Date.now()}`;
+        const effect: import('../models/StatusEffect').StatusEffect = {
+            id: effectId,
+            type: skill.statusEffect.type,
+            duration: skill.statusEffect.duration,
+            severity: skill.statusEffect.severity,
+            source: 'monster',
+            sourceSkillId: skill.id,
+        };
+
+        // Add to player's volatile status effects
+        const newEffects = [...player.volatileStatusEffects, effect];
+        store.updatePlayer({ volatileStatusEffects: newEffects });
+        // Use proper past tense for status effect messages
+        const statusName = getStatusDisplayName(skill.statusEffect.type);
+        logMessages.push(`You are now ${statusName}!`);
+    }
+
+    // Apply stage effect if present
+    if (skill.stageEffect) {
+        if (skill.stageEffect.target === 'self') {
+            // Buff monster
+            const newStages = { ...monster.statStages };
+            newStages[skill.stageEffect.stat] = Math.max(-6, Math.min(6,
+                (newStages[skill.stageEffect.stat] ?? 0) + skill.stageEffect.stages
+            ));
+            store.updateMonster({ statStages: newStages });
+            const statName = skill.stageEffect.stat.toUpperCase();
+            const direction = skill.stageEffect.stages > 0 ? 'rose' : 'fell';
+            logMessages.push(`${monster.name}'s ${statName} ${direction}!`);
+        } else {
+            // Debuff player
+            const newStages = { ...player.statStages };
+            newStages[skill.stageEffect.stat] = Math.max(-6, Math.min(6,
+                (newStages[skill.stageEffect.stat] ?? 0) + skill.stageEffect.stages
+            ));
+            store.updatePlayer({ statStages: newStages });
+            const statName = skill.stageEffect.stat.toUpperCase();
+            const direction = skill.stageEffect.stages > 0 ? 'rose' : 'fell';
+            logMessages.push(`Your ${statName} ${direction}!`);
+        }
+    }
+
+    // Self-cure: remove all debuffs from monster
+    if (skill.selfCure) {
+        const currentEffects = monster.statusEffects ?? [];
+        if (currentEffects.length > 0) {
+            store.updateMonster({ statusEffects: [] });
+            logMessages.push(`${monster.name} cured all ailments!`);
+        }
+    }
+
+    // Apply damage to player
+    let newHP = playerCurrentHP;
+    if (damage > 0) {
+        newHP = Math.max(0, playerCurrentHP - damage);
+        store.updatePlayerHP(newHP);
+    }
+
+    // Build log entry - include skill name and damage
+    store.addLogEntry({
+        turn: store.turnNumber,
+        actor: 'monster',
+        action: `${skill.icon} ${skill.name}`,
+        damage: damage > 0 ? damage : undefined,
+        result: damageResult,
+        newHP: damage > 0 ? newHP : undefined,
+    });
+
+    // Log additional effects as separate entries (no "Enemy used" prefix)
+    // Use 'player' actor since these are descriptions of what happened TO the player
+    for (const msg of logMessages) {
+        store.addLogEntry({
+            turn: store.turnNumber,
+            actor: 'player', // Shows without "Enemy used" prefix
+            action: msg,
+            result: 'hit',
+        });
+    }
+
+    store.advanceState('ANIMATING_ENEMY');
+
+    // After animation, check outcome and advance turn
+    setTimeout(() => {
+        const currentStore = useBattleStore.getState();
+        if (currentStore.playerCurrentHP <= 0) {
+            handleDefeat();
+        } else {
+            // Next turn
+            currentStore.incrementTurn();
+            currentStore.advanceState('PLAYER_INPUT');
+        }
+    }, 500);
+}
+
+/**
+ * Fallback basic attack when monster has no skills.
+ */
+function executeMonsterBasicAttack(): void {
+    const store = useBattleStore.getState();
+    const { monster, player, playerStats, playerCurrentHP, isPlayerDefending } = store;
+
+    if (!monster || !playerStats) return;
+
     const monsterAtkStage = monster.statStages?.atk ?? 0;
     const playerDefStage = player?.statStages.def ?? 0;
 
-    // Monster always attacks
     const damageResult = calculateDamage(
         monster.attack,
         monster.critChance,
@@ -521,7 +702,6 @@ export function executeMonsterTurn(): void {
 
     let damage = damageResult.damage;
 
-    // Defending halves damage
     if (isPlayerDefending) {
         damage = Math.floor(damage * 0.5);
     }
@@ -540,13 +720,11 @@ export function executeMonsterTurn(): void {
 
     store.advanceState('ANIMATING_ENEMY');
 
-    // After animation, check outcome and advance turn
     setTimeout(() => {
         const currentStore = useBattleStore.getState();
         if (currentStore.playerCurrentHP <= 0) {
             handleDefeat();
         } else {
-            // Next turn
             currentStore.incrementTurn();
             currentStore.advanceState('PLAYER_INPUT');
         }

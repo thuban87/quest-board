@@ -1,5 +1,8 @@
 # Quest Board - Monster Skills Planning
 
+> ✅ **IMPLEMENTED** - 2026-01-30  
+> See `src/data/monsterSkills.ts` for final implementation
+
 **Comprehensive skill pools for all 19 monster templates.**
 
 Design Philosophy: Pokemon Gen 1 style - simple, focused, one job per skill (mostly).
