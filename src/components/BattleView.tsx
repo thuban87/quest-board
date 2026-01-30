@@ -32,6 +32,48 @@ interface BattleViewProps {
 }
 
 // =====================
+// STAGE INDICATORS
+// =====================
+
+interface StageIndicatorsProps {
+    stages: { atk: number; def: number; speed: number };
+    compact?: boolean;
+}
+
+/**
+ * Display stat stage modifiers (+/- indicators)
+ */
+function StageIndicators({ stages, compact = false }: StageIndicatorsProps) {
+    const indicators: { stat: string; value: number; icon: string }[] = [];
+
+    if (stages.atk !== 0) {
+        indicators.push({ stat: 'ATK', value: stages.atk, icon: '⚔️' });
+    }
+    if (stages.def !== 0) {
+        indicators.push({ stat: 'DEF', value: stages.def, icon: '🛡️' });
+    }
+    if (stages.speed !== 0) {
+        indicators.push({ stat: 'SPD', value: stages.speed, icon: '⚡' });
+    }
+
+    if (indicators.length === 0) return null;
+
+    return (
+        <div className={`qb-stage-indicators ${compact ? 'qb-stage-compact' : ''}`}>
+            {indicators.map(({ stat, value, icon }) => (
+                <span
+                    key={stat}
+                    className={`qb-stage-indicator ${value > 0 ? 'qb-stage-buff' : 'qb-stage-debuff'}`}
+                    title={`${stat} ${value > 0 ? '+' : ''}${value} stages`}
+                >
+                    {icon} {value > 0 ? '+' : ''}{value}
+                </span>
+            ))}
+        </div>
+    );
+}
+
+// =====================
 // SUB-COMPONENTS
 // =====================
 
@@ -47,6 +89,7 @@ function MonsterDisplay({ spritePath }: { spritePath?: string }) {
     if (!monster) return null;
 
     const hpPercent = Math.max(0, (monsterHP / monsterMaxHP) * 100);
+    const monsterStages = monster.statStages ?? { atk: 0, def: 0, speed: 0 };
 
     // Determine tint class based on monster name prefix
     let tintClass = '';
@@ -76,6 +119,7 @@ function MonsterDisplay({ spritePath }: { spritePath?: string }) {
                 />
                 <span className="qb-hp-text">{monsterHP} / {monsterMaxHP}</span>
             </div>
+            <StageIndicators stages={monsterStages} compact />
             <div className={`qb-monster-sprite ${tintClass} ${animClass}`}>
                 {spritePath ? (
                     <img
@@ -101,6 +145,7 @@ function PlayerDisplay({ spritePath }: { spritePath?: string }) {
     const playerStats = useBattleStore(state => state.playerStats);
     const playerHP = useBattleStore(state => state.playerCurrentHP);
     const playerMana = useBattleStore(state => state.playerCurrentMana);
+    const player = useBattleStore(state => state.player);
     const isDefending = useBattleStore(state => state.isPlayerDefending);
     const combatState = useBattleStore(state => state.state);
     const character = useCharacterStore(state => state.character);
@@ -110,6 +155,7 @@ function PlayerDisplay({ spritePath }: { spritePath?: string }) {
     const hpPercent = Math.max(0, (playerHP / playerStats.maxHP) * 100);
     const manaPercent = Math.max(0, (playerMana / playerStats.maxMana) * 100);
     const classInfo = CLASS_INFO[character.class];
+    const playerStages = player?.statStages ?? { atk: 0, def: 0, speed: 0 };
 
     // Animation class based on state
     const animClass = combatState === 'ANIMATING_PLAYER' ? 'qb-player-attacking' : '';
@@ -119,6 +165,7 @@ function PlayerDisplay({ spritePath }: { spritePath?: string }) {
             <div className="qb-player-info">
                 <span className="qb-player-name">{character.name}</span>
                 <span className="qb-player-class">Lv. {character.level} {classInfo.name}</span>
+                <StageIndicators stages={playerStages} />
             </div>
             <div className={`qb-player-sprite ${animClass}`}>
                 {spritePath ? (

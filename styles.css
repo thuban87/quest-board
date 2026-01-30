@@ -5471,6 +5471,42 @@
   color: white;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
+/* Stage Indicators (Stat Buffs/Debuffs) */
+.qb-stage-indicators {
+  display: flex;
+  gap: var(--qb-spacing-sm);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: var(--qb-spacing-xs);
+}
+.qb-stage-indicators.qb-stage-compact {
+  gap: var(--qb-spacing-xs);
+  margin-top: 4px;
+}
+.qb-stage-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  animation: qb-fade-in 0.3s ease;
+}
+.qb-stage-indicators.qb-stage-compact .qb-stage-indicator {
+  padding: 1px 6px;
+  font-size: 0.7rem;
+}
+.qb-stage-buff {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+}
+.qb-stage-debuff {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+  border: 1px solid rgba(244, 67, 54, 0.4);
+}
 /* Combat Log - Top Left */
 .qb-combat-log-container {
   grid-area: log;

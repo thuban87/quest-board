@@ -971,3 +971,98 @@ Files: StatusEffectService.ts, SkillService.ts, BattleService.ts,
 battleStore.ts, BattleView.tsx
 ```
 
+---
+
+## 2026-01-30 (Morning) - Stage Indicators + HP/Mana Regen
+
+**Focus:** Adding stage indicators to battle UI and wiring HP/Mana regeneration on task completion
+
+### Completed:
+
+#### BattleView.tsx Updates (Stage Indicators)
+- ✅ Created `StageIndicators` component showing ATK/DEF/SPD buffs/debuffs
+- ✅ Added to `MonsterDisplay` - shows below HP bar (compact mode)
+- ✅ Added to `PlayerDisplay` - shows under character info at top
+- ✅ Color-coded: Green for buffs (+), Red for debuffs (-)
+- ✅ Icons: ⚔️ ATK, 🛡️ DEF, ⚡ SPD
+
+#### combat.css Updates (Stage Indicator Styling)
+- ✅ Added `.qb-stage-indicators` container styles
+- ✅ Added `.qb-stage-indicator` chip styles
+- ✅ Added `.qb-stage-buff` (green) and `.qb-stage-debuff` (red) classes
+- ✅ Added `.qb-stage-compact` for monster display
+
+#### useResourceRegen Hook Fix
+- ✅ Hook was created but never mounted - added to both FullKanban and SidebarQuests
+- ✅ Added `onSave` callback parameter to persist changes to disk
+- ✅ Added global `lastRegenTaskCount` tracker to prevent double-firing
+  - Both views can be open simultaneously - needed mutex to avoid 2x regen
+
+#### FullKanban.tsx + SidebarQuests.tsx Updates
+- ✅ Import `useResourceRegen` hook
+- ✅ Mount hook with `{ onSave: handleSaveCharacter }`
+
+### Files Changed:
+
+**Components:**
+- `src/components/BattleView.tsx` - StageIndicators component, wired to player/monster displays
+- `src/components/FullKanban.tsx` - Mount useResourceRegen hook
+- `src/components/SidebarQuests.tsx` - Mount useResourceRegen hook
+
+**Hooks:**
+- `src/hooks/useResourceRegen.ts` - Added onSave callback, global mutex for double-fire prevention
+
+**Styles:**
+- `src/styles/combat.css` - Stage indicator CSS classes
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Stage indicators visible on player/monster when buffs/debuffs applied
+- ✅ HP/Mana regen works from both Kanban and Sidebar views
+- ✅ Only triggers once per task (not double-counted)
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Phase 4A/4B (Player Skills) confirmed working.
+
+Ready for Phase 4C: Monster Skill Pools
+- Create monster skill definitions in src/data/monsterSkills.ts
+- Update MonsterService to assign skills during monster creation
+- Wire monster skill execution in BattleService
+
+See docs/development/Monster Skills Planning.md for detailed spec.
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): add stage indicators + wire HP/Mana regen on task completion
+
+BattleView.tsx:
+- Add StageIndicators component (⚔️ ATK / 🛡️ DEF / ⚡ SPD)
+- Show on player (under character info) and monster (under HP bar)
+- Color-coded: green for buffs, red for debuffs
+
+combat.css:
+- Add .qb-stage-indicators, .qb-stage-buff, .qb-stage-debuff styles
+
+useResourceRegen.ts:
+- Add onSave callback to persist changes to data.json
+- Add global mutex to prevent double-fire from both Kanban and Sidebar
+
+FullKanban.tsx + SidebarQuests.tsx:
+- Mount useResourceRegen hook with save callback
+- 7% HP/Mana restored per task completion
+
+Files: BattleView.tsx, combat.css, useResourceRegen.ts,
+FullKanban.tsx, SidebarQuests.tsx
+```

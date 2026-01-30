@@ -27,6 +27,7 @@ import { useSaveCharacter } from '../hooks/useSaveCharacter';
 import { useDndQuests } from '../hooks/useDndQuests';
 import { useCollapsedItems } from '../hooks/useCollapsedItems';
 import { useXPAward } from '../hooks/useXPAward';
+import { useResourceRegen } from '../hooks/useResourceRegen';
 import { useFilteredQuests, collectAllCategories, collectAllTags, collectAllTypes } from '../hooks/useFilteredQuests';
 import { Droppable, SortableCard } from './DnDWrappers';
 import { DndContext, closestCenter } from '@dnd-kit/core';
@@ -95,6 +96,9 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         },
         onSaveCharacter: handleSaveCharacter,
     });
+
+    // Resource regen hook - restores HP/Mana on task completion (7% per task)
+    useResourceRegen({ onSave: handleSaveCharacter });
 
     // Collapsed columns state
     const [collapsedColumns, setCollapsedColumns] = useState<Record<QuestStatus, boolean>>({
