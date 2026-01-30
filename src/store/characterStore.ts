@@ -289,6 +289,13 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
 
             // Phase 4: Activity Tracking
             activityHistory: [],
+
+            // Phase 5: Skills System
+            skills: {
+                unlocked: [],
+                equipped: [],
+            },
+            persistentStatusEffects: [],
         };
 
         set({ character });

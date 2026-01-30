@@ -28,19 +28,23 @@ This guide provides a comprehensive, step-by-step plan for adding the Pokemon Ge
 > Complete ALL items in this checklist before beginning Phase 1.
 > Missing items will cause cascading problems later.
 
-### Interface Updates Required
+### Interface Updates Required ✅ (Completed 2026-01-29)
 
-| File | Change | Notes |
-|------|--------|-------|
-| `src/models/Character.ts` | Add `skills` field | `{ unlocked: string[], equipped: string[] }` - NO `usedThisBattle` here! |
-| `src/models/Character.ts` | Add `persistentStatusEffects` field | Status effects that persist between battles |
-| `src/models/Character.ts` | Bump `CHARACTER_SCHEMA_VERSION` | 4 → 5 |
-| `src/models/Monster.ts` | Add `skills: MonsterSkill[]` field | Currently missing from interface |
-| `src/models/Monster.ts` | Add `battleState` field | For stages/status during combat (monsters only) |
-| `src/models/Monster.ts` | Add `skillPool` to `MonsterTemplate` | Array of possible skills |
-| `src/store/battleStore.ts` | Add `BattlePlayer` interface | Mirrors `BattleMonster`, holds volatile player state |
-| `src/store/battleStore.ts` | Expand `BattleMonster` interface | Add `statStages`, `statusEffects`, `skills` for display |
-| `CLASS_INFO` in Character.ts | Add `inherentType: ElementalType` field | Per-class elemental type |
+| File | Change | Status | Notes |
+|------|--------|--------|-------|
+| `src/models/Character.ts` | Add `skills` field | ✅ | `{ unlocked: string[], equipped: string[] }` - NO `usedThisBattle` here! |
+| `src/models/Character.ts` | Add `persistentStatusEffects` field | ✅ | Status effects that persist between battles |
+| `src/models/Character.ts` | Bump `CHARACTER_SCHEMA_VERSION` | ✅ | 4 → 5 |
+| `src/models/Monster.ts` | Add `skills: MonsterSkill[]` field | ✅ | Added to Monster interface |
+| `src/models/Monster.ts` | Add `battleState` field | ✅ | For stages/status during combat (monsters only) |
+| `src/models/Monster.ts` | Add `skillPool` to `MonsterTemplate` | ✅ | Array of possible skills |
+| `src/store/battleStore.ts` | Add `BattlePlayer` interface | ✅ | Mirrors `BattleMonster`, holds volatile player state |
+| `src/store/battleStore.ts` | Expand `BattleMonster` interface | ✅ | Add `statStages`, `statusEffects`, `skills` for display |
+| `CLASS_INFO` in Character.ts | Add `inherentType: ElementalType` field | ✅ | Per-class elemental type |
+
+**New Type Definition Files Created:**
+- `src/models/Skill.ts` - `ElementalType`, `SkillCategory`, `Skill`, `MonsterSkill`
+- `src/models/StatusEffect.ts` - `StatusEffectType`, `StatusEffect`
 
 ### Already Completed (Phase 4 Session 2026-01-29)
 
@@ -57,18 +61,18 @@ This guide provides a comprehensive, step-by-step plan for adding the Pokemon Ge
 
 **See:** [[Phase 4 Implementation Session Log#2026-01-29 (Afternoon) - Battle Actions Expansion]]
 
-### Testing Strategy
+### Testing Strategy ✅ (Completed 2026-01-29)
 
 > [!IMPORTANT]
 > **Confirmed approach:** Unit tests written **alongside** each service, followed by manual testing.
 > This follows the TDD pattern established in Phase 4 (power-up triggers, achievements).
 
-**Test file structure:**
+**Test file structure:** See [[Skills Test Plan]] for comprehensive test specifications.
 - `test/skill-service.test.ts` - Skill execution, validation, mana costs
 - `test/status-effects.test.ts` - Apply/tick/cure logic
 - `test/combat-stages.test.ts` - Stage multipliers, type effectiveness
 
-### Implementation Approach
+### Implementation Approach ✅ (Confirmed 2026-01-29)
 
 > [!IMPORTANT]
 > **Confirmed:** Implement **character skills first** to find pain points.

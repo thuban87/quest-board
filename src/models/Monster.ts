@@ -6,6 +6,8 @@
  */
 
 import { MonsterTier } from '../config/combatConfig';
+import { MonsterSkill, ElementalType } from './Skill';
+import { StatusEffect } from './StatusEffect';
 
 // =====================
 // MONSTER CATEGORIES
@@ -139,6 +141,10 @@ export interface MonsterTemplate {
     // Loot configuration (optional)
     uniqueDropId?: string; // ID from uniqueItems.ts for boss drops
     lootTierBonus?: number; // +/- tier for loot rolls
+
+    // Skills System (Phase 5)
+    skillPool?: string[]; // IDs of skills this monster can use
+    inherentType?: ElementalType; // Elemental type for damage calculations
 }
 
 // =====================
@@ -181,6 +187,17 @@ export interface Monster {
     emoji: string;
     spriteId?: string;
     tint: string; // From prefix
+
+    // Skills System (Phase 5)
+    skills: MonsterSkill[]; // Skills this monster has equipped
+    battleState: {
+        /** Stat stage modifiers (-6 to +6) */
+        statStages: { atk: number; def: number; speed: number };
+        /** Active status effects */
+        statusEffects: StatusEffect[];
+        /** Skills already used this battle (for once-per-battle skills) */
+        skillsUsedThisBattle: string[];
+    };
 }
 
 // =====================

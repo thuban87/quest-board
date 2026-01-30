@@ -125,6 +125,14 @@ export function createMonster(
         emoji: template.emoji,
         spriteId: template.spriteId,
         tint: prefixConfig.tint,
+
+        // Phase 5: Skills System (empty defaults - populated by SkillService)
+        skills: [],
+        battleState: {
+            statStages: { atk: 0, def: 0, speed: 0 },
+            statusEffects: [],
+            skillsUsedThisBattle: [],
+        },
     };
 }
 

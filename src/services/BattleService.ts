@@ -121,6 +121,12 @@ export function monsterToBattleMonster(monster: Monster): BattleMonster {
         emoji: monster.emoji,
         goldReward: monster.goldReward,
         xpReward: monster.xpReward,
+
+        // Phase 5: Skills System
+        skills: monster.skills ?? [],
+        statStages: monster.battleState?.statStages ?? { atk: 0, def: 0, speed: 0 },
+        statusEffects: monster.battleState?.statusEffects ?? [],
+        skillsUsedThisBattle: monster.battleState?.skillsUsedThisBattle ?? [],
     };
 }
 

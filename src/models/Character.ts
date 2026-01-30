@@ -138,6 +138,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'wisdom', admin: 'wisdom',
         },
+        inherentType: 'Physical',
     },
     paladin: {
         id: 'paladin',
@@ -159,6 +160,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'wisdom', admin: 'wisdom',
         },
+        inherentType: 'Light',
     },
     technomancer: {
         id: 'technomancer',
@@ -180,6 +182,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'wisdom', admin: 'wisdom',
         },
+        inherentType: 'Lightning',
     },
     scholar: {
         id: 'scholar',
@@ -201,6 +204,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'wisdom', admin: 'wisdom',
         },
+        inherentType: 'Arcane',
     },
     rogue: {
         id: 'rogue',
@@ -222,6 +226,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'intelligence', admin: 'intelligence',
         },
+        inherentType: 'Dark',
     },
     cleric: {
         id: 'cleric',
@@ -243,6 +248,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'wisdom', admin: 'wisdom',
         },
+        inherentType: 'Light',
     },
     bard: {
         id: 'bard',
@@ -264,6 +270,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'charisma', admin: 'charisma',
         },
+        inherentType: 'Arcane',
     },
 };
 
@@ -612,6 +619,13 @@ export function createCharacter(
 
         // Phase 4: Activity Tracking
         activityHistory: [],
+
+        // Phase 5: Skills System
+        skills: {
+            unlocked: [],
+            equipped: [],
+        },
+        persistentStatusEffects: [],
     };
 }
 
