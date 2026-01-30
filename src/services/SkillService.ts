@@ -511,22 +511,23 @@ export function validateSkillUse(
 // SKILL LOOKUP HELPERS
 // =====================
 
-// Lazy-loaded skill definitions cache
-let _skillDefinitionsCache: Map<string, Skill> | null = null;
+// Re-export skill lookup from data module
+import { getSkillById as lookupSkillById } from '../data/skills';
 
 /**
  * Get skill by ID from definitions
- * Uses lazy loading for performance
+ * @param skillId - The skill ID to look up
+ * @returns The skill definition or undefined if not found
  */
 export function getSkillById(skillId: string): Skill | undefined {
-    // For now, return undefined - will be wired up when SKILL_DEFINITIONS is created
-    // TODO: Import from src/data/skills.ts when available
-    return undefined;
+    return lookupSkillById(skillId);
 }
 
 /**
  * Clear the skill definitions cache (for testing)
+ * Note: The actual cache is in src/data/skills.ts - this is a no-op for compatibility
  */
 export function clearSkillCache(): void {
-    _skillDefinitionsCache = null;
+    // Cache is managed by src/data/skills.ts
 }
+
