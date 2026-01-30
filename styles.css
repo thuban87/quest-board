@@ -943,6 +943,283 @@
   margin-top: var(--qb-spacing-md);
 }
 /* ===========================================
+   Skill Loadout Modal
+   =========================================== */
+.qb-skill-loadout-modal {
+  min-width: 500px;
+}
+.qb-skill-loadout-header {
+  padding: var(--qb-spacing-md) var(--qb-spacing-lg);
+  border-bottom: 1px solid var(--qb-card-border);
+}
+.qb-skill-loadout-header h2 {
+  margin: 0 0 var(--qb-spacing-xs) 0;
+  font-size: 1.5rem;
+}
+.qb-skill-loadout-level {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.qb-skill-loadout-content {
+  padding: var(--qb-spacing-md) var(--qb-spacing-lg);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+/* Equipped Skills Section */
+.qb-equipped-section {
+  margin-bottom: var(--qb-spacing-lg);
+}
+.qb-equipped-section h3 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+.qb-equipped-slots {
+  display: flex;
+  gap: var(--qb-spacing-sm);
+  flex-wrap: wrap;
+}
+.qb-skill-slot {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  border: 2px dashed var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-secondary);
+  min-width: 140px;
+  position: relative;
+}
+.qb-skill-slot.filled {
+  border-style: solid;
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-success-rgb, rgba(0, 200, 100, 0.1));
+}
+.qb-skill-slot.empty {
+  opacity: 0.6;
+}
+.qb-slot-icon {
+  font-size: 1.25rem;
+}
+.qb-slot-name {
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+.qb-slot-cost {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.qb-slot-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-error);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qb-slot-remove:hover {
+  background: #ff4444;
+}
+/* Action Buttons Row */
+.qb-loadout-actions {
+  display: flex;
+  gap: var(--qb-spacing-md);
+  margin-bottom: var(--qb-spacing-lg);
+}
+.qb-loadout-action-btn {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all var(--qb-transition-fast);
+}
+.qb-loadout-action-btn:hover {
+  background: var(--background-modifier-hover);
+}
+.qb-loadout-action-btn.qb-btn-danger {
+  border-color: var(--text-error);
+  color: var(--text-error);
+}
+.qb-loadout-action-btn.qb-btn-danger:hover {
+  background: rgba(255, 100, 100, 0.1);
+}
+/* Available Skills Grid */
+.qb-available-section {
+  margin-bottom: var(--qb-spacing-lg);
+}
+.qb-available-section h3 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+.qb-skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--qb-spacing-sm);
+}
+.qb-skill-card {
+  display: flex;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-sm);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-secondary);
+  cursor: pointer;
+  transition: all var(--qb-transition-fast);
+}
+.qb-skill-card:hover {
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+}
+.qb-skill-card.equipped {
+  border-color: var(--interactive-accent);
+  background: rgba(var(--interactive-accent-rgb), 0.1);
+}
+.qb-skill-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.qb-skill-card.locked:hover {
+  border-color: var(--qb-card-border);
+  background: var(--background-secondary);
+}
+.qb-skill-card.universal {
+  border-style: dashed;
+}
+.qb-skill-card.always-equipped {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: gold;
+  cursor: default;
+}
+.qb-skill-card-icon {
+  font-size: 1.5rem;
+  min-width: 36px;
+  text-align: center;
+}
+.qb-skill-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.qb-skill-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+}
+.qb-skill-card-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.qb-skill-equipped-badge {
+  color: var(--interactive-accent);
+  font-weight: bold;
+}
+.qb-skill-always-badge {
+  font-size: 0.7rem;
+  background: gold;
+  color: #1a1a1a;
+  padding: 2px 6px;
+  border-radius: var(--qb-radius-sm);
+  font-weight: 600;
+}
+.qb-skill-card-details {
+  display: flex;
+  gap: var(--qb-spacing-sm);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.qb-skill-card-level {
+  color: var(--text-faint);
+}
+.qb-skill-card-cost {
+  color: var(--interactive-accent);
+}
+.qb-skill-card-locked {
+  color: var(--text-error);
+}
+.qb-skill-card-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+/* Universal Section */
+.qb-universal-section {
+  margin-top: var(--qb-spacing-lg);
+  padding-top: var(--qb-spacing-md);
+  border-top: 1px solid var(--qb-card-border);
+}
+.qb-universal-section h3 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+.qb-universal-note {
+  font-size: 0.85rem;
+  color: var(--text-faint);
+  font-style: italic;
+  margin-bottom: var(--qb-spacing-sm);
+}
+/* Footer */
+.qb-skill-loadout-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md) var(--qb-spacing-lg);
+  border-top: 1px solid var(--qb-card-border);
+}
+.qb-skill-loadout-btn {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-lg);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.qb-skill-loadout-btn.qb-btn-cancel {
+  background: transparent;
+  color: var(--text-muted);
+}
+.qb-skill-loadout-btn.qb-btn-cancel:hover {
+  background: var(--background-secondary);
+}
+.qb-skill-loadout-btn.qb-btn-save {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: white;
+}
+.qb-skill-loadout-btn.qb-btn-save:hover {
+  opacity: 0.9;
+}
+/* Skills button in character sheet */
+.qb-skills-btn-main {
+  width: 100%;
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  margin-top: var(--qb-spacing-sm);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-align: center;
+  transition: all var(--qb-transition-fast);
+}
+.qb-skills-btn-main:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+/* ===========================================
    Task List on Quest Cards
    =========================================== */
 .qb-card-tasks {

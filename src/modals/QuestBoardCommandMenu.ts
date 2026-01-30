@@ -71,6 +71,7 @@ export class QuestBoardCommandMenu extends Modal {
                 commands: [
                     { label: 'Edit Character', icon: '👤', commandId: 'quest-board:create-edit-character', description: 'Modify your hero' },
                     { label: 'Inventory', icon: '🎒', commandId: 'quest-board:open-inventory', description: 'Manage gear' },
+                    { label: 'Skills', icon: '⚔️', commandId: 'quest-board:manage-skills', description: 'Equip skills' },
                     { label: 'Achievements', icon: '🏆', commandId: 'quest-board:view-achievements', description: 'Trophy case' },
                 ]
             },

@@ -38,6 +38,7 @@ import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { showInventoryModal } from '../modals/InventoryModal';
 import { showBlacksmithModal } from '../modals/BlacksmithModal';
+import { showSkillLoadoutModal } from '../modals/SkillLoadoutModal';
 import { ScrivenersQuillModal } from '../modals/ScrivenersQuillModal';
 import { Quest as QuestModel } from '../models/Quest';
 
@@ -379,6 +380,9 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                         })}
                         onOpenBlacksmith={() => showBlacksmithModal(app, {
                             onSmelt: handleSaveCharacter
+                        })}
+                        onOpenSkillLoadout={() => showSkillLoadoutModal(app, {
+                            onSave: handleSaveCharacter
                         })}
                         spriteFolder={plugin.settings.spriteFolder}
                         spriteResourcePath={spriteResourcePath}

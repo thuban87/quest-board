@@ -3898,28 +3898,40 @@ Ordered by dependencies. Each phase builds on the previous.
 
 ---
 
-### Phase 6: Character Sheet Integration
+### Phase 6: Character Sheet Integration ✅ COMPLETE
 
 **Goal:** Add skill management to character sheet
 
 **Tasks:**
-1. [ ] Add "Skills" tab to `CharacterSheet.tsx`
-2. [ ] Create `SkillLoadoutModal.tsx`
-3. [ ] Show unlocked skills with descriptions
-4. [ ] Show next skill preview (unlock at level X)
-5. [ ] Allow skill loadout editing (drag-drop or click)
-6. [ ] Save loadout to character data
+1. [x] Add "⚔️ Manage Skills" button to `CharacterSheet.tsx`
+2. [x] Create `SkillLoadoutModal.ts` (Obsidian Modal, not React)
+3. [x] Show unlocked skills with descriptions
+4. [x] Show locked skills with unlock level preview
+5. [x] Allow skill loadout editing (click to equip/unequip)
+6. [x] Auto-Fill and Clear All buttons
+7. [x] Save loadout to character data via `updateSkillLoadout()`
+8. [x] Register `manage-skills` command in main.ts
+9. [x] Add Skills to QuestBoardCommandMenu Character category
+10. [x] Update BattleView to use `character.skills.equipped`
 
 **Files Changed:**
-- `src/components/CharacterSheet.tsx`
-- `src/components/SkillLoadoutModal.tsx` (NEW)
-- `src/styles/character.css`
+- `src/components/CharacterSheet.tsx` - Added `onOpenSkillLoadout` prop, "Manage Skills" button
+- `src/modals/SkillLoadoutModal.ts` (NEW) - Full skill management modal
+- `src/store/characterStore.ts` - Added `updateSkillLoadout()` action
+- `src/components/BattleView.tsx` - Use equipped skills in submenu
+- `src/components/SidebarQuests.tsx` - Wire modal to CharacterSheet
+- `src/modals/QuestBoardCommandMenu.ts` - Add Skills to Character category
+- `main.ts` - Register `manage-skills` command
+- `src/styles/modals.css` - Skill loadout modal CSS
 
 **Success Criteria:**
-- Skills tab shows all unlocked skills
-- Loadout editor allows equipping up to 5 skills
-- Changes save correctly
-- Next skill preview accurate
+- ✅ "Manage Skills" button in Character Sheet
+- ✅ Skill Loadout Modal shows 5 equipped slots
+- ✅ Modal shows all class skills (locked/unlocked)
+- ✅ Click to equip/unequip skills
+- ✅ Auto-Fill fills with highest-level unlocked skills
+- ✅ Changes save correctly via store
+- ✅ Battle View shows only equipped skills
 
 ---
 

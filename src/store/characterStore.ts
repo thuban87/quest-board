@@ -172,6 +172,11 @@ interface CharacterActions {
 
     /** Log an activity event (quest completion, bounty, dungeon, etc.) */
     logActivity: (event: Omit<ActivityEvent, 'timestamp'>) => void;
+
+    // ========== Phase 6: Skills System ==========
+
+    /** Update equipped skill loadout (includes Meditate + up to 5 class skills) */
+    updateSkillLoadout: (equippedSkillIds: string[]) => void;
 }
 
 type CharacterStore = CharacterState & CharacterActions;
@@ -1014,6 +1019,24 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             character: {
                 ...character,
                 activityHistory: newHistory,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    // ========== Phase 6: Skills System ==========
+
+    updateSkillLoadout: (equippedSkillIds: string[]) => {
+        const { character } = get();
+        if (!character) return;
+
+        set({
+            character: {
+                ...character,
+                skills: {
+                    ...character.skills,
+                    equipped: equippedSkillIds,
+                },
                 lastModified: new Date().toISOString(),
             },
         });

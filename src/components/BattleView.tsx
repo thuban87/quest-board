@@ -13,7 +13,7 @@ import { CLASS_INFO } from '../models/Character';
 import { CONSUMABLES, ConsumableEffect } from '../models/Consumable';
 import { battleService } from '../services/BattleService';
 import { LootDrop } from '../models/Gear';
-import { getUnlockedSkills } from '../data/skills';
+import { getSkillById } from '../data/skills';
 import { Skill } from '../models/Skill';
 import { StatusEffect, getStatusIcon, getStatusDisplayName } from '../models/StatusEffect';
 
@@ -431,13 +431,16 @@ function ActionButtons({ onAction, onItemClick, disabled, isAutoAttacking, onTog
     const playerMana = useBattleStore(state => state.playerCurrentMana);
     const player = useBattleStore(state => state.player);
 
-    // Get unlocked skills for this class/level (exclude Meditate - it has its own button)
-    const unlockedSkills = React.useMemo(() => {
-        if (!character) return [];
-        const skills = getUnlockedSkills(character.class, character.level);
-        // Filter out Meditate (handled by main menu button) and take first 5 class skills
-        return skills.filter(s => s.id !== 'universal_meditate').slice(0, 5);
-    }, [character?.class, character?.level]);
+    // Get equipped skills for battle (exclude Meditate - it has its own button)
+    const equippedSkills = React.useMemo(() => {
+        if (!character?.skills?.equipped) return [];
+        // Get skill data for equipped skill IDs (filter out Meditate)
+        return character.skills.equipped
+            .filter((id: string) => id !== 'universal_meditate')
+            .map((id: string) => getSkillById(id))
+            .filter((s): s is Skill => s !== undefined && s !== null)
+            .slice(0, 5);
+    }, [character?.skills?.equipped]);
 
     // Placeholder handlers
     const handleMeditate = () => {
@@ -466,7 +469,7 @@ function ActionButtons({ onAction, onItemClick, disabled, isAutoAttacking, onTog
     if (currentMenu === 'skills') {
         return (
             <div className={`qb-battle-actions qb-skills-menu ${isMobile ? 'mobile' : ''}`}>
-                {unlockedSkills.map((skill, idx) => {
+                {equippedSkills.map((skill, idx) => {
                     const canUse = canUseSkill(skill) && !isSkillUsedThisBattle(skill);
                     const usedOnce = isSkillUsedThisBattle(skill);
                     return (
@@ -485,7 +488,7 @@ function ActionButtons({ onAction, onItemClick, disabled, isAutoAttacking, onTog
                     );
                 })}
                 {/* Fill empty slots if less than 5 skills */}
-                {Array.from({ length: Math.max(0, 5 - unlockedSkills.length) }).map((_, idx) => (
+                {Array.from({ length: Math.max(0, 5 - equippedSkills.length) }).map((_, idx) => (
                     <button
                         key={`empty-${idx}`}
                         className="qb-action-btn qb-action-skill qb-skill-empty"

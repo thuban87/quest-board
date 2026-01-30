@@ -1321,3 +1321,148 @@ Log Message Fixes:
 Files: BattleView.tsx, BattleService.ts, StatusEffectService.ts, combat.css
 ```
 
+---
+
+## 2026-01-30 - Phase 6: Character Sheet Integration
+
+**Focus:** Implementing the Skill Loadout Modal for skill management from Character Sheet
+
+### Completed:
+
+#### SkillLoadoutModal.ts (NEW)
+- ✅ Created full skill management modal with Obsidian Modal pattern
+- ✅ Equipped Skills section: 5 slots with skill info and remove buttons
+- ✅ Available Skills section: Class skills grid (locked/unlocked with level requirements)
+- ✅ Universal Skills section: Meditate shown with "Always" badge
+- ✅ Action buttons: Auto-Fill (highest-level skills), Clear All
+- ✅ Save/Cancel footer with proper persistence
+- ✅ Skill tooltips with full details (level, mana, type, description)
+
+#### CharacterSheet.tsx Updates
+- ✅ Added `onOpenSkillLoadout` prop to CharacterSheetProps interface
+- ✅ Added "⚔️ Manage Skills" button under Equipment section
+- ✅ Button styled and positioned correctly
+
+#### characterStore.ts Updates
+- ✅ Added `updateSkillLoadout(equippedSkillIds: string[])` to CharacterActions interface
+- ✅ Implemented `updateSkillLoadout()` - updates character.skills.equipped
+
+#### BattleView.tsx Updates
+- ✅ Changed skills submenu to use `character.skills.equipped` instead of `getUnlockedSkills()`
+- ✅ Fixed type guard for `getSkillById()` to handle undefined/null
+- ✅ Removed unused `getUnlockedSkills` import
+
+#### Command Registration
+- ✅ Added `manage-skills` command to main.ts
+- ✅ Added Skills item to QuestBoardCommandMenu Character category
+
+#### SidebarQuests.tsx Updates
+- ✅ Imported `showSkillLoadoutModal`
+- ✅ Wired `onOpenSkillLoadout` prop to CharacterSheet
+
+#### modals.css Updates
+- ✅ Added comprehensive skill loadout modal styles (~240 lines)
+- ✅ Equipped slots, skill cards, action buttons, universal section
+- ✅ "Manage Skills" button styling for Character Sheet
+
+### Files Changed:
+
+**New:**
+- `src/modals/SkillLoadoutModal.ts` - Skill management modal
+
+**Modified:**
+- `src/components/CharacterSheet.tsx` - onOpenSkillLoadout prop, button
+- `src/components/BattleView.tsx` - Use equipped skills in submenu
+- `src/components/SidebarQuests.tsx` - Wire modal to CharacterSheet
+- `src/store/characterStore.ts` - updateSkillLoadout action
+- `src/modals/QuestBoardCommandMenu.ts` - Add Skills to Character category
+- `main.ts` - Register manage-skills command
+- `src/styles/modals.css` - Skill loadout modal CSS
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Skill Loadout Modal opens from Character Sheet
+- ✅ Equip/unequip skills by clicking
+- ✅ Auto-Fill fills with highest-level unlocked skills
+- ✅ Clear All empties all slots
+- ✅ Save persists changes to character data
+- ✅ Battle View shows only equipped skills in submenu
+- ✅ Command Menu shows Skills in Character category
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 6 Complete ✅
+
+Phase 6: Character Sheet Integration is now COMPLETE!
+
+---
+
+## Next Session Prompt
+
+```
+Phase 6 Character Sheet Integration COMPLETE.
+
+What was done this session:
+- Created SkillLoadoutModal.ts with full skill management UI
+- Added "Manage Skills" button to CharacterSheet
+- Added updateSkillLoadout() action to characterStore
+- Updated BattleView to use character.skills.equipped
+- Registered manage-skills command
+- Added Skills to QuestBoardCommandMenu
+
+Ready for Phase 7: Skill Unlocking & Notifications
+- Hook into level-up logic in XPSystem.ts
+- Call SkillService.checkAndUnlockSkills()
+- Show notification for new skills unlocked
+- Auto-equip first skill if < 5 equipped
+
+Key files:
+- docs/development/Skills Implementation Guide.md - Phase 7 spec
+- src/services/XPSystem.ts - Level-up hook point
+- src/modals/SkillLoadoutModal.ts - Reference for skill display
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 6 - Character Sheet integration complete
+
+SkillLoadoutModal.ts (NEW):
+- Full skill management modal with 5 equipped slots
+- Available skills grid (locked/unlocked by level)
+- Universal skills section (Meditate always equipped)
+- Auto-Fill and Clear All buttons
+- Save/Cancel with proper persistence
+- Rich tooltips with skill details
+
+CharacterSheet.tsx:
+- Add onOpenSkillLoadout prop
+- Add "⚔️ Manage Skills" button under Equipment section
+
+characterStore.ts:
+- Add updateSkillLoadout(equippedSkillIds) action
+
+BattleView.tsx:
+- Change skills submenu to use character.skills.equipped
+- Fix type guard for getSkillById()
+
+Command Registration:
+- Add manage-skills command to main.ts
+- Add Skills to QuestBoardCommandMenu Character category
+
+SidebarQuests.tsx:
+- Wire showSkillLoadoutModal to CharacterSheet
+
+modals.css:
+- Add ~240 lines of skill loadout modal styles
+
+Files: SkillLoadoutModal.ts, CharacterSheet.tsx, BattleView.tsx,
+characterStore.ts, SidebarQuests.tsx, QuestBoardCommandMenu.ts,
+main.ts, modals.css
+```
