@@ -3718,7 +3718,7 @@ Ordered by dependencies. Each phase builds on the previous.
 
 ---
 
-### Phase 2: Resource Management Updates
+### Phase 2: Resource Management Updates  ✅ COMPLETE
 
 **Goal:** Update Long Rest and task completion to restore mana
 

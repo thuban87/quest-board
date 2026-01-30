@@ -752,3 +752,144 @@ Tested: Warrior Level 30 in test vault
 
 Files: Character.ts, FullKanban.tsx, SidebarQuests.tsx, Schema Changes v5.md
 ```
+
+---
+
+## 2026-01-29 (Late Night) - Phase 2: Resource Management Updates
+
+**Focus:** Implementing paid Long Rest bypass option to skip cooldown timer by spending gold
+
+### Completed:
+
+#### combatConfig.ts Updates
+- ✅ Added `PAID_LONG_REST_BASE = 100` constant
+- ✅ Added `PAID_LONG_REST_PER_LEVEL = 35` constant
+- ✅ Added `getPaidLongRestCost(level)` function (formula: 100 + level × 35)
+
+#### PaidRestModal.ts (NEW)
+- ✅ Created new modal for paid Long Rest confirmation
+- ✅ Shows cost based on character level
+- ✅ Shows current gold and affordability
+- ✅ Deducts gold, calls `fullRestore()`, sets new timer
+
+#### RecoveryOptionsModal.ts Updates
+- ✅ Added import for `getPaidLongRestCost`
+- ✅ Added paid bypass option when timer is active
+- ✅ Option shows "Paid Rest (Xg)" instead of disabled Long Rest
+- ✅ Added `handlePaidRest(cost)` method
+
+#### main.ts Updates
+- ✅ Updated Long Rest command to open PaidRestModal when on cooldown
+- ✅ Maintains original behavior when not on cooldown
+
+#### combat.css Updates
+- ✅ Added `.qb-paid-rest-modal` styles
+- ✅ Added `.qb-paid-rest-header`, `.qb-paid-rest-cost`, button styles
+- ✅ Added `.qb-cost-affordable` (green) and `.qb-cost-expensive` (red) classes
+
+### Files Changed:
+
+**Config:**
+- `src/config/combatConfig.ts` - Paid rest cost constants and function
+
+**Modals:**
+- `src/modals/PaidRestModal.ts` - NEW
+- `src/modals/RecoveryOptionsModal.ts` - Paid bypass option
+
+**Main:**
+- `main.ts` - Updated Long Rest command
+
+**Styles:**
+- `src/styles/combat.css` - Paid rest modal CSS
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Command Menu Long Rest → shows PaidRestModal when on cooldown
+- ✅ Pay & Rest works with sufficient gold
+- ✅ Pay & Rest disabled without sufficient gold
+- ✅ RecoveryOptionsModal shows paid option when timer active
+- ✅ Cost formula verified (Level 1 = 135g, Level 10 = 450g, Level 30 = 1150g)
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 2 Complete ✅
+
+All Phase 2 Resource Management tasks are now complete:
+
+1. ✅ Long Rest restores mana (`fullRestore()` already done)
+2. ✅ Task completion HP/Mana regen (`useResourceRegen.ts` - 7%)
+3. ✅ Paid Long Rest bypass (100g + level×35 formula)
+4. ✅ Long Rest UI shows cooldown bypass option
+5. ✅ Tests passed
+
+**Ready for Phase 3: Core Combat Logic** (StatusEffectService, SkillService, BattleService integration)
+
+---
+
+## Next Session Prompt
+
+```
+Phase 2 (Resource Management Updates) is COMPLETE.
+
+Implemented:
+- Paid Long Rest bypass: 100g + (level × 35)
+- PaidRestModal for command menu
+- RecoveryOptionsModal paid bypass option
+- CSS styling for new modal
+
+Next: Phase 3 (Core Combat Logic)
+- Create StatusEffectService.ts
+- Create SkillService.ts
+- Integrate ATK/DEF stages into damage calculation
+- Update BattleService for skill execution
+
+Key files:
+- src/config/combatConfig.ts - getPaidLongRestCost, getStageMultiplier
+- src/modals/PaidRestModal.ts - Paid bypass modal
+- docs/development/Skills Implementation Guide.md - Master reference
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 2 complete - implement paid Long Rest bypass
+
+Phase 2 Resource Management Updates complete. Added ability to bypass
+the 30-minute Long Rest cooldown by paying gold.
+
+combatConfig.ts:
+- Add PAID_LONG_REST_BASE (100) and PAID_LONG_REST_PER_LEVEL (35)
+- Add getPaidLongRestCost(level) function: 100 + (level × 35)
+
+PaidRestModal.ts (NEW):
+- Modal for paid Long Rest bypass confirmation
+- Shows cost, current gold, and affordability
+- Deducts gold, restores HP/Mana, sets new timer
+
+RecoveryOptionsModal.ts:
+- Add paid bypass option when timer is active
+- Shows "Paid Rest (Xg)" instead of disabled Long Rest
+- Add handlePaidRest(cost) method
+
+main.ts:
+- Update Long Rest command to open PaidRestModal when on cooldown
+
+combat.css:
+- Add .qb-paid-rest-modal styles
+- Add cost affordability color classes (green/red)
+
+Cost examples:
+- Level 1: 135g
+- Level 10: 450g
+- Level 30: 1,150g
+
+Files: combatConfig.ts, PaidRestModal.ts, RecoveryOptionsModal.ts,
+main.ts, combat.css
+```
+

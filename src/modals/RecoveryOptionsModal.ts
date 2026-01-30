@@ -7,6 +7,7 @@
 
 import { App, Modal, Notice } from 'obsidian';
 import { useCharacterStore } from '../store/characterStore';
+import { getPaidLongRestCost } from '../config/combatConfig';
 
 /** Revive potion price in gold */
 const REVIVE_POTION_PRICE = 200;
@@ -56,6 +57,8 @@ export class RecoveryOptionsModal extends Modal {
         const hasRevivePotion = inventory.some(i => i.itemId === 'revive-potion' && i.quantity > 0);
         const canBuyPotion = gold >= REVIVE_POTION_PRICE;
         const revivePotionCount = inventory.find(i => i.itemId === 'revive-potion')?.quantity ?? 0;
+        const paidRestCost = getPaidLongRestCost(character.level);
+        const canAffordPaidRest = gold >= paidRestCost;
 
         // Check if timer is already active
         let timerActive = false;
@@ -113,16 +116,28 @@ export class RecoveryOptionsModal extends Modal {
             onClick: () => this.handleTakeBreak(),
         });
 
-        // Option 4: Long Rest (full restore + timer)
-        this.renderOptionButton(optionsContainer, {
-            emoji: '🛏️',
-            label: 'Long Rest',
-            description: timerActive
-                ? `Already resting (${timerMinutes}m remaining)`
-                : `Full HP/Mana restore with ${RECOVERY_TIMER_MINUTES}-minute rest timer.`,
-            enabled: !timerActive,
-            onClick: () => this.handleLongRest(),
-        });
+        // Option 4: Long Rest (full restore + timer, or paid bypass)
+        if (timerActive) {
+            // Show paid bypass option when timer is active
+            this.renderOptionButton(optionsContainer, {
+                emoji: '💰',
+                label: `Paid Rest (${paidRestCost}g)`,
+                description: canAffordPaidRest
+                    ? `Pay ${paidRestCost}g to restore now (${timerMinutes}m remaining)`
+                    : `Not enough gold (need ${paidRestCost}g, have ${gold}g)`,
+                enabled: canAffordPaidRest,
+                onClick: () => this.handlePaidRest(paidRestCost),
+            });
+        } else {
+            // Show free Long Rest when no timer active
+            this.renderOptionButton(optionsContainer, {
+                emoji: '🛏️',
+                label: 'Long Rest',
+                description: `Full HP/Mana restore with ${RECOVERY_TIMER_MINUTES}-minute rest timer.`,
+                enabled: true,
+                onClick: () => this.handleLongRest(),
+            });
+        }
 
         // Footer
         const footer = contentEl.createDiv('qb-recovery-footer');
@@ -259,6 +274,34 @@ export class RecoveryOptionsModal extends Modal {
         store.setRecoveryTimer(endTime);
 
         new Notice(`🛏️ Long Rest complete! Full HP/Mana restored. Resting for ${RECOVERY_TIMER_MINUTES} minutes.`, 4000);
+        if (this.options.onSave) this.options.onSave();
+        this.options.onRecoveryComplete?.();
+        this.close();
+    }
+
+    private handlePaidRest(cost: number) {
+        const store = useCharacterStore.getState();
+        const character = store.character;
+
+        if (!character || character.gold < cost) {
+            new Notice('❌ Not enough gold!', 2000);
+            return;
+        }
+
+        // Deduct gold
+        store.updateGold(-cost);
+
+        // Full restore HP/Mana (also clears persistentStatusEffects)
+        store.fullRestore();
+
+        // Clear unconscious status
+        store.setStatus('active');
+
+        // Set new recovery timer (30 mins)
+        const endTime = new Date(Date.now() + RECOVERY_TIMER_MINUTES * 60 * 1000).toISOString();
+        store.setRecoveryTimer(endTime);
+
+        new Notice(`🏨 Paid Rest complete! Full HP/Mana restored. (-${cost}g)`, 3000);
         if (this.options.onSave) this.options.onSave();
         this.options.onRecoveryComplete?.();
         this.close();
