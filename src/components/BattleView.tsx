@@ -15,6 +15,7 @@ import { battleService } from '../services/BattleService';
 import { LootDrop } from '../models/Gear';
 import { getUnlockedSkills } from '../data/skills';
 import { Skill } from '../models/Skill';
+import { StatusEffect, getStatusIcon, getStatusDisplayName } from '../models/StatusEffect';
 
 
 // =====================
@@ -74,6 +75,36 @@ function StageIndicators({ stages, compact = false }: StageIndicatorsProps) {
 }
 
 // =====================
+// STATUS INDICATORS
+// =====================
+
+interface StatusIndicatorsProps {
+    effects: StatusEffect[];
+    compact?: boolean;
+}
+
+/**
+ * Display active status effects with icons
+ */
+function StatusIndicators({ effects, compact = false }: StatusIndicatorsProps) {
+    if (!effects || effects.length === 0) return null;
+
+    return (
+        <div className={`qb-status-indicators ${compact ? 'qb-status-compact' : ''}`}>
+            {effects.map((effect) => (
+                <span
+                    key={effect.id}
+                    className={`qb-status-indicator qb-status-${effect.type}`}
+                    title={`${getStatusDisplayName(effect.type)}${effect.duration > 0 ? ` (${effect.duration} turns)` : ''}`}
+                >
+                    {getStatusIcon(effect.type)}
+                </span>
+            ))}
+        </div>
+    );
+}
+
+// =====================
 // SUB-COMPONENTS
 // =====================
 
@@ -120,6 +151,7 @@ function MonsterDisplay({ spritePath }: { spritePath?: string }) {
                 <span className="qb-hp-text">{monsterHP} / {monsterMaxHP}</span>
             </div>
             <StageIndicators stages={monsterStages} compact />
+            <StatusIndicators effects={monster.statusEffects ?? []} compact />
             <div className={`qb-monster-sprite ${tintClass} ${animClass}`}>
                 {spritePath ? (
                     <img
@@ -166,6 +198,7 @@ function PlayerDisplay({ spritePath }: { spritePath?: string }) {
                 <span className="qb-player-name">{character.name}</span>
                 <span className="qb-player-class">Lv. {character.level} {classInfo.name}</span>
                 <StageIndicators stages={playerStages} />
+                <StatusIndicators effects={player?.volatileStatusEffects ?? []} />
             </div>
             <div className={`qb-player-sprite ${animClass}`}>
                 {spritePath ? (
@@ -220,8 +253,46 @@ function CombatLog() {
 
     // Format log entry for display
     const formatLogEntry = (entry: CombatLogEntry): string => {
+        const action = entry.action;
+
+        // Special messages that should display as-is (no actor prefix)
+        // Patterns that must be at the START of the message
+        const startsWithPatterns = [
+            "It's super effective",
+            "It's not very effective",
+            "Used ",
+            "Dealt ",
+            "Restored ",
+            "Cured",
+            "Critical hit",
+            "You are ",  // "You are stunned!" or "You are now Bleeding!"
+            "Enemy is ",
+            "Your ",
+            "Enemy's ",
+            "Took ",  // DoT damage: "Took 68 burning damage!"
+            "No longer",  // "No longer stunned!"
+        ];
+
+        // Patterns that can appear ANYWHERE in the message
+        const containsPatterns = [
+            " wore off",  // "Burning wore off!"
+            "'s ",  // Possessive messages like "Wolf's ATK rose!"
+            " is stunned",  // Monster CC: "Wolf is stunned!"
+            " is asleep",
+            " is frozen",
+            " is paralyzed",
+        ];
+
+        const isSystemMessage =
+            startsWithPatterns.some(pattern => action.startsWith(pattern)) ||
+            containsPatterns.some(pattern => action.includes(pattern));
+
+        if (isSystemMessage) {
+            return action;
+        }
+
         const actor = entry.actor === 'player' ? 'You' : 'Enemy';
-        let message = `${actor} used ${entry.action}`;
+        let message = `${actor} used ${action}`;
 
         if (entry.damage !== undefined && entry.damage > 0) {
             message += ` for ${entry.damage} damage`;
@@ -234,7 +305,7 @@ function CombatLog() {
         } else if (entry.result === 'blocked') {
             message = `🛡️ BLOCKED! ${message}`;
         } else if (entry.result === 'heal') {
-            message = `💚 ${entry.action}`;
+            message = `💚 ${action}`;
         }
 
         return message;

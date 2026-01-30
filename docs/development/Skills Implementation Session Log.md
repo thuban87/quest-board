@@ -1189,3 +1189,135 @@ Base Attack Names (conflict fix):
 Files: monsterSkills.ts, Skill.ts, monsters.ts, MonsterService.ts,
 BattleService.ts, battleStore.ts, combatConfig.ts
 ```
+
+---
+
+## 2026-01-30 - Phase 5 Battle UI Integration Complete
+
+**Focus:** Completing remaining Phase 5 tasks: status effect icons, type effectiveness messages, and wiring hard CC to actually block actions
+
+### Completed:
+
+#### Status Effect Icons (BattleView.tsx)
+- ✅ Created `StatusIndicators` component to display status effect icons
+- ✅ Positioned below StageIndicators for both player and monster
+- ✅ Compact mode for monster display, regular for player
+- ✅ Hover tooltips show effect name and remaining duration
+- ✅ Icons use `getStatusIcon()` from StatusEffect model
+
+#### Status Effect CSS (combat.css)
+- ✅ Added `.qb-status-indicators` container with flexbox layout
+- ✅ Added `.qb-status-indicator` with circular design and pulse animation
+- ✅ Type-specific colors (burn=orange, poison=purple, freeze=cyan, etc.)
+- ✅ Compact variant for monster display
+
+#### Type Effectiveness Messages
+- ✅ Already implemented in `SkillService.executeSkill()` - generates "It's super effective!" / "It's not very effective..."
+- ✅ Fixed `formatLogEntry` in BattleView to display these without "You used" prefix
+- ✅ Added pattern matching for `startsWithPatterns` and `containsPatterns`
+
+#### Hard CC Action Blocking (Critical Bug Fix!)
+- ✅ Added `shouldSkipTurn` import from `StatusEffectService`
+- ✅ **Player turn**: Checks CC before processing action, logs "You are stunned!" and skips to enemy turn
+- ✅ **Monster turn**: Checks CC before skill selection, logs "[Monster] is stunned!" and returns to player
+- ✅ Ticks status effects when skipped (decrements duration, clears stun, applies DoT)
+- ✅ Persists updated effect arrays back to store
+- ✅ Handles death from DoT during skip
+
+#### Status Effect Log Message Fixes
+- ✅ Updated `tickStatusEffects` to use generic messages without `combatant.name` (BattlePlayer has no name field)
+- ✅ DoT damage: `"Took 68 bleeding damage!"` (uses `getStatusDisplayName`)
+- ✅ Effect expired: `"Bleeding wore off!"`
+- ✅ Stun cleared: `"No longer stunned!"`
+- ✅ Updated `formatLogEntry` patterns to recognize these as system messages
+
+### Files Changed:
+
+**Components:**
+- `src/components/BattleView.tsx` - StatusIndicators component, formatLogEntry pattern fixes
+
+**Services:**
+- `src/services/BattleService.ts` - shouldSkipTurn integration, CC action blocking, effect tick on skip
+- `src/services/StatusEffectService.ts` - Generic log messages, getStatusDisplayName import
+
+**Styles:**
+- `src/styles/combat.css` - Status indicator styles with type-specific colors
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Status icons display correctly under stage indicators
+- ✅ Stun/CC effects now actually prevent actions
+- ✅ DoT damage logs correctly as "Took X bleeding damage!"
+- ✅ Effects tick and clear properly
+
+### Phase 5 Status:
+
+| Task | Status |
+|------|--------|
+| A. Add "Skills" button to BattleView.tsx | ✅ Complete |
+| B. Create skills submenu (inline) | ✅ Complete |
+| C. Add stage indicators | ✅ Complete |
+| D. Add status effect icons row | ✅ Complete |
+| E. Add type effectiveness messages | ✅ Complete |
+| F. Style skill buttons and indicators | ✅ Complete |
+
+**Phase 5: Battle UI Integration is now COMPLETE!**
+
+---
+
+## Next Session Prompt
+
+```
+Phase 5 Battle UI Integration COMPLETE.
+
+What was done this session:
+- Status effect icons (🔥💤❄️ etc.) display below stage indicators
+- Type effectiveness messages work correctly
+- Hard CC (stun/freeze/sleep/paralyze) now actually blocks actions
+- Fixed log messages for DoT/effect expiration (no more "undefined")
+
+Ready for Phase 6: Character Sheet Integration
+- Add "Skills" tab to CharacterSheet.tsx
+- Create SkillLoadoutModal.tsx
+- Show unlocked skills with descriptions
+- Allow skill loadout editing (5 slots)
+
+Key files:
+- docs/development/Skills Implementation Guide.md - Phase 6 spec
+- src/components/CharacterSheet.tsx - Where to add Skills tab
+- src/data/skills.ts - Skill definitions for display
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 5 - complete Battle UI integration
+
+Status Effect Icons:
+- Created StatusIndicators component for player and monster
+- Positioned below StageIndicators with hover tooltips
+- Type-specific colors (burn=orange, poison=purple, etc.)
+- Pulse animation and compact mode for monster display
+
+Type Effectiveness Messages:
+- "It's super effective!" / "It's not very effective..." now display correctly
+- Fixed formatLogEntry pattern matching for system messages
+
+Hard CC Action Blocking (Bug Fix):
+- Stun/freeze/sleep/paralyze now actually prevent actions
+- Player: Logs "You are stunned!" and skips to enemy turn
+- Monster: Logs "[Monster] is stunned!" and returns to player
+- Status effects tick during skip (durations decrement, DoT applies)
+- Persists updated effects to store
+
+Log Message Fixes:
+- DoT: "Took X bleeding damage!" (was "undefined took X bleed damage")
+- Expired: "Bleeding wore off!" (was "undefined's bleed wore off")
+- Stun clear: "No longer stunned!" (was "undefined is no longer stunned")
+
+Files: BattleView.tsx, BattleService.ts, StatusEffectService.ts, combat.css
+```
+

@@ -498,6 +498,90 @@
   border: 1px solid rgba(244, 67, 54, 0.4);
 }
 
+/* Status Effect Indicators (Burn, Poison, etc.) */
+.qb-status-indicators {
+  display: flex;
+  gap: var(--qb-spacing-xs);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.qb-status-indicators.qb-status-compact {
+  gap: 2px;
+}
+
+.qb-status-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 0.9rem;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid currentColor;
+  animation: qb-status-pulse 2s ease-in-out infinite;
+  cursor: help;
+}
+
+.qb-status-indicators.qb-status-compact .qb-status-indicator {
+  width: 20px;
+  height: 20px;
+  font-size: 0.75rem;
+}
+
+/* Status type colors */
+.qb-status-burn {
+  color: #ff6b35;
+}
+
+.qb-status-poison {
+  color: #9c27b0;
+}
+
+.qb-status-bleed {
+  color: #dc3545;
+}
+
+.qb-status-curse {
+  color: #6f42c1;
+}
+
+.qb-status-paralyze {
+  color: #ffc107;
+}
+
+.qb-status-sleep {
+  color: #64b5f6;
+}
+
+.qb-status-freeze {
+  color: #00bcd4;
+}
+
+.qb-status-stun {
+  color: #ff9800;
+}
+
+.qb-status-confusion {
+  color: #e91e63;
+}
+
+@keyframes qb-status-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
+
 /* Combat Log - Top Left */
 .qb-combat-log-container {
   grid-area: log;

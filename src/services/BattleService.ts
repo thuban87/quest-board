@@ -299,6 +299,52 @@ export function executePlayerTurn(action: PlayerAction): void {
         return;
     }
 
+    // Phase 5: Check if player should skip turn due to hard CC
+    const player = store.player;
+    if (player) {
+        const skipCheck = shouldSkipTurn(player as any);
+        if (skipCheck.skip) {
+            // Log the skip
+            store.addLogEntry({
+                turn: store.turnNumber,
+                actor: 'player',
+                action: `You are ${skipCheck.reason}!`,
+                result: 'miss',
+            });
+
+            // Tick status effects (decrement durations, apply DoT, clear stun)
+            const tickResult = tickStatusEffects(player as any, store.turnNumber);
+
+            // Apply DoT damage
+            if (tickResult.damageTaken > 0) {
+                const newHP = Math.max(0, store.playerCurrentHP - tickResult.damageTaken);
+                store.updatePlayerHP(newHP);
+
+                for (const entry of tickResult.logEntries) {
+                    store.addLogEntry({
+                        turn: store.turnNumber,
+                        actor: 'player',
+                        action: entry,
+                    });
+                }
+
+                // Check for death from DoT
+                if (newHP <= 0) {
+                    handleDefeat();
+                    return;
+                }
+            }
+
+            // Persist updated status effects to store
+            store.updatePlayer({ volatileStatusEffects: [...player.volatileStatusEffects] });
+
+            // Skip to enemy turn without processing player action
+            store.advanceState('ENEMY_TURN');
+            executeMonsterTurn();
+            return;
+        }
+    }
+
     store.selectAction(action);
     store.advanceState('PROCESSING_TURN');
 
@@ -508,6 +554,49 @@ export function executeMonsterTurn(): void {
     const { monster, player, playerStats, playerCurrentHP, isPlayerDefending } = store;
 
     if (!monster || !playerStats) return;
+
+    // Phase 5: Check if monster should skip turn due to hard CC
+    const skipCheck = shouldSkipTurn(monster as any);
+    if (skipCheck.skip) {
+        // Log the skip
+        store.addLogEntry({
+            turn: store.turnNumber,
+            actor: 'monster',
+            action: `${monster.name} is ${skipCheck.reason}!`,
+            result: 'miss',
+        });
+
+        // Tick monster's status effects (decrement durations, apply DoT, clear stun)
+        const tickResult = tickStatusEffects(monster as any, store.turnNumber);
+
+        // Apply DoT damage to monster
+        if (tickResult.damageTaken > 0) {
+            const newHP = Math.max(0, monster.currentHP - tickResult.damageTaken);
+            store.updateMonsterHP(newHP);
+
+            for (const entry of tickResult.logEntries) {
+                store.addLogEntry({
+                    turn: store.turnNumber,
+                    actor: 'monster',
+                    action: entry,
+                });
+            }
+
+            // Check for victory from DoT
+            if (newHP <= 0) {
+                handleVictory();
+                return;
+            }
+        }
+
+        // Persist updated status effects to store
+        store.updateMonster({ statusEffects: [...(monster.statusEffects ?? [])] });
+
+        // Advance turn and return to player input
+        store.incrementTurn();
+        store.advanceState('PLAYER_INPUT');
+        return;
+    }
 
     // Phase 4C: Select a skill using AI
     const selectedSkill = selectMonsterSkillAI(
@@ -964,7 +1053,7 @@ import {
     SkillResult,
     SkillExecutionContext,
 } from './SkillService';
-import { tickStatusEffects, wakeFromSleep, breakFreeze } from './StatusEffectService';
+import { tickStatusEffects, wakeFromSleep, breakFreeze, shouldSkipTurn } from './StatusEffectService';
 import { ElementalType, CLASS_ELEMENTAL_TYPES } from '../models/Skill';
 
 /**
@@ -1197,6 +1286,9 @@ function checkBattleOutcomeWithStatusTick(): void {
                 return;
             }
         }
+
+        // Persist updated status effects (stun cleared, durations decremented)
+        store.updatePlayer({ volatileStatusEffects: [...player.volatileStatusEffects] });
     }
 
     // Continue battle - monster's turn

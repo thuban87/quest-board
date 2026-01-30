@@ -6,7 +6,7 @@
  * Stat stages are ephemeral (reset each battle).
  */
 
-import { StatusEffect, StatusEffectType, isDoTEffect, isHardCC, StatusSeverity } from '../models/StatusEffect';
+import { StatusEffect, StatusEffectType, isDoTEffect, isHardCC, StatusSeverity, getStatusDisplayName } from '../models/StatusEffect';
 import { ElementalType } from '../models/Skill';
 import {
     STATUS_DOT_PERCENT,
@@ -155,12 +155,14 @@ export function tickStatusEffects(
 
     for (let i = 0; i < effects.length; i++) {
         const effect = effects[i];
+        const displayName = getStatusDisplayName(effect.type);
 
         // Process DoT damage
         if (isDoTEffect(effect.type)) {
             const damage = calculateDoTDamage(combatant.maxHP, effect.type, effect.severity, effect.stacks);
             result.damageTaken += damage;
-            result.logEntries.push(`${combatant.name} took ${damage} ${effect.type} damage!`);
+            // Generic message - caller will add actor context
+            result.logEntries.push(`Took ${damage} ${displayName.toLowerCase()} damage!`);
         }
 
         // Decrement duration (skip -1 = until cured)
@@ -170,7 +172,7 @@ export function tickStatusEffects(
             if (effect.duration <= 0) {
                 effectsToRemove.push(i);
                 result.effectsExpired.push(effect.type);
-                result.logEntries.push(`${combatant.name}'s ${effect.type} wore off!`);
+                result.logEntries.push(`${displayName} wore off!`);
             }
         }
 
@@ -178,7 +180,7 @@ export function tickStatusEffects(
         if (effect.type === 'stun') {
             effectsToRemove.push(i);
             result.effectsExpired.push('stun');
-            result.logEntries.push(`${combatant.name} is no longer stunned!`);
+            result.logEntries.push(`No longer stunned!`);
         }
     }
 

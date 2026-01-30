@@ -3868,7 +3868,7 @@ Ordered by dependencies. Each phase builds on the previous.
 
 ---
 
-### Phase 5: Battle UI Integration ⏳ PARTIAL
+### Phase 5: Battle UI Integration ✅ COMPLETE
 
 **Goal:** Add skill selection to battle UI, show stages/status
 
@@ -3876,12 +3876,15 @@ Ordered by dependencies. Each phase builds on the previous.
 1. ✅ Add "Skills" button to `BattleView.tsx`
 2. ✅ Create skills submenu (inline, not modal)
 3. ✅ Add stage indicators to battle UI
-4. [ ] Add status effect icons row under HP bars
-5. [ ] Add type effectiveness messages ("It's super effective!")
+4. ✅ Add status effect icons row under stage indicators
+5. ✅ Add type effectiveness messages ("It's super effective!")
 6. ✅ Style skill buttons and stage indicators
+7. ✅ Wire shouldSkipTurn for hard CC action blocking (critical fix!)
 
 **Files Changed:**
 - `src/components/BattleView.tsx`
+- `src/services/BattleService.ts`
+- `src/services/StatusEffectService.ts`
 - `src/styles/combat.css`
 
 **Success Criteria:**
@@ -3889,8 +3892,9 @@ Ordered by dependencies. Each phase builds on the previous.
 - ✅ Skills show mana cost, "USED" badge for once-per-battle
 - ✅ Disabled skills when insufficient mana
 - ✅ Stages display as ⚔️ ATK / 🛡️ DEF / ⚡ SPD badges
-- [ ] Status icons appear on combatants
-- [ ] "Super Effective!" message shows on 2x hits
+- ✅ Status icons appear on combatants with tooltips
+- ✅ "Super Effective!" message shows on 2x hits
+- ✅ Hard CC (stun/freeze/sleep) actually blocks actions
 
 ---
 
@@ -4085,7 +4089,7 @@ Use this checklist to track implementation progress across sessions.
 - [x] Update MonsterService for Elite/Boss scaling
 - [x] Test monster skill spawning
 
-### Phase 5: Battle UI ⏳ PARTIAL
+### Phase 5: Battle UI ✅ COMPLETE
 
 - [x] Add "Skills" button to BattleView action bar
 - [x] Create skills submenu (inline, not modal)
@@ -4096,8 +4100,9 @@ Use this checklist to track implementation progress across sessions.
   - [x] Cancel/back button to return to action selection
 - [x] On skill select → call BattleService.executePlayerSkill()
 - [x] Add stage indicators (ATK/DEF/SPD arrows) to player/monster panels
-- [ ] Add status effect icons row under HP bars
-- [ ] Add type effectiveness messages ("It's super effective!")
+- [x] Add status effect icons row under stage indicators
+- [x] Add type effectiveness messages ("It's super effective!")
+- [x] **Critical fix:** Wire shouldSkipTurn for hard CC action blocking
 - [x] Style skill buttons and stage indicators
 
 
