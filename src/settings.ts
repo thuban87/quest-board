@@ -96,6 +96,11 @@ export interface QuestBoardSettings {
 
     // AI Quest generation settings
     aiQuestSkipPreview: boolean;  // Skip the preview modal when generating quests
+
+    // Balance Testing Configuration
+    enableBalanceTesting: boolean;        // Toggle for balance test logging
+    balanceTestingFolder: string;         // Folder for balance test notes
+    balanceTestingNoteName: string;       // Current note name (without .md)
 }
 
 /**
@@ -149,6 +154,9 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     mobileKanbanMode: 'swipe',  // Default to swipe single-column mode
     mobileDefaultColumn: 'active',  // Default to Active column on mobile
     aiQuestSkipPreview: false,  // Default to showing preview
+    enableBalanceTesting: false,
+    balanceTestingFolder: 'Quest Board/Balance Testing',
+    balanceTestingNoteName: '',
 };
 
 /**
@@ -511,6 +519,116 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     this.plugin.settings.mobileDefaultColumn = value as 'available' | 'active' | 'in_progress' | 'completed';
                     await this.plugin.saveSettings();
                 }));
+
+        // Balance Testing Section
+        containerEl.createEl('h3', { text: '🧪 Balance Testing' });
+
+        new Setting(containerEl)
+            .setName('Enable Balance Test Logging')
+            .setDesc('Log battle data to a note for balance testing and analysis')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableBalanceTesting ?? false)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableBalanceTesting = value;
+                    await this.plugin.saveSettings();
+                    this.display(); // Refresh to show/hide dependent settings
+                }));
+
+        // Only show these settings if balance testing is enabled
+        if (this.plugin.settings.enableBalanceTesting) {
+            const folderSetting = new Setting(containerEl)
+                .setName('Balance Testing Folder')
+                .setDesc('Folder where balance test notes are stored');
+
+            folderSetting.addText(text => {
+                text.setPlaceholder('Quest Board/Balance Testing')
+                    .setValue(this.plugin.settings.balanceTestingFolder || 'Quest Board/Balance Testing')
+                    .onChange(async (value) => {
+                        this.plugin.settings.balanceTestingFolder = value;
+                        await this.plugin.saveSettings();
+                    });
+
+                // Add folder autocomplete
+                import('./utils/FolderSuggest').then(({ FolderSuggest }) => {
+                    new FolderSuggest(this.app, text.inputEl);
+                });
+            });
+
+            new Setting(containerEl)
+                .setName('Current Test Note')
+                .setDesc('Note name for logging (without .md extension). E.g., "Paladin Testing"')
+                .addText(text => text
+                    .setPlaceholder('Paladin Testing')
+                    .setValue(this.plugin.settings.balanceTestingNoteName || '')
+                    .onChange(async (value) => {
+                        this.plugin.settings.balanceTestingNoteName = value;
+                        await this.plugin.saveSettings();
+                    }));
+
+            // Test Character Generator
+            containerEl.createEl('h4', { text: '⚡ Quick Test Character' });
+            containerEl.createEl('p', {
+                text: 'Generate a test character with appropriate stats, gear, and skills for the selected level.',
+                cls: 'setting-item-description'
+            });
+
+            // Store selections for the generate button
+            let selectedClass: import('./models/Character').CharacterClass = 'warrior';
+            let selectedLevel: number = 20;
+
+            new Setting(containerEl)
+                .setName('Test Class')
+                .setDesc('Character class to generate')
+                .addDropdown(dropdown => {
+                    const classes: import('./models/Character').CharacterClass[] = [
+                        'warrior', 'paladin', 'technomancer', 'scholar', 'rogue', 'cleric', 'bard'
+                    ];
+                    classes.forEach(c => dropdown.addOption(c, c.charAt(0).toUpperCase() + c.slice(1)));
+                    dropdown.setValue('warrior');
+                    dropdown.onChange((value) => {
+                        selectedClass = value as import('./models/Character').CharacterClass;
+                    });
+                });
+
+            new Setting(containerEl)
+                .setName('Test Level')
+                .setDesc('Character level (1-40)')
+                .addDropdown(dropdown => {
+                    // Add common test levels
+                    const levels = [1, 5, 10, 15, 20, 25, 30, 35, 40];
+                    levels.forEach(l => dropdown.addOption(l.toString(), `Level ${l}`));
+                    dropdown.setValue('20');
+                    dropdown.onChange((value) => {
+                        selectedLevel = parseInt(value, 10);
+                    });
+                });
+
+            new Setting(containerEl)
+                .setName('Generate Test Character')
+                .setDesc('⚠️ This will REPLACE your current character with a test character!')
+                .addButton(button => button
+                    .setButtonText('🧪 Generate & Apply')
+                    .setWarning()
+                    .onClick(async () => {
+                        // Dynamically import generator to avoid circular deps
+                        const { generateTestCharacter } = await import('./services/TestCharacterGenerator');
+                        const { useCharacterStore } = await import('./store/characterStore');
+
+                        const currentCharacter = useCharacterStore.getState().character;
+                        const testCharacter = generateTestCharacter(selectedClass, selectedLevel, currentCharacter || undefined);
+
+                        // Apply to store
+                        useCharacterStore.getState().setCharacter(testCharacter);
+
+                        // Save to plugin data
+                        this.plugin.settings.character = testCharacter;
+                        await this.plugin.saveSettings();
+
+                        new (await import('obsidian')).Notice(
+                            `✅ Generated Level ${selectedLevel} ${selectedClass.charAt(0).toUpperCase() + selectedClass.slice(1)} test character!`
+                        );
+                    }));
+        }
 
         // Quest → Gear Slot Mapping Section
         containerEl.createEl('h3', { text: 'Quest → Gear Slot Mapping' });

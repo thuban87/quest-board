@@ -33,6 +33,16 @@ import { Character } from '../models/Character';
 import { selectMonsterSkillAI } from '../data/monsterSkills';
 import { MonsterSkill } from '../models/Skill';
 import { getStatusDisplayName } from '../models/StatusEffect';
+import {
+    startBattleTracking,
+    trackSkillUse,
+    trackDamageTaken,
+    trackStageChange,
+    trackStatusEffect,
+    updateTurnCount,
+    finalizeBattle,
+    isBalanceTestingEnabled,
+} from './BalanceTestingService';
 
 // =====================
 // SAVE CALLBACK (set by main.ts)
@@ -256,6 +266,16 @@ export function startBattleWithMonster(
     // Phase 5: Hydrate BattlePlayer from Character
     const battlePlayer = hydrateBattlePlayer(character, playerStats);
     useBattleStore.getState().setPlayer(battlePlayer);
+
+    // Phase 8: Start balance testing tracking if enabled
+    startBattleTracking(
+        character,
+        battleMonster,
+        playerStats.currentHP,
+        playerStats.currentMana,
+        playerStats.maxHP,
+        playerStats.maxMana
+    );
 
     return true;
 }
@@ -535,6 +555,10 @@ function executePlayerRetreat(): void {
 
         // Phase 5: Copy volatile status effects back to persistent storage
         copyVolatileStatusToPersistent();
+
+        // Phase 8: Finalize balance testing log
+        updateTurnCount(store.turnNumber);
+        finalizeBattle('retreat', store.log, store.playerCurrentHP, store.playerCurrentMana);
 
         store.endBattle('retreat');
     } else {
@@ -934,6 +958,10 @@ function handleVictory(): void {
     // Check for level-up and show modal if needed
     triggerLevelUpIfNeeded(oldXP, newXP, isTrainingMode);
 
+    // Phase 8: Finalize balance testing log
+    updateTurnCount(store.turnNumber);
+    finalizeBattle('victory', store.log, store.playerCurrentHP, store.playerCurrentMana);
+
     // Loot is generated separately when victory modal is shown
     // The lootBonus is stored for the modal to use
 }
@@ -998,6 +1026,10 @@ function handleDefeat(): void {
     if (saveCallback) {
         saveCallback().catch(err => console.error('[BattleService] Save failed:', err));
     }
+
+    // Phase 8: Finalize balance testing log
+    updateTurnCount(store.turnNumber);
+    finalizeBattle('defeat', store.log, 0, store.playerCurrentMana);
 }
 
 /**

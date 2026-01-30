@@ -231,6 +231,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | **Gear Click → Inventory Filter** | Click slot in CharacterSheet → open inventory filtered to slot | ✅ Complete |
 | **Gear Comparison Tooltips** | WoW-style dual-panel tooltips showing item vs equipped stats | ✅ Complete |
 | **Recent Acquisition Sort** | Sort inventory by "Recent" to find newly acquired items | ✅ Complete |
+| **Balance Testing Infrastructure** | Battle logger + test character generator for systematic tuning | ✅ Complete |
 
 #### Tier 3: Game Systems (Enhance Motivation)
 
@@ -381,5 +382,5 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-01-29 (Skills Pre-Implementation Part 4 - Combatant Type Handling)
+**Last Updated:** 2026-01-30 (Balance Testing Infrastructure)
 

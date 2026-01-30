@@ -1613,7 +1613,6 @@ Key files:
 
 ## Git Commit Message
 
-```
 feat(skills): Phase 7 complete - skill unlocking & bug fixes
 
 Phase 7 Skill Unlocking:
@@ -1636,3 +1635,117 @@ Files: SkillService.ts, BattleService.ts, characterStore.ts, useXPAward.ts,
 LevelUpModal.ts, AchievementHubModal.ts, main.ts, gearFormatters.ts,
 fullpage.css, Feature Roadmap v2.md
 ```
+
+---
+
+## 2026-01-30 (Afternoon) - Phase 8: Balance Testing Infrastructure
+
+**Focus:** Creating infrastructure for systematic balance testing
+
+### Completed:
+
+#### Balance Testing Logger
+- ✅ Created `src/services/BalanceTestingService.ts` - Battle data logging service
+- ✅ Added settings fields: `enableBalanceTesting`, `balanceTestingFolder`, `balanceTestingNoteName`
+- ✅ Added settings UI section with toggle and folder/note configuration
+- ✅ Integrated into `BattleService.ts` - hooks at battle start/end
+- ✅ Auto-creates log notes with sequential battle numbering
+- ✅ Captures: character stats, monster stats, skills used, damage dealt, outcome
+
+#### Test Character Generator
+- ✅ Created `src/services/TestCharacterGenerator.ts` - Quick test character setup
+- ✅ `generateTestCharacter(class, level)` - Creates fully configured character
+- ✅ `generateTestGear()` - **Uses actual `lootGenerationService`** for realistic gear
+- ✅ Stats scale with level: +1 per 2 levels on primary stats, +1 per 5 on all
+- ✅ Skills auto-unlocked and equipped based on level
+- ✅ Added settings UI: class dropdown, level dropdown, "Generate & Apply" button
+- ✅ Tier selection matches real tier ranges from `TIER_INFO.levelRange`
+
+#### Documentation
+- ✅ Created `docs/development/Battle Testing Shortcuts.md` - XP thresholds, gear reference
+
+### Files Changed:
+
+**New Files:**
+- `src/services/BalanceTestingService.ts` - Battle logging infrastructure
+- `src/services/TestCharacterGenerator.ts` - Test character generation
+- `docs/development/Battle Testing Shortcuts.md` - Reference documentation
+
+**Modified:**
+- `src/settings.ts` - Balance testing settings section, test character generator UI
+- `src/services/BattleService.ts` - Balance testing hooks at battle lifecycle points
+- `main.ts` - Initialize balance testing context
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test and staging vaults
+- ✅ Test character generator creates realistic gear using actual loot service
+- ✅ Balance testing logger creates notes and appends battle data
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 8: Balance Testing - In Progress
+
+Ready for systematic balance testing across all classes and levels.
+
+---
+
+## Next Session Prompt
+
+```
+Balance Testing Infrastructure COMPLETE.
+
+What was done this session:
+- Created BalanceTestingService for battle data logging
+- Created TestCharacterGenerator for quick test character setup
+- Generator uses ACTUAL lootGenerationService for realistic gear
+- Added settings UI for both features (toggle, class/level dropdowns)
+- Created Battle Testing Shortcuts.md reference doc
+
+The user will now:
+1. Generate test characters at various levels
+2. Run battles and collect data via the logger
+3. Analyze balance and report back for tuning
+
+Key files:
+- src/services/BalanceTestingService.ts
+- src/services/TestCharacterGenerator.ts  
+- src/settings.ts (Balance Testing section)
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(balance): add balance testing infrastructure
+
+Balance Testing Logger:
+- Add BalanceTestingService.ts for automated battle data logging
+- Add settings: enableBalanceTesting, balanceTestingFolder, balanceTestingNoteName
+- Hook into BattleService battle lifecycle (start, victory, defeat, retreat)
+- Auto-create log notes with sequential battle numbering
+
+Test Character Generator:
+- Add TestCharacterGenerator.ts for quick test character setup
+- generateTestCharacter(class, level) with appropriate stats/gear/skills
+- Uses ACTUAL lootGenerationService for realistic gear generation
+- Stats scale: +1 per 2 levels (primary), +1 per 5 levels (all)
+- Skills auto-unlocked based on level
+
+Settings UI:
+- Balance Testing toggle with folder/note configuration
+- Test Class dropdown (7 classes)
+- Test Level dropdown (1, 5, 10, 15, 20, 25, 30, 35, 40)
+- "Generate & Apply" button with warning
+
+Documentation:
+- Battle Testing Shortcuts.md - XP thresholds, tier ranges reference
+
+Files: BalanceTestingService.ts, TestCharacterGenerator.ts, settings.ts,
+BattleService.ts, main.ts, Battle Testing Shortcuts.md
+```
+

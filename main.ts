@@ -54,6 +54,7 @@ import { CharacterClass } from './src/models/Character';
 import { showProgressDashboardModal } from './src/modals/ProgressDashboardModal';
 import { initDailyNoteService, dailyNoteService } from './src/services/DailyNoteService';
 import { initTemplateStatsService } from './src/services/TemplateStatsService';
+import { setBalanceTestingContext } from './src/services/BalanceTestingService';
 
 
 
@@ -100,6 +101,9 @@ export default class QuestBoardPlugin extends Plugin {
         bountyService.setSaveCallback(async () => {
             await this.saveSettings();
         });
+
+        // Initialize balance testing context (Phase 8: Balance Testing Logger)
+        setBalanceTestingContext(this.app, () => this.settings);
 
         // Set up save callback for battle outcomes (persists XP, gold, HP after combat)
         setBattleSaveCallback(async () => {

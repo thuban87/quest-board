@@ -8,10 +8,9 @@
 
 
 ## General issues checklist:
--Add an auto-attack feature to the battle options. As in just clicking attack once trigger it to keep running until you click again to stop it.
 -Ability to rename columns headers in kanban view
 -Button on completed column to archive the quests currently in that column. Would need to scan and move the correct ques files, probably leave the linked files alone
--Clean up settings menu
+-Clean up settings menu. Need ot reorganize according to topic/subject and then put in a better order: more used items up top, less used below. Make sub menu modals where needed if possible.
 
 ## Mobile issues checklist:
 
