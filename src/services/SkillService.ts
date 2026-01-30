@@ -531,3 +531,76 @@ export function clearSkillCache(): void {
     // Cache is managed by src/data/skills.ts
 }
 
+// =====================
+// SKILL UNLOCKING (Phase 7)
+// =====================
+
+import { CharacterClass } from '../models/Character';
+import { getSkillsForClass } from '../data/skills';
+
+/**
+ * Result of checking for newly unlocked skills
+ */
+export interface SkillUnlockResult {
+    /** Skills that were newly unlocked */
+    newlyUnlocked: Skill[];
+    /** Complete list of all unlocked skill IDs after this level-up */
+    allUnlockedIds: string[];
+}
+
+/**
+ * Check which skills unlock between two levels.
+ * Handles multi-level jumps (e.g., 4→6 unlocks both level 5 and 6 skills).
+ * 
+ * @param characterClass - The character's class
+ * @param oldLevel - Previous level (before XP gain)
+ * @param newLevel - New level (after XP gain)
+ * @param currentUnlockedIds - Currently unlocked skill IDs (to avoid duplicates)
+ * @returns Skills that were newly unlocked and complete unlocked list
+ */
+export function checkAndUnlockSkills(
+    characterClass: CharacterClass,
+    oldLevel: number,
+    newLevel: number,
+    currentUnlockedIds: string[]
+): SkillUnlockResult {
+    // Get all skills available to this class (including universal)
+    const allClassSkills = getSkillsForClass(characterClass);
+
+    // Find skills that unlock at levels > oldLevel AND <= newLevel
+    const newlyUnlocked = allClassSkills.filter(skill =>
+        skill.learnLevel > oldLevel &&
+        skill.learnLevel <= newLevel &&
+        !currentUnlockedIds.includes(skill.id)
+    );
+
+    // Build complete unlocked list (deduped)
+    const allUnlockedIds = [...new Set([
+        ...currentUnlockedIds,
+        ...newlyUnlocked.map(s => s.id)
+    ])];
+
+    return {
+        newlyUnlocked,
+        allUnlockedIds,
+    };
+}
+
+/**
+ * Get all skills that should be unlocked at a given level.
+ * Used for initializing new characters or repairing skill data.
+ * 
+ * @param characterClass - The character's class
+ * @param level - Current character level
+ * @returns Array of skill IDs that should be unlocked
+ */
+export function getUnlockedSkillIdsForLevel(
+    characterClass: CharacterClass,
+    level: number
+): string[] {
+    const allClassSkills = getSkillsForClass(characterClass);
+    return allClassSkills
+        .filter(skill => skill.learnLevel <= level)
+        .map(skill => skill.id);
+}
+

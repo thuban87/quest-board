@@ -26,7 +26,7 @@ This guide provides a comprehensive, step-by-step plan for adding the Pokemon Ge
     - [Phase 4C: Monster Skill Pools](#phase-4c-monster-skill-pools)
     - [Phase 5: Battle UI](#phase-5-battle-ui-integration)
     - [Phase 6: Character Sheet](#phase-6-character-sheet-integration)
-    - [Phase 7: Skill Unlocking](#phase-7-skill-unlocking--notifications)
+    - [Phase 7: Skill Unlocking](#phase-7-skill-unlocking--notifications---complete)
     - [Phase 8: Balance Testing](#phase-8-balance-testing--tuning)
     - [Phase 9: Polish](#phase-9-polish--edge-cases)
     - [Phase 10: Deployment](#phase-10-deployment--migration)
@@ -3935,26 +3935,32 @@ Ordered by dependencies. Each phase builds on the previous.
 
 ---
 
-### Phase 7: Skill Unlocking & Notifications
+### Phase 7: Skill Unlocking & Notifications ✅ COMPLETE
 
 **Goal:** Auto-unlock skills on level up, notify user
 
 **Tasks:**
-1. [ ] Hook into level-up logic in `XPSystem.ts`
-2. [ ] Call `SkillService.checkAndUnlockSkills()`
-3. [ ] Show notification for new skills unlocked
-4. [ ] Auto-equip first skill if < 4 equipped
-5. [ ] Test level-up from 4→5, 12→13, 37→38
+1. [x] Hook into level-up logic in `useXPAward.ts`, `BattleService.ts`, `AchievementHubModal.ts`
+2. [x] Add `SkillService.checkAndUnlockSkills()` function
+3. [x] Update `LevelUpModal` with skill card display for new unlocks
+4. [x] Auto-equip skills if < 5 equipped via `characterStore.unlockSkills()`
+5. [x] Test level-up scenarios (task XP, battle XP, achievement XP)
 
 **Files Changed:**
-- `src/services/XPSystem.ts`
-- `src/services/SkillService.ts`
+- `src/services/SkillService.ts` - checkAndUnlockSkills, getUnlockedSkillIdsForLevel
+- `src/hooks/useXPAward.ts` - Wire skill unlocking to task completion
+- `src/services/BattleService.ts` - Wire skill unlocking to battle XP
+- `src/modals/AchievementHubModal.ts` - Wire skill unlocking to achievement XP
+- `src/modals/LevelUpModal.ts` - Display skill cards for new unlocks
+- `src/store/characterStore.ts` - unlockSkills action with auto-equip
+- `src/styles/fullpage.css` - Skill unlock card CSS
+- `main.ts` - Pass unlockedSkills to LevelUpModal
 
 **Success Criteria:**
-- Skills unlock at correct levels
-- Notification shows skill name + level
-- Auto-equip works for first 4 skills
-- No skills missed on rapid level-ups
+- ✅ Skills unlock at correct levels
+- ✅ Notification shows skill name, icon, description, mana cost
+- ✅ Auto-equip works for first 5 skills
+- ✅ Multi-level jumps handled correctly
 
 ---
 
@@ -4139,13 +4145,13 @@ Use this checklist to track implementation progress across sessions.
 
 
 
-### Phase 7: Skill Unlocking ❌
+### Phase 7: Skill Unlocking ✅
 
-- [ ] Hook into level-up
-- [ ] Auto-unlock skills
-- [ ] Show notification
-- [ ] Auto-equip logic
-- [ ] Test level-up scenarios
+- [x] Hook into level-up (useXPAward, BattleService, AchievementHubModal)
+- [x] Auto-unlock skills (SkillService.checkAndUnlockSkills)
+- [x] Show notification (LevelUpModal with skill cards)
+- [x] Auto-equip logic (characterStore.unlockSkills)
+- [x] Test level-up scenarios
 
 ### Phase 8: Balance Testing ❌
 

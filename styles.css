@@ -2361,6 +2361,69 @@
   }
 }
 /* ==================================================
+   Level-Up Modal - Skill Unlocks (Phase 7)
+   ================================================== */
+.qb-levelup-skills {
+  margin: var(--qb-spacing-lg) 0;
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  border: 1px solid var(--interactive-accent);
+}
+.qb-levelup-skills-title {
+  font-size: 1.1rem;
+  margin: 0 0 var(--qb-spacing-md) 0;
+  color: var(--interactive-accent);
+  text-align: center;
+}
+.qb-levelup-skills-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-sm);
+}
+.qb-levelup-skill-card {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-sm);
+  text-align: left;
+}
+.qb-levelup-skill-header {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  margin-bottom: var(--qb-spacing-xs);
+}
+.qb-levelup-skill-icon {
+  font-size: 1.25rem;
+}
+.qb-levelup-skill-name {
+  font-weight: 600;
+  flex: 1;
+}
+.qb-levelup-skill-mana {
+  font-size: 0.75rem;
+  color: var(--interactive-accent);
+  background: rgba(100, 150, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: var(--qb-radius-sm);
+}
+.qb-levelup-skill-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+.qb-levelup-skill-once {
+  font-size: 0.7rem;
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a1a1a;
+  padding: 2px 6px;
+  border-radius: var(--qb-radius-sm);
+  font-weight: 600;
+  display: inline-block;
+  margin-top: var(--qb-spacing-xs);
+}
+/* ==================================================
    Full Page Kanban Board
    ================================================== */
 .qb-fullpage-board {

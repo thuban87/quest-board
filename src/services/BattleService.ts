@@ -65,6 +65,8 @@ export interface LevelUpCallbackOptions {
     tierChanged: boolean;
     isTrainingMode: boolean;
     onGraduate?: () => void;
+    /** Skills unlocked at this level (Phase 7) */
+    unlockedSkills?: import('../models/Skill').Skill[];
 }
 
 /**
@@ -90,6 +92,25 @@ export function triggerLevelUpIfNeeded(oldXP: number, newXP: number, isTrainingM
     if (result.didLevelUp && levelUpCallback) {
         const character = useCharacterStore.getState().character;
         if (character) {
+            // Phase 7: Check for skill unlocks (non-training only)
+            let unlockedSkills: import('../models/Skill').Skill[] = [];
+            if (!isTrainingMode) {
+                const { checkAndUnlockSkills } = require('./SkillService');
+                const skillResult = checkAndUnlockSkills(
+                    character.class,
+                    result.oldLevel,
+                    result.newLevel,
+                    character.skills?.unlocked ?? []
+                );
+                if (skillResult.newlyUnlocked.length > 0) {
+                    useCharacterStore.getState().unlockSkills(
+                        skillResult.newlyUnlocked.map((s: any) => s.id)
+                    );
+                    unlockedSkills = skillResult.newlyUnlocked;
+                    // Save will happen via battleService saveCallback
+                }
+            }
+
             levelUpCallback({
                 characterClass: character.class,
                 newLevel: result.newLevel,
@@ -98,6 +119,7 @@ export function triggerLevelUpIfNeeded(oldXP: number, newXP: number, isTrainingM
                 onGraduate: isTrainingMode && result.newLevel >= 10 ? () => {
                     useCharacterStore.getState().graduate();
                 } : undefined,
+                unlockedSkills,
             });
         }
     }
@@ -1183,7 +1205,9 @@ export function executePlayerSkill(): void {
 
     // Apply healing to player
     if (result.healing && result.healing > 0) {
-        const newHP = Math.min(player.maxHP, player.currentHP + result.healing);
+        // BUG FIX: Use store.playerCurrentHP, not player.currentHP (which is stale from battle start)
+        const currentHP = store.playerCurrentHP;
+        const newHP = Math.min(player.maxHP, currentHP + result.healing);
         store.updatePlayerHP(newHP);
     }
 

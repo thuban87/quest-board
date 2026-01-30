@@ -118,7 +118,8 @@ export default class QuestBoardPlugin extends Plugin {
                 options.newLevel,
                 options.tierChanged,
                 options.isTrainingMode,
-                options.onGraduate ?? (() => { })
+                options.onGraduate ?? (() => { }),
+                options.unlockedSkills ?? []  // Phase 7: Pass unlocked skills
             );
             modal.open();
         });

@@ -1466,3 +1466,173 @@ Files: SkillLoadoutModal.ts, CharacterSheet.tsx, BattleView.tsx,
 characterStore.ts, SidebarQuests.tsx, QuestBoardCommandMenu.ts,
 main.ts, modals.css
 ```
+
+---
+
+## 2026-01-30 (Afternoon) - Phase 7: Skill Unlocking & Bug Fixes
+
+**Focus:** Completing Phase 7 (Skill Unlocking on Level-Up) and fixing critical combat bugs
+
+### Completed:
+
+#### Phase 7: Skill Unlocking & Notifications
+
+##### SkillService.ts Updates
+- ✅ Added `checkAndUnlockSkills()` function - identifies skills unlocking between old and new levels
+- ✅ Added `getUnlockedSkillIdsForLevel()` helper function
+- ✅ Handles multi-level jumps correctly
+
+##### characterStore.ts Updates
+- ✅ Added `unlockSkills(newSkillIds)` action
+  - Appends new skills to `character.skills.unlocked` (dedupes)
+  - Auto-equips new skills if character has < 5 equipped
+
+##### useXPAward.ts Updates
+- ✅ Integrated skill unlocking into task completion level-up flow
+- ✅ Passes `unlockedSkills` to LevelUpModal
+
+##### BattleService.ts Updates
+- ✅ Updated `triggerLevelUpIfNeeded()` to include skill unlocking for battle XP
+- ✅ Updated `LevelUpCallbackOptions` interface with `unlockedSkills` field
+
+##### main.ts Updates
+- ✅ Updated `setLevelUpCallback` to pass `unlockedSkills` to LevelUpModal
+
+##### AchievementHubModal.ts Updates
+- ✅ Added level-up + skill unlock checks to `manualUnlock()` function
+
+##### LevelUpModal.ts Updates
+- ✅ Updated constructor to accept optional `unlockedSkills` array
+- ✅ Added `renderUnlockedSkills()` method with skill card UI
+- ✅ Displays skill icon, name, mana cost, description, and Ultimate badge
+
+##### fullpage.css Updates
+- ✅ Added CSS for `.qb-levelup-skills`, `.qb-levelup-skills-title`, `.qb-levelup-skill-card`
+
+---
+
+#### Bug Fix: Paladin Heal Skill (100% Heal → 40% Heal)
+
+**Root Cause:** In `BattleService.ts` line 1208, heal was using `player.currentHP` which is set at battle start and never updated during combat. When player took damage then healed, it added healing to the ORIGINAL HP, always restoring to max.
+
+**Fix:** Changed to use `store.playerCurrentHP` which is correctly updated when damage is taken:
+```typescript
+// BUG FIX: Use store.playerCurrentHP, not player.currentHP (which is stale from battle start)
+const currentHP = store.playerCurrentHP;
+const newHP = Math.min(player.maxHP, currentHP + result.healing);
+```
+
+---
+
+#### Bug Fix: Sticky Gear Comparison Tooltip
+
+**Root Cause:** Each tooltip had its own closure-scoped reference. When rapidly moving between items, the old tooltip's `mouseleave` event could fire after the new item's `mouseenter`, causing orphaned tooltips.
+
+**Fix:** Added global cleanup in `gearFormatters.ts` - removes ALL existing `.qb-gear-tooltip-wrapper` elements before showing a new tooltip:
+```typescript
+document.querySelectorAll('.qb-gear-tooltip-wrapper').forEach(el => el.remove());
+```
+
+---
+
+#### Feature Roadmap v2 Update
+- ✅ Added "Character Edit Modal" to Tier 4: Polish & UI section
+
+### Files Changed:
+
+**Services:**
+- `src/services/SkillService.ts` - checkAndUnlockSkills, getUnlockedSkillIdsForLevel
+- `src/services/BattleService.ts` - LevelUpCallbackOptions, heal bug fix
+
+**Stores:**
+- `src/store/characterStore.ts` - unlockSkills action
+
+**Hooks:**
+- `src/hooks/useXPAward.ts` - Skill unlock integration
+
+**Modals:**
+- `src/modals/LevelUpModal.ts` - Skill unlock notifications
+- `src/modals/AchievementHubModal.ts` - Level-up check after manual unlock
+
+**Components:**
+- `main.ts` - Pass unlockedSkills to LevelUpModal
+
+**Styles:**
+- `src/styles/fullpage.css` - Skill unlock display CSS
+
+**Utils:**
+- `src/utils/gearFormatters.ts` - Tooltip global cleanup
+
+**Docs:**
+- `docs/development/Feature Roadmap v2.md` - Character Edit Modal added
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Skills unlock on level-up (tested via task completion XP)
+- ✅ Paladin Heal now correctly heals 40% max HP
+- ✅ Gear tooltips no longer stick when moving between items
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 7 Complete ✅
+
+Phase 7: Skill Unlocking & Notifications is now COMPLETE!
+
+---
+
+## Next Session Prompt
+
+```
+Phase 7 Skill Unlocking & Bug Fixes COMPLETE.
+
+What was done this session:
+- Implemented skill unlocking on level-up (task XP, battle XP, achievement XP)
+- Added checkAndUnlockSkills() to SkillService
+- Added unlockSkills() action with auto-equip (< 5 slots)
+- Updated LevelUpModal with skill card display
+- FIXED: Paladin Heal was healing 100% instead of 40% (stale HP reference)
+- FIXED: Gear comparison tooltip was sticky (global cleanup added)
+
+Ready for Phase 8: Balance Testing & Tuning
+- Test skill damage values across all classes
+- Verify status effect durations
+- Check mana costs are balanced
+- Confirm type effectiveness multipliers
+
+Key files:
+- docs/development/Skills Implementation Guide.md - Full spec
+- src/services/SkillService.ts - Skill execution and unlocking
+- src/services/BattleService.ts - Combat integration
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 7 complete - skill unlocking & bug fixes
+
+Phase 7 Skill Unlocking:
+- Add checkAndUnlockSkills() to SkillService.ts
+- Add unlockSkills() action to characterStore (auto-equips if < 5 slots)
+- Wire skill unlocking to useXPAward (task completion XP)
+- Wire skill unlocking to BattleService (battle XP)
+- Wire skill unlocking to AchievementHubModal (achievement XP)
+- Update LevelUpModal with skill card display for new unlocks
+- Add CSS for skill unlock cards in fullpage.css
+
+Bug Fixes:
+- Fix Paladin Heal healing 100% instead of 40% (used stale player.currentHP)
+- Fix sticky gear tooltip (add global cleanup before showing new tooltip)
+
+Documentation:
+- Add Character Edit Modal to Feature Roadmap v2 Tier 4
+
+Files: SkillService.ts, BattleService.ts, characterStore.ts, useXPAward.ts,
+LevelUpModal.ts, AchievementHubModal.ts, main.ts, gearFormatters.ts,
+fullpage.css, Feature Roadmap v2.md
+```
