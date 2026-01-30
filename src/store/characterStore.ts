@@ -135,6 +135,14 @@ interface CharacterActions {
     /** Full restore HP and Mana (Long Rest). */
     fullRestore: () => void;
 
+    /**
+     * Restore HP and Mana by a percentage of max values.
+     * Used for task completion regen (7% per task).
+     * @param percent - Fraction of max to restore (0.07 = 7%)
+     * @returns The actual amounts restored (capped at max)
+     */
+    restoreResources: (percent: number) => { restoredHP: number; restoredMana: number };
+
     /** Recalculate and update maxHP/maxMana based on current stats. */
     recalculateMaxHPMana: () => void;
 
@@ -289,6 +297,13 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
 
             // Phase 4: Activity Tracking
             activityHistory: [],
+
+            // Phase 5: Skills System
+            skills: {
+                unlocked: [],
+                equipped: [],
+            },
+            persistentStatusEffects: [],
         };
 
         set({ character });
@@ -823,10 +838,37 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 ...character,
                 currentHP: character.maxHP,
                 currentMana: character.maxMana,
+                persistentStatusEffects: [], // Phase 5: Clear all status effects on Long Rest
                 lastModified: new Date().toISOString(),
             },
         });
     },
+
+    restoreResources: (percent: number) => {
+        const { character } = get();
+        if (!character) return { restoredHP: 0, restoredMana: 0 };
+
+        const hpToRestore = Math.floor(character.maxHP * percent);
+        const manaToRestore = Math.floor(character.maxMana * percent);
+
+        const newHP = Math.min(character.currentHP + hpToRestore, character.maxHP);
+        const newMana = Math.min(character.currentMana + manaToRestore, character.maxMana);
+
+        const restoredHP = newHP - character.currentHP;
+        const restoredMana = newMana - character.currentMana;
+
+        set({
+            character: {
+                ...character,
+                currentHP: newHP,
+                currentMana: newMana,
+                lastModified: new Date().toISOString(),
+            },
+        });
+
+        return { restoredHP, restoredMana };
+    },
+
 
     recalculateMaxHPMana: () => {
         const { character } = get();
@@ -911,6 +953,7 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 currentHP: revivedHP,
                 status: 'active',
                 recoveryTimerEnd: null,
+                persistentStatusEffects: [], // Phase 5: Clear all status effects on revive
                 lastModified: new Date().toISOString(),
             },
         });

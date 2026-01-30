@@ -8,6 +8,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import { CombatStats } from '../services/CombatService';
+import { StatusEffect } from '../models/StatusEffect';
+import { MonsterSkill } from '../models/Skill';
 
 // =====================
 // COMBAT STATE MACHINE
@@ -66,6 +68,38 @@ export interface BattleMonster {
     emoji: string;
     goldReward: number;
     xpReward: number;
+
+    // Skills System (Phase 5)
+    skills: MonsterSkill[];
+    statStages: { atk: number; def: number; speed: number };
+    statusEffects: StatusEffect[];
+    skillsUsedThisBattle: string[];
+}
+
+/**
+ * Player volatile battle state
+ * Mirrors BattleMonster structure for consistent battle logic.
+ * Created at battle start from Character + gear, not persisted to Character.
+ */
+export interface BattlePlayer {
+    // Derived combat stats (from Character + gear)
+    maxHP: number;
+    currentHP: number;
+    maxMana: number;
+    currentMana: number;
+    physicalAttack: number;
+    magicAttack: number;
+    defense: number;
+    magicDefense: number;
+    speed: number;
+    critChance: number;
+    dodgeChance: number;
+
+    // VOLATILE: Battle-specific state (not persisted!)
+    statStages: { atk: number; def: number; speed: number };
+    volatileStatusEffects: StatusEffect[];  // Working copy from persistentStatusEffects
+    skillsUsedThisBattle: string[];
+    turnsInBattle: number;
 }
 
 // =====================
@@ -82,6 +116,9 @@ interface BattleState {
     playerCurrentHP: number;
     playerCurrentMana: number;
     monster: BattleMonster | null;
+
+    // Phase 5: Player battle state (volatile, separate from Character)
+    player: BattlePlayer | null;
 
     // Turn tracking
     currentTurn: 'player' | 'monster';
@@ -126,6 +163,10 @@ interface BattleActions {
     updateMonsterHP: (newHP: number) => void;
     setPlayerDefending: (isDefending: boolean) => void;
 
+    // Phase 5: Player battle state management
+    setPlayer: (player: BattlePlayer) => void;
+    updatePlayer: (updates: Partial<BattlePlayer>) => void;
+
     // Combat log
     addLogEntry: (entry: Omit<CombatLogEntry, 'timestamp'>) => void;
     clearLog: () => void;
@@ -148,6 +189,7 @@ const initialState: BattleState = {
     playerCurrentHP: 0,
     playerCurrentMana: 0,
     monster: null,
+    player: null,
     currentTurn: 'player',
     turnNumber: 0,
     selectedAction: null,
@@ -301,6 +343,24 @@ export const useBattleStore = create<BattleStore>()(
                 });
             },
 
+            // Phase 5: Set player battle state at battle start
+            setPlayer: (player) => {
+                set({
+                    player,
+                    lastUpdated: Date.now(),
+                });
+            },
+
+            // Phase 5: Update player battle state during battle
+            updatePlayer: (updates) => {
+                const { player } = get();
+                if (!player) return;
+                set({
+                    player: { ...player, ...updates },
+                    lastUpdated: Date.now(),
+                });
+            },
+
             addLogEntry: (entry) => {
                 set((state) => ({
                     log: [...state.log, { ...entry, timestamp: Date.now() }],
@@ -358,6 +418,7 @@ export const useBattleStore = create<BattleStore>()(
                 lootBonus: state.lootBonus,
                 isBountyFight: state.isBountyFight,
                 sourceQuestId: state.sourceQuestId,
+                player: state.player, // Phase 5: Persist player battle state for crash recovery
                 lastUpdated: state.lastUpdated,
             }),
         }

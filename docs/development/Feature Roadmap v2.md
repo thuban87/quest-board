@@ -24,7 +24,7 @@ This document reflects the **actual state of implementation** based on a deep co
 | Phase 3A | Gear & Loot System | ✅ Complete |
 | Phase 3B | Combat System | ✅ Complete |
 | Phase 3C | Dungeon Exploration | ✅ Complete |
-| Phase 4 | Skills, Bosses & AI | 🔄 Planning |
+| Phase 4 | Skills, Bosses & AI | 🔄 In Progress |
 | Phase 5 | Party System & Advanced | 📋 Future |
 
 ---
@@ -240,7 +240,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | **Accessory Special Abilities** | Unique effects: sneak past monsters, reset rest timer (cooldown), etc. | High |
 | **Character Titles** | Ecosystem of titles earned from various activities | Medium |
 | **Dungeon Bosses** | Boss monsters at dungeon end | Medium |
-| **Skills/Abilities** | Class-specific moves using mana (informed by power-up system) | High |
+| **Skills/Abilities** | Class-specific moves using mana (Pokemon Gen 1 style) | 🔄 Pre-Implementation (Part 4/X) |
 | **Tier Sprite Choices** | At tier-up, choose from 3 sprite looks | Medium |
 
 #### Tier 4: Polish & UI
@@ -380,4 +380,5 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-01-29 (Battle screen improvements, mobile polish)
+**Last Updated:** 2026-01-29 (Skills Pre-Implementation Part 4 - Combatant Type Handling)
+

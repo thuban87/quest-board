@@ -6,7 +6,7 @@
  */
 
 /** Current character schema version */
-export const CHARACTER_SCHEMA_VERSION = 4;
+export const CHARACTER_SCHEMA_VERSION = 5;
 
 /**
  * Character class types
@@ -110,6 +110,8 @@ export interface ClassInfo {
     primaryStats: [StatType, StatType];
     /** Class-specific category to stat mapping */
     categoryStatMap: Record<string, StatType>;
+    /** Inherent elemental type for this class (affects type effectiveness) */
+    inherentType: import('./Skill').ElementalType;
 }
 
 /**
@@ -136,6 +138,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'wisdom', admin: 'wisdom',
         },
+        inherentType: 'Physical',
     },
     paladin: {
         id: 'paladin',
@@ -157,6 +160,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'wisdom', admin: 'wisdom',
         },
+        inherentType: 'Light',
     },
     technomancer: {
         id: 'technomancer',
@@ -178,6 +182,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'wisdom', admin: 'wisdom',
         },
+        inherentType: 'Lightning',
     },
     scholar: {
         id: 'scholar',
@@ -199,6 +204,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'wisdom', admin: 'wisdom',
         },
+        inherentType: 'Arcane',
     },
     rogue: {
         id: 'rogue',
@@ -220,6 +226,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'intelligence', admin: 'intelligence',
         },
+        inherentType: 'Dark',
     },
     cleric: {
         id: 'cleric',
@@ -241,6 +248,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'wisdom', admin: 'wisdom',
         },
+        inherentType: 'Light',
     },
     bard: {
         id: 'bard',
@@ -262,6 +270,7 @@ export const CLASS_INFO: Record<CharacterClass, ClassInfo> = {
             creative: 'dexterity', efficiency: 'dexterity',
             planning: 'charisma', admin: 'charisma',
         },
+        inherentType: 'Arcane',
     },
 };
 
@@ -494,6 +503,19 @@ export interface Character {
 
     /** Activity history for progress tracking (capped at MAX_ACTIVITY_HISTORY) */
     activityHistory: ActivityEvent[];
+
+    // ========== Phase 5: Skills System ==========
+
+    /** Skills loadout */
+    skills: {
+        /** All learned skill IDs */
+        unlocked: string[];
+        /** Currently equipped skills (max 5) */
+        equipped: string[];
+    };
+
+    /** Status effects that persist between battles (cleared by Long Rest or death recovery) */
+    persistentStatusEffects: import('./StatusEffect').StatusEffect[];
 }
 
 /**
@@ -597,6 +619,13 @@ export function createCharacter(
 
         // Phase 4: Activity Tracking
         activityHistory: [],
+
+        // Phase 5: Skills System
+        skills: {
+            unlocked: [],
+            equipped: [],
+        },
+        persistentStatusEffects: [],
     };
 }
 
@@ -793,8 +822,40 @@ export function migrateCharacterV2toV3(oldData: Record<string, unknown>): Charac
  * @returns Migrated character data conforming to schema v4
  */
 export function migrateCharacterV3toV4(oldData: Record<string, unknown>): Character {
-    // Already v4 or higher? Return as-is
-    if ((oldData.schemaVersion as number) >= 4) {
+    // Already v4 or higher? Chain to next migration
+    if (oldData.schemaVersion === 4) {
+        return migrateCharacterV4toV5(oldData);
+    }
+    if ((oldData.schemaVersion as number) >= 5) {
+        return oldData as unknown as Character;
+    }
+
+    // Build migrated character
+    const migrated: Record<string, unknown> = {
+        // Copy all existing fields
+        ...(oldData as object),
+
+        // Bump schema version
+        schemaVersion: 4,
+
+        // Phase 4: Activity Tracking defaults
+        activityHistory: (oldData.activityHistory as ActivityEvent[]) ?? [],
+    };
+
+    // Chain to v4 → v5 migration
+    return migrateCharacterV4toV5(migrated);
+}
+
+/**
+ * Migrate character data from schema v4 to schema v5.
+ * Adds skills system fields.
+ * 
+ * @param oldData - Character data at schema v4
+ * @returns Migrated character data conforming to schema v5
+ */
+export function migrateCharacterV4toV5(oldData: Record<string, unknown>): Character {
+    // Already v5 or higher? Return as-is
+    if ((oldData.schemaVersion as number) >= 5) {
         return oldData as unknown as Character;
     }
 
@@ -804,10 +865,16 @@ export function migrateCharacterV3toV4(oldData: Record<string, unknown>): Charac
         ...(oldData as object),
 
         // Bump schema version
-        schemaVersion: 4,
+        schemaVersion: 5,
 
-        // Phase 4: Activity Tracking defaults
-        activityHistory: (oldData.activityHistory as ActivityEvent[]) ?? [],
+        // Phase 5: Skills System defaults
+        skills: (oldData.skills as { unlocked: string[]; equipped: string[] }) ?? {
+            unlocked: [],  // Will be populated on first battle or skill check
+            equipped: [],
+        },
+
+        // Persistent status effects (empty for fresh migration)
+        persistentStatusEffects: (oldData.persistentStatusEffects as unknown[]) ?? [],
     } as Character;
 
     return migrated;

@@ -156,6 +156,12 @@ describe('Attack Style Logic', () => {
         emoji: '👹',
         goldReward: 100,
         xpReward: 50,
+
+        // Phase 5: Skills System
+        skills: [],
+        statStages: { atk: 0, def: 0, speed: 0 },
+        statusEffects: [],
+        skillsUsedThisBattle: [],
     };
 
     it('physical attack uses physicalAttack vs defense', () => {

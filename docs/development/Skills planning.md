@@ -27,7 +27,7 @@ Planning document for the character skills system. Skills are special moves used
 - **Stage Types:**
   - **ATK Stages:** Affect damage dealt
   - **DEF Stages:** Affect damage taken
-  - **Speed Stages:** Affect turn order (high speed advantage = multiple attacks per enemy turn)
+  - **Speed Stages:** Affect turn order (higher speed goes first each round, Pokemon Gen 1 style)
 - **Stage Reset:** All stages reset to 0 after battle ends
 - **Stage Duration:** Last until battle ends (no turn tracking)
 
@@ -88,9 +88,10 @@ Status damage ticks at **END of turn** (after all actions).
 - **Means:** Enemy DEF stages don't apply (treated as stage 0)
 - Attacker's ATK stages still apply
 
-**Turn Order:**
-- Determined by Speed stat + Speed stages
-- High speed advantage = multiple attacks per enemy turn (like Pokemon)
+**Turn Order (Pokemon Gen 1 Style):**
+- Determined by Speed stat × Speed stage multiplier
+- Higher speed goes first each round (NOT multiple attacks per turn)
+- Each round: Player action → Monster action (or vice versa based on speed)
 
 ---
 
@@ -336,7 +337,7 @@ Critical edge cases and rules to implement correctly:
 - ✅ **Miss = No Status:** Missing an attack = no status effect roll
 - ✅ **Healing Bypasses Types:** Healing skills ignore type effectiveness chart entirely
 - ✅ **Ignores Stages:** Means enemy DEF stages treated as 0 (attacker ATK stages still apply)
-- ✅ **Speed Affects Turn Order:** High speed advantage = multiple attacks per enemy turn
+- ✅ **Speed Affects Turn Order:** Higher speed goes first each round (not multiple attacks)
 - ✅ **Type Resistances Only:** All type matchups are 0.5x (resist), no 0x (immune) for V1
 
 ### Monster AI (V1)
