@@ -334,7 +334,7 @@ export default class QuestBoardPlugin extends Plugin {
             },
         });
 
-        // Add Long Rest command (Phase 3B)
+        // Add Long Rest command (Phase 3B) - with paid bypass option (Phase 5)
         this.addCommand({
             id: 'long-rest',
             name: 'Long Rest (Restore HP & Mana)',
@@ -349,8 +349,17 @@ export default class QuestBoardPlugin extends Plugin {
                 if (character.recoveryTimerEnd) {
                     const remaining = new Date(character.recoveryTimerEnd).getTime() - Date.now();
                     if (remaining > 0) {
-                        const mins = Math.ceil(remaining / 60000);
-                        new (require('obsidian').Notice)(`🛏️ Already resting! ${mins} minutes remaining.`, 3000);
+                        // Offer paid bypass instead of just blocking
+                        const { openPaidRestModal } = await import('./src/modals/PaidRestModal');
+                        openPaidRestModal(this.app, {
+                            onSuccess: () => {
+                                // Refresh views if needed
+                            },
+                            onSave: async () => {
+                                this.settings.character = useCharacterStore.getState().character;
+                                await this.saveSettings();
+                            },
+                        });
                         return;
                     }
                 }

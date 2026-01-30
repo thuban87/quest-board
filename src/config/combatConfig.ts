@@ -453,3 +453,21 @@ export const INHERENT_TYPE_RESISTANCE = 0.10;
 
 /** HP/Mana restored per task completion (7% of max) */
 export const TASK_REGEN_PERCENT = 0.07;
+
+// =====================
+// PAID LONG REST (Phase 5)
+// =====================
+
+/** Base gold cost for paid Long Rest bypass */
+export const PAID_LONG_REST_BASE = 100;
+
+/** Gold cost per character level for paid Long Rest bypass */
+export const PAID_LONG_REST_PER_LEVEL = 35;
+
+/**
+ * Get the gold cost to bypass Long Rest cooldown.
+ * Formula: 100 + (level × 35)
+ */
+export function getPaidLongRestCost(level: number): number {
+    return PAID_LONG_REST_BASE + (level * PAID_LONG_REST_PER_LEVEL);
+}

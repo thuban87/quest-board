@@ -193,12 +193,18 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         return mobileVisibleColumns.includes(status);
     }, [isMobile, mobileMode, mobileColumnIndex, mobileVisibleColumns]);
 
-    // Load character on mount
+    // Load character on mount and save if migration occurred
     useEffect(() => {
         if (plugin.settings.character) {
+            const oldVersion = plugin.settings.character.schemaVersion;
             setCharacter(plugin.settings.character);
+            // If migration happened (store has newer version), save immediately
+            const newCharacter = useCharacterStore.getState().character;
+            if (newCharacter && newCharacter.schemaVersion !== oldVersion) {
+                handleSaveCharacter();
+            }
         }
-    }, [plugin.settings.character, setCharacter]);
+    }, [plugin.settings.character, setCharacter, handleSaveCharacter]);
 
     // Collect available categories, tags, and types for filter dropdowns
     const availableCategories = useMemo(() => collectAllCategories(allQuests), [allQuests]);

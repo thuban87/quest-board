@@ -655,4 +655,241 @@ Implemented all 57 skill definitions in `src/data/skills.ts`. Created comprehens
 
 ---
 
+## 2026-01-29 (Late Night) - Phase 1 Foundation Complete
+
+**Focus:** Completing Phase 1 (Data Models & Migrations) for the skills system
+
+### Completed:
+
+#### Interface Verification
+- ✅ Verified `src/models/Skill.ts` - ElementalType, SkillCategory, Skill, MonsterSkill
+- ✅ Verified `src/models/StatusEffect.ts` - StatusEffectType, StatusEffect
+- ✅ Verified `src/models/Character.ts` - skills field, persistentStatusEffects, schema v5
+- ✅ Verified `src/models/Monster.ts` - skills, battleState, skillPool
+- ✅ Verified `src/store/battleStore.ts` - BattlePlayer, expanded BattleMonster
+- ✅ Verified CLASS_INFO with inherentType for all 7 classes
+
+#### Migration Script Completion
+- ✅ Implemented smart loadout logic in `migrateCharacterV4toV5()`
+  - Auto-unlocks skills based on character class and level
+  - Builds balanced 5-skill loadout (heal → buff → ultimate → damage)
+  - Uses `getDefaultSkillLoadout()` helper function
+- ✅ Fixed migration chain entry point (v1→v2 now chains to v3+ correctly)
+- ✅ Fixed migration save issue - components now save immediately after migration
+- ✅ Tested with Warrior Level 30 in test vault - schema v3 → v5 successful
+
+#### Documentation
+- ✅ Created `docs/development/Schema Changes v5.md`
+
+### Files Changed:
+
+**Models:**
+- `src/models/Character.ts` - Smart loadout migration, fixed migration chain
+
+**Components:**
+- `src/components/FullKanban.tsx` - Save after migration
+- `src/components/SidebarQuests.tsx` - Save after migration
+
+**Docs:**
+- `docs/development/Schema Changes v5.md` - NEW
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Schema v3 → v5 migration successful
+- ✅ Skills populated correctly for Warrior Level 30 (7 unlocked, 5 equipped)
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Phase 1 (Data Models & Migrations) is COMPLETE.
+
+The foundation is in place:
+- All interfaces verified (Skill, StatusEffect, Character, Monster, battleStore)
+- Smart loadout migration working (unlocks/equips skills based on class+level)
+- Schema v3 → v5 migration tested successfully
+
+Next: Phase 2 (Skill Execution Service) or Phase 3 (Battle UI Integration)
+See Skills Implementation Guide for full roadmap.
+
+Key files:
+- src/data/skills.ts - 57 skill definitions
+- src/models/Character.ts - migrateCharacterV4toV5 with smart loadout
+- docs/development/Schema Changes v5.md - Schema documentation
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 1 complete - smart migration with skill loadout
+
+Completed Phase 1 (Data Models & Migrations) for the skills system.
+
+Character.ts:
+- Implement migrateCharacterV4toV5() with smart loadout logic
+- Auto-unlock skills based on class and level
+- Build balanced 5-skill loadout (heal → buff → ultimate → damage)
+- Fix migration chain: v3+ now properly chains to v4→v5
+
+FullKanban.tsx + SidebarQuests.tsx:
+- Save character immediately after migration runs
+- Fixes issue where migrated data wasn't persisted to data.json
+
+Schema Changes v5.md:
+- Document new fields (skills, persistentStatusEffects)
+- Document migration chain and testing notes
+
+Tested: Warrior Level 30 in test vault
+- Schema v3 → v5 migration successful
+- 7 skills unlocked, 5 equipped (Meditate, Enrage, Cleave, etc.)
+
+Files: Character.ts, FullKanban.tsx, SidebarQuests.tsx, Schema Changes v5.md
+```
+
+---
+
+## 2026-01-29 (Late Night) - Phase 2: Resource Management Updates
+
+**Focus:** Implementing paid Long Rest bypass option to skip cooldown timer by spending gold
+
+### Completed:
+
+#### combatConfig.ts Updates
+- ✅ Added `PAID_LONG_REST_BASE = 100` constant
+- ✅ Added `PAID_LONG_REST_PER_LEVEL = 35` constant
+- ✅ Added `getPaidLongRestCost(level)` function (formula: 100 + level × 35)
+
+#### PaidRestModal.ts (NEW)
+- ✅ Created new modal for paid Long Rest confirmation
+- ✅ Shows cost based on character level
+- ✅ Shows current gold and affordability
+- ✅ Deducts gold, calls `fullRestore()`, sets new timer
+
+#### RecoveryOptionsModal.ts Updates
+- ✅ Added import for `getPaidLongRestCost`
+- ✅ Added paid bypass option when timer is active
+- ✅ Option shows "Paid Rest (Xg)" instead of disabled Long Rest
+- ✅ Added `handlePaidRest(cost)` method
+
+#### main.ts Updates
+- ✅ Updated Long Rest command to open PaidRestModal when on cooldown
+- ✅ Maintains original behavior when not on cooldown
+
+#### combat.css Updates
+- ✅ Added `.qb-paid-rest-modal` styles
+- ✅ Added `.qb-paid-rest-header`, `.qb-paid-rest-cost`, button styles
+- ✅ Added `.qb-cost-affordable` (green) and `.qb-cost-expensive` (red) classes
+
+### Files Changed:
+
+**Config:**
+- `src/config/combatConfig.ts` - Paid rest cost constants and function
+
+**Modals:**
+- `src/modals/PaidRestModal.ts` - NEW
+- `src/modals/RecoveryOptionsModal.ts` - Paid bypass option
+
+**Main:**
+- `main.ts` - Updated Long Rest command
+
+**Styles:**
+- `src/styles/combat.css` - Paid rest modal CSS
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Command Menu Long Rest → shows PaidRestModal when on cooldown
+- ✅ Pay & Rest works with sufficient gold
+- ✅ Pay & Rest disabled without sufficient gold
+- ✅ RecoveryOptionsModal shows paid option when timer active
+- ✅ Cost formula verified (Level 1 = 135g, Level 10 = 450g, Level 30 = 1150g)
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 2 Complete ✅
+
+All Phase 2 Resource Management tasks are now complete:
+
+1. ✅ Long Rest restores mana (`fullRestore()` already done)
+2. ✅ Task completion HP/Mana regen (`useResourceRegen.ts` - 7%)
+3. ✅ Paid Long Rest bypass (100g + level×35 formula)
+4. ✅ Long Rest UI shows cooldown bypass option
+5. ✅ Tests passed
+
+**Ready for Phase 3: Core Combat Logic** (StatusEffectService, SkillService, BattleService integration)
+
+---
+
+## Next Session Prompt
+
+```
+Phase 2 (Resource Management Updates) is COMPLETE.
+
+Implemented:
+- Paid Long Rest bypass: 100g + (level × 35)
+- PaidRestModal for command menu
+- RecoveryOptionsModal paid bypass option
+- CSS styling for new modal
+
+Next: Phase 3 (Core Combat Logic)
+- Create StatusEffectService.ts
+- Create SkillService.ts
+- Integrate ATK/DEF stages into damage calculation
+- Update BattleService for skill execution
+
+Key files:
+- src/config/combatConfig.ts - getPaidLongRestCost, getStageMultiplier
+- src/modals/PaidRestModal.ts - Paid bypass modal
+- docs/development/Skills Implementation Guide.md - Master reference
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 2 complete - implement paid Long Rest bypass
+
+Phase 2 Resource Management Updates complete. Added ability to bypass
+the 30-minute Long Rest cooldown by paying gold.
+
+combatConfig.ts:
+- Add PAID_LONG_REST_BASE (100) and PAID_LONG_REST_PER_LEVEL (35)
+- Add getPaidLongRestCost(level) function: 100 + (level × 35)
+
+PaidRestModal.ts (NEW):
+- Modal for paid Long Rest bypass confirmation
+- Shows cost, current gold, and affordability
+- Deducts gold, restores HP/Mana, sets new timer
+
+RecoveryOptionsModal.ts:
+- Add paid bypass option when timer is active
+- Shows "Paid Rest (Xg)" instead of disabled Long Rest
+- Add handlePaidRest(cost) method
+
+main.ts:
+- Update Long Rest command to open PaidRestModal when on cooldown
+
+combat.css:
+- Add .qb-paid-rest-modal styles
+- Add cost affordability color classes (green/red)
+
+Cost examples:
+- Level 1: 135g
+- Level 10: 450g
+- Level 30: 1,150g
+
+Files: combatConfig.ts, PaidRestModal.ts, RecoveryOptionsModal.ts,
+main.ts, combat.css
+```
 

@@ -136,7 +136,13 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         initializedRef.current = true;
 
         if (plugin.settings.character) {
+            const oldVersion = plugin.settings.character.schemaVersion;
             setCharacter(plugin.settings.character);
+            // If migration happened (store has newer version), save immediately
+            const newCharacter = useCharacterStore.getState().character;
+            if (newCharacter && newCharacter.schemaVersion !== oldVersion) {
+                handleSaveCharacter();
+            }
         }
         // Initialize achievements with defaults (merges saved state with default achievements)
         const achievementService = new AchievementService(app.vault, plugin.settings.badgeFolder);

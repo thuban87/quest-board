@@ -1370,6 +1370,102 @@
 }
 
 /* ===========================================
+   Paid Rest Modal (Phase 5 - Skills)
+   =========================================== */
+.qb-paid-rest-modal {
+  max-width: 420px;
+}
+
+.qb-paid-rest-header {
+  text-align: center;
+  padding: var(--qb-spacing-lg) var(--qb-spacing-md);
+  border-bottom: 1px solid var(--qb-card-border);
+}
+
+.qb-paid-rest-icon {
+  font-size: 3rem;
+  margin-bottom: var(--qb-spacing-sm);
+}
+
+.qb-paid-rest-header h2 {
+  margin: 0 0 var(--qb-spacing-xs) 0;
+  font-size: 1.4rem;
+  color: #ffc107;
+}
+
+.qb-paid-rest-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.qb-paid-rest-cost {
+  text-align: center;
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  margin: var(--qb-spacing-md);
+  border-radius: var(--qb-radius-md);
+  font-size: 1rem;
+}
+
+.qb-cost-affordable {
+  color: #4cd964;
+  font-weight: 600;
+}
+
+.qb-cost-expensive {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.qb-paid-rest-buttons {
+  display: flex;
+  gap: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  justify-content: center;
+}
+
+.qb-paid-rest-confirm-btn {
+  padding: var(--qb-spacing-md) var(--qb-spacing-xl);
+  border: none;
+  border-radius: var(--qb-radius-md);
+  background: linear-gradient(135deg, #ffc107, #d97706);
+  color: #1a1a1a;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--qb-transition-fast);
+}
+
+.qb-paid-rest-confirm-btn:hover:not(.disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 193, 7, 0.4);
+}
+
+.qb-paid-rest-confirm-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+.qb-paid-rest-cancel-btn {
+  padding: var(--qb-spacing-md) var(--qb-spacing-lg);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all var(--qb-transition-fast);
+}
+
+.qb-paid-rest-cancel-btn:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+/* ===========================================
    Consumable Use Button (Inventory Modal)
    =========================================== */
 .qb-consumable-btn.qb-btn-use {
