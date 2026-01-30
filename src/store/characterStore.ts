@@ -830,6 +830,7 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 ...character,
                 currentHP: character.maxHP,
                 currentMana: character.maxMana,
+                persistentStatusEffects: [], // Phase 5: Clear all status effects on Long Rest
                 lastModified: new Date().toISOString(),
             },
         });
@@ -918,6 +919,7 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 currentHP: revivedHP,
                 status: 'active',
                 recoveryTimerEnd: null,
+                persistentStatusEffects: [], // Phase 5: Clear all status effects on revive
                 lastModified: new Date().toISOString(),
             },
         });

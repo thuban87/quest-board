@@ -25,8 +25,10 @@ import {
     ELITE_BOUNTY_CHANCE,
     ELITE_OVERWORLD_CHANCE,
     ELITE_NAME_PREFIXES,
+    SPEED_BASE,
 } from '../config/combatConfig';
 import { checkLevelUp, LevelUpResult } from './XPSystem';
+import { Character } from '../models/Character';
 
 // =====================
 // SAVE CALLBACK (set by main.ts)
@@ -225,7 +227,57 @@ export function startBattleWithMonster(
     const battleMonster = monsterToBattleMonster(monster);
     useBattleStore.getState().startBattle(playerStats, battleMonster, options);
 
+    // Phase 5: Hydrate BattlePlayer from Character
+    const battlePlayer = hydrateBattlePlayer(character, playerStats);
+    useBattleStore.getState().setPlayer(battlePlayer);
+
     return true;
+}
+
+/**
+ * Hydrate BattlePlayer from Character and derived combat stats.
+ * Called at battle start to create the volatile battle state.
+ */
+function hydrateBattlePlayer(character: Character, stats: CombatStats): import('../store/battleStore').BattlePlayer {
+    return {
+        // Combat stats from deriveCombatStats
+        maxHP: stats.maxHP,
+        currentHP: stats.currentHP,
+        maxMana: stats.maxMana,
+        currentMana: stats.currentMana,
+        physicalAttack: stats.physicalAttack,
+        magicAttack: stats.magicAttack,
+        defense: stats.defense,
+        magicDefense: stats.magicDefense,
+        speed: SPEED_BASE + (character.baseStats.dexterity + (character.statBonuses?.dexterity || 0)),
+        critChance: stats.critChance,
+        dodgeChance: stats.dodgeChance,
+
+        // VOLATILE: Initialize fresh for this battle
+        statStages: { atk: 0, def: 0, speed: 0 },
+        volatileStatusEffects: [...(character.persistentStatusEffects || [])], // Copy in
+        skillsUsedThisBattle: [],
+        turnsInBattle: 0,
+    };
+}
+
+/**
+ * Copy volatile status effects back to persistent storage.
+ * Called on battle end (victory, defeat, retreat) to persist status effects between battles.
+ */
+function copyVolatileStatusToPersistent(): void {
+    const player = useBattleStore.getState().player;
+    if (!player) return;
+
+    const character = useCharacterStore.getState().character;
+    if (!character) return;
+
+    // Copy volatile status effects back to persistent storage
+    useCharacterStore.getState().setCharacter({
+        ...character,
+        persistentStatusEffects: [...player.volatileStatusEffects],
+        lastModified: new Date().toISOString(),
+    });
 }
 
 // =====================
@@ -340,13 +392,20 @@ function calculatePlayerDamage(
     // Apply class damage modifier
     attackPower = Math.floor(attackPower * player.damageModifier);
 
-    // Calculate with dodge, crit, variance
+    // Phase 5: Get stat stages from BattlePlayer and BattleMonster
+    const battlePlayer = useBattleStore.getState().player;
+    const playerAtkStage = battlePlayer?.statStages.atk ?? 0;
+    const monsterDefStage = monster.statStages?.def ?? 0;
+
+    // Calculate with dodge, crit, variance, and stat stages
     const damageResult = calculateDamage(
         attackPower,
         player.critChance,
         defenderDef,
         monster.dodgeChance,
-        0 // Monsters don't have block
+        0, // Monsters don't have block
+        playerAtkStage,
+        monsterDefStage
     );
 
     return {
@@ -399,6 +458,9 @@ function executePlayerRetreat(): void {
             result: 'hit',
         });
 
+        // Phase 5: Copy volatile status effects back to persistent storage
+        copyVolatileStatusToPersistent();
+
         store.endBattle('retreat');
     } else {
         // Failed retreat - take 15% HP damage
@@ -435,9 +497,13 @@ function executePlayerRetreat(): void {
  */
 export function executeMonsterTurn(): void {
     const store = useBattleStore.getState();
-    const { monster, playerStats, playerCurrentHP, isPlayerDefending } = store;
+    const { monster, player, playerStats, playerCurrentHP, isPlayerDefending } = store;
 
     if (!monster || !playerStats) return;
+
+    // Phase 5: Get stat stages from BattleMonster and BattlePlayer
+    const monsterAtkStage = monster.statStages?.atk ?? 0;
+    const playerDefStage = player?.statStages.def ?? 0;
 
     // Monster always attacks
     const damageResult = calculateDamage(
@@ -445,7 +511,9 @@ export function executeMonsterTurn(): void {
         monster.critChance,
         playerStats.defense,
         playerStats.dodgeChance,
-        playerStats.blockChance
+        playerStats.blockChance,
+        monsterAtkStage,
+        playerDefStage
     );
 
     let damage = damageResult.damage;
@@ -548,6 +616,9 @@ function handleVictory(): void {
     // End battle
     store.endBattle('victory');
 
+    // Phase 5: Copy volatile status effects back to persistent storage
+    copyVolatileStatusToPersistent();
+
     // === ACTIVITY LOGGING (Phase 4) ===
     // Log combat victory for progress tracking (all fights, not just bounties)
     // IMPORTANT: This must happen BEFORE saveCallback so activity history is persisted
@@ -610,6 +681,9 @@ function handleDefeat(): void {
     }
 
     store.endBattle('defeat');
+
+    // Phase 5: Copy volatile status effects back to persistent storage
+    copyVolatileStatusToPersistent();
 
     // === ACTIVITY LOGGING (Phase 4) ===
     // Log combat defeat for progress tracking

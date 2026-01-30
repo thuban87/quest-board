@@ -1017,24 +1017,29 @@ Files: BattleView.tsx, combat.css, inventory.css, gearFormatters.ts
 ### Blockers/Issues:
 - None
 
+> **Note:** Skills Pre-Implementation work (interface updates, schema v5) moved to [[Skills Implementation Session Log]] as it marks the start of Phase 5.
+
 ---
 
 ## Next Session Prompt
 
 ```
-Battle actions UI scaffolding complete. Skills and Meditate are placeholders.
+Phase 4 complete. Battle actions UI scaffolding done. Phase 5 (Skills) branch started.
 
-Next steps for skills system:
-1. Create Skill model (id, name, manaCost, effect, cooldown, unlockLevel)
-2. Create SkillService for skill definitions and availability
-3. Wire Meditate to restore mana (amount TBD)
-4. Wire skills to actual effects
-5. Add skill unlock logic based on level/class
+Skills work continues in: docs/development/Skills Implementation Session Log.md
 
-Key files to reference:
-- src/components/BattleView.tsx - ActionButtons component with menu state
-- src/styles/combat.css - Action grid layouts
-- docs/development/Skills Implementation Guide.md - Full skill system design
+Phase 4 key accomplishments:
+- Console.log cleanup, default paths
+- Mobile Kanban optimization
+- Bug fixes & 5-tier XP system
+- AI Quest Generation
+- Progress Dashboard with activity tracking
+- Daily Note Integration
+- Quest Templates UI (Scrivener's Desk)
+- TDD Power-Ups & Achievements (168 tests)
+- Inventory UX improvements
+- Battle screen polish & auto-attack
+- Battle actions expansion (Skills/Meditate buttons)
 ```
 
 ---
@@ -1065,6 +1070,3 @@ Button Styling:
 
 Files: BattleView.tsx, combat.css
 ```
-
----
-

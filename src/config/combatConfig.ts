@@ -171,6 +171,38 @@ export const DAMAGE_VARIANCE = 0.1;
 export const MIN_DAMAGE = 1;
 
 // =====================
+// SPEED SYSTEM (Phase 5)
+// =====================
+
+/** Base speed value for turn order calculation */
+export const SPEED_BASE = 10;
+
+// =====================
+// STAT STAGES (Phase 5)
+// =====================
+
+/** Minimum stat stage (Pokemon-style -6) */
+export const MIN_STAGE = -6;
+
+/** Maximum stat stage (Pokemon-style +6) */
+export const MAX_STAGE = 6;
+
+/** Multiplier per stage (50% per stage = 1.5x at +1, 2.25x at +2, etc.) */
+export const STAGE_MULTIPLIER_PERCENT = 0.50;
+
+/**
+ * Get the multiplier for a given stat stage.
+ * Stage 0 = 1.00x
+ * Stage +1 = 1.50x, +2 = 2.25x, +3 = 3.38x, ... +6 = 11.39x
+ * Stage -1 = 0.67x, -2 = 0.50x, -3 = 0.40x, ... -6 = 0.09x
+ * Formula: 1.5^stage for positive, 1/(1.5^|stage|) for negative
+ */
+export function getStageMultiplier(stage: number): number {
+    const clampedStage = Math.max(MIN_STAGE, Math.min(MAX_STAGE, stage));
+    return Math.pow(1 + STAGE_MULTIPLIER_PERCENT, clampedStage);
+}
+
+// =====================
 // GEAR TIER MULTIPLIERS
 // =====================
 

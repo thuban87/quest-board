@@ -163,6 +163,10 @@ interface BattleActions {
     updateMonsterHP: (newHP: number) => void;
     setPlayerDefending: (isDefending: boolean) => void;
 
+    // Phase 5: Player battle state management
+    setPlayer: (player: BattlePlayer) => void;
+    updatePlayer: (updates: Partial<BattlePlayer>) => void;
+
     // Combat log
     addLogEntry: (entry: Omit<CombatLogEntry, 'timestamp'>) => void;
     clearLog: () => void;
@@ -339,6 +343,24 @@ export const useBattleStore = create<BattleStore>()(
                 });
             },
 
+            // Phase 5: Set player battle state at battle start
+            setPlayer: (player) => {
+                set({
+                    player,
+                    lastUpdated: Date.now(),
+                });
+            },
+
+            // Phase 5: Update player battle state during battle
+            updatePlayer: (updates) => {
+                const { player } = get();
+                if (!player) return;
+                set({
+                    player: { ...player, ...updates },
+                    lastUpdated: Date.now(),
+                });
+            },
+
             addLogEntry: (entry) => {
                 set((state) => ({
                     log: [...state.log, { ...entry, timestamp: Date.now() }],
@@ -396,6 +418,7 @@ export const useBattleStore = create<BattleStore>()(
                 lootBonus: state.lootBonus,
                 isBountyFight: state.isBountyFight,
                 sourceQuestId: state.sourceQuestId,
+                player: state.player, // Phase 5: Persist player battle state for crash recovery
                 lastUpdated: state.lastUpdated,
             }),
         }

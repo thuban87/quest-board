@@ -26,6 +26,7 @@ import {
     HP_PER_CON,
     HP_PER_CON_TANK,
     HP_PER_LEVEL,
+    getStageMultiplier,
 } from '../config/combatConfig';
 
 // =====================
@@ -284,26 +285,43 @@ export interface DamageOutput {
 
 /**
  * Calculate damage from an attack.
- * Handles dodge, block, crit, and variance.
+ * Handles dodge, block, crit, variance, and stat stages.
  * Uses capped percentage reduction formula for defense.
+ * 
+ * @param attackPower - Base attack power (physical or magic)
+ * @param attackerCrit - Critical hit chance percentage
+ * @param defenderDefense - Base defense (physical or magic)
+ * @param defenderDodge - Dodge chance percentage
+ * @param defenderBlock - Block chance percentage (from shields)
+ * @param atkStage - Attacker's ATK stat stage (-6 to +6), default 0
+ * @param defStage - Defender's DEF stat stage (-6 to +6), default 0
+ * @param ignoreDefStages - If true, treat defender's DEF stage as 0 (for crits, certain skills)
  */
 export function calculateDamage(
     attackPower: number,
     attackerCrit: number,
     defenderDefense: number,
     defenderDodge: number,
-    defenderBlock: number = 0
+    defenderBlock: number = 0,
+    atkStage: number = 0,
+    defStage: number = 0,
+    ignoreDefStages: boolean = false
 ): DamageOutput {
     // 1. Check for dodge
     if (Math.random() * 100 < defenderDodge) {
         return { damage: 0, result: 'miss' };
     }
 
+    // Phase 5: Apply stat stage multipliers
+    const effectiveAttack = attackPower * getStageMultiplier(atkStage);
+    const effectiveDefStage = ignoreDefStages ? 0 : defStage;
+    const effectiveDefense = defenderDefense * getStageMultiplier(effectiveDefStage);
+
     // 2. Check for block (shields)
     if (defenderBlock > 0 && Math.random() * 100 < defenderBlock) {
         // Blocked attacks do 25% damage (after reduction)
-        const reduction = Math.min(0.75, defenderDefense / (100 + defenderDefense));
-        const reducedDamage = attackPower * (1 - reduction);
+        const reduction = Math.min(0.75, effectiveDefense / (100 + effectiveDefense));
+        const reducedDamage = effectiveAttack * (1 - reduction);
         const blockedDamage = Math.floor(reducedDamage * 0.25);
         return { damage: Math.max(MIN_DAMAGE, blockedDamage), result: 'blocked' };
     }
@@ -311,11 +329,17 @@ export function calculateDamage(
     // 3. Calculate base damage using capped percentage reduction
     // Formula: reduction = min(75%, defense / (100 + defense))
     // This prevents immunity at high defense while still rewarding it
-    const reduction = Math.min(0.75, defenderDefense / (100 + defenderDefense));
-    let damage = Math.max(MIN_DAMAGE, Math.floor(attackPower * (1 - reduction)));
+    const reduction = Math.min(0.75, effectiveDefense / (100 + effectiveDefense));
+    let damage = Math.max(MIN_DAMAGE, Math.floor(effectiveAttack * (1 - reduction)));
 
-    // 4. Check for crit (2.0x multiplier)
+    // 4. Check for crit (2.0x multiplier, crits ignore DEF stages)
     if (Math.random() * 100 < attackerCrit) {
+        // Recalculate with ignoreDefStages = true for crit
+        if (!ignoreDefStages) {
+            const critDefense = defenderDefense * getStageMultiplier(0); // Stage 0 = 1.0x
+            const critReduction = Math.min(0.75, critDefense / (100 + critDefense));
+            damage = Math.max(MIN_DAMAGE, Math.floor(effectiveAttack * (1 - critReduction)));
+        }
         damage = Math.floor(damage * CRIT_MULTIPLIER);
         return { damage, result: 'critical' };
     }

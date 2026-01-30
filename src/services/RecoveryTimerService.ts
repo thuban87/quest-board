@@ -43,6 +43,7 @@ export function checkAndProcessRecoveryTimer(): boolean {
         currentHP: status === 'unconscious' ? revivedHP : character.currentHP,
         status: 'active',
         recoveryTimerEnd: null,
+        persistentStatusEffects: [], // Phase 5: Clear all status effects on timer-based recovery
         lastModified: new Date().toISOString(),
     });
 

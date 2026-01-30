@@ -84,7 +84,7 @@ This approach:
 - Identifies integration issues before duplicating work for monsters
 - Monster skills can reuse the validated SkillService logic
 
-### Status Persistence Architecture
+### Status Persistence Architecture ✅ (Completed 2026-01-29)
 
 > [!IMPORTANT]
 > **Key Design Decision:** Volatile battle state lives in `BattleStore`, NOT on `Character`.
@@ -176,7 +176,7 @@ useCharacterStore.getState().updateCharacter({
 
 
 
-### ATK/DEF Stages in Damage Formula
+### ATK/DEF Stages in Damage Formula ✅ (Completed 2026-01-29)
 
 **Current formula in CombatService.calculateDamage():**
 ```typescript
@@ -208,8 +208,27 @@ const damage = effectiveAttack * (1 - defenseReduction);
 
 **Basic attacks use stages:** ✅ Yes, same as skills.
 
-### Migration Strategy (Character v4 → v5)
+### Migration Strategy (Character v4 → v5) ⚠️ (Stub Complete 2026-01-29)
 
+> [!WARNING]
+> **Stub implementation done** - basic migration exists in `Character.ts` (`migrateCharacterV4toV5`).
+> **TODO:** Implement smart loadout logic (`getDefaultLoadout`) after `SKILL_DEFINITIONS` data is created.
+> See [[#Data Creation]] section for skill definitions, then return here to wire up smart loadout.
+
+**Current implementation (stub):**
+```typescript
+// In src/models/Character.ts (ALREADY IMPLEMENTED):
+export function migrateCharacterV4toV5(oldData: Record<string, unknown>): Character {
+    return {
+        ...(oldData as object),
+        schemaVersion: 5,
+        skills: { unlocked: [], equipped: [] },  // Empty until skill data exists
+        persistentStatusEffects: [],
+    } as Character;
+}
+```
+
+**Full implementation (TODO after skill data):**
 ```typescript
 export function migrateCharacterV4toV5(oldData: Record<string, unknown>): Character {
     if ((oldData.schemaVersion as number) >= 5) {
