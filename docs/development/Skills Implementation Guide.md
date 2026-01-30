@@ -9,19 +9,718 @@ This guide provides a comprehensive, step-by-step plan for adding the Pokemon Ge
 ## Table of Contents
 
 1. [Overview & Goals](#overview--goals)
-2. [Design Decisions Reference](#design-decisions-reference)
-3. [Current System Audit](#current-system-audit)
-4. [Schema Changes & Migrations](#schema-changes--migrations)
-5. [Service Layer Changes](#service-layer-changes)
-6. [UI Component Changes](#ui-component-changes)
-7. [Data Creation](#data-creation)
-8. [Testing & Balance](#testing--balance)
-9. [Implementation Phases](#implementation-phases)
-10. [Progress Tracking](#progress-tracking)
+2. [Pre-Implementation Checklist](#pre-implementation-checklist) <!-- NEW -->
+3. [Design Decisions Reference](#design-decisions-reference)
+4. [Current System Audit](#current-system-audit)
+5. [Schema Changes & Migrations](#schema-changes--migrations)
+6. [Service Layer Changes](#service-layer-changes)
+7. [UI Component Changes](#ui-component-changes)
+8. [Data Creation](#data-creation)
+9. [Testing & Balance](#testing--balance)
+10. [Implementation Phases](#implementation-phases)
+11. [Progress Tracking](#progress-tracking)
+
+---
+
+## Pre-Implementation Checklist
+
+> [!CAUTION]
+> Complete ALL items in this checklist before beginning Phase 1.
+> Missing items will cause cascading problems later.
+
+### Interface Updates Required
+
+| File | Change | Notes |
+|------|--------|-------|
+| `src/models/Character.ts` | Add `skills` field | `{ unlocked: string[], equipped: string[] }` - NO `usedThisBattle` here! |
+| `src/models/Character.ts` | Add `persistentStatusEffects` field | Status effects that persist between battles |
+| `src/models/Character.ts` | Bump `CHARACTER_SCHEMA_VERSION` | 4 → 5 |
+| `src/models/Monster.ts` | Add `skills: MonsterSkill[]` field | Currently missing from interface |
+| `src/models/Monster.ts` | Add `battleState` field | For stages/status during combat (monsters only) |
+| `src/models/Monster.ts` | Add `skillPool` to `MonsterTemplate` | Array of possible skills |
+| `src/store/battleStore.ts` | Add `BattlePlayer` interface | Mirrors `BattleMonster`, holds volatile player state |
+| `src/store/battleStore.ts` | Expand `BattleMonster` interface | Add `statStages`, `statusEffects`, `skills` for display |
+| `CLASS_INFO` in Character.ts | Add `inherentType: ElementalType` field | Per-class elemental type |
+
+### Already Completed (Phase 4 Session 2026-01-29)
+
+> [!TIP]
+> The following UI scaffolding is already implemented and just needs wiring to the skill system.
+
+| Item | Status | Location |
+|------|--------|----------|
+| Skills button in battle action grid | ✅ Done | `BattleView.tsx` |
+| 5-slot skill submenu (placeholders) | ✅ Done | `ActionButtons` component |
+| Back button (returns to main menu) | ✅ Done | `ActionButtons` component |
+| Meditate button (placeholder) | ✅ Done | Needs mana restore logic |
+| Desktop 3x2 / Mobile 2x3 layouts | ✅ Done | `combat.css` |
+
+**See:** [[Phase 4 Implementation Session Log#2026-01-29 (Afternoon) - Battle Actions Expansion]]
+
+### Testing Strategy
+
+> [!IMPORTANT]
+> **Confirmed approach:** Unit tests written **alongside** each service, followed by manual testing.
+> This follows the TDD pattern established in Phase 4 (power-up triggers, achievements).
+
+**Test file structure:**
+- `test/skill-service.test.ts` - Skill execution, validation, mana costs
+- `test/status-effects.test.ts` - Apply/tick/cure logic
+- `test/combat-stages.test.ts` - Stage multipliers, type effectiveness
+
+### Implementation Approach
+
+> [!IMPORTANT]
+> **Confirmed:** Implement **character skills first** to find pain points.
+> Monster skills will be added after core player mechanics are working.
+
+This approach:
+- Reduces initial complexity
+- Allows testing the full player flow end-to-end
+- Identifies integration issues before duplicating work for monsters
+- Monster skills can reuse the validated SkillService logic
+
+### Status Persistence Architecture
+
+> [!IMPORTANT]
+> **Key Design Decision:** Volatile battle state lives in `BattleStore`, NOT on `Character`.
+> This prevents ephemeral data (stat stages, volatile statuses) from being persisted to `data.json`.
+
+**Problem:** Status effects should persist between battles, but stat stages are ephemeral.
+
+**Solution:** Split state between persisted Character fields and volatile BattleStore state.
+
+```typescript
+// In src/models/Character.ts - Character interface:
+
+// PERSISTED: Survives app restart, cleared by Long Rest or death recovery
+persistentStatusEffects: StatusEffect[];
+
+// Skills loadout (persisted)
+skills: {
+    unlocked: string[];   // All learned skill IDs
+    equipped: string[];   // Currently equipped (max 5)
+};
+// NOTE: usedThisBattle is tracked in BattleStore, NOT here!
+```
+
+```typescript
+// In src/store/battleStore.ts - NEW BattlePlayer interface:
+
+interface BattlePlayer {
+    // Combat stats (derived from Character + gear)
+    maxHP: number;
+    currentHP: number;
+    maxMana: number;
+    currentMana: number;
+    physicalAttack: number;
+    magicAttack: number;
+    defense: number;
+    magicDefense: number;
+    speed: number;
+    critChance: number;
+    dodgeChance: number;
+
+    // VOLATILE: Battle-specific state (not persisted!)
+    statStages: { atk: number; def: number; speed: number };
+    volatileStatusEffects: StatusEffect[];  // Working copy from persistentStatusEffects
+    skillsUsedThisBattle: string[];
+    turnsInBattle: number;
+}
+
+// Add to BattleStore state:
+interface BattleState {
+    // ... existing fields ...
+    player: BattlePlayer | null;  // NEW
+}
+```
+
+**Battle Start Flow:**
+```typescript
+// In BattleService.startBattle():
+const character = useCharacterStore.getState().character;
+
+// Hydrate BattlePlayer from Character
+const player: BattlePlayer = {
+    ...deriveCombatStats(character),  // Existing function
+    statStages: { atk: 0, def: 0, speed: 0 },
+    volatileStatusEffects: [...character.persistentStatusEffects],  // Copy in
+    skillsUsedThisBattle: [],
+    turnsInBattle: 0,
+};
+
+useBattleStore.getState().setPlayer(player);
+```
+
+**Battle End Flow (Victory/Defeat/Retreat):**
+```typescript
+// Copy volatile → persistent (statuses survive battles)
+const player = useBattleStore.getState().player;
+useCharacterStore.getState().updateCharacter({
+    persistentStatusEffects: [...player.volatileStatusEffects],
+});
+
+// Stages are NOT copied back - they reset each battle
+```
+
+**Long Rest / Death Recovery:**
+```typescript
+useCharacterStore.getState().updateCharacter({
+    persistentStatusEffects: [],  // Clear all statuses
+});
+```
+
+
+
+### ATK/DEF Stages in Damage Formula
+
+**Current formula in CombatService.calculateDamage():**
+```typescript
+attackPower × (1 - defenseReduction)
+```
+
+**Problem:** ATK/DEF stages not integrated.
+
+**Updated formula:**
+```typescript
+// Apply ATK stage to attacker
+const atkMultiplier = getStageMultiplier(attacker.battleState?.statStages.atk || 0);
+const effectiveAttack = attackPower * atkMultiplier;
+
+// Apply DEF stage to defender (unless crit or ignoresStages)
+const defMultiplier = isCrit ? 1.0 : getStageMultiplier(defender.battleState?.statStages.def || 0);
+const effectiveDefense = defenderDefense * defMultiplier;
+
+// Then apply normal formula
+const defenseReduction = Math.min(0.75, effectiveDefense / (100 + effectiveDefense));
+const damage = effectiveAttack * (1 - defenseReduction);
+```
+
+**Where to inject:**
+1. `CombatService.calculateDamage()` - Add optional `attackerStages` and `defenderStages` params
+2. `BattleService.calculatePlayerDamage()` - Pass stages from character.battleState
+3. `BattleService.executeMonsterTurn()` - Pass stages from monster.battleState
+4. `SkillService.calculateSkillDamage()` - Use stages from battleState
+
+**Basic attacks use stages:** ✅ Yes, same as skills.
+
+### Migration Strategy (Character v4 → v5)
+
+```typescript
+export function migrateCharacterV4toV5(oldData: Record<string, unknown>): Character {
+    if ((oldData.schemaVersion as number) >= 5) {
+        return oldData as unknown as Character;
+    }
+
+    // Get skills based on current level
+    const classSkills = SKILL_DEFINITIONS.filter(s =>
+        s.requiredClass.includes(oldData.class as string) &&
+        s.learnLevel <= (oldData.level as number)
+    );
+    const unlockedIds = classSkills.map(s => s.id);
+
+    // Use smart loadout helper (see below)
+    const equippedIds = getDefaultLoadout(classSkills, 5);
+
+    return {
+        ...(oldData as object),
+        schemaVersion: 5,
+
+        // NEW: Skills system
+        skills: {
+            unlocked: unlockedIds,
+            equipped: equippedIds,
+            // NOTE: usedThisBattle is in BattleStore, not here!
+        },
+
+        // NEW: Persistent status effects (empty for fresh migration)
+        persistentStatusEffects: [],
+    } as Character;
+}
+
+/**
+ * Build a smart default loadout that prioritizes skill variety:
+ * 1. Include highest-level heal (if available)
+ * 2. Include highest-level buff (if available)
+ * 3. Include ultimate skill (if available)
+ * 4. Fill remaining slots with highest-level damage skills
+ */
+function getDefaultLoadout(skills: Skill[], slots: number): string[] {
+    const result: string[] = [];
+    const used = new Set<string>();
+
+    // Helper to pick best skill matching criteria
+    const pickBest = (filter: (s: Skill) => boolean): Skill | null => {
+        const candidates = skills.filter(s => !used.has(s.id) && filter(s));
+        if (candidates.length === 0) return null;
+        // Sort by learn level descending (highest = strongest)
+        candidates.sort((a, b) => b.learnLevel - a.learnLevel);
+        return candidates[0];
+    };
+
+    // Priority 1: One heal skill
+    const heal = pickBest(s => s.category === 'heal');
+    if (heal) { result.push(heal.id); used.add(heal.id); }
+
+    // Priority 2: One buff skill
+    const buff = pickBest(s => s.category === 'buff');
+    if (buff) { result.push(buff.id); used.add(buff.id); }
+
+    // Priority 3: Ultimate (learn level 30+)
+    const ultimate = pickBest(s => s.learnLevel >= 30);
+    if (ultimate) { result.push(ultimate.id); used.add(ultimate.id); }
+
+    // Priority 4: Fill remaining with highest-level damage skills
+    while (result.length < slots) {
+        const damage = pickBest(s => s.category === 'damage' || s.category === 'attack');
+        if (!damage) break;
+        result.push(damage.id);
+        used.add(damage.id);
+    }
+
+    // If still not full, add any remaining skills
+    while (result.length < slots) {
+        const any = pickBest(() => true);
+        if (!any) break;
+        result.push(any.id);
+        used.add(any.id);
+    }
+
+    return result;
+}
+```
+
+**Chain migration:** Update `migrateCharacterV3toV4()` to call `migrateCharacterV4toV5()`.
+
+
+
+### Orchestrator Pattern for SkillService
+
+**Architecture:** SkillService is a thin orchestrator, not a monolith.
+
+```typescript
+// SkillService orchestrates, delegates heavy lifting:
+export class SkillService {
+    constructor(
+        private combatService: typeof CombatService,
+        private statusService: StatusEffectService
+    ) {}
+
+    executeSkill(skill: Skill, user: Combatant, target: Combatant): SkillResult {
+        // 1. Validate (own logic)
+        // 2. Deduct mana (own logic)
+        // 3. Calculate damage → delegate to CombatService
+        // 4. Apply status → delegate to StatusEffectService
+        // 5. Return result
+    }
+}
+```
+
+**Why orchestrator > merge:**
+- Keeps services small and testable
+- Single responsibility per file (your preference)
+- Easy to mock dependencies for testing
+- Learning opportunity for composition pattern
+
+### SkillResult Interface
+
+**SkillService.executeSkill() returns a result object** that describes what happened, rather than directly pushing logs or updating state.
+
+```typescript
+interface SkillResult {
+    success: boolean;
+    skillId: string;
+    skillName: string;
+    
+    // What happened
+    damage?: number;
+    healing?: number;
+    stageChanges?: { stat: 'atk' | 'def' | 'speed'; delta: number; target: 'self' | 'enemy' }[];
+    statusApplied?: { type: StatusEffectType; target: 'self' | 'enemy' };
+    statusCured?: StatusEffectType[];
+    
+    // For combat log
+    logEntries: string[];  // e.g., ["You used Power Strike!", "Dealt 45 damage!", "Enemy is now Burning!"]
+    
+    // V2 FUTURE: Animation support (deferred for now)
+    // animationId?: string;
+    // visualEffect?: 'projectile' | 'aoe' | 'buff' | 'heal';
+}
+```
+
+**BattleService then uses this result to:**
+1. Update BattleStore state (HP, stages, statuses)
+2. Push log entries to combat log
+3. Trigger UI animations (V2: based on animationId)
+
+> [!NOTE]
+> **V1 Scope:** Skill name/icon is sufficient for UI feedback.
+> **V2 Enhancement:** Add `animationId` and `visualEffect` for richer animations.
+
+
+
+### Array Filter vs Splice
+
+**Current (splice in reverse):**
+```typescript
+effectsToRemove.reverse().forEach(index => {
+    combatant.battleState!.statusEffects.splice(index, 1);
+});
+```
+
+**Recommended (filter):**
+```typescript
+combatant.battleState.statusEffects = 
+    combatant.battleState.statusEffects.filter((_, i) => !effectsToRemove.includes(i));
+```
+
+**Why filter is better:**
+- Creates new array (immutable, safer)
+- No index tracking bugs
+- Cleaner code
+- Works with any order
+
+### Lazy Loading Skill Definitions
+
+**All platforms benefit** (not just mobile):
+- Faster initial load (skills only loaded when needed)
+- Lower memory footprint on startup
+- Skills loaded on first battle or character sheet access
+
+**Implementation:**
+```typescript
+// Instead of:
+export const SKILL_DEFINITIONS: Skill[] = [...];
+
+// Use:
+let _skillDefinitions: Skill[] | null = null;
+
+export function getSkillDefinitions(): Skill[] {
+    if (!_skillDefinitions) {
+        _skillDefinitions = Object.freeze([...createSkillDefinitions()]);
+    }
+    return _skillDefinitions;
+}
+```
+
+### Once-Per-Battle Reset on Retreat
+
+**Add to BattleService.executePlayerRetreat():**
+```typescript
+if (roll < runChance) {
+    // Successful retreat - copy volatile status back to persistent
+    const player = useBattleStore.getState().player;
+    useCharacterStore.getState().updateCharacter({
+        persistentStatusEffects: [...player.volatileStatusEffects],
+    });
+    
+    store.endBattle('retreat');
+    // skillsUsedThisBattle is in BattleStore and will be cleared on next battle start
+}
+```
+
+**Note:** Battle initialization already resets `skillsUsedThisBattle` in BattleStore, but retreat explicitly copies volatile status effects back to persistent storage.
+
+### Configuration Centralization
+
+> [!IMPORTANT]
+> **All "magic numbers" for combat must live in `combatConfig.ts`.**
+> This ensures consistency and makes balancing easier.
+
+**Add to `src/config/combatConfig.ts`:**
+
+```typescript
+// =====================
+// TYPE EFFECTIVENESS
+// =====================
+
+export type ElementalType = 
+    | 'Physical' | 'Fire' | 'Ice' | 'Lightning' 
+    | 'Earth' | 'Arcane' | 'Dark' | 'Light'
+    | 'Poison' | 'Nature' | 'Psychic';
+
+/**
+ * Type effectiveness chart (Pokemon-style)
+ * - strong: 2x damage dealt
+ * - weak: 0.5x damage dealt
+ * - immune: never (all types can damage all types)
+ */
+export const TYPE_CHART: Record<ElementalType, { strong: ElementalType[]; weak: ElementalType[] }> = {
+    Physical: { strong: ['Arcane'], weak: ['Earth', 'Dark'] },
+    Fire:     { strong: ['Ice', 'Nature'], weak: ['Fire', 'Earth'] },
+    Ice:      { strong: ['Nature', 'Lightning'], weak: ['Fire', 'Ice'] },
+    Lightning:{ strong: ['Fire', 'Psychic'], weak: ['Earth', 'Lightning'] },
+    Earth:    { strong: ['Lightning', 'Physical'], weak: ['Nature', 'Ice'] },
+    Arcane:   { strong: ['Dark', 'Psychic'], weak: ['Physical', 'Light'] },
+    Dark:     { strong: ['Light', 'Psychic'], weak: ['Arcane', 'Dark'] },
+    Light:    { strong: ['Dark', 'Poison'], weak: ['Arcane', 'Light'] },
+    Poison:   { strong: ['Nature', 'Physical'], weak: ['Light', 'Earth'] },
+    Nature:   { strong: ['Earth', 'Psychic'], weak: ['Fire', 'Poison'] },
+    Psychic:  { strong: ['Poison', 'Physical'], weak: ['Dark', 'Arcane'] },
+};
+
+// =====================
+// STAT STAGES
+// =====================
+
+/** Minimum and maximum stat stages (Pokemon-style ±6) */
+export const MIN_STAGE = -6;
+export const MAX_STAGE = 6;
+
+/** Multiplier per stage (50% per stage = 1.5x at +1, 2.0x at +2, etc.) */
+export const STAGE_MULTIPLIER_PERCENT = 0.50;
+
+/**
+ * Get the multiplier for a given stat stage.
+ * Stage 0 = 1.0, +1 = 1.5, +2 = 2.0, -1 = 0.67, -2 = 0.5
+ */
+export function getStageMultiplier(stage: number): number {
+    const clampedStage = Math.max(MIN_STAGE, Math.min(MAX_STAGE, stage));
+    if (clampedStage >= 0) {
+        return 1 + (clampedStage * STAGE_MULTIPLIER_PERCENT);
+    } else {
+        // Negative stages: 1 / (1 + |stage| * 0.5)
+        return 1 / (1 + Math.abs(clampedStage) * STAGE_MULTIPLIER_PERCENT);
+    }
+}
+
+// =====================
+// STATUS EFFECT DAMAGE
+// =====================
+
+/** DoT damage as percentage of max HP per turn */
+export const STATUS_DOT_PERCENT: Record<string, { minor: number; moderate: number; severe: number }> = {
+    burn:   { minor: 0.04, moderate: 0.06, severe: 0.08 },
+    poison: { minor: 0.03, moderate: 0.05, severe: 0.08 }, // Per stack
+    bleed:  { minor: 0.04, moderate: 0.06, severe: 0.10 },
+    curse:  { minor: 0.02, moderate: 0.04, severe: 0.06 },
+};
+
+/** Paralysis skip chance (25% chance to lose turn) */
+export const PARALYZE_SKIP_CHANCE = 0.25;
+
+/** Confusion self-hit chance (33% chance to hit self) */
+export const CONFUSION_SELF_HIT_CHANCE = 0.33;
+
+/** Burn physical damage reduction (25% less physical damage dealt) */
+export const BURN_DAMAGE_REDUCTION = 0.25;
+```
+
+### Task Completion Resource Regeneration
+
+> [!NOTE]
+> Task completion grants 7% HP and Mana regeneration.
+> This follows the existing hook pattern (like `useXPAward.ts`), NOT direct service coupling.
+
+**Implementation: Create `src/hooks/useResourceRegen.ts`**
+
+```typescript
+import { useEffect } from 'react';
+import { useQuestStore } from '../store/questStore';
+import { useCharacterStore } from '../store/characterStore';
+import { Notice } from 'obsidian';
+
+/**
+ * Hook that watches for task completions and restores HP/Mana.
+ * Should be mounted in a top-level component (e.g., QuestBoardView).
+ */
+export function useResourceRegen(): void {
+    const character = useCharacterStore(s => s.character);
+    const restoreResources = useCharacterStore(s => s.restoreResources);
+
+    // Track previous task completion count to detect new completions
+    const tasksCompletedToday = character?.tasksCompletedToday ?? 0;
+
+    useEffect(() => {
+        // Skip on initial mount and if no character
+        if (!character || tasksCompletedToday === 0) return;
+
+        // This effect runs when tasksCompletedToday changes
+        // The incrementing is done elsewhere (useXPAward or QuestActionsService)
+        // We just respond to it here
+
+        const regenPercent = 0.07; // 7% of max HP/Mana
+        const { restoredHP, restoredMana } = restoreResources(regenPercent);
+
+        if (restoredHP > 0 || restoredMana > 0) {
+            new Notice(`⚡ Task power! +${restoredHP} HP, +${restoredMana} Mana`);
+        }
+    }, [tasksCompletedToday]);
+}
+```
+
+**Add to CharacterStore:**
+```typescript
+interface CharacterStoreActions {
+    // ... existing actions ...
+    
+    /**
+     * Restore HP and Mana by a percentage of max values.
+     * @param percent - Fraction of max to restore (0.07 = 7%)
+     * @returns The actual amounts restored (capped at max)
+     */
+    restoreResources: (percent: number) => { restoredHP: number; restoredMana: number };
+}
+```
+
+**Why hook pattern instead of service coupling:**
+- Keeps `QuestActionsService` focused on file I/O
+- Follows existing patterns (`useXPAward.ts`)
+- Easier to test (mock the store)
+- Centralized side-effect handling in React components
+
+### Skills Modal UI Specification
+
+> [!NOTE]
+> **Two modals needed:**
+> - `SkillLoadoutModal.ts` - Manage equipped skills (out of battle)
+> - `SkillPickerModal.tsx` - Select skill to use (during battle)
+
+#### SkillLoadoutModal (Phase 6)
+
+**Purpose:** View all skills, see unlock requirements, and customize which 5 are equipped for battle.
+
+**Access Points:**
+- Character Sheet → "Skills" button/tab
+- Command palette → "Quest Board: Manage Skills"
+- Optional: Battle View → "Loadout" gear icon (for mid-dungeon changes)
+
+**Layout Mockup:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ⚔️ Skill Loadout                                 [X Close] │
+├─────────────────────────────────────────────────────────────┤
+│ EQUIPPED (3/5)                    [Clear All] [Auto-Fill]  │
+│ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐│
+│ │ 🗡️      │ │ ⚔️      │ │ 🧘      │ │  Empty  │ │  Empty  ││
+│ │  Slash  │ │Power    │ │Meditate │ │   ---   │ │   ---   ││
+│ │  Lv 1   │ │Strike   │ │ Univ.   │ │         │ │         ││
+│ │   [−]   │ │   [−]   │ │   [−]   │ │         │ │         ││
+│ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘│
+│                                                             │
+│ CLASS SKILLS (Warrior)                          Level: 12   │
+│ ─────────────────────────────────────────────────────────── │
+│ │ ✅ Slash           Lv 1   │ 10 Mana │ 100% ATK physical  ││
+│ │ ✅ Power Strike    Lv 5   │ 20 Mana │ 150% ATK, +crit    ││
+│ │ ✅ Rage            Lv 10  │ 25 Mana │ +2 ATK, -1 DEF     ││
+│ │ 🔒 Cleave          Lv 15  │ 🔓 Unlocks at Level 15       ││
+│ │ 🔒 Iron Wall       Lv 20  │ 🔓 Unlocks at Level 20       ││
+│ │ 🔒 War Cry         Lv 25  │ 🔓 Unlocks at Level 25       ││
+│ │ 🔒 Berserker Rage  Lv 30  │ 🔓 Unlocks at Level 30       ││
+│ │ 🔒 Last Stand      Lv 40  │ 🔓 Unlocks at Level 40       ││
+│ ─────────────────────────────────────────────────────────── │
+│ UNIVERSAL SKILLS                                            │
+│ ─────────────────────────────────────────────────────────── │
+│ │ ✅ Meditate        Lv 1   │ 0 Mana  │ Restore 33% Mana   ││
+│ ─────────────────────────────────────────────────────────── │
+│                                                             │
+│                               [Save Loadout] [Cancel]       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Interactions:**
+
+| Action | Result |
+|--------|--------|
+| Click ✅ unlocked skill | Toggle equipped/unequipped (if slots available) |
+| Click 🔒 locked skill | Show "Unlocks at Level X" tooltip |
+| Hover any skill | Show detailed tooltip (mana cost, effects, type, cooldown) |
+| Click [−] on equipped | Remove from loadout |
+| Click [Auto-Fill] | Fill empty slots with highest-level unlocked skills |
+| Click [Clear All] | Remove all equipped skills |
+| Click [Save Loadout] | Persist to character.skills.equipped, close modal |
+| Already at 5 equipped | Cannot add more (show "Loadout full" message) |
+
+**Skill Card States:**
+
+```css
+/* Unlocked + Equipped */
+.qb-skill-card.equipped { 
+    border: 2px solid var(--color-accent);
+    background: var(--background-modifier-success);
+}
+
+/* Unlocked + Not Equipped */
+.qb-skill-card.available { 
+    border: 1px solid var(--background-modifier-border);
+    cursor: pointer;
+}
+
+/* Locked */
+.qb-skill-card.locked { 
+    opacity: 0.5;
+    filter: grayscale(50%);
+    cursor: not-allowed;
+}
+```
+
+**Skill Tooltip Content:**
+
+```
+┌─────────────────────────────────────┐
+│ ⚔️ Power Strike                    │
+│ Level 5 • Physical                 │
+│ ─────────────────────────────────── │
+│ Mana Cost: 20                      │
+│ ─────────────────────────────────── │
+│ Deal 150% physical damage.         │
+│ +15% critical hit chance.          │
+│ ─────────────────────────────────── │
+│ 💡 "Strike with overwhelming      │
+│     force!"                        │
+└─────────────────────────────────────┘
+```
+
+#### SkillPickerModal (Phase 5 - Battle UI)
+
+**Purpose:** During battle, select which equipped skill to use this turn.
+
+**Trigger:** Click "Skills" button in BattleView (replaces basic Attack for that turn)
+
+**Layout (Compact):**
+
+```
+┌─────────────────────────────────────────────┐
+│ Choose a Skill                              │
+├─────────────────────────────────────────────┤
+│ ┌─────────────┐ ┌─────────────┐             │
+│ │ 🗡️ Slash    │ │ ⚔️ Power    │            │
+│ │ 10 Mana     │ │ Strike 20   │            │
+│ └─────────────┘ └─────────────┘             │
+│ ┌─────────────┐ ┌─────────────┐             │
+│ │ 😤 Rage     │ │ 🧘 Meditate │            │
+│ │ 25 Mana     │ │ FREE        │            │
+│ └─────────────┘ └─────────────┘             │
+│ ┌─────────────┐                             │
+│ │ 💀 Berserk  │ (Once per battle)          │
+│ │ 50 Mana    │                             │
+│ └─────────────┘                             │
+│                                  [Cancel]   │
+└─────────────────────────────────────────────┘
+```
+
+**Skill Button States:**
+
+| State | Appearance | Clickable |
+|-------|------------|-----------|
+| Available | Normal colors | ✅ Yes |
+| Not enough mana | Grayed, red mana text | ❌ No |
+| Already used (once-per-battle) | Grayed, "Used" badge | ❌ No |
+| Blocked by Hard CC | All grayed, "Stunned!" overlay | ❌ No |
+
+**On Skill Select:**
+1. Close modal
+2. Execute skill via `SkillService.executeSkill()`
+3. BattleService updates store with SkillResult
+4. BattleView shows skill animation/effects
+5. Combat log updates
 
 ---
 
 ## Overview & Goals
+
+
 
 ### What We're Building
 
@@ -2989,7 +3688,8 @@ Ordered by dependencies. Each phase builds on the previous.
    - Stage tracking and reset
    - Status effect ticking
    - Skill execution flow
-5. ✅ Write unit tests for stage/status logic
+5. ✅ **UPDATE Long Rest to clear status effects** (moved from Phase 2)
+6. ✅ Write unit tests for stage/status logic
 
 **Files Changed:**
 - `src/services/StatusEffectService.ts` (NEW) - **Do this first!**
@@ -3010,50 +3710,78 @@ Ordered by dependencies. Each phase builds on the previous.
 
 ---
 
-### Phase 4: Skill & Monster Data
+### Phase 4A: Meditate + Warrior Skills (End-to-End Testing)
 
-**Goal:** Create all skill definitions and monster skill pools
+**Goal:** Implement Meditate and one class's skills to validate full skill pipeline
 
-**START WITH MEDITATE (First Skill to Implement & Test):**
-
-**Why Meditate First:**
-- ✅ Universal (all classes get it at level 1)
-- ✅ Simple mechanic (restore 33% mana, no damage/status)
-- ✅ Tests core systems: skill selection, mana consumption, skill effects
-- ✅ Every character has it, so perfect for testing
-- ✅ Foundation for all other skills
-
-**Meditate Implementation Checklist:**
-1. [ ] Define `universal_meditate` in `skills.ts`
-2. [ ] Add `restoreManaPercent` to `SkillEffect` interface
-3. [ ] Add mana restoration logic to `SkillService.executeSkill()`
-4. [ ] Test in battle: Use Meditate, verify 33% mana restored
-5. [ ] Verify mana cost (0) and usage (unlimited)
-6. [ ] Test it works for all 7 classes
-
-**Once Meditate Works, Continue with Full Skill Set:**
+**Why Start with Meditate + Warrior:**
+- ✅ Meditate = Universal skill (all classes, level 1)
+- ✅ Warrior = Familiar class, straightforward skills
+- ✅ Tests complete flow: skill definition → unlock → equip → battle use
+- ✅ Validates skill service, UI, and persistence
+- ✅ One class gives real feedback before transcribing 56 more skills
 
 **Tasks:**
-1. ✅ Create `src/data/skills.ts` with all 57 skills (56 class + Meditate)
-   - **START:** Meditate universal skill (test first!)
-   - **THEN:** Transcribe from `Skills planning.md`
-2. ✅ Create `src/data/monsterSkills.ts` with all 19 template pools
-   - 3-4 skills per template
-   - Weighted by priority
-3. ✅ Update `MonsterService.ts` to assign skills on creation
-4. ✅ Test monster skill assignment (correct count, valid skills)
+1. [ ] Create `src/data/skills.ts` with `universal_meditate` skill
+2. [ ] Add `restoreManaPercent` to `SkillEffect` interface
+3. [ ] Add mana restoration logic to `SkillService.executeSkill()`
+4. [ ] Test Meditate in battle (all 7 classes)
+5. [ ] Add all 8 Warrior skills to `skills.ts`
+6. [ ] Test Warrior skills end-to-end (damage, buffs, status)
+7. [ ] Validate skill unlock on level-up
+
+**Success Criteria:**
+- ✅ Meditate restores 33% mana, costs 0, works every turn
+- ✅ Warrior damage skills deal correct multiplied damage
+- ✅ Warrior buffs apply stat stages correctly
+- ✅ Warrior Bloodthirst (once-per-battle) works and resets
+
+---
+
+### Phase 4B: Remaining Class Skills
+
+**Goal:** Transcribe remaining 48 skills (6 classes × 8 skills)
+
+**Tasks:**
+1. [ ] Add Paladin skills (8) to `skills.ts`
+2. [ ] Add Technomancer skills (8) to `skills.ts`
+3. [ ] Add Scholar skills (8) to `skills.ts`
+4. [ ] Add Rogue skills (8) to `skills.ts`
+5. [ ] Add Cleric skills (8) to `skills.ts`
+6. [ ] Add Bard skills (8) to `skills.ts`
+7. [ ] Test each class's ultimate (once-per-battle) skill
+8. [ ] Verify type effectiveness for each class's skill types
 
 **Files Changed:**
-- `src/data/skills.ts` (NEW) - **Start with Meditate only!**
+- `src/data/skills.ts`
+
+**Success Criteria:**
+- All 57 skills defined (56 class + Meditate)
+- Each class has correct skills at correct levels
+- Type chart interactions work for all elemental skills
+
+---
+
+### Phase 4C: Monster Skill Pools
+
+**Goal:** Create skill pools for all 19 monster templates
+
+**Tasks:**
+1. [ ] Create `src/data/monsterSkills.ts`
+2. [ ] Define 3-4 skills per monster template (19 templates)
+3. [ ] Update `MonsterService.ts` to assign skills on creation
+4. [ ] Update `MonsterService.ts` to scale skills for Elite/Boss tiers
+5. [ ] Test monster skill assignment (variety, correct count)
+6. [ ] Test monster AI skill selection (weighted random)
+
+**Files Changed:**
 - `src/data/monsterSkills.ts` (NEW)
 - `src/services/MonsterService.ts`
 
 **Success Criteria:**
-- ✅ **Meditate works perfectly** (blocking requirement)
-- All 57 skills defined with correct stats
 - All 19 monster templates have skill pools
-- Monsters spawn with correct skill count (2-4)
-- Elite/Boss get stronger skill versions
+- Monsters spawn with 2 skills (normal), 3-4 skills (elite/boss)
+- Elite/Boss get stronger skill versions (+10-20% damage)
 
 ---
 
@@ -3217,10 +3945,12 @@ Use this checklist to track implementation progress across sessions.
 
 - [ ] Create Skill.ts model
 - [ ] Update Character.ts with skills field
-- [ ] Update CharacterClass with type field
-- [ ] Update Monster.ts with skills field
+- [ ] Update Character.ts with persistentStatusEffects field
+- [ ] Update CharacterClass (CLASS_INFO) with type field
+- [ ] Update Monster.ts with skills field + battleState
 - [ ] Update MonsterTemplate with skillPool
-- [ ] Write migration script 001
+- [ ] Expand BattleMonster interface (stages, status, skills)
+- [ ] Write migration script (v4 → v5)
 - [ ] Test migration script
 - [ ] Document schema changes
 
@@ -3235,37 +3965,81 @@ Use this checklist to track implementation progress across sessions.
 ### Phase 3: Core Combat Logic ❌
 
 - [ ] Create StatusEffectService.ts **FIRST**
-- [ ] Update CombatService with stages
+- [ ] Update CombatService with stage multipliers
 - [ ] Update CombatService with type chart
-- [ ] Create SkillService.ts (after Status + Combat)
+- [ ] Integrate ATK/DEF stages into damage formula
+- [ ] Create SkillService.ts (thin orchestrator)
 - [ ] Update BattleService with skill execution
 - [ ] Update BattleService with status ticking
+- [ ] Update BattleService with once-per-battle reset on retreat
+- [ ] Update Long Rest to clear persistentStatusEffects
 - [ ] Write unit tests
 
-### Phase 4: Skill & Monster Data ❌
+### Phase 4A: Meditate + Warrior Skills ❌
 
-- [ ] Create skills.ts (56 skills)
-- [ ] Create monsterSkills.ts (19 pools)
+- [ ] Create skills.ts with universal_meditate
+- [ ] Add restoreManaPercent to SkillEffect interface
+- [ ] Implement mana restore in SkillService
+- [ ] Test Meditate in battle (all classes)
+- [ ] Add all 8 Warrior skills
+- [ ] Test Warrior skills end-to-end
+- [ ] Validate skill unlock on level-up
+
+### Phase 4B: Remaining Class Skills ❌
+
+- [ ] Add Paladin skills (8)
+- [ ] Add Technomancer skills (8)
+- [ ] Add Scholar skills (8)
+- [ ] Add Rogue skills (8)
+- [ ] Add Cleric skills (8)
+- [ ] Add Bard skills (8)
+- [ ] Test each class's ultimate skill
+
+### Phase 4C: Monster Skill Pools ❌
+
+- [ ] Create monsterSkills.ts
+- [ ] Define skills for 19 monster templates
 - [ ] Update MonsterService skill assignment
+- [ ] Update MonsterService for Elite/Boss scaling
 - [ ] Test monster skill spawning
 
 ### Phase 5: Battle UI ❌
 
-- [ ] Add Skills button to BattleView
-- [ ] Create SkillPickerModal
-- [ ] Add stage indicators
-- [ ] Add status icons
-- [ ] Add type effectiveness messages
-- [ ] Style new elements
+- [ ] Add "Skills" button to BattleView action bar
+- [ ] Create SkillPickerModal.tsx (React component)
+  - [ ] Show only equipped skills (max 5)
+  - [ ] Show mana cost per skill
+  - [ ] Gray out skills with insufficient mana
+  - [ ] Gray out once-per-battle skills already used
+  - [ ] "Stunned!" overlay when blocked by hard CC
+  - [ ] Cancel button to return to action selection
+- [ ] On skill select → call BattleService.executePlayerSkill()
+- [ ] Add stage indicators (ATK/DEF/SPD arrows) to player/monster panels
+- [ ] Add status effect icons row under HP bars
+- [ ] Add type effectiveness messages to combat log ("It's super effective!")
+- [ ] Style skill buttons and new status indicators
 
-### Phase 6: Character Sheet ❌
 
-- [ ] Add Skills tab
-- [ ] Create SkillLoadoutModal
-- [ ] Show unlocked skills
-- [ ] Show next skill preview
-- [ ] Implement loadout editing
-- [ ] Save loadout
+
+### Phase 6: Character Sheet / Skills Management ❌
+
+- [ ] Add "Skills" button to CharacterSheet component
+- [ ] Create SkillLoadoutModal.ts (Obsidian Modal)
+  - [ ] Show equipped skills section (5 slots)
+  - [ ] Show all class skills (8 total)
+  - [ ] Show universal skills (Meditate)
+  - [ ] Locked skills with "Unlocks at Level X" label
+  - [ ] Toggle equipped/unequipped on click
+  - [ ] [Auto-Fill] button - fills with highest-level skills
+  - [ ] [Clear All] button
+  - [ ] Skill tooltips with full details
+- [ ] Add CSS for skill card states (equipped, available, locked)
+- [ ] Add command: "Quest Board: Manage Skills"
+- [ ] Save loadout to character.skills.equipped
+- [ ] Test equipping/unequipping flow
+- [ ] Test locked skill display
+
+
 
 ### Phase 7: Skill Unlocking ❌
 
@@ -3457,7 +4231,7 @@ Curse: 10% max HP per turn (blocks healing)
 ---
 
 **Last Updated:** 2026-01-29
-**Version:** 1.1 (Design Review & Fixes Applied)
+**Version:** 1.2 (Pre-Implementation Review Updates)
 
 **Status:** ✅ Ready for Implementation
 - All design critiques addressed (95% → 100%)
@@ -3465,3 +4239,7 @@ Curse: 10% max HP per turn (blocks healing)
 - Architecture issues fixed
 - Speed mechanic clarified (Pokemon Gen 1 style)
 - Implementation order optimized
+- **NEW:** Already-completed UI scaffolding documented
+- **NEW:** Testing strategy confirmed (unit tests alongside services)
+- **NEW:** Implementation approach confirmed (character skills first)
+
