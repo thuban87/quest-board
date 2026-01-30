@@ -345,6 +345,48 @@ export class SkillService {
 - Easy to mock dependencies for testing
 - Learning opportunity for composition pattern
 
+### Combatant Type Handling ✅ (Added 2026-01-29)
+
+> [!IMPORTANT]
+> **BattlePlayer and BattleMonster have different stat structures.**
+> SkillService must handle this difference with helper functions.
+
+**The difference:**
+- `BattlePlayer` has `physicalAttack` and `magicAttack` (derived from STR/INT + gear)
+- `BattleMonster` has a single `attack` value (monsters are simpler)
+
+**Resolution:** Use a helper function to get the correct attack power:
+
+```typescript
+/**
+ * Type guard to check if combatant is a player
+ */
+function isBattlePlayer(combatant: Combatant): combatant is BattlePlayer {
+    return 'volatileStatusEffects' in combatant;
+}
+
+/**
+ * Get attack power based on combatant type and skill damage type.
+ * - Players: Use physicalAttack or magicAttack based on skill
+ * - Monsters: Use single attack value (damageType determines player defense used)
+ */
+function getAttackPower(combatant: Combatant, damageType: 'physical' | 'magic'): number {
+    if (isBattlePlayer(combatant)) {
+        return damageType === 'physical' 
+            ? combatant.physicalAttack 
+            : combatant.magicAttack;
+    }
+    // Monsters use single attack value for all damage types
+    return combatant.attack;
+}
+```
+
+**Why this approach:**
+1. **Matches existing design** - Players already have physical/magic split for build diversity
+2. **Monsters stay simple** - Intentional design; monster skills define damageType which determines which player defense is used
+3. **No schema changes** - Current data model is correct
+4. **Type-safe** - TypeScript type guard handles the union type properly
+
 ### SkillResult Interface
 
 **SkillService.executeSkill() returns a result object** that describes what happened, rather than directly pushing logs or updating state.
