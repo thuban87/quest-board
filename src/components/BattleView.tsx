@@ -13,6 +13,9 @@ import { CLASS_INFO } from '../models/Character';
 import { CONSUMABLES, ConsumableEffect } from '../models/Consumable';
 import { battleService } from '../services/BattleService';
 import { LootDrop } from '../models/Gear';
+import { getUnlockedSkills } from '../data/skills';
+import { Skill } from '../models/Skill';
+
 
 // =====================
 // TYPES
@@ -306,58 +309,74 @@ type ActionMenu = 'main' | 'skills';
 function ActionButtons({ onAction, onItemClick, disabled, isAutoAttacking, onToggleAutoAttack }: ActionButtonsProps) {
     const [currentMenu, setCurrentMenu] = useState<ActionMenu>('main');
     const isMobile = Platform.isMobile;
+    const character = useCharacterStore(state => state.character);
+    const playerMana = useBattleStore(state => state.playerCurrentMana);
+    const player = useBattleStore(state => state.player);
+
+    // Get unlocked skills for this class/level (exclude Meditate - it has its own button)
+    const unlockedSkills = React.useMemo(() => {
+        if (!character) return [];
+        const skills = getUnlockedSkills(character.class, character.level);
+        // Filter out Meditate (handled by main menu button) and take first 5 class skills
+        return skills.filter(s => s.id !== 'universal_meditate').slice(0, 5);
+    }, [character?.class, character?.level]);
 
     // Placeholder handlers
     const handleMeditate = () => {
-        // TODO: Implement mana regen logic
-        console.log('[Battle] Meditate action triggered - mana regen placeholder');
-        // For now, just log - will be wired to actual effect later
+        // Meditate is universal_meditate skill
+        battleService.setSelectedSkill('universal_meditate');
+        onAction('skill');
     };
 
-    const handleSkillUse = (skillNum: number) => {
-        // TODO: Wire to actual skill system
-        console.log(`[Battle] Skill ${skillNum} used - placeholder`);
+    const handleSkillUse = (skillId: string) => {
+        battleService.setSelectedSkill(skillId);
+        onAction('skill');
+    };
+
+    // Check if a skill can be used (enough mana)
+    const canUseSkill = (skill: Skill): boolean => {
+        return playerMana >= skill.manaCost;
+    };
+
+    // Check if skill was used this battle (for once-per-battle skills)
+    const isSkillUsedThisBattle = (skill: Skill): boolean => {
+        if (!skill.usesPerBattle || !player) return false;
+        return player.skillsUsedThisBattle.includes(skill.id);
     };
 
     // Skills submenu
     if (currentMenu === 'skills') {
         return (
             <div className={`qb-battle-actions qb-skills-menu ${isMobile ? 'mobile' : ''}`}>
-                <button
-                    className="qb-action-btn qb-action-skill"
-                    onClick={() => handleSkillUse(1)}
-                    disabled={disabled}
-                >
-                    ✨ Skill 1
-                </button>
-                <button
-                    className="qb-action-btn qb-action-skill"
-                    onClick={() => handleSkillUse(2)}
-                    disabled={disabled}
-                >
-                    ✨ Skill 2
-                </button>
-                <button
-                    className="qb-action-btn qb-action-skill"
-                    onClick={() => handleSkillUse(3)}
-                    disabled={disabled}
-                >
-                    ✨ Skill 3
-                </button>
-                <button
-                    className="qb-action-btn qb-action-skill"
-                    onClick={() => handleSkillUse(4)}
-                    disabled={disabled}
-                >
-                    ✨ Skill 4
-                </button>
-                <button
-                    className="qb-action-btn qb-action-skill"
-                    onClick={() => handleSkillUse(5)}
-                    disabled={disabled}
-                >
-                    ✨ Skill 5
-                </button>
+                {unlockedSkills.map((skill, idx) => {
+                    const canUse = canUseSkill(skill) && !isSkillUsedThisBattle(skill);
+                    const usedOnce = isSkillUsedThisBattle(skill);
+                    return (
+                        <button
+                            key={skill.id}
+                            className={`qb-action-btn qb-action-skill ${!canUse ? 'qb-skill-disabled' : ''}`}
+                            onClick={() => handleSkillUse(skill.id)}
+                            disabled={disabled || !canUse}
+                            title={`${skill.name}\n${skill.description}\nCost: ${skill.manaCost} MP`}
+                        >
+                            <span className="qb-skill-icon">{skill.icon}</span>
+                            <span className="qb-skill-name">{skill.name}</span>
+                            <span className="qb-skill-cost">{skill.manaCost}</span>
+                            {usedOnce && <span className="qb-skill-used">USED</span>}
+                        </button>
+                    );
+                })}
+                {/* Fill empty slots if less than 5 skills */}
+                {Array.from({ length: Math.max(0, 5 - unlockedSkills.length) }).map((_, idx) => (
+                    <button
+                        key={`empty-${idx}`}
+                        className="qb-action-btn qb-action-skill qb-skill-empty"
+                        disabled={true}
+                    >
+                        <span className="qb-skill-icon">🔒</span>
+                        <span className="qb-skill-name">Locked</span>
+                    </button>
+                ))}
                 <button
                     className="qb-action-btn qb-action-back"
                     onClick={() => setCurrentMenu('main')}
@@ -367,6 +386,7 @@ function ActionButtons({ onAction, onItemClick, disabled, isAutoAttacking, onTog
             </div>
         );
     }
+
 
     // Main menu (3x2 grid)
     return (

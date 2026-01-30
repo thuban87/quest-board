@@ -305,6 +305,9 @@ export function executePlayerTurn(action: PlayerAction): void {
         case 'defend':
             executePlayerDefend();
             break;
+        case 'skill':
+            executePlayerSkill();
+            break;
         case 'retreat':
             executePlayerRetreat();
             break;
@@ -770,17 +773,276 @@ export function getBattleStateSummary() {
 }
 
 // =====================
+// SKILL EXECUTION
+// =====================
+
+// Import skill and status services at module scope
+// These will be used by executePlayerSkill
+import {
+    executeSkill,
+    getSkillById,
+    validateSkillUse,
+    isIncapacitated,
+    SkillResult,
+    SkillExecutionContext,
+} from './SkillService';
+import { tickStatusEffects, wakeFromSleep, breakFreeze } from './StatusEffectService';
+import { ElementalType, CLASS_ELEMENTAL_TYPES } from '../models/Skill';
+
+/**
+ * Currently selected skill ID for execution.
+ * Set by UI before calling executePlayerTurn('skill').
+ */
+let selectedSkillId: string | null = null;
+
+/**
+ * Set the skill ID to execute on next skill action.
+ * Called by BattleView when player selects a skill.
+ */
+export function setSelectedSkill(skillId: string): void {
+    selectedSkillId = skillId;
+}
+
+/**
+ * Get the currently selected skill ID.
+ */
+export function getSelectedSkill(): string | null {
+    return selectedSkillId;
+}
+
+/**
+ * Clear the selected skill after use.
+ */
+export function clearSelectedSkill(): void {
+    selectedSkillId = null;
+}
+
+/**
+ * Execute a player skill action.
+ * Called when action === 'skill' in executePlayerTurn.
+ */
+export function executePlayerSkill(): void {
+    const store = useBattleStore.getState();
+    const { player, playerStats, monster, playerCurrentMana } = store;
+    const character = useCharacterStore.getState().character;
+
+    if (!player || !playerStats || !monster || !character) {
+        console.warn('[BattleService] Invalid state for skill execution');
+        store.advanceState('PLAYER_INPUT');
+        return;
+    }
+
+    // Validate skill selection
+    if (!selectedSkillId) {
+        console.warn('[BattleService] No skill selected');
+        store.advanceState('PLAYER_INPUT');
+        return;
+    }
+
+    // Get skill definition
+    const skill = getSkillById(selectedSkillId);
+    if (!skill) {
+        console.warn(`[BattleService] Skill not found: ${selectedSkillId}`);
+        clearSelectedSkill();
+        store.advanceState('PLAYER_INPUT');
+        return;
+    }
+
+    // Validate skill use
+    const validation = validateSkillUse(
+        skill,
+        playerCurrentMana,
+        player.skillsUsedThisBattle,
+        isIncapacitated(player as any)
+    );
+
+    if (!validation.valid) {
+        store.addLogEntry({
+            turn: store.turnNumber,
+            actor: 'player',
+            action: `${skill.name} failed`,
+            result: 'miss',
+        });
+        clearSelectedSkill();
+        store.advanceState('PLAYER_INPUT');
+        return;
+    }
+
+    // Get elemental types for effectiveness
+    const userType: ElementalType = CLASS_ELEMENTAL_TYPES[character.class];
+    const targetType: ElementalType = monster.statStages
+        ? (monster as any).elementalType ?? 'Physical'
+        : 'Physical';
+
+    // Create execution context
+    const context: SkillExecutionContext = {
+        user: player as any,
+        target: monster as any,
+        userType,
+        targetType,
+        skillType: skill.elementalType,
+        turnNumber: store.turnNumber,
+    };
+
+    // Execute the skill
+    const result = executeSkill(skill, context);
+
+    // Deduct mana cost
+    const newMana = Math.max(0, playerCurrentMana - skill.manaCost);
+    store.updatePlayerMana(newMana);
+
+    // Track skill usage for once-per-battle skills
+    if (skill.usesPerBattle !== undefined) {
+        store.updatePlayer({
+            skillsUsedThisBattle: [...player.skillsUsedThisBattle, skill.id],
+        });
+    }
+
+    // Apply damage to monster
+    if (result.damage && result.damage > 0) {
+        const newMonsterHP = Math.max(0, monster.currentHP - result.damage);
+        store.updateMonsterHP(newMonsterHP);
+
+        // Wake from sleep on direct damage
+        if ((monster as any).statusEffects?.some((e: any) => e.type === 'sleep')) {
+            wakeFromSleep(monster as any);
+        }
+
+        // Fire breaks freeze
+        if (skill.elementalType === 'Fire') {
+            breakFreeze(monster as any, 'Fire');
+        }
+    }
+
+    // Apply healing to player
+    if (result.healing && result.healing > 0) {
+        const newHP = Math.min(player.maxHP, player.currentHP + result.healing);
+        store.updatePlayerHP(newHP);
+    }
+
+    // Apply mana restoration (Meditate)
+    if (result.manaRestored && result.manaRestored > 0) {
+        const restoredMana = Math.min(player.maxMana, newMana + result.manaRestored);
+        store.updatePlayerMana(restoredMana);
+    }
+
+    // Apply stage changes to player/monster
+    if (result.stageChanges) {
+        for (const change of result.stageChanges) {
+            if (change.target === 'self') {
+                store.updatePlayer({
+                    statStages: {
+                        ...player.statStages,
+                        [change.stat]: (player.statStages[change.stat] ?? 0) + change.delta,
+                    },
+                });
+            } else {
+                // Monster stage changes update the monster object
+                const currentMonster = store.monster!;
+                store.updateMonsterHP(currentMonster.currentHP); // Trigger update
+            }
+        }
+    }
+
+    // Log the skill use
+    store.addLogEntry({
+        turn: store.turnNumber,
+        actor: 'player',
+        action: skill.name,
+        damage: result.damage,
+        result: result.isCrit ? 'critical' : result.damage ? 'hit' : 'heal',
+        newHP: monster.currentHP - (result.damage ?? 0),
+    });
+
+    // Add additional log entries (type effectiveness, etc.)
+    for (const logEntry of result.logEntries) {
+        store.addLogEntry({
+            turn: store.turnNumber,
+            actor: 'player',
+            action: logEntry,
+        });
+    }
+
+    // Clear selected skill
+    clearSelectedSkill();
+
+    // Transition to animation, then check outcome
+    store.advanceState('ANIMATING_PLAYER');
+
+    // After animation, check outcome
+    setTimeout(() => {
+        checkBattleOutcomeWithStatusTick();
+    }, 500);
+}
+
+/**
+ * Check battle outcome and tick status effects at end of turn.
+ */
+function checkBattleOutcomeWithStatusTick(): void {
+    const store = useBattleStore.getState();
+
+    if (!store.monster) return;
+
+    // Check for victory/defeat first
+    if (store.monster.currentHP <= 0) {
+        handleVictory();
+        return;
+    }
+
+    if (store.playerCurrentHP <= 0) {
+        handleDefeat();
+        return;
+    }
+
+    // Tick status effects on player (DoT damage, duration, expiration)
+    const player = store.player;
+    if (player) {
+        const tickResult = tickStatusEffects(player as any, store.turnNumber);
+
+        // Apply DoT damage
+        if (tickResult.damageTaken > 0) {
+            const newHP = Math.max(0, store.playerCurrentHP - tickResult.damageTaken);
+            store.updatePlayerHP(newHP);
+
+            // Log DoT damage
+            for (const entry of tickResult.logEntries) {
+                store.addLogEntry({
+                    turn: store.turnNumber,
+                    actor: 'player',
+                    action: entry,
+                });
+            }
+
+            // Check for death from DoT
+            if (newHP <= 0) {
+                handleDefeat();
+                return;
+            }
+        }
+    }
+
+    // Continue battle - monster's turn
+    store.advanceState('ENEMY_TURN');
+    executeMonsterTurn();
+}
+
+// =====================
 // EXPORTS
 // =====================
+
 
 export const battleService = {
     startRandomBattle,
     startBattleWithTemplate,
     startBattleWithMonster,
     executePlayerTurn,
+    executePlayerSkill,
     executeMonsterTurn,
     generateVictoryLoot,
     canStartRandomFight,
     consumeStaminaForFight,
     getBattleStateSummary,
+    setSelectedSkill,
+    getSelectedSkill,
+    clearSelectedSkill,
 };

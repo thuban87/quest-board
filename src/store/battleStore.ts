@@ -34,7 +34,8 @@ export type CombatState =
 /**
  * Player action options
  */
-export type PlayerAction = 'attack' | 'defend' | 'item' | 'retreat';
+export type PlayerAction = 'attack' | 'defend' | 'skill' | 'item' | 'retreat';
+
 
 /**
  * Combat log entry for battle history
