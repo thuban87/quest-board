@@ -33,6 +33,16 @@ import { Character } from '../models/Character';
 import { selectMonsterSkillAI } from '../data/monsterSkills';
 import { MonsterSkill } from '../models/Skill';
 import { getStatusDisplayName } from '../models/StatusEffect';
+import {
+    startBattleTracking,
+    trackSkillUse,
+    trackDamageTaken,
+    trackStageChange,
+    trackStatusEffect,
+    updateTurnCount,
+    finalizeBattle,
+    isBalanceTestingEnabled,
+} from './BalanceTestingService';
 
 // =====================
 // SAVE CALLBACK (set by main.ts)
@@ -257,6 +267,16 @@ export function startBattleWithMonster(
     const battlePlayer = hydrateBattlePlayer(character, playerStats);
     useBattleStore.getState().setPlayer(battlePlayer);
 
+    // Phase 8: Start balance testing tracking if enabled
+    startBattleTracking(
+        character,
+        battleMonster,
+        playerStats.currentHP,
+        playerStats.currentMana,
+        playerStats.maxHP,
+        playerStats.maxMana
+    );
+
     return true;
 }
 
@@ -321,50 +341,60 @@ export function executePlayerTurn(action: PlayerAction): void {
         return;
     }
 
-    // Phase 5: Check if player should skip turn due to hard CC
     const player = store.player;
-    if (player) {
-        const skipCheck = shouldSkipTurn(player as any);
-        if (skipCheck.skip) {
-            // Log the skip
+    if (!player) return;
+
+    // Phase 8 Fix: ALWAYS tick player status effects at start of turn (DoT damage, duration countdown)
+    const tickResult = tickStatusEffects(player as any, store.turnNumber);
+
+    // Apply DoT damage if any
+    if (tickResult.damageTaken > 0) {
+        const newHP = Math.max(0, store.playerCurrentHP - tickResult.damageTaken);
+        store.updatePlayerHP(newHP);
+
+        for (const entry of tickResult.logEntries) {
             store.addLogEntry({
                 turn: store.turnNumber,
                 actor: 'player',
-                action: `You are ${skipCheck.reason}!`,
-                result: 'miss',
+                action: entry,
             });
+        }
 
-            // Tick status effects (decrement durations, apply DoT, clear stun)
-            const tickResult = tickStatusEffects(player as any, store.turnNumber);
-
-            // Apply DoT damage
-            if (tickResult.damageTaken > 0) {
-                const newHP = Math.max(0, store.playerCurrentHP - tickResult.damageTaken);
-                store.updatePlayerHP(newHP);
-
-                for (const entry of tickResult.logEntries) {
-                    store.addLogEntry({
-                        turn: store.turnNumber,
-                        actor: 'player',
-                        action: entry,
-                    });
-                }
-
-                // Check for death from DoT
-                if (newHP <= 0) {
-                    handleDefeat();
-                    return;
-                }
-            }
-
-            // Persist updated status effects to store
+        // Check for death from DoT
+        if (newHP <= 0) {
             store.updatePlayer({ volatileStatusEffects: [...player.volatileStatusEffects] });
-
-            // Skip to enemy turn without processing player action
-            store.advanceState('ENEMY_TURN');
-            executeMonsterTurn();
+            handleDefeat();
             return;
         }
+    } else if (tickResult.logEntries.length > 0) {
+        // Log expiry messages even if no damage (e.g., "Curse wore off!")
+        for (const entry of tickResult.logEntries) {
+            store.addLogEntry({
+                turn: store.turnNumber,
+                actor: 'player',
+                action: entry,
+            });
+        }
+    }
+
+    // Persist updated status effects to store
+    store.updatePlayer({ volatileStatusEffects: [...player.volatileStatusEffects] });
+
+    // Phase 5: Check if player should skip turn due to hard CC
+    const skipCheck = shouldSkipTurn(player as any);
+    if (skipCheck.skip) {
+        // Log the skip
+        store.addLogEntry({
+            turn: store.turnNumber,
+            actor: 'player',
+            action: `You are ${skipCheck.reason}!`,
+            result: 'miss',
+        });
+
+        // Skip to enemy turn without processing player action
+        store.advanceState('ENEMY_TURN');
+        executeMonsterTurn();
+        return;
     }
 
     store.selectAction(action);
@@ -536,6 +566,10 @@ function executePlayerRetreat(): void {
         // Phase 5: Copy volatile status effects back to persistent storage
         copyVolatileStatusToPersistent();
 
+        // Phase 8: Finalize balance testing log
+        updateTurnCount(store.turnNumber);
+        finalizeBattle('retreat', store.log, store.playerCurrentHP, store.playerCurrentMana);
+
         store.endBattle('retreat');
     } else {
         // Failed retreat - take 15% HP damage
@@ -577,6 +611,42 @@ export function executeMonsterTurn(): void {
 
     if (!monster || !playerStats) return;
 
+    // Phase 8 Fix: ALWAYS tick monster status effects at start of turn (DoT damage, duration countdown)
+    const tickResult = tickStatusEffects(monster as any, store.turnNumber);
+
+    // Apply DoT damage to monster if any
+    if (tickResult.damageTaken > 0) {
+        const newHP = Math.max(0, monster.currentHP - tickResult.damageTaken);
+        store.updateMonsterHP(newHP);
+
+        for (const entry of tickResult.logEntries) {
+            store.addLogEntry({
+                turn: store.turnNumber,
+                actor: 'monster',
+                action: entry,
+            });
+        }
+
+        // Check for victory from DoT
+        if (newHP <= 0) {
+            store.updateMonster({ statusEffects: [...(monster.statusEffects ?? [])] });
+            handleVictory();
+            return;
+        }
+    } else if (tickResult.logEntries.length > 0) {
+        // Log expiry messages even if no damage
+        for (const entry of tickResult.logEntries) {
+            store.addLogEntry({
+                turn: store.turnNumber,
+                actor: 'monster',
+                action: entry,
+            });
+        }
+    }
+
+    // Persist updated status effects to store (also updates UI icons)
+    store.updateMonster({ statusEffects: [...(monster.statusEffects ?? [])] });
+
     // Phase 5: Check if monster should skip turn due to hard CC
     const skipCheck = shouldSkipTurn(monster as any);
     if (skipCheck.skip) {
@@ -587,32 +657,6 @@ export function executeMonsterTurn(): void {
             action: `${monster.name} is ${skipCheck.reason}!`,
             result: 'miss',
         });
-
-        // Tick monster's status effects (decrement durations, apply DoT, clear stun)
-        const tickResult = tickStatusEffects(monster as any, store.turnNumber);
-
-        // Apply DoT damage to monster
-        if (tickResult.damageTaken > 0) {
-            const newHP = Math.max(0, monster.currentHP - tickResult.damageTaken);
-            store.updateMonsterHP(newHP);
-
-            for (const entry of tickResult.logEntries) {
-                store.addLogEntry({
-                    turn: store.turnNumber,
-                    actor: 'monster',
-                    action: entry,
-                });
-            }
-
-            // Check for victory from DoT
-            if (newHP <= 0) {
-                handleVictory();
-                return;
-            }
-        }
-
-        // Persist updated status effects to store
-        store.updateMonster({ statusEffects: [...(monster.statusEffects ?? [])] });
 
         // Advance turn and return to player input
         store.incrementTurn();
@@ -694,19 +738,17 @@ function executeMonsterSkill(skill: MonsterSkill): void {
 
     // Apply status effect if present and chance succeeds
     if (skill.statusEffect && Math.random() * 100 < skill.statusEffect.chance) {
-        const effectId = `monster_${skill.id}_${store.turnNumber}_${Date.now()}`;
-        const effect: import('../models/StatusEffect').StatusEffect = {
-            id: effectId,
-            type: skill.statusEffect.type,
-            duration: skill.statusEffect.duration,
-            severity: skill.statusEffect.severity,
-            source: 'monster',
-            sourceSkillId: skill.id,
-        };
-
-        // Add to player's volatile status effects
-        const newEffects = [...player.volatileStatusEffects, effect];
-        store.updatePlayer({ volatileStatusEffects: newEffects });
+        // Phase 8 Fix: Use applyStatus to handle replace-on-refresh (no stacking of same type)
+        const logMsg = applyStatus(
+            player as any,
+            skill.statusEffect.type,
+            skill.statusEffect.duration,
+            'monster',
+            skill.statusEffect.severity,
+            skill.id
+        );
+        // Update store with new effects
+        store.updatePlayer({ volatileStatusEffects: [...player.volatileStatusEffects] });
         // Use proper past tense for status effect messages
         const statusName = getStatusDisplayName(skill.statusEffect.type);
         logMessages.push(`You are now ${statusName}!`);
@@ -934,6 +976,10 @@ function handleVictory(): void {
     // Check for level-up and show modal if needed
     triggerLevelUpIfNeeded(oldXP, newXP, isTrainingMode);
 
+    // Phase 8: Finalize balance testing log
+    updateTurnCount(store.turnNumber);
+    finalizeBattle('victory', store.log, store.playerCurrentHP, store.playerCurrentMana);
+
     // Loot is generated separately when victory modal is shown
     // The lootBonus is stored for the modal to use
 }
@@ -998,6 +1044,10 @@ function handleDefeat(): void {
     if (saveCallback) {
         saveCallback().catch(err => console.error('[BattleService] Save failed:', err));
     }
+
+    // Phase 8: Finalize balance testing log
+    updateTurnCount(store.turnNumber);
+    finalizeBattle('defeat', store.log, 0, store.playerCurrentMana);
 }
 
 /**
@@ -1075,7 +1125,7 @@ import {
     SkillResult,
     SkillExecutionContext,
 } from './SkillService';
-import { tickStatusEffects, wakeFromSleep, breakFreeze, shouldSkipTurn } from './StatusEffectService';
+import { tickStatusEffects, wakeFromSleep, breakFreeze, shouldSkipTurn, applyStatus } from './StatusEffectService';
 import { ElementalType, CLASS_ELEMENTAL_TYPES } from '../models/Skill';
 
 /**
@@ -1211,6 +1261,13 @@ export function executePlayerSkill(): void {
         store.updatePlayerHP(newHP);
     }
 
+    // Apply lifesteal healing (Phase 8: Bloodthirst fix)
+    if (result.lifesteal && result.lifesteal > 0) {
+        const currentHP = store.playerCurrentHP;
+        const newHP = Math.min(player.maxHP, currentHP + result.lifesteal);
+        store.updatePlayerHP(newHP);
+    }
+
     // Apply mana restoration (Meditate)
     if (result.manaRestored && result.manaRestored > 0) {
         const restoredMana = Math.min(player.maxMana, newMana + result.manaRestored);
@@ -1233,6 +1290,20 @@ export function executePlayerSkill(): void {
                 store.updateMonsterHP(currentMonster.currentHP); // Trigger update
             }
         }
+    }
+
+    // Apply status effect to monster (Phase 8 Fix: This was missing!)
+    if (result.statusApplied && result.statusApplied.target === 'enemy') {
+        applyStatus(
+            monster as any,
+            result.statusApplied.type,
+            -1, // Duration until cured
+            'player',
+            result.statusApplied.severity,
+            skill.id
+        );
+        // Sync to store so UI updates
+        store.updateMonster({ statusEffects: [...(monster.statusEffects ?? [])] });
     }
 
     // Log the skill use

@@ -1,0 +1,70 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/bwales/projects/obsidian-plugins/quest-board[39m
+
+[90mstdout[2m | test/skills-combat-simulator.test.ts[2m > [22m[2mSkills Combat Simulator[2m > [22m[2mBalance - Same Level Combat[2m > [22m[2mshows complete skills balance matrix
+[22m[39m
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ                           SKILLS COMBAT BALANCE (200 battles each)                               Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+Class             L10 Win   L20 Win   L35 Win   L20 Type% L20 Status%  L20 Skills
+---------------------------------------------------------------------------------
+warrior               75%       67%       83%         59%          0%         1.9
+paladin               83%       67%       80%         45%          0%         1.7
+technomancer          78%       69%       85%         29%         49%         1.8
+scholar               64%       34%       64%         57%          0%         1.0
+rogue                 87%       80%       80%         68%         50%         1.7
+cleric                 0%       99%      100%         41%          0%         1.0
+bard                  61%       50%       52%         56%         29%         2.1
+---------------------------------------------------------------------------------
+L20 Average: 66.4% | Range: 34% - 99%
+
+ [2m[90mΓåô[39m[22m test/skills-combat-simulator.test.ts[2m > [22mSkills Combat Simulator[2m > [22mBasic Skill Usage[2m > [22mall classes should have skills at level 20
+ [2m[90mΓåô[39m[22m test/skills-combat-simulator.test.ts[2m > [22mSkills Combat Simulator[2m > [22mBasic Skill Usage[2m > [22mskills at level 38 should include ultimate
+ [2m[90mΓåô[39m[22m test/skills-combat-simulator.test.ts[2m > [22mSkills Combat Simulator[2m > [22mType Effectiveness[2m > [22mLight should be super effective vs Dark
+ [2m[90mΓåô[39m[22m test/skills-combat-simulator.test.ts[2m > [22mSkills Combat Simulator[2m > [22mType Effectiveness[2m > [22mFire should be super effective vs Ice
+ [2m[90mΓåô[39m[22m test/skills-combat-simulator.test.ts[2m > [22mSkills Combat Simulator[2m > [22mType Effectiveness[2m > [22mArcane should be weak vs Physical
+ [2m[90mΓåô[39m[22m test/skills-combat-simulator.test.ts[2m > [22mSkills Combat Simulator[2m > [22mType Effectiveness[2m > [22mPhysical should be weak vs Dark
+ [31m├ù[39m test/skills-combat-simulator.test.ts[2m > [22mSkills Combat Simulator[2m > [22mBalance - Same Level Combat[2m > [22mshows complete skills balance matrix[32m 38[2mms[22m[39m
+[31m   ΓåÆ expected 33.5 to be greater than or equal to 40[39m
+ [2m[90mΓåô[39m[22m test/skills-combat-simulator.test.ts[2m > [22mSkills Combat Simulator[2m > [22mBalance - With Consumables[2m > [22mconsumables should improve win rate
+ [2m[90mΓåô[39m[22m test/skills-combat-simulator.test.ts[2m > [22mSkills Combat Simulator[2m > [22mType Effectiveness Impact[2m > [22mPaladin (Light) should perform better vs Dark enemies
+ [2m[90mΓåô[39m[22m test/skills-combat-simulator.test.ts[2m > [22mSkills Combat Simulator[2m > [22mType Effectiveness Impact[2m > [22mPhysical classes should struggle vs Dark enemies
+ [2m[90mΓåô[39m[22m test/skills-combat-simulator.test.ts[2m > [22mSkills Combat Simulator[2m > [22mSkill Variety Analysis[2m > [22mshould use multiple skills per battle
+node.exe : 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteExc 
+   eption
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 1 
+[49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m test/skills-combat-simulator.test.ts[2m 
+> [22mSkills Combat Simulator[2m > [22mBalance - Same Level 
+Combat[2m > [22mshows complete skills balance matrix
+[31m[1mAssertionError[22m: expected 33.5 to be greater than or 
+equal to 40[39m
+[36m [2mΓ¥»[22m 
+test/skills-combat-simulator.test.ts:[2m773:28[22m[39m
+    [90m771| [39m
+    [90m772| [39m            [90m// Check balance[39m
+    [90m773| [39m            [34mexpect[39m(minWin)[33m.[39m[
+34mtoBeGreaterThanOrEqual[39m([34m40[39m)[33m;[39m
+    [90m   | [39m                           [31m^[39m
+    [90m774| [39m            [34mexpect[39m(maxWin)[33m.[39m[
+34mtoBeLessThanOrEqual[39m([34m95[39m)[33m;[39m
+    [90m775| [39m        })[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ
+»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/1]ΓÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[33m10 skipped[39m[90m (11)[39m
+[2m   Start at [22m 22:48:21
+[2m   Duration [22m 234ms[2m (transform 57ms, setup 29ms, import 43ms, tests 39ms, environment 0ms)[22m
+

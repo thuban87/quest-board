@@ -1613,7 +1613,6 @@ Key files:
 
 ## Git Commit Message
 
-```
 feat(skills): Phase 7 complete - skill unlocking & bug fixes
 
 Phase 7 Skill Unlocking:
@@ -1636,3 +1635,549 @@ Files: SkillService.ts, BattleService.ts, characterStore.ts, useXPAward.ts,
 LevelUpModal.ts, AchievementHubModal.ts, main.ts, gearFormatters.ts,
 fullpage.css, Feature Roadmap v2.md
 ```
+
+---
+
+## 2026-01-30 (Afternoon) - Phase 8: Balance Testing Infrastructure
+
+**Focus:** Creating infrastructure for systematic balance testing
+
+### Completed:
+
+#### Balance Testing Logger
+- ✅ Created `src/services/BalanceTestingService.ts` - Battle data logging service
+- ✅ Added settings fields: `enableBalanceTesting`, `balanceTestingFolder`, `balanceTestingNoteName`
+- ✅ Added settings UI section with toggle and folder/note configuration
+- ✅ Integrated into `BattleService.ts` - hooks at battle start/end
+- ✅ Auto-creates log notes with sequential battle numbering
+- ✅ Captures: character stats, monster stats, skills used, damage dealt, outcome
+
+#### Test Character Generator
+- ✅ Created `src/services/TestCharacterGenerator.ts` - Quick test character setup
+- ✅ `generateTestCharacter(class, level)` - Creates fully configured character
+- ✅ `generateTestGear()` - **Uses actual `lootGenerationService`** for realistic gear
+- ✅ Stats scale with level: +1 per 2 levels on primary stats, +1 per 5 on all
+- ✅ Skills auto-unlocked and equipped based on level
+- ✅ Added settings UI: class dropdown, level dropdown, "Generate & Apply" button
+- ✅ Tier selection matches real tier ranges from `TIER_INFO.levelRange`
+
+#### Documentation
+- ✅ Created `docs/development/Battle Testing Shortcuts.md` - XP thresholds, gear reference
+
+### Files Changed:
+
+**New Files:**
+- `src/services/BalanceTestingService.ts` - Battle logging infrastructure
+- `src/services/TestCharacterGenerator.ts` - Test character generation
+- `docs/development/Battle Testing Shortcuts.md` - Reference documentation
+
+**Modified:**
+- `src/settings.ts` - Balance testing settings section, test character generator UI
+- `src/services/BattleService.ts` - Balance testing hooks at battle lifecycle points
+- `main.ts` - Initialize balance testing context
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test and staging vaults
+- ✅ Test character generator creates realistic gear using actual loot service
+- ✅ Balance testing logger creates notes and appends battle data
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 8: Balance Testing - In Progress
+
+Ready for systematic balance testing across all classes and levels.
+
+---
+
+## Next Session Prompt
+
+```
+Balance Testing Infrastructure COMPLETE.
+
+What was done this session:
+- Created BalanceTestingService for battle data logging
+- Created TestCharacterGenerator for quick test character setup
+- Generator uses ACTUAL lootGenerationService for realistic gear
+- Added settings UI for both features (toggle, class/level dropdowns)
+- Created Battle Testing Shortcuts.md reference doc
+
+The user will now:
+1. Generate test characters at various levels
+2. Run battles and collect data via the logger
+3. Analyze balance and report back for tuning
+
+Key files:
+- src/services/BalanceTestingService.ts
+- src/services/TestCharacterGenerator.ts  
+- src/settings.ts (Balance Testing section)
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(balance): add balance testing infrastructure
+
+Balance Testing Logger:
+- Add BalanceTestingService.ts for automated battle data logging
+- Add settings: enableBalanceTesting, balanceTestingFolder, balanceTestingNoteName
+- Hook into BattleService battle lifecycle (start, victory, defeat, retreat)
+- Auto-create log notes with sequential battle numbering
+
+Test Character Generator:
+- Add TestCharacterGenerator.ts for quick test character setup
+- generateTestCharacter(class, level) with appropriate stats/gear/skills
+- Uses ACTUAL lootGenerationService for realistic gear generation
+- Stats scale: +1 per 2 levels (primary), +1 per 5 levels (all)
+- Skills auto-unlocked based on level
+
+Settings UI:
+- Balance Testing toggle with folder/note configuration
+- Test Class dropdown (7 classes)
+- Test Level dropdown (1, 5, 10, 15, 20, 25, 30, 35, 40)
+- "Generate & Apply" button with warning
+
+Documentation:
+- Battle Testing Shortcuts.md - XP thresholds, tier ranges reference
+
+Files: BalanceTestingService.ts, TestCharacterGenerator.ts, settings.ts,
+BattleService.ts, main.ts, Battle Testing Shortcuts.md
+```
+
+---
+
+## 2026-01-30 (Late Night) - Balance Tuning Session
+
+**Focus:** Combat balance fixes based on manual testing and simulator results
+
+### Completed:
+
+#### Rogue Nerfs (Backstab OP)
+- ✅ Reduced Backstab power: 200 → 160 (1.6x ATK instead of 2x)
+- ✅ Reduced Backstab crit bonus: 30% → 15%
+
+#### Cleric Nerfs (Smite Evil OP)
+- ✅ Removed self-heal from Smite Evil entirely
+- ✅ Changed category from 'hybrid' to 'damage'
+- ✅ Kept power at 160 (no compensation buff)
+
+#### Bard Buffs (L1 Too Weak)
+- ✅ Increased Bard damageModifier: 1.1 → 1.25 (helps weak Dissonance)
+
+### Files Changed:
+
+**Skills:**
+- `src/data/skills.ts` - Backstab power/crit nerf, Smite Evil heal removed
+
+**Config:**
+- `src/config/combatConfig.ts` - Bard damageModifier buff
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test and staging vaults
+- Manual testing confirmed Cleric L20 was trivially easy before fix
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Balance fixes deployed. Smite Evil no longer heals, Backstab nerfed, Bard buffed.
+
+Remaining issues from user testing:
+- Enemy status effect icons not showing in battle UI
+- Enemies not taking status damage (may be same root cause)
+- Combat log duplication (too verbose)
+- Skill tooltips need better explanations
+- Technomancer ultimate feels weak
+- Scholar Arcane type weak vs Physical (most monsters)
+```
+
+---
+
+## Git Commit Message
+
+```
+fix(balance): nerf Rogue Backstab and Cleric Smite Evil, buff Bard
+
+Rogue - Backstab was one-shotting enemies at all levels:
+- Reduced power: 200 → 160 (2x ATK → 1.6x ATK)
+- Reduced crit bonus: 30% → 15%
+
+Cleric - Smite Evil self-heal made dungeons trivial:
+- Removed 10% HP self-heal effect entirely
+- Changed category from 'hybrid' to 'damage'
+- Kept power at 160 (no compensation)
+
+Bard - Dissonance dealt only 3-11 damage at L1:
+- Increased damageModifier: 1.1 → 1.25
+
+Files: skills.ts, combatConfig.ts
+```
+
+---
+
+## 2026-01-31 (Afternoon) - Phase 8: Status Effects & Balance Fixes
+
+**Focus:** Fixing status effect bugs, XP cap, combat logs, and skill balance changes
+
+### Completed:
+
+#### Status Effect Fixes (Critical Bug Fixes)
+- ✅ Fixed player skills not applying status effects to monsters
+  - Added missing `applyStatus()` call in BattleService when `result.statusApplied.target === 'enemy'`
+  - Added `store.updateMonster()` call to sync changes to React UI
+- ✅ Fixed status stacking bug in `executeMonsterSkill()`
+  - Changed from `push()` to `applyStatus()` for monster-inflicted effects
+  - Same status type now refreshes instead of stacking infinitely
+- ✅ Added `applyStatus` import from StatusEffectService
+
+#### Skill Balance Changes
+- ✅ Bloodthirst (Warrior): Added 20% lifesteal effect
+  - Added `lifesteal: 0.20` to skill definition
+  - Added `lifesteal` property to `SkillDamageEffect` interface
+  - Implemented lifesteal calculation in `SkillService.processDamageEffect()`
+  - Implemented HP restoration in `BattleService.executePlayerSkill()`
+- ✅ Divine Shield (Paladin): Buffed to be true "panic button"
+  - Added +3 DEF stages
+  - Added 50% max HP heal
+  - Added full status cure (burn, poison, curse, bleed, confusion)
+- ✅ Meteor (Technomancer): Buffed ultimate
+  - Increased power: 300 → 400 (4x ATK)
+  - Increased burn chance: 50% → 75%
+  - Severity upgraded to 'severe'
+- ✅ Cleric skill order swap: Smite Evil and Bless levels swapped
+  - Smite Evil: L5 (was L13) - gives damage early
+  - Bless: L13 (was L5) - delays party buff
+- ✅ Scholar Arcane type: Removed Physical from weaknesses in TYPE_CHART
+
+#### XP System Fix
+- ✅ Cleric XP bonus cap corrected
+  - Changed from 35% (7 days × 5%) to 25% (5 days × 5%)
+
+#### Combat Log Cleanup
+- ✅ Removed duplicate "Used [Skill Name]!" log entry from SkillService
+  - BattleService already logs the skill name, so this was redundant
+
+### Files Changed:
+
+**Services:**
+- `src/services/BattleService.ts` - Status effect application, lifesteal healing
+- `src/services/SkillService.ts` - Lifesteal calculation, removed duplicate log
+- `src/services/XPSystem.ts` - Cleric XP cap fix
+
+**Models:**
+- `src/models/Skill.ts` - Added `lifesteal` property to SkillDamageEffect
+
+**Data:**
+- `src/data/skills.ts` - Bloodthirst, Divine Shield, Meteor, Cleric skill order
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ `npm test` - Core tests pass (gear migration tests are pre-existing failures)
+- ✅ Deployed to test vault
+- ✅ Manual testing: Status icons now appear on enemies after applying burn/poison
+- ✅ Manual testing: DoT damage ticks correctly
+- ✅ Manual testing: Duplicate log entries removed
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 8 Complete ✅
+
+All Phase 8 balance fixes and bug fixes are complete:
+
+1. ✅ Status effects apply correctly to monsters
+2. ✅ Status icons appear on enemy UI
+3. ✅ Status stacking fixed (same type refreshes, doesn't stack)
+4. ✅ Cleric XP cap corrected to 25%
+5. ✅ Combat log duplication fixed
+6. ✅ Bloodthirst lifesteal implemented
+7. ✅ Divine Shield buffed
+8. ✅ Meteor buffed
+9. ✅ Cleric skill progression reordered
+10. ✅ Scholar Arcane weakness removed
+
+---
+
+## Next Session Prompt
+
+```
+Phase 8 balance and bug fixes complete. Status effects now work correctly.
+
+Remaining from improvements list:
+- Skill tooltips need better explanations (exact descriptions of what moves do)
+
+Combat system is now stable and balanced.
+```
+
+---
+
+## Git Commit Message
+
+```
+fix(combat): Phase 8 - status effects, skill balance, and combat log fixes
+
+Critical Bug Fixes:
+- Player skills now correctly apply status effects to monsters
+  (was missing applyStatus call in BattleService)
+- Status icons now appear on enemy UI
+- Fixed status stacking: same type refreshes instead of stacking infinitely
+
+Skill Balance Changes:
+- Bloodthirst (Warrior): Added 20% lifesteal effect
+- Divine Shield (Paladin): Now grants +3 DEF, 50% HP heal, and full cure
+- Meteor (Technomancer): Power 300→400, burn chance 50%→75%, severe severity
+- Cleric skill order: Smite Evil L5 (was L13), Bless L13 (was L5)
+- Scholar: Removed Physical from Arcane type weaknesses
+
+XP System:
+- Cleric daily XP bonus cap corrected: 35% → 25% (5 days max)
+
+Combat Logs:
+- Removed duplicate "Used [Skill Name]!" log entry
+
+Files: BattleService.ts, SkillService.ts, XPSystem.ts, skills.ts, Skill.ts
+```
+
+---
+
+## 2026-01-31 (Afternoon) - Phase 9: Polish & Edge Cases
+
+**Focus:** Skill tooltip improvements with detailed mechanics text, edge case verification
+
+### Completed:
+
+#### Skill Tooltip Improvements
+- ✅ Created `src/utils/skillFormatters.ts` - New utility file
+  - `getSkillMechanicsLines(skill)` - Parses effects array into readable mechanics
+  - `formatSkillTooltipBattle(skill)` - Compact format for BattleView (mechanics only)
+  - `formatSkillTooltipFull(skill)` - Full format for SkillLoadoutModal (mechanics + flavor)
+- ✅ Updated `BattleView.tsx` to use compact tooltip formatter
+- ✅ Updated `SkillLoadoutModal.ts` to use full tooltip formatter
+
+#### Tooltip Format Examples
+
+**BattleView (compact):**
+```
+🩸 Bloodthirst (32 MP)
+Type: Physical
+
+300% Physical Physical damage (20% lifesteal)
+
+⚠️ Once per battle
+```
+
+**SkillLoadoutModal (full):**
+```
+🩸 Bloodthirst
+Lv 38 | 32 MP | Physical
+⚠️ Once per battle
+
+300% Physical Physical damage (20% lifesteal)
+
+"A savage strike that drains the life from your enemy."
+```
+
+#### Edge Case Testing
+- ✅ Status persistence between battles - Confirmed working
+- ✅ Once-per-battle reset on retreat - Confirmed working (tested earlier)
+- ✅ Stage cap enforcement (±6) - Confirmed working (tested earlier)
+- ✅ Hard CC self-cure prevention - Confirmed working (tested earlier)
+
+#### Deferred Items
+- ❌ Skill animations/effects - Skipped per user request
+- ❌ Sound effects - Skipped per user request
+- ❌ Tutorial/help text updates - Optional, can be done later
+
+### Files Changed:
+
+**New Files:**
+- `src/utils/skillFormatters.ts`
+
+**Components:**
+- `src/components/BattleView.tsx` - Import and use `formatSkillTooltipBattle`
+
+**Modals:**
+- `src/modals/SkillLoadoutModal.ts` - Import and use `formatSkillTooltipFull`
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test vault
+- ✅ Manual testing: Tooltips display correctly in BattleView (compact)
+- ✅ Manual testing: Tooltips display correctly in SkillLoadoutModal (full with flavor)
+- ✅ Manual testing: Status persistence works across battles
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 9 Complete ✅
+
+All Phase 9 polish and edge case tasks are complete:
+
+1. ✅ Status persistence between battles - Verified
+2. ✅ Once-per-battle skill reset on retreat - Verified
+3. ✅ Stage cap enforcement (±6) - Verified
+4. ✅ Hard CC self-cure prevention - Verified
+5. ✅ Skill tooltips with detailed mechanics - Implemented
+6. ❌ Animations - Deferred
+7. ❌ Sound effects - Deferred
+
+### Additional: Dev Feature Flag (2026-01-31)
+
+Added `DEV_FEATURES_ENABLED` compile-time flag to gate balance testing features:
+
+**Files Changed:**
+- `src/config/combatConfig.ts` - Added `DEV_FEATURES_ENABLED = false` constant
+- `src/settings.ts` - Wrapped Balance Testing UI section with feature flag
+- `main.ts` - Wrapped `setBalanceTestingContext()` initialization with feature flag
+
+**Result:**
+- Balance Testing section completely hidden in production builds
+- End users cannot see or enable these dev tools
+- To re-enable: set `DEV_FEATURES_ENABLED = true` in combatConfig.ts and rebuild
+
+---
+
+## Next Session Prompt
+
+```
+Phase 9 (Polish & Edge Cases) complete. Skills System is feature-complete!
+
+Remaining work:
+- Phase 10: Deployment & Migration to production vault
+
+All edge cases verified, tooltips improved with mechanics text.
+Dev feature flag added to hide balance testing in production.
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 9 - skill tooltips, edge cases, dev feature flag
+
+Skill Tooltip Improvements:
+- Created src/utils/skillFormatters.ts for parsing skill effects
+- formatSkillTooltipBattle() - compact format for BattleView buttons
+- formatSkillTooltipFull() - full format for SkillLoadoutModal
+- Shows mechanics like "150% Physical damage", "+2 Attack stages"
+
+Edge Case Verification:
+- Status persistence between battles ✅
+- Once-per-battle reset on retreat ✅
+- Stage cap enforcement (±6) ✅
+- Hard CC self-cure prevention ✅
+
+Dev Feature Flag:
+- Added DEV_FEATURES_ENABLED constant in combatConfig.ts
+- Balance Testing settings hidden when flag is false
+- Keeps dev tools out of production builds
+
+Files: skillFormatters.ts (NEW), BattleView.tsx, SkillLoadoutModal.ts,
+       combatConfig.ts, settings.ts, main.ts
+```
+
+---
+
+## 2026-01-31 (Afternoon) - Phase 10: Deployment & Migration + XP Curve Rebalance
+
+**Focus:** Final deployment of Skills System to production, plus XP curve rebalance for late-game progression
+
+### Completed:
+
+#### Phase 10: Production Deployment
+- ✅ User backed up entire production vault before deployment
+- ✅ Verified `DEV_FEATURES_ENABLED = false` in combatConfig.ts
+- ✅ Final build passed with no errors
+- ✅ Deployed to production vault via `npm run deploy:production`
+- ✅ Tested in production: character loads, skills populated correctly
+- ✅ Schema v5 migration runs successfully on existing characters
+
+#### XP Curve Rebalance (Option 4)
+- ✅ Identified issue: Dungeons granting 1.2-1.4 levels at high levels (too fast)
+- ✅ Implemented steeper XP curve for Tiers 3-5:
+  - Tier 3 (17-24): +160/level delta (was +120)
+  - Tier 4 (25-32): +220/level delta (was +140)
+  - Tier 5 (33-40): +320/level delta (was +160)
+- ✅ New dungeon balance:
+  - Level 20: ~0.95 levels per dungeon (still fast)
+  - Level 30: ~0.62 levels per dungeon (earning it)
+  - Level 35: ~0.46 levels per dungeon (real grind)
+- ✅ Total XP to L40: 159,960 (was 82,520, +94% increase)
+- ✅ Added future tuning notes in code comments
+
+### Files Changed:
+
+**Services:**
+- `src/services/XPSystem.ts` - New XP_THRESHOLDS with steeper late-game curve
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to production
+- ✅ Character migration verified working
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 10 Complete ✅ - Skills System Shipped!
+
+All 10 phases of the Skills System implementation are now complete:
+
+1. ✅ Phase 1: Foundation (Data Models & Migrations)
+2. ✅ Phase 2: Resource Management Updates
+3. ✅ Phase 3: Core Combat Logic
+4. ✅ Phase 4A/4B: Class Skills (57 total)
+5. ✅ Phase 4C: Monster Skill Pools
+6. ✅ Phase 5: Battle UI Integration
+7. ✅ Phase 6: Character Sheet Integration
+8. ✅ Phase 7: Skill Unlocking & Notifications
+9. ✅ Phase 8: Balance Testing & Tuning
+10. ✅ Phase 9: Polish & Edge Cases
+11. ✅ Phase 10: Deployment & Migration
+
+**Bonus:** XP curve rebalanced to prevent dungeons from granting multiple levels at high levels.
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 10 complete - production deployment + XP curve rebalance
+
+Skills System Production Deployment:
+- Backed up production vault
+- Deployed skills system to production
+- Schema v5 migration verified working
+- All 57 skills available in production
+
+XP Curve Rebalance (Option 4):
+- Tier 3: +160/level delta (was +120)
+- Tier 4: +220/level delta (was +140) 
+- Tier 5: +320/level delta (was +160)
+- Total XP to L40: 159,960 (was 82,520, +94%)
+- Dungeons now grant ~0.5 levels at L35 (was 1.3)
+
+Future tuning notes added to XPSystem.ts for potential
+further increases if raids make leveling too easy.
+
+Files: XPSystem.ts
+
+SKILLS SYSTEM COMPLETE! 🎉
+```
+
