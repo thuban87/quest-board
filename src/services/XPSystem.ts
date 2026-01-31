@@ -253,10 +253,10 @@ export function calculateXPWithBonus(
             break;
 
         case 'cleric':
-            // Self-Care Aura: Wellness streaks grant stacking bonus (+5% per day)
+            // Self-Care Aura: Wellness streaks grant stacking bonus (+5% per day, cap 25%)
             if (options.isStreak && options.streakDays &&
                 categoryMatchesClass(category, 'cleric')) {
-                totalXP *= 1 + (0.05 * Math.min(options.streakDays, 7)); // Cap at 35%
+                totalXP *= 1 + (0.05 * Math.min(options.streakDays, 5)); // Cap at 25% (5 days * 5%)
             }
             break;
     }

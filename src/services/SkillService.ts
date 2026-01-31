@@ -54,7 +54,7 @@ export const TYPE_CHART: Record<ElementalType, { strong: ElementalType[]; weak: 
     Ice: { strong: ['Nature', 'Lightning'], weak: ['Fire', 'Ice'] },
     Lightning: { strong: ['Fire', 'Psychic'], weak: ['Earth', 'Lightning'] },
     Earth: { strong: ['Lightning', 'Physical'], weak: ['Nature', 'Ice'] },
-    Arcane: { strong: ['Dark', 'Psychic'], weak: ['Physical', 'Light'] },
+    Arcane: { strong: ['Dark', 'Psychic'], weak: ['Light'] },  // Physical removed for Scholar balance
     Dark: { strong: ['Light', 'Psychic'], weak: ['Arcane', 'Dark'] },
     Light: { strong: ['Dark', 'Poison'], weak: ['Arcane', 'Light'] },
     Poison: { strong: ['Nature', 'Physical'], weak: ['Light', 'Earth'] },
@@ -196,8 +196,7 @@ export function executeSkill(skill: Skill, context: SkillExecutionContext): Skil
         manaCost: skill.manaCost,
     };
 
-    // Add initial log entry
-    result.logEntries.push(`Used ${skill.name}!`);
+    // NOTE: BattleService already logs the skill name, so we don't add "Used X!" here
 
     // Process each effect in order
     for (const effect of skill.effects) {
@@ -314,6 +313,13 @@ function processDamageEffect(
 
     result.damage = damage;
     result.logEntries.push(`Dealt ${damage} damage!`);
+
+    // Handle lifesteal if present
+    if (effect.lifesteal && effect.lifesteal > 0 && damage > 0) {
+        const healAmount = Math.floor(damage * effect.lifesteal);
+        result.lifesteal = healAmount;
+        result.logEntries.push(`Drained ${healAmount} HP!`);
+    }
 }
 
 /**

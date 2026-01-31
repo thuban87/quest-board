@@ -75,6 +75,8 @@ export interface SkillDamageEffect {
     ignoresStages?: boolean;
     /** Bonus crit chance for this skill (added to base) */
     critBonus?: number;
+    /** Lifesteal percentage (0-1.0) - heal for this percentage of damage dealt */
+    lifesteal?: number;
 }
 
 /**

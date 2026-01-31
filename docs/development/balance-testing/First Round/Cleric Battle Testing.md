@@ -3,6 +3,7 @@ tags:
   - life
   - quest-board
   - balance-testing
+  - first-round
 ---
 ## Battle #1 - 2026-01-30 22:00
 

@@ -1823,4 +1823,130 @@ Bard - Dissonance dealt only 3-11 damage at L1:
 Files: skills.ts, combatConfig.ts
 ```
 
+---
+
+## 2026-01-31 (Afternoon) - Phase 8: Status Effects & Balance Fixes
+
+**Focus:** Fixing status effect bugs, XP cap, combat logs, and skill balance changes
+
+### Completed:
+
+#### Status Effect Fixes (Critical Bug Fixes)
+- ✅ Fixed player skills not applying status effects to monsters
+  - Added missing `applyStatus()` call in BattleService when `result.statusApplied.target === 'enemy'`
+  - Added `store.updateMonster()` call to sync changes to React UI
+- ✅ Fixed status stacking bug in `executeMonsterSkill()`
+  - Changed from `push()` to `applyStatus()` for monster-inflicted effects
+  - Same status type now refreshes instead of stacking infinitely
+- ✅ Added `applyStatus` import from StatusEffectService
+
+#### Skill Balance Changes
+- ✅ Bloodthirst (Warrior): Added 20% lifesteal effect
+  - Added `lifesteal: 0.20` to skill definition
+  - Added `lifesteal` property to `SkillDamageEffect` interface
+  - Implemented lifesteal calculation in `SkillService.processDamageEffect()`
+  - Implemented HP restoration in `BattleService.executePlayerSkill()`
+- ✅ Divine Shield (Paladin): Buffed to be true "panic button"
+  - Added +3 DEF stages
+  - Added 50% max HP heal
+  - Added full status cure (burn, poison, curse, bleed, confusion)
+- ✅ Meteor (Technomancer): Buffed ultimate
+  - Increased power: 300 → 400 (4x ATK)
+  - Increased burn chance: 50% → 75%
+  - Severity upgraded to 'severe'
+- ✅ Cleric skill order swap: Smite Evil and Bless levels swapped
+  - Smite Evil: L5 (was L13) - gives damage early
+  - Bless: L13 (was L5) - delays party buff
+- ✅ Scholar Arcane type: Removed Physical from weaknesses in TYPE_CHART
+
+#### XP System Fix
+- ✅ Cleric XP bonus cap corrected
+  - Changed from 35% (7 days × 5%) to 25% (5 days × 5%)
+
+#### Combat Log Cleanup
+- ✅ Removed duplicate "Used [Skill Name]!" log entry from SkillService
+  - BattleService already logs the skill name, so this was redundant
+
+### Files Changed:
+
+**Services:**
+- `src/services/BattleService.ts` - Status effect application, lifesteal healing
+- `src/services/SkillService.ts` - Lifesteal calculation, removed duplicate log
+- `src/services/XPSystem.ts` - Cleric XP cap fix
+
+**Models:**
+- `src/models/Skill.ts` - Added `lifesteal` property to SkillDamageEffect
+
+**Data:**
+- `src/data/skills.ts` - Bloodthirst, Divine Shield, Meteor, Cleric skill order
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ `npm test` - Core tests pass (gear migration tests are pre-existing failures)
+- ✅ Deployed to test vault
+- ✅ Manual testing: Status icons now appear on enemies after applying burn/poison
+- ✅ Manual testing: DoT damage ticks correctly
+- ✅ Manual testing: Duplicate log entries removed
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 8 Complete ✅
+
+All Phase 8 balance fixes and bug fixes are complete:
+
+1. ✅ Status effects apply correctly to monsters
+2. ✅ Status icons appear on enemy UI
+3. ✅ Status stacking fixed (same type refreshes, doesn't stack)
+4. ✅ Cleric XP cap corrected to 25%
+5. ✅ Combat log duplication fixed
+6. ✅ Bloodthirst lifesteal implemented
+7. ✅ Divine Shield buffed
+8. ✅ Meteor buffed
+9. ✅ Cleric skill progression reordered
+10. ✅ Scholar Arcane weakness removed
+
+---
+
+## Next Session Prompt
+
+```
+Phase 8 balance and bug fixes complete. Status effects now work correctly.
+
+Remaining from improvements list:
+- Skill tooltips need better explanations (exact descriptions of what moves do)
+
+Combat system is now stable and balanced.
+```
+
+---
+
+## Git Commit Message
+
+```
+fix(combat): Phase 8 - status effects, skill balance, and combat log fixes
+
+Critical Bug Fixes:
+- Player skills now correctly apply status effects to monsters
+  (was missing applyStatus call in BattleService)
+- Status icons now appear on enemy UI
+- Fixed status stacking: same type refreshes instead of stacking infinitely
+
+Skill Balance Changes:
+- Bloodthirst (Warrior): Added 20% lifesteal effect
+- Divine Shield (Paladin): Now grants +3 DEF, 50% HP heal, and full cure
+- Meteor (Technomancer): Power 300→400, burn chance 50%→75%, severe severity
+- Cleric skill order: Smite Evil L5 (was L13), Bless L13 (was L5)
+- Scholar: Removed Physical from Arcane type weaknesses
+
+XP System:
+- Cleric daily XP bonus cap corrected: 35% → 25% (5 days max)
+
+Combat Logs:
+- Removed duplicate "Used [Skill Name]!" log entry
+
+Files: BattleService.ts, SkillService.ts, XPSystem.ts, skills.ts, Skill.ts
+```
 

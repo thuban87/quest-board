@@ -199,8 +199,7 @@ function createSkillDefinitions(): Skill[] {
             category: 'hybrid',
             manaCost: 32,
             effects: [
-                { type: 'damage', power: 300, damageType: 'physical', critBonus: 0 },  // 3x ATK
-                // Lifesteal 20% handled via special logic in SkillService
+                { type: 'damage', power: 300, damageType: 'physical', critBonus: 0, lifesteal: 0.20 },  // 3x ATK, 20% lifesteal
             ],
             requiredClass: ['warrior'],
             learnLevel: 38,
@@ -319,8 +318,9 @@ function createSkillDefinitions(): Skill[] {
             category: 'hybrid',
             manaCost: 36,
             effects: [
-                { type: 'stage', stat: 'def', stages: 2, target: 'self' },
-                { type: 'heal', power: 30, target: 'self' },  // 30% max HP
+                { type: 'stage', stat: 'def', stages: 3, target: 'self' },
+                { type: 'heal', power: 50, target: 'self' },  // 50% max HP
+                { type: 'cure', cures: 'all', target: 'self' },
             ],
             requiredClass: ['paladin'],
             learnLevel: 38,
@@ -439,8 +439,8 @@ function createSkillDefinitions(): Skill[] {
             category: 'hybrid',
             manaCost: 38,
             effects: [
-                { type: 'damage', power: 300, damageType: 'magic' },  // 3x ATK
-                { type: 'status', statusType: 'burn', duration: -1, chance: 50, target: 'enemy' },
+                { type: 'damage', power: 400, damageType: 'magic' },  // 4x ATK (buffed)
+                { type: 'status', statusType: 'burn', duration: -1, chance: 75, target: 'enemy', severity: 'severe' },
             ],
             requiredClass: ['technomancer'],
             learnLevel: 38,
@@ -699,7 +699,7 @@ function createSkillDefinitions(): Skill[] {
                 { type: 'heal', power: 35, target: 'self' },  // 35% max HP
             ],
             requiredClass: ['cleric'],
-            learnLevel: 5,
+            learnLevel: 13,  // Swapped with Smite Evil for earlier damage
         },
         {
             id: 'cleric_bless',
@@ -727,7 +727,7 @@ function createSkillDefinitions(): Skill[] {
                 { type: 'damage', power: 160, damageType: 'magic' },  // 1.6x ATK (heal removed)
             ],
             requiredClass: ['cleric'],
-            learnLevel: 13,
+            learnLevel: 5,  // Now available early for damage
         },
         {
             id: 'cleric_full_heal',

@@ -3,6 +3,7 @@ tags:
   - life
   - quest-board
   - balance-testing
+  - first-round
 ---
 ## Battle #1 - 2026-01-30 22:15
 
@@ -1264,6 +1265,3 @@ _(Fill in observations after battle)_
 
 ---
 
-## Level 40 Summary
-
-Hardest it's been yet for this class. Fun but annoying. I take back what I said before, that was more fun.
