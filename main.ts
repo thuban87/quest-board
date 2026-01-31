@@ -47,7 +47,7 @@ import { battleService, setSaveCallback as setBattleSaveCallback, setLevelUpCall
 import { startRecoveryTimerCheck, stopRecoveryTimerCheck } from './src/services/RecoveryTimerService';
 import { showEliteEncounterModal } from './src/modals/EliteEncounterModal';
 import { showDungeonSelectionModal } from './src/modals/DungeonSelectionModal';
-import { ELITE_LEVEL_UNLOCK, ELITE_OVERWORLD_CHANCE, ELITE_NAME_PREFIXES } from './src/config/combatConfig';
+import { ELITE_LEVEL_UNLOCK, ELITE_OVERWORLD_CHANCE, ELITE_NAME_PREFIXES, DEV_FEATURES_ENABLED } from './src/config/combatConfig';
 import { GearSlot } from './src/models/Gear';
 import { LevelUpModal } from './src/modals/LevelUpModal';
 import { CharacterClass } from './src/models/Character';
@@ -103,7 +103,10 @@ export default class QuestBoardPlugin extends Plugin {
         });
 
         // Initialize balance testing context (Phase 8: Balance Testing Logger)
-        setBalanceTestingContext(this.app, () => this.settings);
+        // Only enabled when DEV_FEATURES_ENABLED = true
+        if (DEV_FEATURES_ENABLED) {
+            setBalanceTestingContext(this.app, () => this.settings);
+        }
 
         // Set up save callback for battle outcomes (persists XP, gold, HP after combat)
         setBattleSaveCallback(async () => {

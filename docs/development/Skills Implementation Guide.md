@@ -4165,16 +4165,17 @@ Use this checklist to track implementation progress across sessions.
 - [x] Fix Scholar Arcane weakness
 - [x] Clean up combat logs
 
-### Phase 9: Polish ❌
+### Phase 9: Polish ✅
 
-- [ ] Test status persistence
-- [ ] Test once-per-battle reset
-- [ ] Test stage caps
-- [ ] Test hard CC prevention
-- [ ] Add animations
-- [ ] Add sound (optional)
-- [ ] Update tutorial
-- [ ] QA edge cases
+- [x] Test status persistence - Verified working
+- [x] Test once-per-battle reset - Verified working
+- [x] Test stage caps (±6) - Verified working
+- [x] Test hard CC prevention - Verified working
+- [x] Improve skill tooltips - Added mechanics text via skillFormatters.ts
+- ~~[ ] Add animations~~ - Deferred
+- ~~[ ] Add sound (optional)~~ - Deferred
+- [ ] Update tutorial - Optional, low priority
+- [x] QA edge cases - All critical cases verified
 
 ### Phase 10: Deployment ❌
 
@@ -4337,16 +4338,20 @@ Curse: 10% max HP per turn (blocks healing)
 
 ---
 
-**Last Updated:** 2026-01-30
-**Version:** 1.6 (Phase 5 Partial)
+**Last Updated:** 2026-01-31
+**Version:** 1.7 (Phase 9 Complete)
 
-**Status:** ✅ Phases 1-4C Complete, ⏳ Phase 5 Partial
+**Status:** ✅ Phases 1-9 Complete, ⏳ Phase 10 Pending
 - **PHASE 1:** Foundation - Interfaces, schema v5, migrations ✅
 - **PHASE 2:** Resource Management - Long Rest mana restore, paid bypass, 7% HP/Mana regen ✅
 - **PHASE 3:** Core Combat Logic - StatusEffectService, SkillService, stage system ✅
 - **PHASE 4A/4B:** 57 skills implemented in `src/data/skills.ts` (1 universal + 56 class) ✅
 - **PHASE 4C:** Monster Skills - 41 skills in `src/data/monsterSkills.ts`, all 19 templates updated ✅
-- **PHASE 5:** Battle UI - Skills submenu ✅, Stage indicators ✅, Status icons ❌, Type effectiveness ❌
+- **PHASE 5:** Battle UI - Skills submenu, stage indicators, status icons, type effectiveness ✅
+- **PHASE 6:** Character Sheet - SkillLoadoutModal, Manage Skills command ✅
+- **PHASE 7:** Skill Unlocking - Auto-unlock on level-up, LevelUpModal skill cards ✅
+- **PHASE 8:** Balance Testing - Status effect fixes, skill tuning, combat log cleanup ✅
+- **PHASE 9:** Polish - Skill tooltips with mechanics text, edge case verification ✅
 
-**Next:** Complete Phase 5 (status icons, type effectiveness messages) or Phase 6 (SkillLoadoutModal)
+**Next:** Phase 10 - Deployment & Migration to production vault
 

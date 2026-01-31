@@ -17,6 +17,7 @@ import { getSkillsForClass, getSkillById } from '../data/skills';
 import { Skill } from '../models/Skill';
 import { CharacterClass } from '../models/Character';
 import { MAX_EQUIPPED_SKILLS, MEDITATE_SKILL_ID } from '../config/combatConfig';
+import { formatSkillTooltipFull } from '../utils/skillFormatters';
 
 interface SkillLoadoutModalOptions {
     /** Callback when skills are saved */
@@ -275,20 +276,7 @@ export class SkillLoadoutModal extends Modal {
     }
 
     private getSkillTooltip(skill: Skill): string {
-        const lines = [
-            `${skill.icon} ${skill.name}`,
-            `Unlock Level: ${skill.learnLevel}`,
-            `Mana Cost: ${skill.manaCost}`,
-            `Type: ${skill.elementalType}`,
-            '',
-            skill.description,
-        ];
-
-        if (skill.usesPerBattle) {
-            lines.push(`\n⚠️ Once per battle`);
-        }
-
-        return lines.join('\n');
+        return formatSkillTooltipFull(skill);
     }
 
     private equipSkill(skillId: string) {

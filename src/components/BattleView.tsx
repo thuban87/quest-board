@@ -16,6 +16,7 @@ import { LootDrop } from '../models/Gear';
 import { getSkillById } from '../data/skills';
 import { Skill } from '../models/Skill';
 import { StatusEffect, getStatusIcon, getStatusDisplayName } from '../models/StatusEffect';
+import { formatSkillTooltipBattle } from '../utils/skillFormatters';
 
 
 // =====================
@@ -478,7 +479,7 @@ function ActionButtons({ onAction, onItemClick, disabled, isAutoAttacking, onTog
                             className={`qb-action-btn qb-action-skill ${!canUse ? 'qb-skill-disabled' : ''}`}
                             onClick={() => handleSkillUse(skill.id)}
                             disabled={disabled || !canUse}
-                            title={`${skill.name}\n${skill.description}\nCost: ${skill.manaCost} MP`}
+                            title={formatSkillTooltipBattle(skill)}
                         >
                             <span className="qb-skill-icon">{skill.icon}</span>
                             <span className="qb-skill-name">{skill.name}</span>

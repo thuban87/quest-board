@@ -241,7 +241,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | **Accessory Special Abilities** | Unique effects: sneak past monsters, reset rest timer (cooldown), etc. | High |
 | **Character Titles** | Ecosystem of titles earned from various activities | Medium |
 | **Dungeon Bosses** | Boss monsters at dungeon end | Medium |
-| **Skills/Abilities** | Class-specific moves using mana (Pokemon Gen 1 style) | 🔄 Pre-Implementation (Part 4/X) |
+| **Skills/Abilities** | Class-specific moves using mana (Pokemon Gen 1 style) | ✅ Complete (Phase 9 Done, Deploy Pending) |
 | **Tier Sprite Choices** | At tier-up, choose from 3 sprite looks | Medium |
 
 #### Tier 4: Polish & UI
@@ -382,5 +382,5 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-01-30 (Balance Testing Infrastructure)
+**Last Updated:** 2026-01-31 (Skills System Phase 9 Complete)
 
