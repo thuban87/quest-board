@@ -17,8 +17,21 @@ import { getXPMultiplierFromPowerUps } from './PowerUpService';
  * Tier 4 (Levels 25-32): Champion - Hard (late game)
  * Tier 5 (Levels 33-40): Divine Avatar - Epic (endgame)
  * 
- * Timeline: ~6 months of daily play to reach Level 40
- * Design: Fast early game for dopamine/retention, harder late game for achievement
+ * Timeline: ~9-12 months of daily play to reach Level 40
+ * Design: Fast early game for dopamine/retention, steep late game for achievement
+ * 
+ * Delta growth per tier (XP increase per level within tier):
+ * - Tier 1: +60/level, Tier 2: +100/level (unchanged)
+ * - Tier 3: +160/level, Tier 4: +220/level, Tier 5: +320/level
+ * 
+ * Dungeon balance (10 monsters avg):
+ * - Level 20: ~0.95 levels per dungeon (still fast)
+ * - Level 30: ~0.62 levels per dungeon (earning it)
+ * - Level 35: ~0.46 levels per dungeon (real grind)
+ * 
+ * FUTURE TUNING: If high-level dungeons/raids with more monsters still make
+ * leveling too easy, increase Tier 3-5 deltas to +180/+260/+380 respectively.
+ * The starting increases for each tier may also need bumping (+6000/+11000).
  */
 export const XP_THRESHOLDS: number[] = [
     0,       // Level 1
@@ -37,30 +50,30 @@ export const XP_THRESHOLDS: number[] = [
     12260,   // Level 14 (+1500)
     13860,   // Level 15 (+1600)
     15560,   // Level 16 (+1700)
-    17160,   // Level 17 (Tier 3: +1600)
-    18880,   // Level 18 (+1720)
-    20720,   // Level 19 (+1840)
-    22680,   // Level 20 (+1960)
-    24760,   // Level 21 (+2080)
-    26960,   // Level 22 (+2200)
-    29280,   // Level 23 (+2320)
-    31720,   // Level 24 (+2440)
-    33920,   // Level 25 (Tier 4: +2200)
-    36260,   // Level 26 (+2340)
-    38740,   // Level 27 (+2480)
-    41360,   // Level 28 (+2620)
-    44120,   // Level 29 (+2760)
-    47020,   // Level 30 (+2900)
-    50060,   // Level 31 (+3040)
-    53240,   // Level 32 (+3180)
-    56340,   // Level 33 (Tier 5: +3100)
-    59600,   // Level 34 (+3260)
-    63020,   // Level 35 (+3420)
-    66600,   // Level 36 (+3580)
-    70340,   // Level 37 (+3740)
-    74240,   // Level 38 (+3900)
-    78300,   // Level 39 (+4060)
-    82520,   // Level 40 (+4220) - Max Level
+    17160,   // Level 17 (Tier 3: +1600, delta +160)
+    18920,   // Level 18 (+1760)
+    20840,   // Level 19 (+1920)
+    22920,   // Level 20 (+2080)
+    25160,   // Level 21 (+2240)
+    27560,   // Level 22 (+2400)
+    30120,   // Level 23 (+2560)
+    32840,   // Level 24 (+2720)
+    37840,   // Level 25 (Tier 4: +5000, delta +220)
+    43060,   // Level 26 (+5220)
+    48500,   // Level 27 (+5440)
+    54160,   // Level 28 (+5660)
+    60040,   // Level 29 (+5880)
+    66140,   // Level 30 (+6100)
+    72460,   // Level 31 (+6320)
+    79000,   // Level 32 (+6540)
+    88000,   // Level 33 (Tier 5: +9000, delta +320)
+    97320,   // Level 34 (+9320)
+    106960,  // Level 35 (+9640)
+    116920,  // Level 36 (+9960)
+    127200,  // Level 37 (+10280)
+    137800,  // Level 38 (+10600)
+    148720,  // Level 39 (+10920)
+    159960,  // Level 40 (+11240) - Max Level
 ];
 
 /**

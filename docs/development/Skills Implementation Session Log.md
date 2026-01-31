@@ -2091,3 +2091,93 @@ Files: skillFormatters.ts (NEW), BattleView.tsx, SkillLoadoutModal.ts,
        combatConfig.ts, settings.ts, main.ts
 ```
 
+---
+
+## 2026-01-31 (Afternoon) - Phase 10: Deployment & Migration + XP Curve Rebalance
+
+**Focus:** Final deployment of Skills System to production, plus XP curve rebalance for late-game progression
+
+### Completed:
+
+#### Phase 10: Production Deployment
+- ✅ User backed up entire production vault before deployment
+- ✅ Verified `DEV_FEATURES_ENABLED = false` in combatConfig.ts
+- ✅ Final build passed with no errors
+- ✅ Deployed to production vault via `npm run deploy:production`
+- ✅ Tested in production: character loads, skills populated correctly
+- ✅ Schema v5 migration runs successfully on existing characters
+
+#### XP Curve Rebalance (Option 4)
+- ✅ Identified issue: Dungeons granting 1.2-1.4 levels at high levels (too fast)
+- ✅ Implemented steeper XP curve for Tiers 3-5:
+  - Tier 3 (17-24): +160/level delta (was +120)
+  - Tier 4 (25-32): +220/level delta (was +140)
+  - Tier 5 (33-40): +320/level delta (was +160)
+- ✅ New dungeon balance:
+  - Level 20: ~0.95 levels per dungeon (still fast)
+  - Level 30: ~0.62 levels per dungeon (earning it)
+  - Level 35: ~0.46 levels per dungeon (real grind)
+- ✅ Total XP to L40: 159,960 (was 82,520, +94% increase)
+- ✅ Added future tuning notes in code comments
+
+### Files Changed:
+
+**Services:**
+- `src/services/XPSystem.ts` - New XP_THRESHOLDS with steeper late-game curve
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to production
+- ✅ Character migration verified working
+
+### Blockers/Issues:
+- None
+
+---
+
+## Phase 10 Complete ✅ - Skills System Shipped!
+
+All 10 phases of the Skills System implementation are now complete:
+
+1. ✅ Phase 1: Foundation (Data Models & Migrations)
+2. ✅ Phase 2: Resource Management Updates
+3. ✅ Phase 3: Core Combat Logic
+4. ✅ Phase 4A/4B: Class Skills (57 total)
+5. ✅ Phase 4C: Monster Skill Pools
+6. ✅ Phase 5: Battle UI Integration
+7. ✅ Phase 6: Character Sheet Integration
+8. ✅ Phase 7: Skill Unlocking & Notifications
+9. ✅ Phase 8: Balance Testing & Tuning
+10. ✅ Phase 9: Polish & Edge Cases
+11. ✅ Phase 10: Deployment & Migration
+
+**Bonus:** XP curve rebalanced to prevent dungeons from granting multiple levels at high levels.
+
+---
+
+## Git Commit Message
+
+```
+feat(skills): Phase 10 complete - production deployment + XP curve rebalance
+
+Skills System Production Deployment:
+- Backed up production vault
+- Deployed skills system to production
+- Schema v5 migration verified working
+- All 57 skills available in production
+
+XP Curve Rebalance (Option 4):
+- Tier 3: +160/level delta (was +120)
+- Tier 4: +220/level delta (was +140) 
+- Tier 5: +320/level delta (was +160)
+- Total XP to L40: 159,960 (was 82,520, +94%)
+- Dungeons now grant ~0.5 levels at L35 (was 1.3)
+
+Future tuning notes added to XPSystem.ts for potential
+further increases if raids make leveling too easy.
+
+Files: XPSystem.ts
+
+SKILLS SYSTEM COMPLETE! 🎉
+```
+
