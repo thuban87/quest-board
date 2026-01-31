@@ -577,7 +577,7 @@ function createSkillDefinitions(): Skill[] {
             category: 'damage',
             manaCost: 14,
             effects: [
-                { type: 'damage', power: 200, damageType: 'physical', critBonus: 30 },  // 2x ATK, +30% crit
+                { type: 'damage', power: 160, damageType: 'physical', critBonus: 15 },  // 1.6x ATK, +15% crit (nerfed from 2x/+30%)
             ],
             requiredClass: ['rogue'],
             learnLevel: 5,
@@ -721,11 +721,10 @@ function createSkillDefinitions(): Skill[] {
             description: 'Strike down the wicked with holy wrath.',
             icon: '⚡',
             elementalType: 'Light',
-            category: 'hybrid',
+            category: 'damage',
             manaCost: 22,
             effects: [
-                { type: 'damage', power: 160, damageType: 'magic' },  // 1.6x ATK (2x vs Dark in service)
-                { type: 'heal', power: 15, target: 'self' },  // 15% max HP on hit
+                { type: 'damage', power: 160, damageType: 'magic' },  // 1.6x ATK (heal removed)
             ],
             requiredClass: ['cleric'],
             learnLevel: 13,

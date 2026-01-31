@@ -1749,3 +1749,78 @@ Files: BalanceTestingService.ts, TestCharacterGenerator.ts, settings.ts,
 BattleService.ts, main.ts, Battle Testing Shortcuts.md
 ```
 
+---
+
+## 2026-01-30 (Late Night) - Balance Tuning Session
+
+**Focus:** Combat balance fixes based on manual testing and simulator results
+
+### Completed:
+
+#### Rogue Nerfs (Backstab OP)
+- ✅ Reduced Backstab power: 200 → 160 (1.6x ATK instead of 2x)
+- ✅ Reduced Backstab crit bonus: 30% → 15%
+
+#### Cleric Nerfs (Smite Evil OP)
+- ✅ Removed self-heal from Smite Evil entirely
+- ✅ Changed category from 'hybrid' to 'damage'
+- ✅ Kept power at 160 (no compensation buff)
+
+#### Bard Buffs (L1 Too Weak)
+- ✅ Increased Bard damageModifier: 1.1 → 1.25 (helps weak Dissonance)
+
+### Files Changed:
+
+**Skills:**
+- `src/data/skills.ts` - Backstab power/crit nerf, Smite Evil heal removed
+
+**Config:**
+- `src/config/combatConfig.ts` - Bard damageModifier buff
+
+### Testing Notes:
+- ✅ `npm run build` passes
+- ✅ Deployed to test and staging vaults
+- Manual testing confirmed Cleric L20 was trivially easy before fix
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Balance fixes deployed. Smite Evil no longer heals, Backstab nerfed, Bard buffed.
+
+Remaining issues from user testing:
+- Enemy status effect icons not showing in battle UI
+- Enemies not taking status damage (may be same root cause)
+- Combat log duplication (too verbose)
+- Skill tooltips need better explanations
+- Technomancer ultimate feels weak
+- Scholar Arcane type weak vs Physical (most monsters)
+```
+
+---
+
+## Git Commit Message
+
+```
+fix(balance): nerf Rogue Backstab and Cleric Smite Evil, buff Bard
+
+Rogue - Backstab was one-shotting enemies at all levels:
+- Reduced power: 200 → 160 (2x ATK → 1.6x ATK)
+- Reduced crit bonus: 30% → 15%
+
+Cleric - Smite Evil self-heal made dungeons trivial:
+- Removed 10% HP self-heal effect entirely
+- Changed category from 'hybrid' to 'damage'
+- Kept power at 160 (no compensation)
+
+Bard - Dissonance dealt only 3-11 damage at L1:
+- Increased damageModifier: 1.1 → 1.25
+
+Files: skills.ts, combatConfig.ts
+```
+
+

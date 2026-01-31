@@ -65,7 +65,7 @@ export const CLASS_COMBAT_CONFIG: Record<CharacterClass, ClassCombatConfig> = {
     },
     bard: {
         attackStyle: 'hybrid_magic',
-        damageModifier: 1.1,
+        damageModifier: 1.25,  // Buffed from 1.1 to help weak L1 Dissonance
         hpModifier: 1.05,
         attackName: 'Dissonance',
     },
