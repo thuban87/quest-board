@@ -1783,7 +1783,7 @@ export const THORNWOOD_LABYRINTH: DungeonTemplate = {
             monsters: [
                 { position: [4, 4], pool: ['ghost'] },
                 { position: [6, 4], pool: ['ghost'] },
-                { position: [5, 7], pool: ['hollow-stag'], isBoss: true },
+                { position: [5, 7], pool: ['eye-beast'], isBoss: true },
             ],
         },
     ],

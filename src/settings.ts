@@ -102,6 +102,11 @@ export interface QuestBoardSettings {
     enableBalanceTesting: boolean;        // Toggle for balance test logging
     balanceTestingFolder: string;         // Folder for balance test notes
     balanceTestingNoteName: string;       // Current note name (without .md)
+
+    // AI Dungeon Generation Quota Tracking
+    aiDungeonDailyCount: number;          // Number of dungeons generated today
+    aiDungeonLastResetDate: string;       // ISO date (UTC) of last quota reset
+    aiDungeonMaxDaily: number;            // Max dungeons per day (default 10)
 }
 
 /**
@@ -158,6 +163,11 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     enableBalanceTesting: false,
     balanceTestingFolder: 'Quest Board/Balance Testing',
     balanceTestingNoteName: '',
+
+    // AI Dungeon Generation
+    aiDungeonDailyCount: 0,
+    aiDungeonLastResetDate: '',  // Empty = needs reset on first use
+    aiDungeonMaxDaily: 10,
 };
 
 /**
