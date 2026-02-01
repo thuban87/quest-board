@@ -83,6 +83,7 @@ export class QuestBoardCommandMenu extends Modal {
                     { label: 'Store', icon: '🏪', commandId: 'quest-board:open-store', description: 'Buy potions' },
                     { label: 'Long Rest', icon: '🏨', commandId: 'quest-board:long-rest', description: 'Restore HP & Mana' },
                     { label: 'Dungeon', icon: '🗺️', commandId: 'quest-board:preview-dungeon', description: 'Explore dungeon' },
+                    { label: 'AI Dungeon', icon: '🎲', commandId: 'quest-board:generate-ai-dungeon', description: 'Generate with AI' },
                 ]
             },
             {

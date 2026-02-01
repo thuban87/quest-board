@@ -1220,6 +1220,128 @@
   border-color: var(--interactive-accent);
 }
 /* ===========================================
+   AI Dungeon Wizard Modal
+   =========================================== */
+.qb-ai-dungeon-wizard {
+  min-width: 450px;
+  max-width: 550px;
+}
+.qb-ai-dungeon-wizard h2 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 1.5rem;
+}
+.qb-wizard-step-indicator {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 var(--qb-spacing-lg) 0;
+  border-bottom: 1px solid var(--qb-card-border);
+  padding-bottom: var(--qb-spacing-md);
+}
+.qb-wizard-quota {
+  padding: var(--qb-spacing-md);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-secondary);
+  margin-bottom: var(--qb-spacing-lg);
+}
+.qb-wizard-quota p {
+  margin: 0;
+  font-weight: 500;
+}
+.qb-quota-ok {
+  color: var(--interactive-accent);
+}
+.qb-quota-exhausted {
+  color: var(--text-error);
+}
+.qb-wizard-warning {
+  color: var(--text-error);
+  background: rgba(255, 100, 100, 0.1);
+  padding: var(--qb-spacing-md);
+  border-radius: var(--qb-radius-md);
+  margin: var(--qb-spacing-md) 0;
+}
+.qb-wizard-hint {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: var(--qb-spacing-sm);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-sm);
+  margin-top: var(--qb-spacing-md);
+}
+.qb-wizard-categories {
+  margin-top: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  max-height: 300px;
+  overflow-y: auto;
+}
+.qb-wizard-summary {
+  margin-top: var(--qb-spacing-lg);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+}
+.qb-wizard-summary h3 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 1rem;
+}
+.qb-wizard-summary ul {
+  margin: 0;
+  padding-left: var(--qb-spacing-lg);
+}
+.qb-wizard-summary li {
+  margin: var(--qb-spacing-xs) 0;
+}
+.qb-wizard-generate {
+  margin-top: var(--qb-spacing-lg);
+  text-align: center;
+}
+.qb-wizard-generate-btn {
+  padding: var(--qb-spacing-md) var(--qb-spacing-xl);
+  font-size: 1.1rem;
+}
+.qb-wizard-spinner {
+  padding: var(--qb-spacing-lg);
+}
+.qb-wizard-spinner span {
+  font-size: 1.2rem;
+  color: var(--interactive-accent);
+}
+.qb-wizard-spinner-hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: var(--qb-spacing-sm);
+}
+.qb-wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--qb-spacing-lg);
+  padding-top: var(--qb-spacing-md);
+  border-top: 1px solid var(--qb-card-border);
+}
+.qb-wizard-nav button {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-lg);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.qb-wizard-error {
+  padding: var(--qb-spacing-md);
+  background: rgba(255, 100, 100, 0.1);
+  border-radius: var(--qb-radius-md);
+  margin-bottom: var(--qb-spacing-md);
+}
+.qb-wizard-error-text {
+  color: var(--text-error);
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+/* ===========================================
    Task List on Quest Cards
    =========================================== */
 .qb-card-tasks {

@@ -51,21 +51,37 @@ You are generating a dungeon for the Quest Board Obsidian plugin. Output TypeScr
 
 ### MONSTERS
 
-**Available Monster Pools:**
-- **beasts:** `wolf`, `bear`, `giant-rat`
-- **undead:** `skeleton`, `zombie`, `ghost`
-- **goblins:** `goblin`, `hobgoblin`, `bugbear`
-- **trolls:** `cave-troll`, `river-troll`
-- **night_elves:** `shadow-elf`, `dark-ranger`
-- **dwarves:** `rogue-dwarf`, `berserker`
-- **dragonkin:** `drake`, `wyvern`
-- **aberrations:** `mimic`, `eye-beast`
+> ⚠️ **CRITICAL: You may ONLY use the exact monster IDs listed below. DO NOT invent new monster names or IDs. If a monster doesn't exist in this list, it will cause errors.**
+
+**Complete Monster ID List (USE THESE EXACT IDs):**
+
+| ID | Category | Good For Boss? |
+|----|----------|----------------|
+| `wolf` | beasts | No |
+| `bear` | beasts | Yes - mini-boss |
+| `giant-rat` | beasts | No |
+| `skeleton` | undead | No |
+| `zombie` | undead | No |
+| `ghost` | undead | Yes - mini-boss |
+| `goblin` | goblins | No |
+| `hobgoblin` | goblins | Yes - mini-boss |
+| `bugbear` | goblins | Yes - boss |
+| `cave-troll` | trolls | Yes - boss |
+| `river-troll` | trolls | Yes - boss |
+| `shadow-elf` | night_elves | Yes - mini-boss |
+| `dark-ranger` | night_elves | Yes - boss |
+| `rogue-dwarf` | dwarves | No |
+| `berserker` | dwarves | Yes - boss |
+| `drake` | dragonkin | Yes - boss |
+| `wyvern` | dragonkin | Yes - boss |
+| `mimic` | aberrations | Yes - mini-boss |
+| `eye-beast` | aberrations | Yes - boss |
 
 **[USER INPUT] Total Monsters:** `[NUMBER, e.g., 25, 30]`
 
 **[USER INPUT] Monster Categories:** `[LIST, e.g., "goblins, beasts" OR "AI suggest based on tileset"]`
 
-**[USER INPUT] Boss Monster(s):** `[MONSTER ID(S), e.g., "bugbear" OR "cave-troll, hobgoblin"]`
+**[USER INPUT] Boss Monster(s):** `[MONSTER ID FROM TABLE ABOVE, e.g., "bugbear" OR "cave-troll"]`
 
 **Monster Density Rules:**
 - Entry room: 0 monsters (safe spawn)
@@ -236,3 +252,10 @@ Now generate the dungeon based on the user inputs provided above.
 2. Review output carefully - AI often makes row width errors
 3. Run the cleanup prompt on the output to catch common issues
 4. Save AI output to `docs/development/dungeons/quarantine/` for review before adding to codebase
+5. **IMPORTANT:** After adding dungeon to `dungeonTemplates.ts`, you must also add it to the `BUILTIN_TEMPLATES` registry at the bottom of the file:
+   ```typescript
+   const BUILTIN_TEMPLATES: Record<string, DungeonTemplate> = {
+       // ... existing dungeons ...
+       your_new_dungeon: YOUR_NEW_DUNGEON,  // <-- ADD THIS LINE
+   };
+   ```

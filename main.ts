@@ -47,6 +47,7 @@ import { battleService, setSaveCallback as setBattleSaveCallback, setLevelUpCall
 import { startRecoveryTimerCheck, stopRecoveryTimerCheck } from './src/services/RecoveryTimerService';
 import { showEliteEncounterModal } from './src/modals/EliteEncounterModal';
 import { showDungeonSelectionModal } from './src/modals/DungeonSelectionModal';
+import { AIDungeonWizardModal } from './src/modals/AIDungeonWizardModal';
 import { ELITE_LEVEL_UNLOCK, ELITE_OVERWORLD_CHANCE, ELITE_NAME_PREFIXES, DEV_FEATURES_ENABLED } from './src/config/combatConfig';
 import { GearSlot } from './src/models/Gear';
 import { LevelUpModal } from './src/modals/LevelUpModal';
@@ -268,6 +269,21 @@ export default class QuestBoardPlugin extends Plugin {
                 new AIQuestGeneratorModal(this.app, this, () => {
                     this.app.workspace.trigger('quest-board:refresh');
                 }).open();
+            },
+        });
+
+        // Add command for AI dungeon generation wizard
+        this.addCommand({
+            id: 'generate-ai-dungeon',
+            name: 'Generate AI Dungeon',
+            callback: () => {
+                new AIDungeonWizardModal(
+                    this.app,
+                    this.settings,
+                    async () => {
+                        await this.saveSettings();
+                    }
+                ).open();
             },
         });
 
