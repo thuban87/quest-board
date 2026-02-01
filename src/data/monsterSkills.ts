@@ -502,6 +502,253 @@ export const ARCANE_SKILLS: Record<string, MonsterSkill> = {
 };
 
 // =====================
+// BOSS SIGNATURE SKILLS (20 Total)
+// Unique skills for boss monsters
+// =====================
+
+export const BOSS_SIGNATURE_SKILLS: Record<string, MonsterSkill> = {
+    // === BEASTS ===
+    boss_alpha_howl: {
+        id: 'boss_alpha_howl',
+        name: 'Alpha Howl',
+        icon: '🐺',
+        elementalType: 'Physical',
+        power: 0,
+        damageType: 'physical',
+        weight: 60,
+        category: 'buff',
+        stageEffect: { stat: 'atk', stages: 2, target: 'self' },
+    },
+    boss_hibernate: {
+        id: 'boss_hibernate',
+        name: 'Hibernate',
+        icon: '😴',
+        elementalType: 'Physical',
+        power: 0,
+        damageType: 'physical',
+        weight: 40,
+        category: 'utility',
+        useCondition: 'low_hp',
+        selfCure: true,
+        healPercent: 0.20, // 20% HP heal (nerfed from 40%)
+    },
+    boss_swarm: {
+        id: 'boss_swarm',
+        name: 'Swarm',
+        icon: '🐀',
+        elementalType: 'Physical',
+        power: 250, // Total 2.5x, split into 5 hits of 0.5x
+        damageType: 'physical',
+        weight: 80,
+        category: 'damage',
+        multiHit: 5,
+    },
+
+    // === UNDEAD ===
+    boss_reaper_strike: {
+        id: 'boss_reaper_strike',
+        name: 'Reaper Strike',
+        icon: '💀',
+        elementalType: 'Dark',
+        power: 250, // 2.5x damage
+        damageType: 'magic',
+        weight: 85,
+        category: 'hybrid',
+        stageEffect: { stat: 'def', stages: -3, target: 'enemy' }, // Simplified defense ignore
+    },
+    boss_death_grasp: {
+        id: 'boss_death_grasp',
+        name: 'Death Grasp',
+        icon: '☠️',
+        elementalType: 'Dark',
+        power: 300, // 3.0x damage
+        damageType: 'magic',
+        weight: 75,
+        category: 'hybrid',
+        statusEffect: { type: 'curse', chance: 100, duration: 4, severity: 'moderate' },
+    },
+    boss_spectral_slash: {
+        id: 'boss_spectral_slash',
+        name: 'Spectral Slash',
+        icon: '👻',
+        elementalType: 'Physical',
+        power: 220, // 2.2x damage
+        damageType: 'physical',
+        weight: 90,
+        category: 'hybrid',
+        stageEffect: { stat: 'def', stages: -3, target: 'enemy' }, // Simplified defense ignore
+    },
+
+    // === GOBLINS ===
+    boss_war_cry: {
+        id: 'boss_war_cry',
+        name: 'War Cry',
+        icon: '⚔️',
+        elementalType: 'Physical',
+        power: 0,
+        damageType: 'physical',
+        weight: 65,
+        category: 'hybrid',
+        stageEffect: { stat: 'atk', stages: 2, target: 'self' },
+        statusEffect: { type: 'stun', chance: 40, duration: 1 },
+    },
+    boss_earthquake_slam: {
+        id: 'boss_earthquake_slam',
+        name: 'Earthquake Slam',
+        icon: '💥',
+        elementalType: 'Physical',
+        power: 280, // 2.8x damage
+        damageType: 'physical',
+        weight: 70,
+        category: 'hybrid',
+        stageEffect: { stat: 'speed', stages: -2, target: 'enemy' },
+    },
+
+    // === TROLLS ===
+    boss_regenerate: {
+        id: 'boss_regenerate',
+        name: 'Regenerate',
+        icon: '💚',
+        elementalType: 'Earth',
+        power: 0,
+        damageType: 'physical',
+        weight: 50,
+        category: 'utility',
+        useCondition: 'low_hp',
+        healPercent: 0.15, // 15% HP heal (nerfed from 35%, active not passive)
+    },
+    boss_toxic_cloud: {
+        id: 'boss_toxic_cloud',
+        name: 'Toxic Cloud',
+        icon: '☠',
+        elementalType: 'Poison',
+        power: 0,
+        damageType: 'magic',
+        weight: 60,
+        category: 'status',
+        statusEffect: { type: 'poison', chance: 100, duration: 3, severity: 'moderate' },
+    },
+
+    // === NIGHT ELVES ===
+    boss_vanish_strike: {
+        id: 'boss_vanish_strike',
+        name: 'Vanish Strike',
+        icon: '🌑',
+        elementalType: 'Dark',
+        power: 320, // 3.2x damage (no priority, just high damage)
+        damageType: 'magic',
+        weight: 75,
+        category: 'damage',
+    },
+    boss_void_rift: {
+        id: 'boss_void_rift',
+        name: 'Void Rift',
+        icon: '🌌',
+        elementalType: 'Dark',
+        power: 280, // 2.8x damage
+        damageType: 'magic',
+        weight: 80,
+        category: 'hybrid',
+        statusEffect: { type: 'confusion', chance: 60, duration: 3 },
+    },
+
+    // === DWARVES ===
+    boss_hammer_fall: {
+        id: 'boss_hammer_fall',
+        name: 'Hammer Fall',
+        icon: '⚒️',
+        elementalType: 'Earth',
+        power: 260, // 2.6x damage
+        damageType: 'physical',
+        weight: 85,
+        category: 'hybrid',
+        stageEffect: { stat: 'def', stages: -2, target: 'enemy' },
+    },
+    boss_rune_rage: {
+        id: 'boss_rune_rage',
+        name: 'Rune Rage',
+        icon: '⚡',
+        elementalType: 'Earth',
+        power: 350, // 3.5x damage
+        damageType: 'physical',
+        weight: 70,
+        category: 'hybrid',
+        stageEffect: { stat: 'atk', stages: 2, target: 'self' },
+    },
+
+    // === DRAGONKIN ===
+    boss_dragon_roar: {
+        id: 'boss_dragon_roar',
+        name: 'Dragon Roar',
+        icon: '🐲',
+        elementalType: 'Fire',
+        power: 240, // 2.4x damage
+        damageType: 'magic',
+        weight: 75,
+        category: 'hybrid',
+        stageEffect: { stat: 'atk', stages: -2, target: 'enemy' },
+    },
+    boss_tail_whip: {
+        id: 'boss_tail_whip',
+        name: 'Tail Whip',
+        icon: '🦎',
+        elementalType: 'Poison',
+        power: 200, // 2.0x damage
+        damageType: 'physical',
+        weight: 80,
+        category: 'hybrid',
+        statusEffect: { type: 'poison', chance: 100, duration: 4, severity: 'moderate' },
+        stageEffect: { stat: 'speed', stages: -1, target: 'enemy' },
+    },
+    boss_apocalypse_flame: {
+        id: 'boss_apocalypse_flame',
+        name: 'Apocalypse Flame',
+        icon: '🔥',
+        elementalType: 'Fire',
+        power: 400, // 4.0x damage
+        damageType: 'magic',
+        weight: 65,
+        category: 'hybrid',
+        statusEffect: { type: 'burn', chance: 90, duration: 4, severity: 'moderate' },
+    },
+
+    // === ABERRATIONS ===
+    boss_consume: {
+        id: 'boss_consume',
+        name: 'Consume',
+        icon: '🦷',
+        elementalType: 'Physical',
+        power: 280, // 2.8x damage
+        damageType: 'physical',
+        weight: 70,
+        category: 'hybrid',
+        lifesteal: 0.50, // 50% lifesteal
+    },
+    boss_disintegration_ray: {
+        id: 'boss_disintegration_ray',
+        name: 'Disintegration Ray',
+        icon: '👁️',
+        elementalType: 'Arcane',
+        power: 380, // 3.8x damage (no special ignore, just high power)
+        damageType: 'magic',
+        weight: 75,
+        category: 'damage',
+    },
+    boss_void_grasp: {
+        id: 'boss_void_grasp',
+        name: 'Void Grasp',
+        icon: '🦑',
+        elementalType: 'Arcane',
+        power: 250, // 2.5x damage
+        damageType: 'magic',
+        weight: 80,
+        category: 'hybrid',
+        statusEffect: { type: 'curse', chance: 100, duration: 4, severity: 'moderate' },
+        stageEffect: { stat: 'speed', stages: -2, target: 'enemy' },
+    },
+};
+
+// =====================
 // UNIFIED SKILL LOOKUP
 // =====================
 
@@ -511,6 +758,7 @@ export const ALL_MONSTER_SKILLS: Record<string, MonsterSkill> = {
     ...EARTH_SKILLS,
     ...FIRE_SKILLS,
     ...ARCANE_SKILLS,
+    ...BOSS_SIGNATURE_SKILLS,
 };
 
 // =====================

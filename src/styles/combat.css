@@ -345,6 +345,119 @@
   border-color: var(--qb-scholar-color);
 }
 
+/* ===========================================
+   Boss Monster Styling
+   =========================================== */
+
+/* Boss container - optional dark overlay */
+.qb-boss-monster {
+  border: 2px solid #ff4444;
+  box-shadow: 0 0 15px rgba(255, 68, 68, 0.3);
+}
+
+/* Boss sprite - pulsing red border */
+.qb-boss-sprite {
+  border: 4px solid #ff4444 !important;
+  animation: qb-boss-pulse 2s ease-in-out infinite, qb-idle-float 2s ease-in-out infinite !important;
+}
+
+@keyframes qb-boss-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 10px #ff4444, 0 0 20px rgba(255, 68, 68, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 25px #ff6666, 0 0 40px #ff4444, 0 0 60px rgba(255, 68, 68, 0.3);
+  }
+}
+
+/* Raid boss - even more intense glow */
+.qb-battle-monster.qb-tier-raid_boss .qb-boss-sprite {
+  border: 4px solid #ff0000 !important;
+  animation: qb-raid-boss-pulse 1.5s ease-in-out infinite, qb-idle-float 2s ease-in-out infinite !important;
+}
+
+@keyframes qb-raid-boss-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 15px #ff0000, 0 0 30px rgba(255, 0, 0, 0.6);
+  }
+
+  50% {
+    box-shadow: 0 0 35px #ff3333, 0 0 50px #ff0000, 0 0 80px rgba(255, 0, 0, 0.4);
+  }
+}
+
+/* Boss HP bar - wider and distinct color */
+.qb-boss-hp-bar {
+  max-width: 350px;
+}
+
+.qb-boss-hp-bar .qb-hp-fill {
+  background: linear-gradient(90deg, #ff4444, #ff6666, #ff4444);
+  background-size: 200% 100%;
+  animation: qb-boss-hp-shimmer 3s linear infinite;
+}
+
+@keyframes qb-boss-hp-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Tier Badges */
+.qb-tier-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 4px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qb-tier-elite {
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: #000;
+  border: 1px solid #cc8800;
+}
+
+.qb-tier-boss {
+  background: linear-gradient(135deg, #ff4444, #cc0000);
+  color: white;
+  border: 1px solid #990000;
+  animation: qb-tier-badge-glow 2s ease-in-out infinite;
+}
+
+.qb-tier-raid_boss {
+  background: linear-gradient(135deg, #ff0000, #880000);
+  color: white;
+  border: 1px solid #660000;
+  animation: qb-tier-badge-glow 1.5s ease-in-out infinite;
+  font-size: 0.65rem;
+}
+
+@keyframes qb-tier-badge-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px currentColor;
+  }
+
+  50% {
+    box-shadow: 0 0 10px currentColor, 0 0 15px currentColor;
+  }
+}
+
 /* Player Section - Bottom Left */
 .qb-battle-player {
   grid-area: player;

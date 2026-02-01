@@ -696,35 +696,55 @@ function executeMonsterSkill(skill: MonsterSkill): void {
     let damageResult: DamageResult = 'hit';
     const logMessages: string[] = [];
 
+    // Get stat stages for damage calculation
+    const monsterAtkStage = monster.statStages?.atk ?? 0;
+    const playerDefStage = player.statStages.def ?? 0;
+
     // Calculate damage if skill has power > 0
     if (skill.power > 0) {
-        // Get stat stages
-        const monsterAtkStage = monster.statStages?.atk ?? 0;
-        const playerDefStage = player.statStages.def ?? 0;
+        // Check for multi-hit skill (e.g., Swarm = 5 hits)
+        const hitCount = skill.multiHit ?? 1;
+        const powerPerHit = Math.floor(skill.power / hitCount);
+        let totalDamage = 0;
 
-        // Calculate base attack power with skill multiplier
-        const baseAttack = Math.floor(monster.attack * (skill.power / 100));
+        // Execute each hit separately
+        for (let i = 0; i < hitCount; i++) {
+            // Calculate base attack power with skill multiplier (per hit)
+            const baseAttack = Math.floor(monster.attack * (powerPerHit / 100));
 
-        // Determine which defense to use based on damage type
-        const playerDef = skill.damageType === 'magic' ? playerStats.magicDefense : playerStats.defense;
+            // Determine which defense to use based on damage type
+            const playerDef = skill.damageType === 'magic' ? playerStats.magicDefense : playerStats.defense;
 
-        // Calculate damage
-        const result = calculateDamage(
-            baseAttack,
-            monster.critChance,
-            playerDef,
-            playerStats.dodgeChance,
-            playerStats.blockChance,
-            monsterAtkStage,
-            playerDefStage
-        );
+            // Calculate damage for this hit
+            const result = calculateDamage(
+                baseAttack,
+                monster.critChance,
+                playerDef,
+                playerStats.dodgeChance,
+                playerStats.blockChance,
+                monsterAtkStage,
+                playerDefStage
+            );
 
-        damage = result.damage;
-        damageResult = result.result;
+            // Track first hit result for log display
+            if (i === 0) {
+                damageResult = result.result;
+            }
 
-        // Defending halves damage
-        if (isPlayerDefending) {
-            damage = Math.floor(damage * 0.5);
+            // Defending halves damage
+            let hitDamage = result.damage;
+            if (isPlayerDefending) {
+                hitDamage = Math.floor(hitDamage * 0.5);
+            }
+
+            totalDamage += hitDamage;
+        }
+
+        damage = totalDamage;
+
+        // Log multi-hit message if applicable
+        if (hitCount > 1) {
+            logMessages.push(`Hit ${hitCount} times!`);
         }
 
         // Apply lifesteal if present
@@ -734,6 +754,14 @@ function executeMonsterSkill(skill: MonsterSkill): void {
             store.updateMonsterHP(newMonsterHP);
             logMessages.push(`Drained ${healAmount} HP!`);
         }
+    }
+
+    // Handle healPercent skill (e.g., Hibernate = 20% HP, Regenerate = 15% HP)
+    if (skill.healPercent && skill.healPercent > 0) {
+        const healAmount = Math.floor(monster.maxHP * skill.healPercent);
+        const newMonsterHP = Math.min(monster.maxHP, monster.currentHP + healAmount);
+        store.updateMonsterHP(newMonsterHP);
+        logMessages.push(`Healed ${healAmount} HP!`);
     }
 
     // Apply status effect if present and chance succeeds

@@ -48,6 +48,9 @@ interface DungeonState {
     sessionGold: number;
     sessionXP: number;
 
+    // Boss tracking (for end-of-dungeon boss fight)
+    bossDefeated: boolean;
+
     // State machine
     explorationState: ExplorationState;
 
@@ -65,6 +68,7 @@ interface DungeonState {
     addSessionXP: (xp: number) => void;
     startCombat: (roomId: string, monsterId: string) => void;
     endCombat: () => void;
+    markBossDefeated: () => void;  // Called after boss is killed
     restartDungeonMonsters: () => void;  // Respawn all monsters, reset to room 1
 
     // Persistence
@@ -131,6 +135,7 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
     pendingLoot: [],
     sessionGold: 0,
     sessionXP: 0,
+    bossDefeated: false,
     explorationState: 'LOADING',
 
     // Actions
@@ -162,6 +167,7 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             pendingLoot: [],
             sessionGold: 0,
             sessionXP: 0,
+            bossDefeated: false,
             explorationState: 'EXPLORING',
         });
 
@@ -210,6 +216,7 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             pendingLoot: [],
             sessionGold: 0,
             sessionXP: 0,
+            bossDefeated: false,
             explorationState: 'LOADING',
         });
     },
@@ -324,6 +331,10 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             activeCombatRoomId: null,
             explorationState: 'EXPLORING',
         });
+    },
+
+    markBossDefeated: () => {
+        set({ bossDefeated: true });
     },
 
     restartDungeonMonsters: () => {

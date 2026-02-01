@@ -145,6 +145,10 @@ export interface MonsterTemplate {
     // Skills System (Phase 5)
     skillPool?: string[]; // IDs of skills this monster can use
     inherentType?: ElementalType; // Elemental type for damage calculations
+
+    // Boss System
+    /** If true, this is a boss template with signature skills and special UI */
+    isBoss?: boolean;
 }
 
 // =====================

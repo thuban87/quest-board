@@ -922,7 +922,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
             return;
         }
 
-        // Handle PORTAL interaction
+        // Handle PORTAL interaction - exit dungeon
         if (char === LAYOUT_CHARS.PORTAL) {
             setShowExitSummary(true);
             return;
