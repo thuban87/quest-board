@@ -83,6 +83,19 @@ For each entry in `chests` array:
 - [ ] At least one room has type `'boss'`
 - [ ] Boss room monsters include at least one with `isBoss: true`
 
+#### 10. Monster ID Validation (CRITICAL)
+For each monster in any `monsters` array, verify the `pool` contains ONLY valid IDs from this list:
+```
+wolf, bear, giant-rat, skeleton, zombie, ghost, goblin, hobgoblin, 
+bugbear, cave-troll, river-troll, shadow-elf, dark-ranger, 
+rogue-dwarf, berserker, drake, wyvern, mimic, eye-beast
+```
+
+- [ ] All monster pool IDs exist in the valid list above
+- [ ] No invented/fictional monster names (e.g., "hollow-stag", "forest-spirit")
+
+**Common fix:** Replace invalid monster IDs with valid ones from the list above.
+
 ---
 
 ### OUTPUT FORMAT

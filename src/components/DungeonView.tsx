@@ -413,6 +413,7 @@ function DungeonHeader({
  */
 interface RoomGridProps {
     room: RoomTemplate;
+    roomId: string;  // Added to fix tile key uniqueness across rooms
     tileSet: TileSet;
     manifestDir: string;
     adapter: DataAdapter;
@@ -428,6 +429,7 @@ interface RoomGridProps {
 
 function RoomGrid({
     room,
+    roomId,
     tileSet,
     manifestDir,
     adapter,
@@ -476,7 +478,7 @@ function RoomGrid({
 
                 result.push(
                     <Tile
-                        key={`${x}-${y}`}
+                        key={`${roomId}-${x}-${y}`}
                         char={char}
                         x={x}
                         y={y}
@@ -491,7 +493,7 @@ function RoomGrid({
         }
 
         return result;
-    }, [room.layout, room.monsters, tileSet, manifestDir, adapter, roomState]);
+    }, [roomId, room.layout, room.monsters, tileSet, manifestDir, adapter, roomState]);
 
     const gridStyle: React.CSSProperties = {
         '--room-width': room.width,
@@ -1301,6 +1303,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
             <div className={`qb-dungeon-content ${transition.active ? `qb-transition-${transition.phase}-${transition.direction}` : ''}`}>
                 <RoomGrid
                     room={room}
+                    roomId={currentRoomId}
                     tileSet={template.tileSet}
                     manifestDir={manifestDir}
                     adapter={adapter}
