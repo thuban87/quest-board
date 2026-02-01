@@ -248,6 +248,12 @@ export interface MonsterSkill {
 
     /** Lifesteal percentage (0-1.0) for life drain skills */
     lifesteal?: number;
+
+    /** Number of hits for multi-hit skills (e.g., Swarm = 5 hits at power/5 each) */
+    multiHit?: number;
+
+    /** Heal percentage of max HP (0-1.0) for utility healing skills */
+    healPercent?: number;
 }
 
 // =====================

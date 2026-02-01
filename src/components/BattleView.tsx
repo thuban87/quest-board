@@ -132,19 +132,33 @@ function MonsterDisplay({ spritePath }: { spritePath?: string }) {
     // Elite class for red glow animation
     const eliteClass = monster.tier === 'elite' ? 'qb-elite-monster' : '';
 
+    // Boss class for pulsing red border
+    const isBoss = monster.tier === 'boss' || monster.tier === 'raid_boss';
+    const bossClass = isBoss ? 'qb-boss-monster' : '';
+    const bossSpriteClass = isBoss ? 'qb-boss-sprite' : '';
+
     // Animation class based on state
     const animClass = combatState === 'ANIMATING_ENEMY' ? 'qb-monster-attacking' : '';
 
+    // Get tier badge text
+    const tierBadge = monster.tier === 'raid_boss' ? 'RAID BOSS' :
+        monster.tier === 'boss' ? 'BOSS' :
+            monster.tier === 'elite' ? 'ELITE' : null;
+
     return (
-        <div className={`qb-battle-monster ${eliteClass}`}>
+        <div className={`qb-battle-monster ${eliteClass} ${bossClass}`}>
             <div className="qb-monster-info">
                 <span className="qb-monster-name">
                     {monster.name}
-                    {monster.tier === 'elite' && <span className="qb-elite-badge">ELITE</span>}
+                    {tierBadge && (
+                        <span className={`qb-tier-badge qb-tier-${monster.tier}`}>
+                            {tierBadge}
+                        </span>
+                    )}
                 </span>
                 <span className="qb-monster-level">Lv. {monster.level}</span>
             </div>
-            <div className="qb-hp-bar qb-monster-hp">
+            <div className={`qb-hp-bar qb-monster-hp ${isBoss ? 'qb-boss-hp-bar' : ''}`}>
                 <div
                     className="qb-hp-fill"
                     style={{ width: `${hpPercent}%` }}
@@ -153,7 +167,7 @@ function MonsterDisplay({ spritePath }: { spritePath?: string }) {
             </div>
             <StageIndicators stages={monsterStages} compact />
             <StatusIndicators effects={monster.statusEffects ?? []} compact />
-            <div className={`qb-monster-sprite ${tintClass} ${animClass}`}>
+            <div className={`qb-monster-sprite ${tintClass} ${animClass} ${bossSpriteClass}`}>
                 {spritePath ? (
                     <img
                         src={spritePath}
