@@ -78,6 +78,21 @@ export class BattleItemView extends ItemView {
                 }}
                 onShowLoot={(loot) => {
                     if (loot && loot.length > 0) {
+                        // Add loot to inventory BEFORE showing modal
+                        for (const reward of loot) {
+                            if (reward.type === 'gold') {
+                                useCharacterStore.getState().updateGold(reward.amount);
+                            } else if (reward.type === 'gear') {
+                                useCharacterStore.getState().addGear(reward.item);
+                            } else if (reward.type === 'consumable') {
+                                useCharacterStore.getState().addInventoryItem(reward.itemId, reward.quantity);
+                            }
+                        }
+                        // Persist changes to settings
+                        this.plugin.settings.character = useCharacterStore.getState().character;
+                        this.plugin.settings.inventory = useCharacterStore.getState().inventory;
+                        this.plugin.saveSettings();
+
                         showLootModal(this.app, {
                             title: 'Victory Rewards!',
                             subtitle: 'Your spoils from battle',
@@ -85,6 +100,7 @@ export class BattleItemView extends ItemView {
                         });
                     }
                 }}
+
                 onOpenRecoveryModal={() => {
                     openRecoveryOptionsModal(this.app, {
                         onRecoveryComplete: () => {
