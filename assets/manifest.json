@@ -1,0 +1,2279 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-02-03T00:11:38.851Z",
+  "fileCount": 568,
+  "files": {
+    "backgrounds/battle-bg.jpg": {
+      "hash": "9416e8e6",
+      "size": 1059753
+    },
+    "banner.png": {
+      "hash": "09be3e6a",
+      "size": 1850227
+    },
+    "environment/castle/decorative/arrow-set-01.png": {
+      "hash": "e1c7312a",
+      "size": 624
+    },
+    "environment/castle/decorative/awning-yellow-01.png": {
+      "hash": "18f24f38",
+      "size": 509
+    },
+    "environment/castle/decorative/axe-01.png": {
+      "hash": "aa9d2c77",
+      "size": 639
+    },
+    "environment/castle/decorative/banner-purple-01.png": {
+      "hash": "e68edb26",
+      "size": 640
+    },
+    "environment/castle/decorative/banner-purple-02.png": {
+      "hash": "f3e2d0da",
+      "size": 657
+    },
+    "environment/castle/decorative/banner-red-01.png": {
+      "hash": "ca95f6bc",
+      "size": 597
+    },
+    "environment/castle/decorative/banner-red-02.png": {
+      "hash": "2b534afe",
+      "size": 667
+    },
+    "environment/castle/decorative/bell-iron-01.png": {
+      "hash": "53a1f921",
+      "size": 714
+    },
+    "environment/castle/decorative/candel-base-01.png": {
+      "hash": "890044cc",
+      "size": 928
+    },
+    "environment/castle/decorative/candelabra-base-01.png": {
+      "hash": "9cc75701",
+      "size": 617
+    },
+    "environment/castle/decorative/candle-unlit-01.png": {
+      "hash": "c6c35e24",
+      "size": 567
+    },
+    "environment/castle/decorative/cross-gold-01.png": {
+      "hash": "c1384584",
+      "size": 459
+    },
+    "environment/castle/decorative/cross-grave-01.png": {
+      "hash": "91313ed2",
+      "size": 612
+    },
+    "environment/castle/decorative/cross-silver-01.png": {
+      "hash": "3a2589d1",
+      "size": 459
+    },
+    "environment/castle/decorative/shelf-wood-01.png": {
+      "hash": "f427beeb",
+      "size": 669
+    },
+    "environment/castle/decorative/shield-crest-01.png": {
+      "hash": "fd594961",
+      "size": 677
+    },
+    "environment/castle/decorative/shield-small-01.png": {
+      "hash": "66f4dda3",
+      "size": 622
+    },
+    "environment/castle/decorative/shield-yellow-01.png": {
+      "hash": "7b8a64b6",
+      "size": 721
+    },
+    "environment/castle/decorative/sign-apple-01.png": {
+      "hash": "349c30c7",
+      "size": 635
+    },
+    "environment/castle/decorative/sign-barrel-01.png": {
+      "hash": "b98e4ce8",
+      "size": 669
+    },
+    "environment/castle/decorative/sign-blank-01.png": {
+      "hash": "16ecbe4a",
+      "size": 495
+    },
+    "environment/castle/decorative/sign-book-01.png": {
+      "hash": "ac7c3b67",
+      "size": 584
+    },
+    "environment/castle/decorative/sign-bread-01.png": {
+      "hash": "5b57bbb6",
+      "size": 657
+    },
+    "environment/castle/decorative/sign-chest-01.png": {
+      "hash": "9dc91ba5",
+      "size": 640
+    },
+    "environment/castle/decorative/sign-coin-01.png": {
+      "hash": "6fdb5d92",
+      "size": 635
+    },
+    "environment/castle/decorative/sign-hat-01.png": {
+      "hash": "713e1aae",
+      "size": 635
+    },
+    "environment/castle/decorative/sign-inn-01.png": {
+      "hash": "96c88927",
+      "size": 587
+    },
+    "environment/castle/decorative/sign-potion-01.png": {
+      "hash": "feed48bc",
+      "size": 572
+    },
+    "environment/castle/decorative/sign-ring-01.png": {
+      "hash": "7b75d194",
+      "size": 668
+    },
+    "environment/castle/decorative/sign-shield-emblem-01.png": {
+      "hash": "4d9df0a4",
+      "size": 669
+    },
+    "environment/castle/decorative/sign-skull-01.png": {
+      "hash": "aa75d2c5",
+      "size": 619
+    },
+    "environment/castle/decorative/sign-teapot-01.png": {
+      "hash": "8972bd35",
+      "size": 682
+    },
+    "environment/castle/decorative/sign-utensils-01.png": {
+      "hash": "b55d7da5",
+      "size": 638
+    },
+    "environment/castle/decorative/sign-weapon-01.png": {
+      "hash": "b484ce06",
+      "size": 653
+    },
+    "environment/castle/decorative/skull-01.png": {
+      "hash": "875d6ae9",
+      "size": 638
+    },
+    "environment/castle/decorative/step-church-03.png": {
+      "hash": "a1ebd411",
+      "size": 582
+    },
+    "environment/castle/decorative/swords-01.png": {
+      "hash": "fbf08489",
+      "size": 938
+    },
+    "environment/castle/decorative/window-round-01.png": {
+      "hash": "81a61e2c",
+      "size": 624
+    },
+    "environment/castle/decorative/window-round-02.png": {
+      "hash": "cac34ade",
+      "size": 494
+    },
+    "environment/castle/decorative/window-stained-02.png": {
+      "hash": "d016858e",
+      "size": 482
+    },
+    "environment/castle/decorative/window-stained-03.png": {
+      "hash": "b8fc675e",
+      "size": 607
+    },
+    "environment/castle/decorative/window-stained-05.png": {
+      "hash": "06971ec0",
+      "size": 549
+    },
+    "environment/castle/decorative/window-stained-06.png": {
+      "hash": "812e8be2",
+      "size": 532
+    },
+    "environment/castle/decorative/window-stained-base-01.png": {
+      "hash": "53bd12cf",
+      "size": 434
+    },
+    "environment/castle/decorative/window-stained-base-03.png": {
+      "hash": "67cd2be9",
+      "size": 437
+    },
+    "environment/castle/floor/wall-metal-01.png": {
+      "hash": "6c4280c9",
+      "size": 320
+    },
+    "environment/castle/floor/wall-metal-03.png": {
+      "hash": "c9434fbc",
+      "size": 324
+    },
+    "environment/castle/obstacle/armor-stand-01.png": {
+      "hash": "2a7e0995",
+      "size": 796
+    },
+    "environment/castle/obstacle/bookshelf-wood-01.png": {
+      "hash": "1b140d91",
+      "size": 548
+    },
+    "environment/castle/obstacle/bookshelf-wood-02.png": {
+      "hash": "67cada14",
+      "size": 545
+    },
+    "environment/castle/obstacle/bookshelf-wood-03.png": {
+      "hash": "ff3c5841",
+      "size": 459
+    },
+    "environment/castle/obstacle/bookshelf-wood-04.png": {
+      "hash": "fdef5095",
+      "size": 461
+    },
+    "environment/castle/obstacle/cabinet-04.png": {
+      "hash": "a6fbbb98",
+      "size": 507
+    },
+    "environment/castle/obstacle/cabinet-wood-01.png": {
+      "hash": "103c4e82",
+      "size": 545
+    },
+    "environment/castle/obstacle/gravestone-01.png": {
+      "hash": "7f32d5eb",
+      "size": 704
+    },
+    "environment/castle/obstacle/rose-vase-blue-01.png": {
+      "hash": "2ae99296",
+      "size": 836
+    },
+    "environment/castle/obstacle/rose-vase-purple-01.png": {
+      "hash": "6f16ca64",
+      "size": 772
+    },
+    "environment/castle/obstacle/slime-blue-01.png": {
+      "hash": "84f6e431",
+      "size": 468
+    },
+    "environment/castle/obstacle/slime-purple-01.png": {
+      "hash": "ab204fd1",
+      "size": 462
+    },
+    "environment/castle/obstacle/statue-angel-01.png": {
+      "hash": "1160cf53",
+      "size": 937
+    },
+    "environment/castle/obstacle/statue-angel-02.png": {
+      "hash": "cd2a4352",
+      "size": 762
+    },
+    "environment/castle/obstacle/wall-stone-dark-04.png": {
+      "hash": "8b81b8a7",
+      "size": 609
+    },
+    "environment/castle/obstacle/wall-white-06.png": {
+      "hash": "79e250cf",
+      "size": 626
+    },
+    "environment/castle/obstacle/wall-white-09.png": {
+      "hash": "84081d46",
+      "size": 653
+    },
+    "environment/castle/wall/wall-blue-01.png": {
+      "hash": "abd4c6f2",
+      "size": 356
+    },
+    "environment/castle/wall/wall-blue-02.png": {
+      "hash": "8c6c1be5",
+      "size": 436
+    },
+    "environment/castle/wall/wall-blue-03.png": {
+      "hash": "04ea968e",
+      "size": 395
+    },
+    "environment/castle/wall/wall-blue-04.png": {
+      "hash": "98ae45b9",
+      "size": 447
+    },
+    "environment/castle/wall/wall-brick-pink-01.png": {
+      "hash": "9b7cb56d",
+      "size": 607
+    },
+    "environment/castle/wall/wall-brick-red-01.png": {
+      "hash": "42b86916",
+      "size": 483
+    },
+    "environment/castle/wall/wall-brick-red-02.png": {
+      "hash": "51ba04ae",
+      "size": 455
+    },
+    "environment/castle/wall/wall-brick-red-03.png": {
+      "hash": "922a12ce",
+      "size": 486
+    },
+    "environment/castle/wall/wall-brick-red-04.png": {
+      "hash": "ff4ec3e1",
+      "size": 506
+    },
+    "environment/castle/wall/wall-brick-red-06.png": {
+      "hash": "874b876e",
+      "size": 569
+    },
+    "environment/castle/wall/wall-brick-red-07.png": {
+      "hash": "6d46a60f",
+      "size": 582
+    },
+    "environment/castle/wall/wall-brick-red-08.png": {
+      "hash": "a9475da4",
+      "size": 652
+    },
+    "environment/castle/wall/wall-brick-red-09.png": {
+      "hash": "6c67f27b",
+      "size": 821
+    },
+    "environment/castle/wall/wall-brick-red-10.png": {
+      "hash": "f550a6e6",
+      "size": 830
+    },
+    "environment/castle/wall/wall-brick-red-11.png": {
+      "hash": "803318fb",
+      "size": 680
+    },
+    "environment/castle/wall/wall-brick-red-12.png": {
+      "hash": "0d5d252e",
+      "size": 598
+    },
+    "environment/castle/wall/wall-brick-red-13.png": {
+      "hash": "bfa0579a",
+      "size": 624
+    },
+    "environment/castle/wall/wall-brick-red-14.png": {
+      "hash": "a00b4661",
+      "size": 690
+    },
+    "environment/castle/wall/wall-brick-red-15.png": {
+      "hash": "7dfddc95",
+      "size": 968
+    },
+    "environment/castle/wall/wall-brick-red-16.png": {
+      "hash": "74a12048",
+      "size": 986
+    },
+    "environment/cave/floor/basalt.png": {
+      "hash": "70c39405",
+      "size": 5743
+    },
+    "environment/cave/floor/cave coral black weakened.png": {
+      "hash": "7736809d",
+      "size": 8164
+    },
+    "environment/cave/floor/cave coral black.png": {
+      "hash": "e8802a91",
+      "size": 7985
+    },
+    "environment/cave/floor/cave gravel 2.png": {
+      "hash": "ee534d60",
+      "size": 14944
+    },
+    "environment/cave/floor/cave gravel 3.png": {
+      "hash": "49e80f6a",
+      "size": 14654
+    },
+    "environment/cave/floor/cave gravel 4.png": {
+      "hash": "06119562",
+      "size": 14809
+    },
+    "environment/cave/floor/cave gravel 5.png": {
+      "hash": "b5db89f0",
+      "size": 14388
+    },
+    "environment/cave/floor/cave gravel pit 1.png": {
+      "hash": "415bc7ab",
+      "size": 14489
+    },
+    "environment/cave/floor/cave gravel pit 2.png": {
+      "hash": "8cc84a7d",
+      "size": 14720
+    },
+    "environment/cave/floor/cave gravel pit 3.png": {
+      "hash": "82c29a2c",
+      "size": 12690
+    },
+    "environment/cave/floor/cave gravel.png": {
+      "hash": "6d7faebe",
+      "size": 14870
+    },
+    "environment/cave/floor/coldCaveGravel.png": {
+      "hash": "0eb988bb",
+      "size": 15309
+    },
+    "environment/cave/floor/darkCaveGravel.png": {
+      "hash": "eaf4d01b",
+      "size": 13956
+    },
+    "environment/cave/floor/granite floor.png": {
+      "hash": "749ab6be",
+      "size": 5050
+    },
+    "environment/cave/wall/caveCliff2.png": {
+      "hash": "ff99c0d1",
+      "size": 891
+    },
+    "environment/cave/wall/caveCliff3.png": {
+      "hash": "10edfab0",
+      "size": 891
+    },
+    "environment/cave/wall/caveCliff4.png": {
+      "hash": "b0b2ff18",
+      "size": 885
+    },
+    "environment/cave/wall/caveCliff5.png": {
+      "hash": "78e503b5",
+      "size": 868
+    },
+    "environment/cave/wall/cliff.png": {
+      "hash": "9d31cb8d",
+      "size": 994
+    },
+    "environment/cave/wall/coldcliff.png": {
+      "hash": "0929d32c",
+      "size": 856
+    },
+    "environment/cave/wall/darkcliff.png": {
+      "hash": "42818232",
+      "size": 891
+    },
+    "environment/cave/wall/granite cliff.png": {
+      "hash": "f5e042fc",
+      "size": 8488
+    },
+    "environment/construction path snowy.png": {
+      "hash": "d6e845d7",
+      "size": 3959
+    },
+    "environment/construction path.png": {
+      "hash": "4c3e8d77",
+      "size": 433
+    },
+    "environment/coral black weakened.png": {
+      "hash": "1f365b3d",
+      "size": 8254
+    },
+    "environment/coral black.png": {
+      "hash": "f1568ad2",
+      "size": 7924
+    },
+    "environment/coral blue chars.png": {
+      "hash": "b053665d",
+      "size": 9153
+    },
+    "environment/coral blue.png": {
+      "hash": "310d3029",
+      "size": 8709
+    },
+    "environment/coral orange.png": {
+      "hash": "9d8ab1ce",
+      "size": 9394
+    },
+    "environment/coralgreen.png": {
+      "hash": "5e42fba5",
+      "size": 6038
+    },
+    "environment/coralred.png": {
+      "hash": "f6b5b1a2",
+      "size": 6956
+    },
+    "environment/coralyellow.png": {
+      "hash": "a3d91178",
+      "size": 3592
+    },
+    "environment/deepocean.png": {
+      "hash": "f3035d92",
+      "size": 7970
+    },
+    "environment/dustland.png": {
+      "hash": "6bc04f3a",
+      "size": 393
+    },
+    "environment/farmland.png": {
+      "hash": "39878525",
+      "size": 592
+    },
+    "environment/forest/decorative/cabbage-01.png": {
+      "hash": "0aa29429",
+      "size": 579
+    },
+    "environment/forest/decorative/clover-01.png": {
+      "hash": "a9eabd0c",
+      "size": 547
+    },
+    "environment/forest/decorative/flower-dead-01.png": {
+      "hash": "24f77184",
+      "size": 690
+    },
+    "environment/forest/decorative/flowerpot-tulip-01.png": {
+      "hash": "b89c25b8",
+      "size": 636
+    },
+    "environment/forest/decorative/flowers-blue-01.png": {
+      "hash": "ebf410e6",
+      "size": 559
+    },
+    "environment/forest/decorative/flowers-cluster-01.png": {
+      "hash": "e0670ea5",
+      "size": 592
+    },
+    "environment/forest/decorative/flowers-yellow-01.png": {
+      "hash": "a7546faa",
+      "size": 611
+    },
+    "environment/forest/decorative/leaf-large-01.png": {
+      "hash": "b1cc8b1b",
+      "size": 654
+    },
+    "environment/forest/decorative/lilypad-01.png": {
+      "hash": "e0c8796e",
+      "size": 545
+    },
+    "environment/forest/decorative/mushroom-orange-01.png": {
+      "hash": "1fe56cce",
+      "size": 544
+    },
+    "environment/forest/decorative/mushroom-purple-01.png": {
+      "hash": "241b2ccd",
+      "size": 554
+    },
+    "environment/forest/decorative/palm-tree-01.png": {
+      "hash": "9aedf5c7",
+      "size": 492
+    },
+    "environment/forest/decorative/rose-plant-01.png": {
+      "hash": "b9de8c5b",
+      "size": 477
+    },
+    "environment/forest/floor/highland snowy.png": {
+      "hash": "156082f2",
+      "size": 10939
+    },
+    "environment/forest/floor/highland.png": {
+      "hash": "38e8aa11",
+      "size": 10883
+    },
+    "environment/forest/floor/junglegrass.png": {
+      "hash": "964319c5",
+      "size": 394
+    },
+    "environment/forest/obstacle/bush-round-autumn-01.png": {
+      "hash": "56b89005",
+      "size": 805
+    },
+    "environment/forest/obstacle/bush-round-green-01.png": {
+      "hash": "8daf556b",
+      "size": 795
+    },
+    "environment/forest/obstacle/bush-round-green-02.png": {
+      "hash": "7124cd98",
+      "size": 799
+    },
+    "environment/forest/wall/wall-brown-01.png": {
+      "hash": "2a0310c0",
+      "size": 360
+    },
+    "environment/forest/wall/wall-brown-02.png": {
+      "hash": "967a7804",
+      "size": 464
+    },
+    "environment/forest/wall/wall-brown-03.png": {
+      "hash": "b81fe3c2",
+      "size": 534
+    },
+    "environment/forest/wall/wall-brown-04.png": {
+      "hash": "727e4eec",
+      "size": 532
+    },
+    "environment/forest/wall/wall-chocolate-01.png": {
+      "hash": "f363b531",
+      "size": 348
+    },
+    "environment/forest/wall/wall-chocolate-02.png": {
+      "hash": "17332a4e",
+      "size": 429
+    },
+    "environment/forest/wall/wall-chocolate-03.png": {
+      "hash": "a893f1ee",
+      "size": 372
+    },
+    "environment/forest/wall/wall-chocolate-04.png": {
+      "hash": "7fd8b8ca",
+      "size": 413
+    },
+    "environment/granite tile.png": {
+      "hash": "0a8a6443",
+      "size": 5052
+    },
+    "environment/grass nov.png": {
+      "hash": "8a4bb223",
+      "size": 584
+    },
+    "environment/gravel.png": {
+      "hash": "bca0a704",
+      "size": 10673
+    },
+    "environment/higherland.png": {
+      "hash": "9ecb96a5",
+      "size": 565
+    },
+    "environment/highland arid.png": {
+      "hash": "9e1ef65e",
+      "size": 732
+    },
+    "environment/infested gravel.png": {
+      "hash": "b689024f",
+      "size": 14654
+    },
+    "environment/landcoralblack.png": {
+      "hash": "2a2e9d54",
+      "size": 1216
+    },
+    "environment/map tile city.png": {
+      "hash": "321cdbe0",
+      "size": 6429
+    },
+    "environment/map tile forest.png": {
+      "hash": "9001fbb8",
+      "size": 6777
+    },
+    "environment/map tile grass.png": {
+      "hash": "10980007",
+      "size": 6282
+    },
+    "environment/map tile mountain.png": {
+      "hash": "78bacd7c",
+      "size": 6983
+    },
+    "environment/map tile ocean.png": {
+      "hash": "ef4d00b2",
+      "size": 7274
+    },
+    "environment/map tile sand.png": {
+      "hash": "c36169e4",
+      "size": 5810
+    },
+    "environment/monsoongrass.png": {
+      "hash": "670ee0cf",
+      "size": 397
+    },
+    "environment/mountainfloor.png": {
+      "hash": "ab7d6e3f",
+      "size": 564
+    },
+    "environment/mud.png": {
+      "hash": "d6ced406",
+      "size": 5099
+    },
+    "environment/path snowy.png": {
+      "hash": "5fe42f55",
+      "size": 3866
+    },
+    "environment/path.png": {
+      "hash": "a38f33d6",
+      "size": 410
+    },
+    "environment/path2 snowy.png": {
+      "hash": "18cbaa7f",
+      "size": 7252
+    },
+    "environment/path2.png": {
+      "hash": "dbdc0b52",
+      "size": 832
+    },
+    "environment/pebbles cave.png": {
+      "hash": "b2b55cf7",
+      "size": 6241
+    },
+    "environment/pebbles snow.png": {
+      "hash": "f1fe92c7",
+      "size": 7562
+    },
+    "environment/pebbles.png": {
+      "hash": "ce192ecc",
+      "size": 6922
+    },
+    "environment/quartzite cliff.png": {
+      "hash": "8a0e5066",
+      "size": 8793
+    },
+    "environment/quartzite floor.png": {
+      "hash": "6d40ec0e",
+      "size": 5587
+    },
+    "environment/quartzite tile.png": {
+      "hash": "3bd2372f",
+      "size": 5638
+    },
+    "environment/sand ash.png": {
+      "hash": "7e30e828",
+      "size": 4056
+    },
+    "environment/sand orange.png": {
+      "hash": "c5523b56",
+      "size": 4610
+    },
+    "environment/sand white.png": {
+      "hash": "edbac256",
+      "size": 4172
+    },
+    "environment/sand.png": {
+      "hash": "d0e70a37",
+      "size": 4412
+    },
+    "environment/savannah.png": {
+      "hash": "58c545f5",
+      "size": 445
+    },
+    "environment/snow.png": {
+      "hash": "dab619a9",
+      "size": 2643
+    },
+    "environment/stone tile.png": {
+      "hash": "8b0945d1",
+      "size": 5213
+    },
+    "environment/swamp grass nov.png": {
+      "hash": "0a596b08",
+      "size": 11070
+    },
+    "environment/swamp grass snowy.png": {
+      "hash": "77933d6f",
+      "size": 10922
+    },
+    "environment/wood tile.png": {
+      "hash": "1f43e20c",
+      "size": 724
+    },
+    "environment/wood wall.png": {
+      "hash": "29c24c15",
+      "size": 525
+    },
+    "environment/woodpath snowy.png": {
+      "hash": "a741381a",
+      "size": 5974
+    },
+    "environment/woodpath.png": {
+      "hash": "3fe9153d",
+      "size": 837
+    },
+    "environment/woodpath2.png": {
+      "hash": "c592bc3f",
+      "size": 757
+    },
+    "environment/yellow grass.png": {
+      "hash": "63225386",
+      "size": 390
+    },
+    "environment/_interactive/boss-door-01.png": {
+      "hash": "e1a090a3",
+      "size": 592
+    },
+    "environment/_interactive/boss-door-02.png": {
+      "hash": "c9bb4366",
+      "size": 591
+    },
+    "environment/_interactive/boss-door-03.png": {
+      "hash": "8a42caba",
+      "size": 628
+    },
+    "environment/_interactive/boss-door-04.png": {
+      "hash": "e92a9963",
+      "size": 618
+    },
+    "environment/_interactive/chest-large-closed.png": {
+      "hash": "0618659f",
+      "size": 676
+    },
+    "environment/_interactive/chest-large-open.png": {
+      "hash": "179283c0",
+      "size": 608
+    },
+    "environment/_interactive/chest-ornate-closed.png": {
+      "hash": "0fdb098e",
+      "size": 676
+    },
+    "environment/_interactive/chest-ornate-open.png": {
+      "hash": "3759b8c1",
+      "size": 608
+    },
+    "environment/_interactive/chest-small-closed.png": {
+      "hash": "0a773326",
+      "size": 500
+    },
+    "environment/_interactive/door-arch-01.png": {
+      "hash": "5041704a",
+      "size": 576
+    },
+    "environment/_interactive/door-arch-02.png": {
+      "hash": "e3f16179",
+      "size": 585
+    },
+    "environment/_interactive/ladder-wood-01.png": {
+      "hash": "3df5c75e",
+      "size": 384
+    },
+    "environment/_interactive/ladder-wood-02.png": {
+      "hash": "a2598a8b",
+      "size": 705
+    },
+    "environment/_interactive/pot-ceramic-01.png": {
+      "hash": "7b4fcb83",
+      "size": 745
+    },
+    "environment/_interactive/pot-ceramic-02.png": {
+      "hash": "b47b259e",
+      "size": 672
+    },
+    "environment/_interactive/pot-ceramic-03.png": {
+      "hash": "650e9eac",
+      "size": 745
+    },
+    "environment/_interactive/pot-ceramic-04.png": {
+      "hash": "15390b82",
+      "size": 672
+    },
+    "environment/_interactive/rope-autotile-06.png": {
+      "hash": "295d9173",
+      "size": 444
+    },
+    "environment/_interactive/sign-board-01.png": {
+      "hash": "0c3d96b0",
+      "size": 788
+    },
+    "environment/_interactive/sign-cross-01.png": {
+      "hash": "709c30da",
+      "size": 601
+    },
+    "environment/_interactive/sign-direction-01.png": {
+      "hash": "427ae3b4",
+      "size": 865
+    },
+    "environment/_interactive/sign-direction-02.png": {
+      "hash": "e89a04fe",
+      "size": 546
+    },
+    "environment/_interactive/stairs-down-left-01.png": {
+      "hash": "6aa0e355",
+      "size": 480
+    },
+    "environment/_interactive/stairs-down-right-01.png": {
+      "hash": "e95e5c1f",
+      "size": 480
+    },
+    "environment/_interactive/stairs-stone-01.png": {
+      "hash": "fffba14b",
+      "size": 415
+    },
+    "environment/_interactive/stairs-stone-02.png": {
+      "hash": "d636c65c",
+      "size": 425
+    },
+    "environment/_interactive/stairs-wood-01.png": {
+      "hash": "dc17c084",
+      "size": 425
+    },
+    "environment/_interactive/stairs-wood-04.png": {
+      "hash": "dc59e8c8",
+      "size": 509
+    },
+    "environment/_shared/decorative/apple-red-01.png": {
+      "hash": "77e41d42",
+      "size": 590
+    },
+    "environment/_shared/decorative/barrel-01.png": {
+      "hash": "7e87fbca",
+      "size": 736
+    },
+    "environment/_shared/decorative/book-black-01.png": {
+      "hash": "c662d3c7",
+      "size": 458
+    },
+    "environment/_shared/decorative/book-black-open-01.png": {
+      "hash": "b0bb1706",
+      "size": 514
+    },
+    "environment/_shared/decorative/book-blue-01.png": {
+      "hash": "a60146e9",
+      "size": 458
+    },
+    "environment/_shared/decorative/book-blue-open-01.png": {
+      "hash": "7d0ec683",
+      "size": 514
+    },
+    "environment/_shared/decorative/book-green-01.png": {
+      "hash": "2482d6ad",
+      "size": 458
+    },
+    "environment/_shared/decorative/book-green-open-01.png": {
+      "hash": "8fbf63b3",
+      "size": 514
+    },
+    "environment/_shared/decorative/book-red-01.png": {
+      "hash": "faace306",
+      "size": 458
+    },
+    "environment/_shared/decorative/book-red-open-01.png": {
+      "hash": "ad32c946",
+      "size": 514
+    },
+    "environment/_shared/decorative/bread-loaf-01.png": {
+      "hash": "9be3dabd",
+      "size": 616
+    },
+    "environment/_shared/decorative/bread-rolls-01.png": {
+      "hash": "d06d7288",
+      "size": 585
+    },
+    "environment/_shared/decorative/candelabra-lit-01.png": {
+      "hash": "5b654b5a",
+      "size": 1655
+    },
+    "environment/_shared/decorative/candelabra-unlit-01.png": {
+      "hash": "f1472283",
+      "size": 464
+    },
+    "environment/_shared/decorative/candle-01.png": {
+      "hash": "cafb3ff3",
+      "size": 1129
+    },
+    "environment/_shared/decorative/cannonball-01.png": {
+      "hash": "8a528000",
+      "size": 1263
+    },
+    "environment/_shared/decorative/cushion-red-01.png": {
+      "hash": "60da5141",
+      "size": 707
+    },
+    "environment/_shared/decorative/lettuce-01.png": {
+      "hash": "67a22826",
+      "size": 593
+    },
+    "environment/_shared/decorative/mug-01.png": {
+      "hash": "0c6f986a",
+      "size": 558
+    },
+    "environment/_shared/decorative/plant-small-01.png": {
+      "hash": "ff9c7348",
+      "size": 522
+    },
+    "environment/_shared/decorative/plate-dessert-01.png": {
+      "hash": "8e70cabf",
+      "size": 625
+    },
+    "environment/_shared/decorative/plate-eggs-01.png": {
+      "hash": "960bc5da",
+      "size": 631
+    },
+    "environment/_shared/decorative/plate-empty-01.png": {
+      "hash": "8607cc6e",
+      "size": 591
+    },
+    "environment/_shared/decorative/potion-set-01.png": {
+      "hash": "8ec6fe07",
+      "size": 736
+    },
+    "environment/_shared/decorative/potion-set-02.png": {
+      "hash": "2f1ec445",
+      "size": 559
+    },
+    "environment/_shared/decorative/puddle-dark-01.png": {
+      "hash": "51b0a929",
+      "size": 555
+    },
+    "environment/_shared/decorative/puddle-green-01.png": {
+      "hash": "1472692b",
+      "size": 555
+    },
+    "environment/_shared/decorative/puddle-light-01.png": {
+      "hash": "53c06772",
+      "size": 555
+    },
+    "environment/_shared/decorative/quill-01.png": {
+      "hash": "ea79fc4b",
+      "size": 559
+    },
+    "environment/_shared/decorative/stool-purple-01.png": {
+      "hash": "a8d1997d",
+      "size": 585
+    },
+    "environment/_shared/decorative/stool-red-01.png": {
+      "hash": "72df8ce6",
+      "size": 610
+    },
+    "environment/_shared/decorative/stool-wood-02.png": {
+      "hash": "d54973ab",
+      "size": 658
+    },
+    "environment/_shared/decorative/stool-wood-03.png": {
+      "hash": "8617c66d",
+      "size": 654
+    },
+    "environment/_shared/floor/clay.png": {
+      "hash": "a6ccef70",
+      "size": 3392
+    },
+    "environment/_shared/floor/cyan grass.png": {
+      "hash": "5ed7be50",
+      "size": 396
+    },
+    "environment/_shared/floor/dryland.png": {
+      "hash": "2c1e369d",
+      "size": 401
+    },
+    "environment/_shared/floor/dustgrass.png": {
+      "hash": "25c3d778",
+      "size": 5384
+    },
+    "environment/_shared/floor/grass cold.png": {
+      "hash": "f58a9874",
+      "size": 8506
+    },
+    "environment/_shared/floor/grass dry.png": {
+      "hash": "9a54fb2d",
+      "size": 8609
+    },
+    "environment/_shared/floor/grass oct.png": {
+      "hash": "7099bf13",
+      "size": 394
+    },
+    "environment/_shared/floor/grass sep.png": {
+      "hash": "612b4a40",
+      "size": 395
+    },
+    "environment/_shared/floor/grass snowy.png": {
+      "hash": "b5532988",
+      "size": 8001
+    },
+    "environment/_shared/floor/grass-autotile-04.png": {
+      "hash": "928c1544",
+      "size": 712
+    },
+    "environment/_shared/floor/grass-autotile-05.png": {
+      "hash": "48f33078",
+      "size": 711
+    },
+    "environment/_shared/floor/grass-autotile-07.png": {
+      "hash": "eda86a99",
+      "size": 698
+    },
+    "environment/_shared/floor/grass.png": {
+      "hash": "0d848130",
+      "size": 4469
+    },
+    "environment/_shared/floor/ocean.png": {
+      "hash": "ac527260",
+      "size": 6223
+    },
+    "environment/_shared/floor/permasnow.png": {
+      "hash": "502e9f2d",
+      "size": 4467
+    },
+    "environment/_shared/floor/swamp grass mar.png": {
+      "hash": "967f6823",
+      "size": 10836
+    },
+    "environment/_shared/floor/swamp grass oct.png": {
+      "hash": "3dfc6a57",
+      "size": 10918
+    },
+    "environment/_shared/floor/swamp grass sep.png": {
+      "hash": "e98e9c5f",
+      "size": 10780
+    },
+    "environment/_shared/floor/taidra.png": {
+      "hash": "00251b66",
+      "size": 6704
+    },
+    "environment/_shared/floor/taiga.png": {
+      "hash": "9a32ec22",
+      "size": 6724
+    },
+    "environment/_shared/floor/thornfloor damp.png": {
+      "hash": "cbb723e7",
+      "size": 11325
+    },
+    "environment/_shared/floor/thornfloor dry.png": {
+      "hash": "15eef848",
+      "size": 11777
+    },
+    "environment/_shared/floor/thornfloor snowy.png": {
+      "hash": "b7bb9d18",
+      "size": 13743
+    },
+    "environment/_shared/floor/thornfloor.png": {
+      "hash": "b72cc232",
+      "size": 11492
+    },
+    "environment/_shared/floor/tundra snowy.png": {
+      "hash": "c2310419",
+      "size": 7287
+    },
+    "environment/_shared/floor/tundra.png": {
+      "hash": "c8e558fd",
+      "size": 6774
+    },
+    "environment/_shared/hazard/algae green.png": {
+      "hash": "c994716a",
+      "size": 10579
+    },
+    "environment/_shared/hazard/cave ice.png": {
+      "hash": "07373e8d",
+      "size": 3806
+    },
+    "environment/_shared/hazard/cave magma cold.png": {
+      "hash": "605ca4ce",
+      "size": 1596
+    },
+    "environment/_shared/hazard/cave magma.png": {
+      "hash": "4f5fbfa0",
+      "size": 1321
+    },
+    "environment/_shared/hazard/cave water stalagmite.png": {
+      "hash": "974787f4",
+      "size": 5233
+    },
+    "environment/_shared/hazard/cavewater.png": {
+      "hash": "5cb02567",
+      "size": 4170
+    },
+    "environment/_shared/hazard/cliff ice.png": {
+      "hash": "51df1f4a",
+      "size": 7832
+    },
+    "environment/_shared/hazard/ice.png": {
+      "hash": "e97f3a4c",
+      "size": 4957
+    },
+    "environment/_shared/hazard/lilypad.png": {
+      "hash": "d217c803",
+      "size": 6060
+    },
+    "environment/_shared/hazard/shallowwater.png": {
+      "hash": "bc8e0ba8",
+      "size": 4068
+    },
+    "environment/_shared/hazard/water.png": {
+      "hash": "f3b7ad80",
+      "size": 4394
+    },
+    "environment/_shared/obstacle/barrel-brown-01.png": {
+      "hash": "f9c5a58f",
+      "size": 795
+    },
+    "environment/_shared/obstacle/barrel-brown-02.png": {
+      "hash": "df3381d1",
+      "size": 838
+    },
+    "environment/_shared/obstacle/barrel-wood-03.png": {
+      "hash": "89ae744c",
+      "size": 767
+    },
+    "environment/_shared/obstacle/bucket-wood-01.png": {
+      "hash": "d071e726",
+      "size": 835
+    },
+    "environment/_shared/obstacle/bucket-wood-02.png": {
+      "hash": "bf88e664",
+      "size": 715
+    },
+    "environment/_shared/obstacle/bushel-apples-02.png": {
+      "hash": "4330021c",
+      "size": 786
+    },
+    "environment/_shared/obstacle/bushel-apples-03.png": {
+      "hash": "5bd14654",
+      "size": 765
+    },
+    "environment/_shared/obstacle/bushel-apples-04.png": {
+      "hash": "4d6ef8d4",
+      "size": 808
+    },
+    "environment/_shared/obstacle/bushel-empty-01.png": {
+      "hash": "0ea3e46f",
+      "size": 709
+    },
+    "environment/_shared/obstacle/flowerpot-pink-01.png": {
+      "hash": "cfae7867",
+      "size": 939
+    },
+    "environment/_shared/obstacle/planter-01.png": {
+      "hash": "46403a90",
+      "size": 880
+    },
+    "environment/_shared/obstacle/planter-agave-01.png": {
+      "hash": "869a0a82",
+      "size": 863
+    },
+    "environment/_shared/obstacle/planter-agave-02.png": {
+      "hash": "2e4225c9",
+      "size": 590
+    },
+    "environment/_shared/obstacle/pot-gray-01.png": {
+      "hash": "219aa2db",
+      "size": 691
+    },
+    "environment/_shared/obstacle/rock-large-01.png": {
+      "hash": "99bacd44",
+      "size": 661
+    },
+    "environment/_shared/obstacle/rock-medium-01.png": {
+      "hash": "7d9e5c3f",
+      "size": 744
+    },
+    "environment/_shared/obstacle/rock-small-01.png": {
+      "hash": "be1b4c84",
+      "size": 478
+    },
+    "environment/_shared/obstacle/rock-small-02.png": {
+      "hash": "ca2bb7b3",
+      "size": 585
+    },
+    "environment/_shared/obstacle/rope-coil-01.png": {
+      "hash": "519d88fd",
+      "size": 856
+    },
+    "environment/_shared/obstacle/sack-burlap-01.png": {
+      "hash": "bde5884e",
+      "size": 716
+    },
+    "environment/_shared/obstacle/sign-post-01.png": {
+      "hash": "b09471dd",
+      "size": 752
+    },
+    "environment/_shared/obstacle/signpost-02.png": {
+      "hash": "3e187408",
+      "size": 703
+    },
+    "environment/_shared/obstacle/table-wood-01.png": {
+      "hash": "887e8029",
+      "size": 808
+    },
+    "environment/_shared/obstacle/tombstone-01.png": {
+      "hash": "b6173a52",
+      "size": 621
+    },
+    "environment/_shared/obstacle/tombstone-02.png": {
+      "hash": "6a6e382d",
+      "size": 701
+    },
+    "environment/_shared/wall/wall-brick-gray-01.png": {
+      "hash": "1d786c23",
+      "size": 518
+    },
+    "environment/_shared/wall/wall-brick-gray-02.png": {
+      "hash": "68a92ed7",
+      "size": 466
+    },
+    "environment/_shared/wall/wall-brick-gray-03.png": {
+      "hash": "a2a24add",
+      "size": 537
+    },
+    "environment/_shared/wall/wall-brick-gray-04.png": {
+      "hash": "67fc6096",
+      "size": 549
+    },
+    "environment/_shared/wall/wall-brick-gray-05.png": {
+      "hash": "4e9d0cbc",
+      "size": 675
+    },
+    "environment/_shared/wall/wall-brick-gray-06.png": {
+      "hash": "2e8b8e71",
+      "size": 732
+    },
+    "environment/_shared/wall/wall-brick-gray-07.png": {
+      "hash": "a6cad86e",
+      "size": 566
+    },
+    "environment/_shared/wall/wall-brick-gray-08.png": {
+      "hash": "e6191c5e",
+      "size": 519
+    },
+    "environment/_shared/wall/wall-brick-gray-09.png": {
+      "hash": "87f695ab",
+      "size": 579
+    },
+    "environment/_shared/wall/wall-brick-gray-10.png": {
+      "hash": "794f29d0",
+      "size": 598
+    },
+    "environment/_shared/wall/wall-brick-gray-11.png": {
+      "hash": "b383d00a",
+      "size": 855
+    },
+    "environment/_shared/wall/wall-brick-gray-12.png": {
+      "hash": "33822474",
+      "size": 894
+    },
+    "environment/_shared/wall/wall-brick-green-01.png": {
+      "hash": "d299109f",
+      "size": 595
+    },
+    "environment/_shared/wall/wall-brick-green-02.png": {
+      "hash": "ccae4d18",
+      "size": 584
+    },
+    "environment/_shared/wall/wall-brick-green-03.png": {
+      "hash": "825386c2",
+      "size": 608
+    },
+    "environment/_shared/wall/wall-brick-green-04.png": {
+      "hash": "1584e224",
+      "size": 610
+    },
+    "environment/_shared/wall/wall-brick-green-05.png": {
+      "hash": "c92afba6",
+      "size": 874
+    },
+    "environment/_shared/wall/wall-brick-green-06.png": {
+      "hash": "9808473d",
+      "size": 883
+    },
+    "environment/_shared/wall/wall-brick-green-07.png": {
+      "hash": "7131c8d6",
+      "size": 681
+    },
+    "environment/_shared/wall/wall-brick-white-01.png": {
+      "hash": "a12bd6da",
+      "size": 491
+    },
+    "environment/_shared/wall/wall-brick-white-02.png": {
+      "hash": "a3659e9c",
+      "size": 471
+    },
+    "environment/_shared/wall/wall-brick-white-03.png": {
+      "hash": "8c7ca960",
+      "size": 499
+    },
+    "environment/_shared/wall/wall-brick-white-04.png": {
+      "hash": "95a7aa60",
+      "size": 505
+    },
+    "environment/_shared/wall/wall-brick-white-13.png": {
+      "hash": "6c1c871a",
+      "size": 559
+    },
+    "environment/_shared/wall/wall-gray-01.png": {
+      "hash": "f9484e5a",
+      "size": 353
+    },
+    "sprites/monsters/bear/bear.gif": {
+      "hash": "7ce70d98",
+      "size": 4670
+    },
+    "sprites/monsters/bear/bear_east.png": {
+      "hash": "fae3975b",
+      "size": 1239
+    },
+    "sprites/monsters/bear/bear_north-east.png": {
+      "hash": "266bb73f",
+      "size": 1209
+    },
+    "sprites/monsters/bear/bear_north-west.png": {
+      "hash": "db6c780c",
+      "size": 1262
+    },
+    "sprites/monsters/bear/bear_north.png": {
+      "hash": "31a35ef4",
+      "size": 1120
+    },
+    "sprites/monsters/bear/bear_south-east.png": {
+      "hash": "a5698503",
+      "size": 1342
+    },
+    "sprites/monsters/bear/bear_south-west.png": {
+      "hash": "a90a71ca",
+      "size": 1358
+    },
+    "sprites/monsters/bear/bear_south.png": {
+      "hash": "b539b27f",
+      "size": 1569
+    },
+    "sprites/monsters/bear/bear_west.png": {
+      "hash": "8c6ec10e",
+      "size": 1208
+    },
+    "sprites/monsters/berserker/berserker.gif": {
+      "hash": "80fb92e1",
+      "size": 4047
+    },
+    "sprites/monsters/berserker/berserker_east.png": {
+      "hash": "b00d135d",
+      "size": 902
+    },
+    "sprites/monsters/berserker/berserker_north-east.png": {
+      "hash": "862169ef",
+      "size": 1013
+    },
+    "sprites/monsters/berserker/berserker_north-west.png": {
+      "hash": "230c936e",
+      "size": 1012
+    },
+    "sprites/monsters/berserker/berserker_north.png": {
+      "hash": "b3ae5bd2",
+      "size": 745
+    },
+    "sprites/monsters/berserker/berserker_south-east.png": {
+      "hash": "8ede432a",
+      "size": 1009
+    },
+    "sprites/monsters/berserker/berserker_south-west.png": {
+      "hash": "8bf64aeb",
+      "size": 1063
+    },
+    "sprites/monsters/berserker/berserker_south.png": {
+      "hash": "1c7be044",
+      "size": 1056
+    },
+    "sprites/monsters/berserker/berserker_west.png": {
+      "hash": "e9c3c602",
+      "size": 918
+    },
+    "sprites/monsters/bugbear/bugbear.gif": {
+      "hash": "e2c06be5",
+      "size": 4681
+    },
+    "sprites/monsters/bugbear/bugbear_east.png": {
+      "hash": "21c6e3fb",
+      "size": 1087
+    },
+    "sprites/monsters/bugbear/bugbear_north-east.png": {
+      "hash": "5da05484",
+      "size": 1273
+    },
+    "sprites/monsters/bugbear/bugbear_north-west.png": {
+      "hash": "f8baa6ad",
+      "size": 1178
+    },
+    "sprites/monsters/bugbear/bugbear_north.png": {
+      "hash": "0a75397e",
+      "size": 1245
+    },
+    "sprites/monsters/bugbear/bugbear_south-east.png": {
+      "hash": "8b4fdbe9",
+      "size": 1421
+    },
+    "sprites/monsters/bugbear/bugbear_south-west.png": {
+      "hash": "7d593667",
+      "size": 1419
+    },
+    "sprites/monsters/bugbear/bugbear_south.png": {
+      "hash": "da652326",
+      "size": 1584
+    },
+    "sprites/monsters/bugbear/bugbear_west.png": {
+      "hash": "8c047ea2",
+      "size": 1079
+    },
+    "sprites/monsters/cave-troll/cave-troll.gif": {
+      "hash": "1e5c7413",
+      "size": 4397
+    },
+    "sprites/monsters/cave-troll/cave-troll_east.png": {
+      "hash": "cf1d91ac",
+      "size": 1111
+    },
+    "sprites/monsters/cave-troll/cave-troll_north-east.png": {
+      "hash": "38bd7230",
+      "size": 1143
+    },
+    "sprites/monsters/cave-troll/cave-troll_north-west.png": {
+      "hash": "3803fc9d",
+      "size": 1183
+    },
+    "sprites/monsters/cave-troll/cave-troll_north.png": {
+      "hash": "aa8603dd",
+      "size": 1147
+    },
+    "sprites/monsters/cave-troll/cave-troll_south-east.png": {
+      "hash": "4017a6f1",
+      "size": 1257
+    },
+    "sprites/monsters/cave-troll/cave-troll_south-west.png": {
+      "hash": "4cb80aaf",
+      "size": 1285
+    },
+    "sprites/monsters/cave-troll/cave-troll_south.png": {
+      "hash": "8784f713",
+      "size": 1401
+    },
+    "sprites/monsters/cave-troll/cave-troll_west.png": {
+      "hash": "156156b1",
+      "size": 1115
+    },
+    "sprites/monsters/dark-ranger/dark-ranger.gif": {
+      "hash": "59f706af",
+      "size": 2882
+    },
+    "sprites/monsters/dark-ranger/dark-ranger_east.png": {
+      "hash": "dd95b8fc",
+      "size": 683
+    },
+    "sprites/monsters/dark-ranger/dark-ranger_north-east.png": {
+      "hash": "bb318200",
+      "size": 683
+    },
+    "sprites/monsters/dark-ranger/dark-ranger_north-west.png": {
+      "hash": "42dcd184",
+      "size": 687
+    },
+    "sprites/monsters/dark-ranger/dark-ranger_north.png": {
+      "hash": "fd68116a",
+      "size": 457
+    },
+    "sprites/monsters/dark-ranger/dark-ranger_south-east.png": {
+      "hash": "004def7e",
+      "size": 809
+    },
+    "sprites/monsters/dark-ranger/dark-ranger_south-west.png": {
+      "hash": "cf69a5e1",
+      "size": 819
+    },
+    "sprites/monsters/dark-ranger/dark-ranger_south.png": {
+      "hash": "b283a77f",
+      "size": 808
+    },
+    "sprites/monsters/dark-ranger/dark-ranger_west.png": {
+      "hash": "9570a35b",
+      "size": 665
+    },
+    "sprites/monsters/eye-beast/eye-beast.gif": {
+      "hash": "23aec05c",
+      "size": 3787
+    },
+    "sprites/monsters/eye-beast/eye-beast_east.png": {
+      "hash": "e204076b",
+      "size": 951
+    },
+    "sprites/monsters/eye-beast/eye-beast_north-east.png": {
+      "hash": "b6e2f487",
+      "size": 961
+    },
+    "sprites/monsters/eye-beast/eye-beast_north-west.png": {
+      "hash": "532737f2",
+      "size": 1052
+    },
+    "sprites/monsters/eye-beast/eye-beast_north.png": {
+      "hash": "2661d14d",
+      "size": 1072
+    },
+    "sprites/monsters/eye-beast/eye-beast_south-east.png": {
+      "hash": "976ca794",
+      "size": 1068
+    },
+    "sprites/monsters/eye-beast/eye-beast_south-west.png": {
+      "hash": "de1427a3",
+      "size": 1065
+    },
+    "sprites/monsters/eye-beast/eye-beast_south.png": {
+      "hash": "4505382b",
+      "size": 999
+    },
+    "sprites/monsters/eye-beast/eye-beast_west.png": {
+      "hash": "67a2d2cf",
+      "size": 775
+    },
+    "sprites/monsters/giant-rat/giant-rat.gif": {
+      "hash": "d41d8cd9",
+      "size": 0
+    },
+    "sprites/monsters/giant-rat/giant-rat_east.png": {
+      "hash": "d41d8cd9",
+      "size": 0
+    },
+    "sprites/monsters/giant-rat/giant-rat_north-east.png": {
+      "hash": "d41d8cd9",
+      "size": 0
+    },
+    "sprites/monsters/giant-rat/giant-rat_north-west.png": {
+      "hash": "d41d8cd9",
+      "size": 0
+    },
+    "sprites/monsters/giant-rat/giant-rat_north.png": {
+      "hash": "d41d8cd9",
+      "size": 0
+    },
+    "sprites/monsters/giant-rat/giant-rat_south-east.png": {
+      "hash": "d41d8cd9",
+      "size": 0
+    },
+    "sprites/monsters/giant-rat/giant-rat_south-west.png": {
+      "hash": "d41d8cd9",
+      "size": 0
+    },
+    "sprites/monsters/giant-rat/giant-rat_south.png": {
+      "hash": "d41d8cd9",
+      "size": 0
+    },
+    "sprites/monsters/giant-rat/giant-rat_west.png": {
+      "hash": "d41d8cd9",
+      "size": 0
+    },
+    "sprites/monsters/goblin/goblin.gif": {
+      "hash": "ac21ff17",
+      "size": 4166
+    },
+    "sprites/monsters/goblin/goblin_east.png": {
+      "hash": "94767bf8",
+      "size": 817
+    },
+    "sprites/monsters/goblin/goblin_north-east.png": {
+      "hash": "8a673a05",
+      "size": 996
+    },
+    "sprites/monsters/goblin/goblin_north-west.png": {
+      "hash": "e9ac7c77",
+      "size": 979
+    },
+    "sprites/monsters/goblin/goblin_north.png": {
+      "hash": "412f61fa",
+      "size": 939
+    },
+    "sprites/monsters/goblin/goblin_south-east.png": {
+      "hash": "2a576122",
+      "size": 1069
+    },
+    "sprites/monsters/goblin/goblin_south-west.png": {
+      "hash": "3468f837",
+      "size": 1045
+    },
+    "sprites/monsters/goblin/goblin_south.png": {
+      "hash": "a6bee44e",
+      "size": 1037
+    },
+    "sprites/monsters/goblin/goblin_west.png": {
+      "hash": "60396645",
+      "size": 846
+    },
+    "sprites/monsters/hobgoblin/hobgoblin.gif": {
+      "hash": "17645ebd",
+      "size": 3771
+    },
+    "sprites/monsters/hobgoblin/hobgoblin_east.png": {
+      "hash": "258b7efd",
+      "size": 825
+    },
+    "sprites/monsters/hobgoblin/hobgoblin_north-east.png": {
+      "hash": "185c5b8f",
+      "size": 865
+    },
+    "sprites/monsters/hobgoblin/hobgoblin_north-west.png": {
+      "hash": "5700a3ff",
+      "size": 918
+    },
+    "sprites/monsters/hobgoblin/hobgoblin_north.png": {
+      "hash": "c8152bd1",
+      "size": 841
+    },
+    "sprites/monsters/hobgoblin/hobgoblin_south-east.png": {
+      "hash": "51e97160",
+      "size": 1034
+    },
+    "sprites/monsters/hobgoblin/hobgoblin_south-west.png": {
+      "hash": "fc77cfcb",
+      "size": 1047
+    },
+    "sprites/monsters/hobgoblin/hobgoblin_south.png": {
+      "hash": "50eec277",
+      "size": 1022
+    },
+    "sprites/monsters/hobgoblin/hobgoblin_west.png": {
+      "hash": "fe2d9648",
+      "size": 854
+    },
+    "sprites/monsters/mimic/mimic_south.jpeg": {
+      "hash": "2f636a98",
+      "size": 323219
+    },
+    "sprites/monsters/river-troll/river-troll.gif": {
+      "hash": "fae092ae",
+      "size": 4135
+    },
+    "sprites/monsters/river-troll/river-troll_east.png": {
+      "hash": "1510c8af",
+      "size": 1010
+    },
+    "sprites/monsters/river-troll/river-troll_north-east.png": {
+      "hash": "a04234df",
+      "size": 1124
+    },
+    "sprites/monsters/river-troll/river-troll_north-west.png": {
+      "hash": "31250919",
+      "size": 1063
+    },
+    "sprites/monsters/river-troll/river-troll_north.png": {
+      "hash": "e76bff80",
+      "size": 1144
+    },
+    "sprites/monsters/river-troll/river-troll_south-east.png": {
+      "hash": "7bafedcf",
+      "size": 1165
+    },
+    "sprites/monsters/river-troll/river-troll_south-west.png": {
+      "hash": "ce5b5f88",
+      "size": 1146
+    },
+    "sprites/monsters/river-troll/river-troll_south.png": {
+      "hash": "024e1205",
+      "size": 1293
+    },
+    "sprites/monsters/river-troll/river-troll_west.png": {
+      "hash": "e37ae1f5",
+      "size": 898
+    },
+    "sprites/monsters/rogue-dwarf/rogue-dwarf.gif": {
+      "hash": "7c3ca2f2",
+      "size": 3487
+    },
+    "sprites/monsters/rogue-dwarf/rogue-dwarf_east.png": {
+      "hash": "0e8d1ac6",
+      "size": 738
+    },
+    "sprites/monsters/rogue-dwarf/rogue-dwarf_north-east.png": {
+      "hash": "e82a48b1",
+      "size": 834
+    },
+    "sprites/monsters/rogue-dwarf/rogue-dwarf_north-west.png": {
+      "hash": "5b5112f1",
+      "size": 849
+    },
+    "sprites/monsters/rogue-dwarf/rogue-dwarf_north.png": {
+      "hash": "173cb624",
+      "size": 828
+    },
+    "sprites/monsters/rogue-dwarf/rogue-dwarf_south-east.png": {
+      "hash": "c5a9a08f",
+      "size": 960
+    },
+    "sprites/monsters/rogue-dwarf/rogue-dwarf_south-west.png": {
+      "hash": "39c6856e",
+      "size": 967
+    },
+    "sprites/monsters/rogue-dwarf/rogue-dwarf_south.png": {
+      "hash": "56b27c3c",
+      "size": 1005
+    },
+    "sprites/monsters/rogue-dwarf/rogue-dwarf_west.png": {
+      "hash": "6677c7de",
+      "size": 737
+    },
+    "sprites/monsters/shadow-elf/shadow-elf.gif": {
+      "hash": "bff1c6fe",
+      "size": 3528
+    },
+    "sprites/monsters/shadow-elf/shadow-elf_east.png": {
+      "hash": "4aef7e3d",
+      "size": 760
+    },
+    "sprites/monsters/shadow-elf/shadow-elf_north-east.png": {
+      "hash": "e4b0b2b7",
+      "size": 749
+    },
+    "sprites/monsters/shadow-elf/shadow-elf_north-west.png": {
+      "hash": "296c4bfa",
+      "size": 795
+    },
+    "sprites/monsters/shadow-elf/shadow-elf_north.png": {
+      "hash": "afe70571",
+      "size": 726
+    },
+    "sprites/monsters/shadow-elf/shadow-elf_south-east.png": {
+      "hash": "e56a7887",
+      "size": 1027
+    },
+    "sprites/monsters/shadow-elf/shadow-elf_south-west.png": {
+      "hash": "3c551287",
+      "size": 1013
+    },
+    "sprites/monsters/shadow-elf/shadow-elf_south.png": {
+      "hash": "f14a8c19",
+      "size": 950
+    },
+    "sprites/monsters/shadow-elf/shadow-elf_west.png": {
+      "hash": "c5d0ca3a",
+      "size": 794
+    },
+    "sprites/monsters/skeleton/skeleton.gif": {
+      "hash": "bb789a16",
+      "size": 4073
+    },
+    "sprites/monsters/skeleton/skeleton_east.png": {
+      "hash": "f3eb8ad4",
+      "size": 922
+    },
+    "sprites/monsters/skeleton/skeleton_north-east.png": {
+      "hash": "ba44285a",
+      "size": 1004
+    },
+    "sprites/monsters/skeleton/skeleton_north-west.png": {
+      "hash": "be8b4ad3",
+      "size": 971
+    },
+    "sprites/monsters/skeleton/skeleton_north.png": {
+      "hash": "1334ffab",
+      "size": 1014
+    },
+    "sprites/monsters/skeleton/skeleton_south-east.png": {
+      "hash": "335f58da",
+      "size": 1105
+    },
+    "sprites/monsters/skeleton/skeleton_south-west.png": {
+      "hash": "fe54c290",
+      "size": 1007
+    },
+    "sprites/monsters/skeleton/skeleton_south.png": {
+      "hash": "2c2844ae",
+      "size": 1013
+    },
+    "sprites/monsters/skeleton/skeleton_west.png": {
+      "hash": "24572648",
+      "size": 895
+    },
+    "sprites/monsters/wolf/wolf.gif": {
+      "hash": "e4c604d4",
+      "size": 2981
+    },
+    "sprites/monsters/wolf/wolf_east.png": {
+      "hash": "fca143e0",
+      "size": 750
+    },
+    "sprites/monsters/wolf/wolf_north-east.png": {
+      "hash": "ccd6537f",
+      "size": 770
+    },
+    "sprites/monsters/wolf/wolf_north-west.png": {
+      "hash": "29ed48b1",
+      "size": 789
+    },
+    "sprites/monsters/wolf/wolf_north.png": {
+      "hash": "c5a45ffd",
+      "size": 561
+    },
+    "sprites/monsters/wolf/wolf_south-east.png": {
+      "hash": "31c0cc81",
+      "size": 847
+    },
+    "sprites/monsters/wolf/wolf_south-west.png": {
+      "hash": "d91e2435",
+      "size": 804
+    },
+    "sprites/monsters/wolf/wolf_south.png": {
+      "hash": "c77ff0d4",
+      "size": 701
+    },
+    "sprites/monsters/wolf/wolf_west.png": {
+      "hash": "dfceb823",
+      "size": 716
+    },
+    "sprites/monsters/zombie/zombie.gif": {
+      "hash": "aabb80d6",
+      "size": 3724
+    },
+    "sprites/monsters/zombie/zombie_east.png": {
+      "hash": "1d523f20",
+      "size": 823
+    },
+    "sprites/monsters/zombie/zombie_north-east.png": {
+      "hash": "4edd818f",
+      "size": 894
+    },
+    "sprites/monsters/zombie/zombie_north-west.png": {
+      "hash": "c6f300ad",
+      "size": 914
+    },
+    "sprites/monsters/zombie/zombie_north.png": {
+      "hash": "021b1713",
+      "size": 949
+    },
+    "sprites/monsters/zombie/zombie_south-east.png": {
+      "hash": "b08d6aeb",
+      "size": 965
+    },
+    "sprites/monsters/zombie/zombie_south-west.png": {
+      "hash": "988259f3",
+      "size": 938
+    },
+    "sprites/monsters/zombie/zombie_south.png": {
+      "hash": "93c5b3d6",
+      "size": 1032
+    },
+    "sprites/monsters/zombie/zombie_west.png": {
+      "hash": "b504e29f",
+      "size": 831
+    },
+    "sprites/player/bard/bard-tier-4.gif": {
+      "hash": "028fbe0d",
+      "size": 4770
+    },
+    "sprites/player/cleric/cleric-tier-4.gif": {
+      "hash": "3c2139fc",
+      "size": 4408
+    },
+    "sprites/player/paladin/tier1/paladin-tier-1.gif": {
+      "hash": "cd345f22",
+      "size": 4521
+    },
+    "sprites/player/paladin/tier1/paladin-tier-1_east.png": {
+      "hash": "171ed0eb",
+      "size": 884
+    },
+    "sprites/player/paladin/tier1/paladin-tier-1_north-east.png": {
+      "hash": "babb7fc6",
+      "size": 940
+    },
+    "sprites/player/paladin/tier1/paladin-tier-1_north-west.png": {
+      "hash": "d19f956f",
+      "size": 1048
+    },
+    "sprites/player/paladin/tier1/paladin-tier-1_north.png": {
+      "hash": "a96ba2c9",
+      "size": 885
+    },
+    "sprites/player/paladin/tier1/paladin-tier-1_south-east.png": {
+      "hash": "d33ab96a",
+      "size": 1200
+    },
+    "sprites/player/paladin/tier1/paladin-tier-1_south-west.png": {
+      "hash": "9c03f0a7",
+      "size": 1225
+    },
+    "sprites/player/paladin/tier1/paladin-tier-1_south.png": {
+      "hash": "2ff2396b",
+      "size": 1189
+    },
+    "sprites/player/paladin/tier1/paladin-tier-1_west.png": {
+      "hash": "74bb7f24",
+      "size": 1009
+    },
+    "sprites/player/paladin/tier2/paladin-tier-2.gif": {
+      "hash": "966516df",
+      "size": 4142
+    },
+    "sprites/player/paladin/tier2/paladin-tier-2_east.png": {
+      "hash": "6e8b6bb4",
+      "size": 924
+    },
+    "sprites/player/paladin/tier2/paladin-tier-2_north-east.png": {
+      "hash": "965e9cd3",
+      "size": 1038
+    },
+    "sprites/player/paladin/tier2/paladin-tier-2_north-west.png": {
+      "hash": "f39821fa",
+      "size": 1002
+    },
+    "sprites/player/paladin/tier2/paladin-tier-2_north.png": {
+      "hash": "7ecdf0e8",
+      "size": 1019
+    },
+    "sprites/player/paladin/tier2/paladin-tier-2_south-east.png": {
+      "hash": "5897f13e",
+      "size": 1143
+    },
+    "sprites/player/paladin/tier2/paladin-tier-2_south-west.png": {
+      "hash": "4bc4940b",
+      "size": 1152
+    },
+    "sprites/player/paladin/tier2/paladin-tier-2_south.png": {
+      "hash": "b5c71abd",
+      "size": 1262
+    },
+    "sprites/player/paladin/tier2/paladin-tier-2_west.png": {
+      "hash": "ea492474",
+      "size": 909
+    },
+    "sprites/player/paladin/tier3/paladin-tier-3.gif": {
+      "hash": "5865bf6c",
+      "size": 5099
+    },
+    "sprites/player/paladin/tier3/paladin-tier-3_east.png": {
+      "hash": "45bb40a8",
+      "size": 1201
+    },
+    "sprites/player/paladin/tier3/paladin-tier-3_north-east.png": {
+      "hash": "7d812eb8",
+      "size": 1281
+    },
+    "sprites/player/paladin/tier3/paladin-tier-3_north-west.png": {
+      "hash": "c6b37a3f",
+      "size": 1162
+    },
+    "sprites/player/paladin/tier3/paladin-tier-3_north.png": {
+      "hash": "8b9d1a5c",
+      "size": 975
+    },
+    "sprites/player/paladin/tier3/paladin-tier-3_south-east.png": {
+      "hash": "1beccdb6",
+      "size": 1304
+    },
+    "sprites/player/paladin/tier3/paladin-tier-3_south-west.png": {
+      "hash": "29b83dba",
+      "size": 1316
+    },
+    "sprites/player/paladin/tier3/paladin-tier-3_south.png": {
+      "hash": "b37868f7",
+      "size": 1313
+    },
+    "sprites/player/paladin/tier3/paladin-tier-3_west.png": {
+      "hash": "446fc7cb",
+      "size": 1138
+    },
+    "sprites/player/paladin/tier4/paladin-tier-4.gif": {
+      "hash": "dddb85cf",
+      "size": 5723
+    },
+    "sprites/player/paladin/tier4/paladin-tier-4_east.png": {
+      "hash": "c2ba5d68",
+      "size": 1255
+    },
+    "sprites/player/paladin/tier4/paladin-tier-4_north-east.png": {
+      "hash": "bee08559",
+      "size": 1377
+    },
+    "sprites/player/paladin/tier4/paladin-tier-4_north-west.png": {
+      "hash": "cf2ad6d4",
+      "size": 1365
+    },
+    "sprites/player/paladin/tier4/paladin-tier-4_north.png": {
+      "hash": "eed9fcd7",
+      "size": 1285
+    },
+    "sprites/player/paladin/tier4/paladin-tier-4_south-east.png": {
+      "hash": "dc1a0c53",
+      "size": 1450
+    },
+    "sprites/player/paladin/tier4/paladin-tier-4_south-west.png": {
+      "hash": "096f144a",
+      "size": 1540
+    },
+    "sprites/player/paladin/tier4/paladin-tier-4_south.png": {
+      "hash": "ffb43e31",
+      "size": 1672
+    },
+    "sprites/player/paladin/tier4/paladin-tier-4_west.png": {
+      "hash": "2a29178b",
+      "size": 1219
+    },
+    "sprites/player/paladin/tier5/paladin-tier-5.gif": {
+      "hash": "9b658108",
+      "size": 4394
+    },
+    "sprites/player/paladin/tier5/paladin-tier-5_east.png": {
+      "hash": "906daf5f",
+      "size": 1015
+    },
+    "sprites/player/paladin/tier5/paladin-tier-5_north-east.png": {
+      "hash": "468af5de",
+      "size": 1110
+    },
+    "sprites/player/paladin/tier5/paladin-tier-5_north-west.png": {
+      "hash": "7bab9654",
+      "size": 1073
+    },
+    "sprites/player/paladin/tier5/paladin-tier-5_north.png": {
+      "hash": "50552d27",
+      "size": 889
+    },
+    "sprites/player/paladin/tier5/paladin-tier-5_south-east.png": {
+      "hash": "08471548",
+      "size": 1331
+    },
+    "sprites/player/paladin/tier5/paladin-tier-5_south-west.png": {
+      "hash": "900a43db",
+      "size": 1369
+    },
+    "sprites/player/paladin/tier5/paladin-tier-5_south.png": {
+      "hash": "f16ca460",
+      "size": 1293
+    },
+    "sprites/player/paladin/tier5/paladin-tier-5_west.png": {
+      "hash": "11cc328d",
+      "size": 1052
+    },
+    "sprites/player/rogue/rogue-tier-4.gif": {
+      "hash": "cc8be85d",
+      "size": 2624
+    },
+    "sprites/player/scholar/scholar-tier-4.gif": {
+      "hash": "f792af3a",
+      "size": 3463
+    },
+    "sprites/player/technomancer/technomancer-tier-4.gif": {
+      "hash": "dcf3bf15",
+      "size": 3173
+    },
+    "sprites/player/warrior/tier1/warrior-tier-1.gif": {
+      "hash": "5fa2daf8",
+      "size": 3787
+    },
+    "sprites/player/warrior/tier1/warrior-tier-1_east.png": {
+      "hash": "2237e036",
+      "size": 865
+    },
+    "sprites/player/warrior/tier1/warrior-tier-1_north-east.png": {
+      "hash": "91c8719f",
+      "size": 787
+    },
+    "sprites/player/warrior/tier1/warrior-tier-1_north-west.png": {
+      "hash": "4acfcdde",
+      "size": 859
+    },
+    "sprites/player/warrior/tier1/warrior-tier-1_north.png": {
+      "hash": "3db1de3f",
+      "size": 706
+    },
+    "sprites/player/warrior/tier1/warrior-tier-1_south-east.png": {
+      "hash": "8f9e9297",
+      "size": 930
+    },
+    "sprites/player/warrior/tier1/warrior-tier-1_south-west.png": {
+      "hash": "fda802a0",
+      "size": 1083
+    },
+    "sprites/player/warrior/tier1/warrior-tier-1_south.png": {
+      "hash": "9f1b24ab",
+      "size": 957
+    },
+    "sprites/player/warrior/tier1/warrior-tier-1_west.png": {
+      "hash": "8097de47",
+      "size": 808
+    },
+    "sprites/player/warrior/tier2/warrior-tier-2.gif": {
+      "hash": "ef9eb268",
+      "size": 4304
+    },
+    "sprites/player/warrior/tier2/warrior-tier-2_east.png": {
+      "hash": "5ea5cc29",
+      "size": 939
+    },
+    "sprites/player/warrior/tier2/warrior-tier-2_north-east.png": {
+      "hash": "14dcb36c",
+      "size": 984
+    },
+    "sprites/player/warrior/tier2/warrior-tier-2_north-west.png": {
+      "hash": "645b81e4",
+      "size": 1080
+    },
+    "sprites/player/warrior/tier2/warrior-tier-2_north.png": {
+      "hash": "7f3f1e36",
+      "size": 1009
+    },
+    "sprites/player/warrior/tier2/warrior-tier-2_south-east.png": {
+      "hash": "f256f9ae",
+      "size": 1217
+    },
+    "sprites/player/warrior/tier2/warrior-tier-2_south-west.png": {
+      "hash": "e307adca",
+      "size": 1201
+    },
+    "sprites/player/warrior/tier2/warrior-tier-2_south.png": {
+      "hash": "9fb6ffda",
+      "size": 1159
+    },
+    "sprites/player/warrior/tier2/warrior-tier-2_west.png": {
+      "hash": "537b4398",
+      "size": 995
+    },
+    "sprites/player/warrior/tier3/warrior-tier-3.gif": {
+      "hash": "276cf0fe",
+      "size": 3606
+    },
+    "sprites/player/warrior/tier3/warrior-tier-3_east.png": {
+      "hash": "9ca7eb05",
+      "size": 805
+    },
+    "sprites/player/warrior/tier3/warrior-tier-3_north-east.png": {
+      "hash": "eada746d",
+      "size": 795
+    },
+    "sprites/player/warrior/tier3/warrior-tier-3_north-west.png": {
+      "hash": "806ead08",
+      "size": 791
+    },
+    "sprites/player/warrior/tier3/warrior-tier-3_north.png": {
+      "hash": "12bfff03",
+      "size": 802
+    },
+    "sprites/player/warrior/tier3/warrior-tier-3_south-east.png": {
+      "hash": "63c79281",
+      "size": 973
+    },
+    "sprites/player/warrior/tier3/warrior-tier-3_south-west.png": {
+      "hash": "179537f6",
+      "size": 1026
+    },
+    "sprites/player/warrior/tier3/warrior-tier-3_south.png": {
+      "hash": "28f9baf0",
+      "size": 962
+    },
+    "sprites/player/warrior/tier3/warrior-tier-3_west.png": {
+      "hash": "ca9bee0c",
+      "size": 769
+    },
+    "sprites/player/warrior/tier4/warrior-tier-4.gif": {
+      "hash": "02b3c2cd",
+      "size": 3996
+    },
+    "sprites/player/warrior/tier4/warrior-tier-4_east.png": {
+      "hash": "9c980391",
+      "size": 946
+    },
+    "sprites/player/warrior/tier4/warrior-tier-4_north-east.png": {
+      "hash": "21df9704",
+      "size": 1079
+    },
+    "sprites/player/warrior/tier4/warrior-tier-4_north-west.png": {
+      "hash": "9364bf2b",
+      "size": 1030
+    },
+    "sprites/player/warrior/tier4/warrior-tier-4_north.png": {
+      "hash": "909b3fa5",
+      "size": 671
+    },
+    "sprites/player/warrior/tier4/warrior-tier-4_south-east.png": {
+      "hash": "c3c0b45e",
+      "size": 1148
+    },
+    "sprites/player/warrior/tier4/warrior-tier-4_south-west.png": {
+      "hash": "2b078bc9",
+      "size": 1198
+    },
+    "sprites/player/warrior/tier4/warrior-tier-4_south.png": {
+      "hash": "72ab97ac",
+      "size": 1291
+    },
+    "sprites/player/warrior/tier4/warrior-tier-4_west.png": {
+      "hash": "16806aa9",
+      "size": 999
+    },
+    "sprites/player/warrior/tier5/warrior-tier-5.gif": {
+      "hash": "808c0ddd",
+      "size": 4669
+    },
+    "sprites/player/warrior/tier5/warrior-tier-5_east.png": {
+      "hash": "7f864583",
+      "size": 1012
+    },
+    "sprites/player/warrior/tier5/warrior-tier-5_north-east.png": {
+      "hash": "bf84cc17",
+      "size": 1012
+    },
+    "sprites/player/warrior/tier5/warrior-tier-5_north-west.png": {
+      "hash": "8cb0e525",
+      "size": 1017
+    },
+    "sprites/player/warrior/tier5/warrior-tier-5_north.png": {
+      "hash": "db1500eb",
+      "size": 548
+    },
+    "sprites/player/warrior/tier5/warrior-tier-5_south-east.png": {
+      "hash": "28ecdf87",
+      "size": 1184
+    },
+    "sprites/player/warrior/tier5/warrior-tier-5_south-west.png": {
+      "hash": "f62e7bcf",
+      "size": 1289
+    },
+    "sprites/player/warrior/tier5/warrior-tier-5_south.png": {
+      "hash": "a6bd6184",
+      "size": 1255
+    },
+    "sprites/player/warrior/tier5/warrior-tier-5_west.png": {
+      "hash": "febfeba6",
+      "size": 1037
+    }
+  }
+}
