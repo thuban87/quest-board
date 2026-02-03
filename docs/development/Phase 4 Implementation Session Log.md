@@ -1021,25 +1021,102 @@ Files: BattleView.tsx, combat.css, inventory.css, gearFormatters.ts
 
 ---
 
+## 2026-02-01 - Boss System Implementation
+
+**Focus:** Add boss monster templates, signature skills, and dungeon integration
+
+### Completed:
+
+#### Phase 1: Boss Data & Skills
+- ✅ Added 20 boss templates to `monsters.ts` with `isBoss: true` flag
+- ✅ Added 20 signature skills to `monsterSkills.ts`:
+  - Multi-hit (Swarm = 5 hits)
+  - Healing (Hibernate = 20%, Regenerate = 15%)
+  - Various debuffs and stat modifiers
+- ✅ Implemented `multiHit` mechanic in `BattleService.ts`
+- ✅ Implemented `healPercent` mechanic in `BattleService.ts`
+- ✅ Added `getBossTemplates()` and `getBossByCategory()` helper functions
+
+#### Boss Templates by Category:
+| Category | Bosses |
+|----------|--------|
+| Beasts | Alpha Wolf, Grizzled Ancient, Rat King |
+| Undead | Bone Collector, Lich, Wraith Lord |
+| Goblins | Goblin Warlord, Bugbear Tyrant |
+| Trolls | Mountain Troll, Swamp Horror |
+| Night Elves | Shadow Assassin, Dark Matriarch |
+| Dwarves | Ironforge Champion, Rune Berserker |
+| Dragonkin | Elder Drake, Wyvern Matriarch, Ancient Dragon |
+| Aberrations | The Devourer, Beholder, Void Spawn |
+
+#### Phase 2: Boss UI Enhancements
+- ✅ Added pulsing red border for boss sprites (`.qb-boss-sprite`)
+- ✅ Added shimmering boss HP bar (`.qb-boss-hp-bar`)
+- ✅ Added tier badges (BOSS / RAID BOSS / ELITE)
+
+#### Phase 3: Dungeon Integration
+- ✅ Added `bossDefeated` state to `dungeonStore.ts`
+- ✅ Added `markBossDefeated()` action
+- ✅ Existing monster spawn logic already reads `isBoss` from room definitions
+- ❌ **Reverted**: Auto-spawn boss at portal (user wants manual placement)
+
+### Files Changed:
+
+**Models:**
+- `src/models/Skill.ts` - Added `multiHit`, `healPercent` to `MonsterSkill`
+- `src/models/Monster.ts` - Added `isBoss` to `MonsterTemplate`
+
+**Data:**
+- `src/data/monsterSkills.ts` - 20 new signature boss skills
+- `src/data/monsters.ts` - 20 boss templates + helper functions
+
+**Services:**
+- `src/services/BattleService.ts` - Multi-hit and heal mechanics in `executeMonsterSkill`
+
+**Store:**
+- `src/store/dungeonStore.ts` - `bossDefeated` state and action
+
+**Components:**
+- `src/components/BattleView.tsx` - Boss UI classes and tier badges
+
+**Styles:**
+- `src/styles/combat.css` - Boss animations (pulsing border, shimmer HP)
+
+### How to Place Bosses in Dungeons:
+In room template's `monsters` array, set `isBoss: true`:
+```typescript
+monsters: [
+    { 
+        position: [5, 5], 
+        pool: ['boss-lich', 'boss-ancient-dragon'],
+        isBoss: true  // Spawns as 'boss' tier
+    }
+]
+```
+
+### Testing Notes:
+- ✅ Build passes
+- ✅ Deployed to test and production
+
+### Blockers/Issues:
+- Initial implementation forced boss at portal exit - reverted per user request
+
+---
+
 ## Next Session Prompt
 
 ```
-Phase 4 complete. Battle actions UI scaffolding done. Phase 5 (Skills) branch started.
+Boss system complete. 20 bosses with signature skills, boss UI, dungeon integration.
 
-Skills work continues in: docs/development/Skills Implementation Session Log.md
+Bosses can be placed in dungeons via room definitions with isBoss: true flag.
+Existing monster spawn logic handles boss tier automatically.
 
-Phase 4 key accomplishments:
-- Console.log cleanup, default paths
-- Mobile Kanban optimization
-- Bug fixes & 5-tier XP system
-- AI Quest Generation
-- Progress Dashboard with activity tracking
-- Daily Note Integration
-- Quest Templates UI (Scrivener's Desk)
-- TDD Power-Ups & Achievements (168 tests)
-- Inventory UX improvements
-- Battle screen polish & auto-attack
-- Battle actions expansion (Skills/Meditate buttons)
+Key files:
+- monsters.ts (20 boss templates)
+- monsterSkills.ts (20 signature skills)
+- BattleService.ts (multiHit, healPercent mechanics)
+- BattleView.tsx (boss UI styling)
+- combat.css (pulsing border, shimmer HP)
 ```
 
 ---
@@ -1047,26 +1124,11 @@ Phase 4 key accomplishments:
 ## Git Commit Message
 
 ```
-feat: Battle actions expansion - Skills & Meditate buttons
+feat: Add boss system (templates, skills, UI) - user-placed bosses only
 
-New Action Layout:
-- Desktop: 3x2 grid (Attack, Skills, Defend / Run, Meditate, Item)
-- Mobile: 2x3 grid for better touch targets
-
-Skills Submenu:
-- Pokémon Gen 1 style - replaces action buttons when opened
-- 5 placeholder skill slots + Back button
-- Back button always in bottom-right corner
-
-Placeholders:
-- Skills and Meditate log to console for debugging
-- Actual effects to be wired in future session
-
-Button Styling:
-- Skills: orange border (#ff6b35)
-- Meditate: teal border (#17a2b8)
-- Skill placeholders: orange border
-- Back: muted gray border
-
-Files: BattleView.tsx, combat.css
+- 20 boss templates across 8 categories
+- 20 signature skills with multi-hit and heal mechanics
+- Boss UI: pulsing border, shimmer HP bar, tier badges
+- Dungeon monster spawn respects isBoss flag in room definitions
 ```
+
