@@ -1132,3 +1132,116 @@ feat: Add boss system (templates, skills, UI) - user-placed bosses only
 - Dungeon monster spawn respects isBoss flag in room definitions
 ```
 
+---
+
+## 2026-02-03 - Daily Quest & Watched Folder Feature
+
+**Focus:** Implement folder watchers that auto-generate quests when files are added to watched folders
+
+### Completed:
+
+#### Phase 1: Core Infrastructure
+- ✅ Created `FolderWatchService.ts` - Core folder watching with Obsidian vault events
+- ✅ Created `dailyNotesDetector.ts` - Auto-detect Daily Notes folder from core plugin config
+- ✅ Added `WatchedFolderConfig` interface with archive modes, naming options
+- ✅ Initialized FolderWatchService in main.ts
+
+#### Phase 2: Template System Updates
+- ✅ Updated `ScrivenersQuillModal.ts` - Added "📓 Daily Note Quest" and "📂 Watched Folder" types
+- ✅ Added folder path picker UI with FolderSuggest autocomplete
+- ✅ Added archive options UI (on-new-file, after-duration, at-time, none)
+- ✅ Added quest naming convention UI (source-filename, custom-date, custom pattern)
+- ✅ Template save now registers watcher config with FolderWatchService
+
+#### Phase 3: Quest Generation Pipeline
+- ✅ Auto-detect Daily Notes folder from Obsidian settings
+- ✅ Create quest file with `linkedTaskFile` pointing to watched file
+- ✅ Duplicate detection (skip if quest already exists for file)
+- ✅ Notice on creation failure with retry option
+
+#### Phase 4: Archive System
+- ✅ Archive trigger: "on new file creation"
+- ✅ Archive trigger: "after X hours/days"
+- ✅ Archive trigger: "at recurring time"
+- ✅ Custom archive path per template, defaults to settings.archiveFolder
+
+#### Phase 5: Cleanup & Refactoring
+- ✅ Refactored `RecurringQuestService.ts` to use `settings.archiveFolder` instead of hardcoded path
+- ✅ Added startup validation to remove orphaned watcher configs (templates deleted but configs persisted)
+
+#### Bug Fixes
+- 🐛 Fixed root folder path matching (was filtering out root-level files)
+- 🐛 Added 2-second debounce + rename listener to avoid "Untitled" filename capture
+- 🐛 Added `validateConfigs()` to clean up stale watcher configs on plugin load
+
+### Files Changed:
+
+**New:**
+- `src/services/FolderWatchService.ts` - Folder watching, quest generation, archiving
+- `src/utils/dailyNotesDetector.ts` - Daily Notes folder detection
+
+**Modified:**
+- `src/modals/ScrivenersQuillModal.ts` - New quest types, folder watcher UI, config registration
+- `src/services/RecurringQuestService.ts` - Uses settings.archiveFolder
+- `src/settings.ts` - Added WatchedFolderConfig[], archiveFolder setting
+- `main.ts` - Initialize FolderWatchService
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Watched folder template creation works
+- ✅ Quest auto-generation works after file rename
+- ✅ Archive on new file creation works
+- ✅ Orphaned config cleanup works
+
+---
+
+## Next Session Prompt
+
+```
+Daily Quest & Watched Folder feature complete!
+
+What was done this session:
+- FolderWatchService for watching folders and auto-generating quests
+- ScrivenersQuillModal updated with Daily Note Quest and Watched Folder types
+- Archive system with multiple trigger modes
+- Debounce for Untitled file handling
+- Orphaned config cleanup on startup
+
+v2 Future Items (documented in Feature Roadmap):
+- Active watcher indicator in Scroll Library
+- Vacation/pause mode for watchers
+
+Key files:
+- src/services/FolderWatchService.ts - Core watching logic
+- src/modals/ScrivenersQuillModal.ts - Template builder with folder watcher UI
+- src/utils/dailyNotesDetector.ts - Daily Notes folder auto-detection
+```
+
+---
+
+## Git Commit Message
+
+```
+feat: Daily Quest & Watched Folder feature
+
+Core Features:
+- FolderWatchService watches folders for new files
+- Auto-generate quests with linkedTaskFile when files added
+- Daily Notes folder auto-detection from Obsidian settings
+- Archive modes: on-new-file, after-duration, at-time
+
+Template UI (Scrivener's Quill):
+- New "Daily Note Quest" and "Watched Folder" types
+- Folder picker with autocomplete
+- Quest naming modes: source-filename, custom-date, custom pattern
+- Archive configuration options
+
+Bug Fixes:
+- Debounce with rename listener to avoid "Untitled" filename capture
+- Orphaned watcher config cleanup on startup
+- RecurringQuestService uses settings.archiveFolder
+
+Files: FolderWatchService.ts, dailyNotesDetector.ts, ScrivenersQuillModal.ts,
+RecurringQuestService.ts, settings.ts, main.ts
+```

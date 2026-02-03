@@ -221,6 +221,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | **Daily Note Integration** | Log completed quests to daily notes | ✅ Complete |
 | ~~**Weekly Sprint View**~~ | ✅ **Progress Dashboard** - Activity history, stats, XP/gold tracking | ✅ Complete |
 | **Quest Templates UI** | "The Scrivener's Desk" - Template gallery, builder, usage stats, quest-to-template conversion | ✅ Complete |
+| **Daily Quest & Watched Folder** | Auto-create quests when files added to watched folders (Daily Notes, custom folders) | ✅ Complete |
 
 #### Tier 2: Power-Ups & Testing (Early Phase 4)
 
@@ -301,6 +302,11 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 ---
 
 ## Future Vision (Beyond Phase 5)
+
+### Daily Quest & Watched Folder v2 Enhancements
+- **Active Watcher Indicator**: Badge in Scroll Library showing "🟢 Daily Quest Active" when watcher running
+- **Vacation/Pause Mode**: Temporarily disable folder watchers without deleting templates
+- **Multiple Daily Quest Templates**: Allow power users to set up multiple Daily Quest templates
 
 ### Progressive Quest Reveal
 - Hide quest sections on Kanban until previous complete

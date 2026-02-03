@@ -8,6 +8,9 @@
 import { App, Modal, Notice, Setting, TFile, TextAreaComponent } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { ParsedTemplate } from '../services/TemplateService';
+import { ArchiveMode, QuestNamingMode, WatchedFolderConfig } from '../services/FolderWatchService';
+import { detectDailyNotesConfig } from '../utils/dailyNotesDetector';
+import { QuestPriority } from '../models/QuestStatus';
 
 /**
  * Local placeholder info for the template editor
@@ -36,6 +39,15 @@ export class ScrivenersQuillModal extends Modal {
     private recurrencePattern: string = 'daily';
     private customDays: string[] = [];
     private weeklyDay: string = 'monday';
+
+    // Folder watcher state (for daily-quest and watched-folder types)
+    private watchFolder: string = '';
+    private namingMode: QuestNamingMode = 'filename';
+    private customNamingPattern: string = '{{filename}} Quest';
+    private archiveMode: ArchiveMode = 'none';
+    private archiveDurationHours: number = 24;
+    private archiveTime: string = '01:00';
+    private archivePath: string = '';
 
     constructor(app: App, plugin: QuestBoardPlugin, existingTemplate?: ParsedTemplate) {
         super(app);
@@ -103,6 +115,10 @@ export class ScrivenersQuillModal extends Modal {
         const recurrenceContainer = formSide.createDiv({ cls: 'qb-scrivenersquill-section qb-recurrence-section' });
         recurrenceContainer.style.display = this.questType === 'recurring' ? '' : 'none';
 
+        // Container for folder watcher options (daily-quest and watched-folder)
+        const folderWatchContainer = formSide.createDiv({ cls: 'qb-scrivenersquill-section qb-folder-watch-section' });
+        folderWatchContainer.style.display = ['daily-quest', 'watched-folder'].includes(this.questType) ? '' : 'none';
+
         new Setting(typeSection)
             .setName('Type')
             .setDesc('The type of quest this template creates')
@@ -111,12 +127,21 @@ export class ScrivenersQuillModal extends Modal {
                 .addOption('side', '📋 Side Quest')
                 .addOption('training', '🎯 Training Quest')
                 .addOption('recurring', '🔄 Recurring Quest')
-                .addOption('daily', '📅 Daily Quest')
+                .addOption('daily-quest', '📓 Daily Note Quest')
+                .addOption('watched-folder', '📂 Watched Folder')
                 .setValue(this.questType)
                 .onChange(value => {
                     this.questType = value;
                     // Show/hide recurrence options
                     recurrenceContainer.style.display = value === 'recurring' ? '' : 'none';
+                    // Show/hide folder watch options
+                    folderWatchContainer.style.display = ['daily-quest', 'watched-folder'].includes(value) ? '' : 'none';
+                    // Auto-detect daily notes folder for daily-quest
+                    if (value === 'daily-quest' && !this.watchFolder) {
+                        const config = detectDailyNotesConfig(this.app);
+                        this.watchFolder = config.folder;
+                        this.updateFolderWatchUI(folderWatchContainer, previewCard);
+                    }
                     this.updatePreview(previewCard);
                 }));
 
@@ -198,6 +223,9 @@ export class ScrivenersQuillModal extends Modal {
                 this.updatePreview(previewCard);
             });
         }
+
+        // === Folder Watcher Section (for daily-quest and watched-folder) ===
+        this.buildFolderWatchUI(folderWatchContainer, previewCard);
 
         // Category
         new Setting(typeSection)
@@ -346,6 +374,144 @@ Write your quest description here.
     }
 
     /**
+     * Build the folder watcher UI section
+     */
+    private buildFolderWatchUI(container: HTMLElement, previewCard: HTMLElement): void {
+        container.empty();
+
+        const isDailyQuest = this.questType === 'daily-quest';
+        const headerText = isDailyQuest ? '📓 Daily Note Quest Settings' : '📂 Watched Folder Settings';
+        container.createEl('h4', { text: headerText });
+
+        // Description
+        const desc = isDailyQuest
+            ? 'Automatically creates a quest linked to your daily note when it\'s created.'
+            : 'Creates a quest when a new file is added to the watched folder.';
+        container.createEl('p', { text: desc, cls: 'setting-item-description' });
+
+        // Folder path
+        new Setting(container)
+            .setName(isDailyQuest ? 'Daily Notes Folder' : 'Watch Folder')
+            .setDesc(isDailyQuest ? 'Folder where your daily notes are stored' : 'Folder to watch for new files')
+            .addText(text => {
+                text.setPlaceholder(isDailyQuest ? 'Daily' : 'Projects/Sprint-01')
+                    .setValue(this.watchFolder)
+                    .onChange(value => {
+                        this.watchFolder = value;
+                        this.updatePreview(previewCard);
+                    });
+
+                // Add folder autocomplete
+                import('../utils/FolderSuggest').then(({ FolderSuggest }) => {
+                    new FolderSuggest(this.app, text.inputEl);
+                }).catch(() => { });
+            });
+
+        // Auto-detect indicator for daily notes
+        if (isDailyQuest) {
+            const config = detectDailyNotesConfig(this.app);
+            const statusText = config.detected
+                ? `✅ Auto-detected: ${config.folder || '(vault root)'}`
+                : '⚠️ Daily Notes plugin not detected - please enter folder manually';
+            container.createEl('p', { text: statusText, cls: 'setting-item-description qb-folder-status' });
+        }
+
+        // Quest naming
+        new Setting(container)
+            .setName('Quest Naming')
+            .setDesc('How to name the generated quest')
+            .addDropdown(dropdown => dropdown
+                .addOption('filename', 'Use source filename')
+                .addOption('custom', 'Custom pattern')
+                .setValue(this.namingMode)
+                .onChange(value => {
+                    this.namingMode = value as QuestNamingMode;
+                    this.updateFolderWatchUI(container, previewCard);
+                    this.updatePreview(previewCard);
+                }));
+
+        // Custom naming pattern (only if custom mode)
+        if (this.namingMode === 'custom') {
+            new Setting(container)
+                .setName('Naming Pattern')
+                .setDesc('Use {{filename}}, {{date}}, {{date_slug}} placeholders')
+                .addText(text => text
+                    .setPlaceholder('Daily Quest - {{date}}')
+                    .setValue(this.customNamingPattern)
+                    .onChange(value => {
+                        this.customNamingPattern = value;
+                        this.updatePreview(previewCard);
+                    }));
+        }
+
+        // Archive options
+        new Setting(container)
+            .setName('Auto-Archive')
+            .setDesc('When to automatically archive the quest')
+            .addDropdown(dropdown => dropdown
+                .addOption('none', 'None (manual only)')
+                .addOption('on-new-file', 'When new file created')
+                .addOption('after-duration', 'After time period')
+                .addOption('at-time', 'At specific time daily')
+                .setValue(this.archiveMode)
+                .onChange(value => {
+                    this.archiveMode = value as ArchiveMode;
+                    this.updateFolderWatchUI(container, previewCard);
+                    this.updatePreview(previewCard);
+                }));
+
+        // Duration hours (only for after-duration mode)
+        if (this.archiveMode === 'after-duration') {
+            new Setting(container)
+                .setName('Archive After')
+                .setDesc('Hours until auto-archive')
+                .addText(text => text
+                    .setPlaceholder('24')
+                    .setValue(this.archiveDurationHours.toString())
+                    .onChange(value => {
+                        this.archiveDurationHours = parseInt(value, 10) || 24;
+                    }));
+        }
+
+        // Archive time (only for at-time mode)
+        if (this.archiveMode === 'at-time') {
+            new Setting(container)
+                .setName('Archive Time')
+                .setDesc('Time to archive (24-hour format)')
+                .addText(text => text
+                    .setPlaceholder('01:00')
+                    .setValue(this.archiveTime)
+                    .onChange(value => {
+                        this.archiveTime = value;
+                    }));
+        }
+
+        // Custom archive path (optional)
+        new Setting(container)
+            .setName('Custom Archive Path')
+            .setDesc('Leave blank to use default archive folder from settings')
+            .addText(text => {
+                text.setPlaceholder('(use default)')
+                    .setValue(this.archivePath)
+                    .onChange(value => {
+                        this.archivePath = value;
+                    });
+
+                // Add folder autocomplete
+                import('../utils/FolderSuggest').then(({ FolderSuggest }) => {
+                    new FolderSuggest(this.app, text.inputEl);
+                }).catch(() => { });
+            });
+    }
+
+    /**
+     * Update folder watcher UI (rebuild)
+     */
+    private updateFolderWatchUI(container: HTMLElement, previewCard: HTMLElement): void {
+        this.buildFolderWatchUI(container, previewCard);
+    }
+
+    /**
      * Detect placeholders in the body content
      */
     private detectPlaceholders(): void {
@@ -419,7 +585,8 @@ Write your quest description here.
             side: '📋',
             training: '🎯',
             recurring: '🔄',
-            daily: '📅',
+            'daily-quest': '📓',
+            'watched-folder': '📂',
         };
         const icon = icons[this.questType] || '📜';
 
@@ -504,6 +671,18 @@ Write your quest description here.
                     ? `recurrence: ${this.getRecurrenceString()}\n`
                     : '';
 
+                // Folder watcher lines for daily-quest and watched-folder types
+                const isFolderWatcher = ['daily-quest', 'watched-folder'].includes(this.questType);
+                const folderWatchLines = isFolderWatcher
+                    ? `watchFolder: "${this.watchFolder}"\n` +
+                    `namingMode: ${this.namingMode}\n` +
+                    (this.namingMode === 'custom' ? `namingPattern: "${this.customNamingPattern}"\n` : '') +
+                    `archiveMode: ${this.archiveMode}\n` +
+                    (this.archiveMode === 'after-duration' ? `archiveDurationHours: ${this.archiveDurationHours}\n` : '') +
+                    (this.archiveMode === 'at-time' ? `archiveTime: "${this.archiveTime}"\n` : '') +
+                    (this.archivePath ? `archivePath: "${this.archivePath}"\n` : '')
+                    : '';
+
                 content = `---
 questType: ${this.questType}
 status: available
@@ -511,7 +690,7 @@ priority: medium
 category: ${this.category || ''}
 xpValue: 50
 created: {{date}}
-${recurrenceLine}---
+${recurrenceLine}${folderWatchLines}---
 
 ${content}`;
             }
@@ -529,6 +708,11 @@ ${content}`;
                 new Notice('✨ New scroll inscribed!');
             }
 
+            // Register folder watcher for daily-quest and watched-folder types
+            if (['daily-quest', 'watched-folder'].includes(this.questType)) {
+                await this.registerFolderWatcher(filePath);
+            }
+
             this.close();
         } catch (error) {
             console.error('[ScrivenersQuillModal] Failed to save template:', error);
@@ -544,6 +728,48 @@ ${content}`;
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-|-$/g, '');
+    }
+
+    /**
+     * Register a folder watcher configuration with the FolderWatchService
+     */
+    private async registerFolderWatcher(templatePath: string): Promise<void> {
+        const service = this.plugin.folderWatchService;
+        if (!service) {
+            console.error('[ScrivenersQuillModal] FolderWatchService not available');
+            return;
+        }
+
+        // Check if a config already exists for this template
+        const existingConfigs = service.getConfigs();
+        const existingConfig = existingConfigs.find(c => c.templatePath === templatePath);
+
+        const config: WatchedFolderConfig = {
+            id: existingConfig?.id || service.generateConfigId(),
+            templatePath,
+            watchFolder: this.watchFolder,
+            questType: this.questType as 'daily-quest' | 'watched-folder',
+            namingMode: this.namingMode,
+            customNamingPattern: this.namingMode === 'custom' ? this.customNamingPattern : undefined,
+            category: this.category || 'daily',
+            priority: QuestPriority.MEDIUM,
+            xpPerTask: 5,
+            completionBonus: 15,
+            archiveMode: this.archiveMode,
+            archiveDurationHours: this.archiveMode === 'after-duration' ? this.archiveDurationHours : undefined,
+            archiveTime: this.archiveMode === 'at-time' ? this.archiveTime : undefined,
+            archivePath: this.archivePath || undefined,
+            enabled: true,
+            currentQuestPath: existingConfig?.currentQuestPath,
+        };
+
+        if (existingConfig) {
+            await service.updateConfig(config);
+            console.log('[ScrivenersQuillModal] Updated folder watcher config');
+        } else {
+            await service.addConfig(config);
+            console.log('[ScrivenersQuillModal] Registered new folder watcher config');
+        }
     }
 
     onClose(): void {

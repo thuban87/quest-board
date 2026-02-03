@@ -13,6 +13,7 @@ import { Achievement } from './models/Achievement';
 import { lootGenerationService } from './services/LootGenerationService';
 import { GearSlot } from './models/Gear';
 import { DEV_FEATURES_ENABLED } from './config/combatConfig';
+import type { WatchedFolderConfig } from './services/FolderWatchService';
 
 // Re-export for convenience
 export type { Achievement };
@@ -107,6 +108,9 @@ export interface QuestBoardSettings {
     aiDungeonDailyCount: number;          // Number of dungeons generated today
     aiDungeonLastResetDate: string;       // ISO date (UTC) of last quota reset
     aiDungeonMaxDaily: number;            // Max dungeons per day (default 10)
+
+    // Folder Watch Configurations (Daily Quest & Watched Folder)
+    watchedFolderConfigs: WatchedFolderConfig[];
 }
 
 /**
@@ -168,6 +172,9 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     aiDungeonDailyCount: 0,
     aiDungeonLastResetDate: '',  // Empty = needs reset on first use
     aiDungeonMaxDaily: 10,
+
+    // Folder Watch Configurations
+    watchedFolderConfigs: [],
 };
 
 /**
