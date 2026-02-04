@@ -13,6 +13,7 @@
 import { Vault, TFile, TFolder, normalizePath } from 'obsidian';
 import { QuestPriority } from '../models/QuestStatus';
 import { QUEST_SCHEMA_VERSION } from '../models/Quest';
+import type QuestBoardPlugin from '../../main';
 
 /** Day name to number mapping */
 const DAY_MAP: Record<string, number> = {
@@ -52,16 +53,23 @@ export interface TemplateStatus {
 /** Folder paths */
 const RECURRING_TEMPLATES_FOLDER = 'System/Templates/Quest Board/Recurring Quests';
 const RECURRING_QUESTS_FOLDER = 'Life/Quest Board/quests/recurring';
-const ARCHIVE_FOLDER = 'Life/Quest Board/quests/archive';
+// ARCHIVE_FOLDER now comes from settings.archiveFolder
 
 /**
  * Service for managing recurring quests
  */
 export class RecurringQuestService {
     private vault: Vault;
+    private plugin: QuestBoardPlugin;
 
-    constructor(vault: Vault) {
+    constructor(vault: Vault, plugin: QuestBoardPlugin) {
         this.vault = vault;
+        this.plugin = plugin;
+    }
+
+    /** Get archive folder from settings */
+    private get archiveFolder(): string {
+        return this.plugin.settings.archiveFolder || 'Quest Board/quests/archive';
     }
 
     /**
@@ -86,7 +94,7 @@ export class RecurringQuestService {
         const folders = [
             RECURRING_TEMPLATES_FOLDER,
             RECURRING_QUESTS_FOLDER,
-            ARCHIVE_FOLDER,
+            this.archiveFolder,
         ];
 
         for (const folderPath of folders) {
@@ -493,7 +501,7 @@ instanceDate: ${date}
                 if (!content.includes('status: completed')) continue;
 
                 // Move to archive
-                const archiveFolderPath = normalizePath(`${ARCHIVE_FOLDER}/${yesterdayMonth}`);
+                const archiveFolderPath = normalizePath(`${this.archiveFolder}/${yesterdayMonth}`);
 
                 // Ensure month folder exists
                 const monthFolder = this.vault.getAbstractFileByPath(archiveFolderPath);

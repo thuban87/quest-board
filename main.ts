@@ -56,12 +56,14 @@ import { showProgressDashboardModal } from './src/modals/ProgressDashboardModal'
 import { initDailyNoteService, dailyNoteService } from './src/services/DailyNoteService';
 import { initTemplateStatsService } from './src/services/TemplateStatsService';
 import { setBalanceTestingContext } from './src/services/BalanceTestingService';
+import { FolderWatchService } from './src/services/FolderWatchService';
 
 
 
 export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
     recurringQuestService!: RecurringQuestService;
+    folderWatchService!: FolderWatchService;
     monsterService = monsterService; // Expose for testing/debugging
     battleService = battleService; // Expose for testing/debugging
     private lastRecurrenceCheckHour: number = -1;
@@ -161,11 +163,16 @@ export default class QuestBoardPlugin extends Plugin {
         }
 
         // Initialize recurring quest service
-        this.recurringQuestService = new RecurringQuestService(this.app.vault);
+        this.recurringQuestService = new RecurringQuestService(this.app.vault, this);
+
+        // Initialize folder watch service (Daily Quest & Watched Folder)
+        this.folderWatchService = new FolderWatchService(this.app.vault, this);
 
         // Process recurring quests on startup (small delay to let vault load)
         setTimeout(async () => {
             await this.recurringQuestService.processRecurrence();
+            // Initialize folder watchers after vault is ready
+            await this.folderWatchService.initialize();
         }, 2000);
 
         // Register interval to check at 1am daily
@@ -594,6 +601,7 @@ export default class QuestBoardPlugin extends Plugin {
     onunload(): void {
         stopRecoveryTimerCheck();
         statusBarService.destroy();
+        this.folderWatchService?.cleanup();
     }
 
     async loadSettings(): Promise<void> {

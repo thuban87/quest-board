@@ -6,6 +6,7 @@
  */
 
 import { Vault, TFile, TFolder } from 'obsidian';
+import type { ArchiveMode, QuestNamingMode } from './FolderWatchService';
 
 /**
  * Placeholder info extracted from template
@@ -28,6 +29,14 @@ export interface ParsedTemplate {
     placeholders: PlaceholderInfo[];
     questType: 'main' | 'side' | string;
     category?: string;
+    // Folder watcher fields (for daily-quest and watched-folder types)
+    watchFolder?: string;
+    namingMode?: QuestNamingMode;
+    namingPattern?: string;
+    archiveMode?: ArchiveMode;
+    archiveDurationHours?: number;
+    archiveTime?: string;
+    archivePath?: string;
 }
 
 /**
@@ -120,8 +129,31 @@ export class TemplateService {
     /**
      * Extract questType and other frontmatter values
      */
-    extractFrontmatter(content: string): { questType: string; questName?: string; category?: string } {
-        const result = { questType: 'side', questName: undefined as string | undefined, category: undefined as string | undefined };
+    extractFrontmatter(content: string): {
+        questType: string;
+        questName?: string;
+        category?: string;
+        // Folder watcher fields
+        watchFolder?: string;
+        namingMode?: QuestNamingMode;
+        namingPattern?: string;
+        archiveMode?: ArchiveMode;
+        archiveDurationHours?: number;
+        archiveTime?: string;
+        archivePath?: string;
+    } {
+        const result: ReturnType<typeof this.extractFrontmatter> = {
+            questType: 'side',
+            questName: undefined,
+            category: undefined,
+            watchFolder: undefined,
+            namingMode: undefined,
+            namingPattern: undefined,
+            archiveMode: undefined,
+            archiveDurationHours: undefined,
+            archiveTime: undefined,
+            archivePath: undefined,
+        };
 
         // Check for frontmatter
         if (!content.startsWith('---')) {
@@ -153,6 +185,42 @@ export class TemplateService {
             result.category = catMatch[1];
         }
 
+        // Extract folder watcher fields
+        const watchFolderMatch = frontmatter.match(/watchFolder:\s*["']?([^"'\n]+)["']?/);
+        if (watchFolderMatch) {
+            result.watchFolder = watchFolderMatch[1].trim();
+        }
+
+        const namingModeMatch = frontmatter.match(/namingMode:\s*(\w+)/);
+        if (namingModeMatch) {
+            result.namingMode = namingModeMatch[1] as QuestNamingMode;
+        }
+
+        const namingPatternMatch = frontmatter.match(/namingPattern:\s*["']?([^"'\n]+)["']?/);
+        if (namingPatternMatch) {
+            result.namingPattern = namingPatternMatch[1].trim();
+        }
+
+        const archiveModeMatch = frontmatter.match(/archiveMode:\s*(\S+)/);
+        if (archiveModeMatch) {
+            result.archiveMode = archiveModeMatch[1] as ArchiveMode;
+        }
+
+        const archiveDurationMatch = frontmatter.match(/archiveDurationHours:\s*(\d+)/);
+        if (archiveDurationMatch) {
+            result.archiveDurationHours = parseInt(archiveDurationMatch[1], 10);
+        }
+
+        const archiveTimeMatch = frontmatter.match(/archiveTime:\s*["']?([^"'\n]+)["']?/);
+        if (archiveTimeMatch) {
+            result.archiveTime = archiveTimeMatch[1].trim();
+        }
+
+        const archivePathMatch = frontmatter.match(/archivePath:\s*["']?([^"'\n]+)["']?/);
+        if (archivePathMatch) {
+            result.archivePath = archivePathMatch[1].trim();
+        }
+
         return result;
     }
 
@@ -179,6 +247,14 @@ export class TemplateService {
             placeholders,
             questType: frontmatter.questType,
             category: frontmatter.category,
+            // Folder watcher fields
+            watchFolder: frontmatter.watchFolder,
+            namingMode: frontmatter.namingMode,
+            namingPattern: frontmatter.namingPattern,
+            archiveMode: frontmatter.archiveMode,
+            archiveDurationHours: frontmatter.archiveDurationHours,
+            archiveTime: frontmatter.archiveTime,
+            archivePath: frontmatter.archivePath,
         };
     }
 
