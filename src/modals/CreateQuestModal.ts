@@ -9,6 +9,7 @@ import type QuestBoardPlugin from '../../main';
 import { QuestPriority, QuestDifficulty } from '../models/QuestStatus';
 import { ManualQuest, QUEST_SCHEMA_VERSION } from '../models/Quest';
 import { saveManualQuest, loadAllQuests } from '../services/QuestService';
+import { ColumnConfigService } from '../services/ColumnConfigService';
 
 /**
  * File Suggest Modal for selecting a file from the vault
@@ -38,6 +39,7 @@ class FileSuggestModal extends FuzzySuggestModal<TFile> {
 interface QuestFormData {
     questName: string;
     questType: string;  // Dynamic folder name (Main, Side, Training, Recurring, etc.)
+    status: string;     // Starting column for the quest
     category: string;
     priority: QuestPriority;
     linkedTaskFile: string;
@@ -64,9 +66,11 @@ export class CreateQuestModal extends Modal {
         this.onSave = onSave || (() => { });
 
         // Initialize form with defaults
+        const columnConfigService = new ColumnConfigService(plugin.settings);
         this.formData = {
             questName: '',
             questType: 'main',  // Default, will be updated from folders
+            status: columnConfigService.getDefaultColumn(),  // First column by default
             category: '',
             priority: QuestPriority.MEDIUM,
             linkedTaskFile: '',
@@ -190,6 +194,21 @@ export class CreateQuestModal extends Modal {
                     .addOption(QuestPriority.HIGH, '🔴 High')
                     .setValue(this.formData.priority)
                     .onChange(value => this.formData.priority = value as QuestPriority);
+            });
+
+        // Status (Starting Column)
+        new Setting(contentEl)
+            .setName('Starting Column')
+            .setDesc('Which column should this quest start in?')
+            .addDropdown(dropdown => {
+                const columnService = new ColumnConfigService(this.plugin.settings);
+                const columns = columnService.getColumns();
+                columns.forEach(col => {
+                    dropdown.addOption(col.id, `${col.emoji || ''} ${col.title}`.trim());
+                });
+                dropdown
+                    .setValue(this.formData.status)
+                    .onChange(value => this.formData.status = value);
             });
 
         // Linked Task File with file search button
@@ -326,7 +345,7 @@ export class CreateQuestModal extends Modal {
 
     private async loadExistingCategories() {
         try {
-            const result = await loadAllQuests(this.app.vault, this.plugin.settings.storageFolder);
+            const result = await loadAllQuests(this.app.vault, this.plugin.settings.storageFolder, this.plugin.settings);
             result.quests.forEach(quest => {
                 if (quest.category) {
                     this.existingCategories.add(quest.category.toLowerCase());
@@ -421,7 +440,7 @@ export class CreateQuestModal extends Modal {
             questName: this.formData.questName.trim(),
             questType: this.formData.questType,
             category: this.formData.category.trim() || 'general',
-            status: 'available' as any,
+            status: this.formData.status,  // Use selected status from dropdown
             priority: this.formData.priority,
             tags: [],
             createdDate: new Date().toISOString(),

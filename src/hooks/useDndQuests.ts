@@ -9,21 +9,23 @@
 import { useCallback } from 'react';
 import { DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { QuestStatus } from '../models/QuestStatus';
 import { Quest, isManualQuest } from '../models/Quest';
 
 interface UseDndQuestsOptions {
     /** Called when quest is moved to a different column */
-    onMoveQuest: (questId: string, newStatus: QuestStatus) => void;
+    onMoveQuest: (questId: string, newStatus: string) => void;
 
     /** Called when quest is reordered within the same column */
-    onReorderQuest?: (questId: string, newSortOrder: number, status: QuestStatus) => void;
+    onReorderQuest?: (questId: string, newSortOrder: number, status: string) => void;
 
     /** Current quest status map (questId -> status) for detecting same-column drops */
-    getQuestStatus?: (questId: string) => QuestStatus | undefined;
+    getQuestStatus?: (questId: string) => string | undefined;
 
     /** Current quests grouped by status for calculating new sort orders */
-    getQuestsForStatus?: (status: QuestStatus) => Quest[];
+    getQuestsForStatus?: (status: string) => Quest[];
+
+    /** Valid column IDs for detecting column drops */
+    columnIds?: string[];
 }
 
 interface UseDndQuestsResult {
@@ -40,6 +42,7 @@ export function useDndQuests({
     onReorderQuest,
     getQuestStatus,
     getQuestsForStatus,
+    columnIds = [],
 }: UseDndQuestsOptions): UseDndQuestsResult {
     // DnD sensors - require slight movement before dragging starts
     const sensors = useSensors(
@@ -62,10 +65,10 @@ export function useDndQuests({
         if (questId === overId) return;
 
         // Check if dropped on a status (column/section header)
-        const isDroppedOnStatus = Object.values(QuestStatus).includes(overId as QuestStatus);
+        const isDroppedOnStatus = columnIds.includes(overId);
 
         if (isDroppedOnStatus) {
-            const newStatus = overId as QuestStatus;
+            const newStatus = overId;
             const currentStatus = getQuestStatus?.(questId);
 
             // If different column, move the quest
@@ -127,7 +130,7 @@ export function useDndQuests({
 
             onReorderQuest(questId, newSortOrder, sourceStatus);
         }
-    }, [onMoveQuest, onReorderQuest, getQuestStatus, getQuestsForStatus]);
+    }, [onMoveQuest, onReorderQuest, getQuestStatus, getQuestsForStatus, columnIds]);
 
     return {
         sensors,

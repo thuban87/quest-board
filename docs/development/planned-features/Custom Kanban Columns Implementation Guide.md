@@ -1,0 +1,899 @@
+# Custom Kanban Columns - Implementation Guide
+
+**Status:** Ready for implementation
+**Estimated Effort:** 10-12 hours across 5-6 phases
+**Created:** 2026-02-01
+**Last Updated:** 2026-02-04 (comprehensive codebase review + security/performance analysis)
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Key Design Decisions](#key-design-decisions)
+3. [Data Structures](#data-structures)
+4. [Migration Strategy](#migration-strategy)
+5. [Security & Validation](#security--validation)
+6. [Performance Optimizations](#performance-optimizations)
+7. [ColumnConfigService Architecture](#columnconfigservice-architecture)
+8. [Implementation Phases](#implementation-phases)
+   - [Phase 1: Foundation (Settings UI & Service)](#phase-1-foundation-settings-ui--service)
+   - [Phase 2: Archive Bug Fix & Quest Model Prep](#phase-2-archive-bug-fix--quest-model-prep)
+   - [Phase 3: Type Migration & Core Services](#phase-3-type-migration--core-services-the-big-change)
+   - [Phase 4: Quest Actions Service](#phase-4-quest-actions-service-completion-logic)
+   - [Phase 5: Quest Card & UI Components Part 1](#phase-5-quest-card--ui-components-part-1)
+   - [Phase 6: Kanban Views, DnD, & Modals](#phase-6-kanban-views-dnd--modals)
+   - [Phase 7: Cleanup, Migration, & Testing](#phase-7-cleanup-migration--testing)
+9. [Complete Files List](#complete-files-list)
+10. [Verification Checklist (Final)](#verification-checklist-final)
+11. [Rollback Plan](#rollback-plan)
+12. [Post-Implementation Considerations](#post-implementation-considerations)
+13. [Notes](#notes)
+14. [Questions for Brad (Post-Implementation)](#questions-for-brad-post-implementation)
+
+---
+
+## Overview
+
+Allow users to define their own Kanban column names, emojis, order, and completion behavior. Completion is decoupled from column position - triggered by an explicit Complete button, not column location.
+
+---
+
+## Key Design Decisions
+
+### Columns Are Organizational + Optional Completion Triggers
+- Users define column ID, title, optional emoji
+- Each column has optional `triggersCompletion: boolean` flag
+- Drag-and-drop works between any columns
+- Moving between columns = organizational only (no rewards)
+
+### Completion Is Button-Triggered
+- **Complete button** → awards loot, streaks, power-ups, bounty, stamina, activity logging, sets `completedDate`
+- If a column with `triggersCompletion: true` exists → quest auto-moves there
+- If no completion column exists → quest stays in current column
+- Moving between columns = just organizational, no rewards
+
+### XP Award System Remains Separate
+**IMPORTANT:** XP awards are NOT part of this feature. The existing `useXPAward` hook continues to watch task files and award XP when tasks are completed. This feature only handles: loot, streaks, power-ups, bounty, stamina, activity logging.
+
+**Architecture note:** The design allows for future integration of XP into the Complete button if needed, but it's explicitly out of scope for this implementation.
+
+### Button States
+
+**Before completion:**
+- Move buttons for each column (except current)
+- Complete ✅ button (bottom of card + context menu)
+
+**After completion:**
+- Reopen 🔄 button (clears `completedDate`, logs reopen event)
+- Archive 📦 button (moves file to archive folder)
+- No column move buttons (drag-and-drop still works)
+
+### Completed Quest Visual Styling
+- Green border/background on completed quest cards
+- Helps distinguish completed quests from incomplete ones
+
+### Completed Quest Tracking
+- Completed = quest has `completedDate` set (regardless of column)
+- Count all quests with `completedDate` regardless of folder location
+
+---
+
+## Data Structures
+
+### CustomColumn
+```typescript
+interface CustomColumn {
+    id: string;                    // Internal key (stored in quest frontmatter)
+    title: string;                 // Display name
+    emoji?: string;                // Optional, defaults to empty string, max 2 chars
+    triggersCompletion?: boolean;  // If true, moving here awards rewards (default false)
+}
+```
+
+### Quest Model Update
+```typescript
+interface Quest {
+    // ... existing fields
+    status: QuestStatus | string;  // Changed from QuestStatus enum to union type
+    filePath?: string;             // NEW: Actual file location (for archive support)
+}
+```
+
+### Default Columns
+```typescript
+const DEFAULT_COLUMNS: CustomColumn[] = [
+    { id: 'available', title: 'Available', emoji: '📋', triggersCompletion: false },
+    { id: 'active', title: 'Active', emoji: '⚡', triggersCompletion: false },
+    { id: 'in-progress', title: 'In Progress', emoji: '🔨', triggersCompletion: false },
+    { id: 'completed', title: 'Completed', emoji: '✅', triggersCompletion: true },
+];
+```
+
+### New Settings
+```typescript
+interface QuestBoardSettings {
+    // ... existing settings
+    customColumns: CustomColumn[];      // User-defined columns
+    enableCustomColumns: boolean;       // Feature flag for gradual rollout
+    archiveFolder: string;              // EXISTING - already in codebase at settings.ts:73
+}
+```
+
+---
+
+## Migration Strategy
+
+**Auto-migrate on load (no file changes):**
+1. When loading quest, check if `status` matches any current column ID
+2. If not, check legacy enum values and map to current columns
+3. If no match found, default to first column
+4. Quest files keep original `status` value - no file modification
+5. If user deletes a column, quests in that column auto-migrate to first column
+
+**Legacy mapping:**
+```typescript
+const LEGACY_STATUS_MAP: Record<string, string> = {
+    'available': 'available',
+    'active': 'active',
+    'in-progress': 'in-progress',
+    'completed': 'completed',
+};
+```
+
+**Edge cases:**
+- Quest has `status: 'custom-old-column'` but user deleted that column → migrate to first column
+- Quest has `status: 'completed'` but user renamed completion column → show warning modal with option to reassign
+- User has no columns (impossible - settings enforces minimum 1)
+
+---
+
+## Security & Validation
+
+### Input Validation
+
+**Column ID validation** (critical for frontmatter safety):
+```typescript
+function validateColumnId(id: string): boolean {
+    // Lowercase alphanumeric, hyphens, underscores only, 1-32 chars
+    return /^[a-z0-9_-]{1,32}$/.test(id);
+}
+```
+
+**Why:** Prevents frontmatter injection attacks like:
+```yaml
+status: evil
+maliciousField: true
+```
+
+**Column validation checks:**
+- ✅ ID is required and non-empty
+- ✅ ID matches pattern: `^[a-z0-9_-]{1,32}$`
+- ✅ ID is unique (no duplicates)
+- ✅ Display name is required (max 50 chars)
+- ✅ Emoji is optional (max 2 chars)
+- ✅ At least 1 column exists at all times
+
+**Archive folder validation:**
+- Use existing `validateFolderPath()` from `src/utils/pathValidator.ts`
+- Already implemented in settings UI at line 301-309
+
+---
+
+## Performance Optimizations
+
+### 1. Memoize Column Configuration
+Components shouldn't read `plugin.settings.customColumns` on every render.
+
+**Solution:** Use `useMemo` in components:
+```typescript
+const columns = useMemo(
+    () => columnConfigService.getColumns(),
+    [plugin.settings.customColumns]
+);
+```
+
+Or create a React Context:
+```typescript
+const ColumnConfigContext = React.createContext<CustomColumn[]>(DEFAULT_COLUMNS);
+```
+
+### 2. ColumnConfigService Caching
+```typescript
+export class ColumnConfigService {
+    private cachedColumns: CustomColumn[] | null = null;
+
+    getColumns(): CustomColumn[] {
+        if (!this.cachedColumns) {
+            this.cachedColumns = this.settings.customColumns || DEFAULT_COLUMNS;
+        }
+        return this.cachedColumns;
+    }
+
+    invalidateCache(): void {
+        this.cachedColumns = null;
+    }
+}
+```
+
+---
+
+## ColumnConfigService Architecture
+
+Central service for all column-related logic. Provides type-safe access, validation, and completion logic.
+
+```typescript
+// src/services/ColumnConfigService.ts
+
+import { QuestBoardSettings } from '../settings';
+import { CustomColumn } from '../models/CustomColumn';
+
+export class ColumnConfigService {
+    private settings: QuestBoardSettings;
+    private cachedColumns: CustomColumn[] | null = null;
+
+    constructor(settings: QuestBoardSettings) {
+        this.settings = settings;
+    }
+
+    /**
+     * Get all columns (from settings or defaults)
+     */
+    getColumns(): CustomColumn[] {
+        if (!this.cachedColumns) {
+            this.cachedColumns = this.settings.customColumns || DEFAULT_COLUMNS;
+        }
+        return this.cachedColumns;
+    }
+
+    /**
+     * Get column by ID
+     */
+    getColumnById(id: string): CustomColumn | undefined {
+        return this.getColumns().find(c => c.id === id);
+    }
+
+    /**
+     * Check if a column triggers quest completion
+     */
+    isCompletionColumn(columnId: string): boolean {
+        const column = this.getColumnById(columnId);
+        return column?.triggersCompletion ?? false;
+    }
+
+    /**
+     * Get first completion column (for Complete button auto-move)
+     */
+    getFirstCompletionColumn(): CustomColumn | undefined {
+        return this.getColumns().find(c => c.triggersCompletion);
+    }
+
+    /**
+     * Get default column for new quests
+     */
+    getDefaultColumn(): string {
+        return this.getColumns()[0]?.id || 'available';
+    }
+
+    /**
+     * Validate column ID format
+     */
+    validateColumnId(id: string): boolean {
+        return /^[a-z0-9_-]{1,32}$/.test(id);
+    }
+
+    /**
+     * Check if column ID is unique
+     */
+    isColumnIdUnique(id: string, excludeIndex?: number): boolean {
+        const columns = this.getColumns();
+        return !columns.some((col, idx) =>
+            col.id === id && idx !== excludeIndex
+        );
+    }
+
+    /**
+     * Invalidate cache (call after settings change)
+     */
+    invalidateCache(): void {
+        this.cachedColumns = null;
+    }
+}
+```
+
+---
+
+## Implementation Phases
+
+### Phase 1: Foundation (Settings UI & Service) ✅ COMPLETE
+**Estimated Time:** 2-2.5 hours
+**Actual Time:** ~1.5 hours (2026-02-05)
+**Goal:** Add settings UI and ColumnConfigService without breaking existing functionality
+
+#### Tasks:
+1. ✅ Create `CustomColumn` interface in `src/models/CustomColumn.ts`
+2. ✅ Update `QuestBoardSettings` in `src/settings.ts`:
+   - Added `customColumns: CustomColumn[]`
+   - Added `enableCustomColumns: boolean` (default `false`)
+   - Confirmed `archiveFolder` exists (line 73)
+3. ✅ Update `DEFAULT_SETTINGS` with default columns
+4. ✅ Create `ColumnConfigService` in `src/services/ColumnConfigService.ts`
+5. ✅ Build settings UI:
+   - Created separate `ColumnManagerModal.ts` (opened from settings)
+   - Show existing columns with edit/reorder/delete
+   - Add new column form with validation
+   - Implemented validation (ID format, uniqueness, min 1 column)
+   - Confirmation for deletion via `confirm()` dialog
+   - Warning box about ID changes affecting quests
+6. 🔲 Manual testing in Obsidian (handed off to user)
+
+#### Key Files Modified:
+- `src/models/CustomColumn.ts` (NEW)
+- `src/services/ColumnConfigService.ts` (NEW)
+- `src/modals/ColumnManagerModal.ts` (NEW)
+- `src/settings.ts` (UPDATE)
+- `src/styles/modals.css` (UPDATE - ~260 lines added)
+
+#### Testing Checklist:
+- [ ] Settings UI renders correctly
+- [ ] Can add new column with valid ID
+- [ ] Cannot add column with invalid ID (shows error)
+- [ ] Cannot add duplicate column ID (shows error)
+- [ ] Can reorder columns with drag-and-drop
+- [ ] Can delete column (shows confirmation)
+- [ ] Cannot delete last column
+- [ ] Can edit column after creation
+- [ ] `triggersCompletion` checkbox works
+
+#### Tech Debt:
+- **Up/Down Arrow Reordering:** Original spec called for up/down arrow buttons; implemented DnD instead. More intuitive but could add arrows as a future enhancement.
+- **Confirmation for "Quests Exist" Deletion:** Currently shows generic confirmation. Future enhancement could check if quests exist in that column and show a more specific warning.
+
+#### Notes:
+- Feature flag `enableCustomColumns` is OFF - existing functionality unchanged
+- No quest files modified
+- Build passes with no TypeScript errors
+
+---
+
+### Phase 2: Archive Bug Fix & Quest Model Prep ✅ COMPLETE
+**Estimated Time:** 1.5-2 hours
+**Actual Time:** ~15 minutes (2026-02-05)
+**Goal:** Fix archive duplicate file bug and prepare Quest model for type migration
+
+#### Tasks:
+1. ✅ Add `filePath?: string` to Quest interface (`src/models/Quest.ts`)
+2. ✅ Update `QuestService.loadQuests()` to set `filePath` when loading:
+   ```typescript
+   // In loadQuests() after parsing quest data
+   quest.filePath = file.path;
+   ```
+3. ✅ Update `QuestService.saveManualQuest()` to respect existing `filePath`:
+   ```typescript
+   // At path determination (line ~507)
+   const targetPath = quest.filePath
+       ?? `${baseFolder}/${subFolder}/${safeQuestId}.md`;
+   ```
+4. ✅ Update `QuestService.saveAIQuest()` similarly
+5. ✅ Test archive bug fix:
+   - Create quest
+   - Archive it (move file to archive folder)
+   - Toggle a task in the archived quest
+   - Verify no duplicate file is created
+   - Verify quest stays in archive folder
+
+#### Key Files Modified:
+- `src/models/Quest.ts` (UPDATE)
+- `src/services/QuestService.ts` (UPDATE)
+
+#### Testing Checklist:
+- [x] Existing quests load correctly
+- [x] New quests save to correct folder
+- [x] Archived quests respect archive folder
+- [x] Toggling task in archived quest doesn't create duplicate
+- [x] Quest files have correct `filePath` property in memory
+
+#### Notes:
+- This phase is independent of custom columns feature
+- Fixes a critical bug in existing functionality
+- No TypeScript errors
+
+---
+
+### Phase 3: Type Migration & Core Services (The Big Change) ✅ COMPLETE
+**Estimated Time:** 2-2.5 hours
+**Actual Time:** ~1 hour (2026-02-05)
+**Goal:** Change Quest.status type and fix immediate TypeScript errors
+
+⚠️ **WARNING:** This phase was expected to generate 80-150 TypeScript errors. In practice, we saw only 19 due to TypeScript's permissive handling of union types with strings.
+
+#### Tasks:
+1. ✅ Change `Quest.status` type in `src/models/Quest.ts`:
+   ```typescript
+   // FROM:
+   status: QuestStatus;
+
+   // TO:
+   status: QuestStatus | string;
+   ```
+
+2. ✅ Update `src/store/questStore.ts`:
+   - Changed `updateQuestStatus()` signature: `(questId: string, status: QuestStatus | string)`
+   - Changed `getQuestsByStatus()` to accept `string` status  
+   - Updated selectors (`selectQuestsByStatus`, `selectQuestCountByStatus`)
+   - **Note:** Hardcoded `status === QuestStatus.COMPLETED` check remains for now (deferred to Phase 4)
+
+3. ✅ Update `src/utils/validator.ts`:
+   - Removed enum check, accepts any non-empty string
+   - Added fallback to `QuestStatus.AVAILABLE` if status missing/empty
+
+4. ✅ Update `src/config/questStatusConfig.ts`:
+   - Added dynamic `getStatusConfigs(settings)` function
+   - Added `getSidebarStatuses(settings)` function
+   - Added `getKanbanStatuses(settings)` function
+   - Updated `StatusConfig.status` type to `QuestStatus | string`
+   - Updated `getStatusConfig()` to accept optional settings param
+   - Kept existing static arrays for backward compatibility
+
+5. ✅ Update `src/services/QuestService.ts`:
+   - Removed `as QuestStatus` cast in status parsing (line 146)
+   - Now accepts any string from frontmatter
+
+6. ✅ Audited all Priority 1 & 2 files for issues:
+   - `Quest.ts` - Fixed ✓
+   - `questStore.ts` - Fixed ✓
+   - `characterStore.ts` - No QuestStatus usage (no changes needed) ✓
+   - `QuestService.ts` - Fixed ✓
+   - `validator.ts` - Fixed ✓
+   - `questStatusConfig.ts` - Fixed ✓
+
+7. ✅ Ran `npm run build` - identified 19 TypeScript errors in components (deferred to Phases 5-6)
+
+#### Key Files Modified:
+- `src/models/Quest.ts` (UPDATE)
+- `src/store/questStore.ts` (UPDATE)
+- `src/utils/validator.ts` (UPDATE)
+- `src/config/questStatusConfig.ts` (UPDATE)
+- `src/services/QuestService.ts` (UPDATE)
+
+#### Testing Checklist:
+- [x] No TypeScript errors in models/stores
+- [x] No TypeScript errors in core services
+- [x] validator.ts accepts custom status strings
+- [x] `npm run build` runs (component errors expected, deferred)
+
+#### Tech Debt:
+- **Fewer errors than expected:** Implementation guide estimated 80-150 errors, but only 19 appeared. TypeScript's union type `QuestStatus | string` is permissive because enum values ARE strings - errors only appear in `Record<QuestStatus>` lookups and strict callback types.
+- **QuestStatus.COMPLETED checks remain:** The `questStore.ts` hardcoded completion check (line 96) was left in place to be replaced with `ColumnConfigService.isCompletionColumn()` in Phase 4.
+- **Component errors (19):** All in FullKanban.tsx (12), QuestCard.tsx (3), SidebarQuests.tsx (4) - using `Record<QuestStatus>` patterns. Deferred to Phases 5-6.
+
+#### Notes:
+- Feature flag `enableCustomColumns` is still OFF
+- Build has 19 expected TypeScript errors in components (Phase 5-6 work)
+- Core models, stores, and services are fully updated
+
+---
+
+### Phase 4: Quest Actions Service (Completion Logic) ✅ COMPLETE
+**Estimated Time:** 1.5-2 hours
+**Actual Time:** ~1 hour (2026-02-05)
+**Goal:** Update QuestActionsService to use ColumnConfigService and add new completion methods
+
+#### Tasks:
+1. ✅ Added `settings: QuestBoardSettings` to `MoveQuestOptions` interface
+2. ✅ Updated `moveQuest()` signature to accept `string` instead of `QuestStatus`
+3. ✅ Created `ColumnConfigService` instance and `isCompletion` variable for dynamic completion detection
+4. ✅ Replaced ALL 6 hardcoded `QuestStatus.COMPLETED` checks with `isCompletion`:
+   - Line 103-107: completedDate setting (now only sets if not already completed)
+   - Line 115: Streak update trigger
+   - Line 191: Power-up/quest completion triggers
+   - Line 270: Bounty roll trigger
+   - Line 305: Loot generation trigger
+   - Line 423: Stamina award and activity logging trigger
+5. ✅ Added `completeQuest()` method (80+ lines):
+   - Uses ColumnConfigService to find completion column
+   - If completion column exists, delegates to `moveQuest()`
+   - If no completion column, manually sets completedDate and awards stamina
+6. ✅ Added `reopenQuest()` method (50+ lines):
+   - Clears `completedDate`
+   - Logs reopen event with activity logging
+   - Saves updated quest to file
+7. ✅ Added `archiveQuest()` method (70+ lines):
+   - Validates quest has `filePath`
+   - Ensures archive folder exists
+   - Moves file using `vault.rename()`
+   - Updates quest `filePath` in store
+   - Logs archive event
+8. ✅ Updated `useQuestActions` hook:
+   - Added `settings` to options interface
+   - Updated `moveQuest` callback signature to accept `string`
+   - Passes `settings` to `moveQuest()` call
+
+#### Key Files Modified:
+- `src/services/QuestActionsService.ts` (MAJOR UPDATE - 220+ lines added)
+- `src/hooks/useQuestActions.ts` (settings parameter added)
+
+#### Testing Checklist:
+- [ ] Moving quest to completion column awards rewards
+- [ ] Moving quest to non-completion column doesn't award rewards
+- [ ] `completeQuest()` works with and without completion column
+- [ ] `reopenQuest()` clears completedDate
+- [ ] `reopenQuest()` logs activity event
+- [ ] `archiveQuest()` moves file to archive folder
+- [ ] No TypeScript errors in QuestActionsService
+
+#### Tech Debt:
+- **Component errors remain (21):** FullKanban.tsx (13), QuestCard.tsx (3), SidebarQuests.tsx (5) - Phase 5-6 work
+- **Cannot deploy:test until Phase 5-6 errors fixed:** Build fails with component errors
+- **`completeQuest()` no-completion-column path:** Simpler implementation (only stamina + activity logging) vs full moveQuest path. Consider whether loot/streaks/power-ups should be triggered here too.
+
+#### Notes:
+- Feature flag `enableCustomColumns` is still OFF
+- Build has 21 expected TypeScript errors in components (Phase 5-6 work)
+- Core service logic is fully updated and ready for component integration
+
+---
+
+### Phase 5: Quest Card & UI Components Part 1 ✅ COMPLETE
+**Estimated Time:** 2-2.5 hours
+**Actual Time:** ~1.5 hours (2026-02-05)
+**Goal:** Update QuestCard with dynamic buttons and integrate with ColumnConfigService
+
+#### Tasks Completed:
+1. ✅ Updated `src/components/QuestCard.tsx`:
+   - Removed hardcoded `STATUS_TRANSITIONS` object
+   - Removed hardcoded `MOVE_LABELS` object
+   - Added props: `columns`, `onComplete`, `onReopen`, `onArchive`
+   - Changed `onMove` signature to accept `string` instead of `QuestStatus`
+   - Used `useMemo` to compute `availableMoves` from columns prop
+   - Fixed `isCompleted` to check column config (not just `completedDate`)
+   - Added `hasCompletionColumn` check - Complete button only shows when NO completion column
+
+2. ✅ Added dynamic move buttons:
+   - Renders button for each column except current status
+   - Uses emoji + title from column config
+
+3. ✅ Added Complete button:
+   - Only visible when `!hasCompletionColumn` (no redundancy with Completed column button)
+   - Calls `onComplete` handler
+
+4. ✅ Added Reopen + Archive buttons:
+   - Visible when quest is in a completion column
+   - Reopen moves to first non-completion column
+   - Archive removes quest from Kanban immediately
+
+5. ✅ Added context menu Complete/Archive/Reopen options
+
+6. ✅ Added completed quest styling in `kanban.css`:
+   - Green border and left accent
+   - Gradient background (green → transparent)
+   - Muted title color
+   - `.qb-completed-actions` container
+
+7. ✅ Updated `FullKanban.tsx` & `SidebarQuests.tsx`:
+   - Imported and memoized ColumnConfigService
+   - Added `handleCompleteQuest`, `handleReopenQuest`, `handleArchiveQuest` handlers
+   - Pass `columns` and action handlers to QuestCard
+   - Pass `settings` to `useQuestActions` hook
+   - Updated collapsed state to use dynamic column IDs
+   - `SidebarQuests` filters to non-completion columns only
+
+8. ✅ Updated `useDndQuests.ts`:
+   - Added `columnIds` parameter for dynamic column detection
+   - Updated all type signatures from `QuestStatus` to `string`
+   - Replaced `Object.values(QuestStatus)` with `columnIds.includes()`
+
+9. ✅ Fixed `reopenQuest()` in `QuestActionsService.ts`:
+   - Now accepts optional `settings` parameter
+   - Moves quest to first non-completion column (not just clears completedDate)
+
+10. ✅ Fixed `archiveQuest()` in `QuestActionsService.ts`:
+    - Now calls `removeQuest()` to immediately remove from Kanban store
+
+#### Key Files Modified:
+- `src/components/QuestCard.tsx` (MAJOR UPDATE)
+- `src/components/FullKanban.tsx` (MAJOR UPDATE)
+- `src/components/SidebarQuests.tsx` (MAJOR UPDATE)
+- `src/hooks/useDndQuests.ts` (UPDATE)
+- `src/services/QuestActionsService.ts` (UPDATE - reopenQuest, archiveQuest)
+- `src/styles/kanban.css` (UPDATE - completed styling)
+
+#### Testing Checklist:
+- [x] Move buttons show all columns except current
+- [x] Complete button only visible when NO completion column exists
+- [x] Complete button calls `onComplete` handler
+- [x] Reopen button visible when quest in completion column
+- [x] Reopen moves quest to first non-completion column
+- [x] Archive button visible when quest in completion column
+- [x] Archive removes quest from Kanban immediately
+- [x] Completed quests have green border/background
+- [x] Context menu has Complete/Archive/Reopen options
+- [x] No TypeScript errors (0 errors, down from 21)
+- [x] Deployed to test vault and manually verified
+
+#### Tech Debt:
+- `questStatusConfig.ts` dynamic functions (getStatusConfigs, getSidebarStatuses, getKanbanStatuses) were created in Phase 3 but not required by Phase 5 - components now use ColumnConfigService directly
+- Consider consolidating `questStatusConfig.ts` and `ColumnConfigService.ts` in future refactor
+
+#### Notes:
+- Phase 5 also completed most of Phase 6 tasks (FullKanban, SidebarQuests, useDndQuests)
+- Only remaining Phase 6 work: modal dropdowns (CreateQuestModal, FilterBar)
+- Feature flag `enableCustomColumns` is still OFF
+
+---
+
+### Phase 6: Kanban Views, DnD, & Modals ✅ COMPLETE
+**Estimated Time:** 2-2.5 hours
+**Actual Time:** ~1 hour (2026-02-05, split across Phases 5 & 6)
+**Goal:** Update FullKanban, SidebarQuests, useDndQuests, and modal components
+
+**Note:** Most of Phase 6 was completed during Phase 5. This phase covered the remaining items.
+
+#### Tasks Completed:
+1. ✅ Update `src/components/FullKanban.tsx`: (Completed in Phase 5)
+2. ✅ Update `src/components/SidebarQuests.tsx`: (Completed in Phase 5)
+3. ✅ Update `src/hooks/useDndQuests.ts`: (Completed in Phase 5)
+4. ✅ Update `src/modals/CreateQuestModal.ts`:
+   - Import `ColumnConfigService`
+   - Use `columnConfigService.getDefaultColumn()` for new quest status
+5. ✅ Update `src/modals/AIQuestGeneratorModal.ts`:
+   - Import `ColumnConfigService`
+   - Dynamic status dropdown from columns configuration
+   - Status dropdown now shows all custom columns
+6. ✅ Update `src/services/AIQuestService.ts`:
+   - Changed `AIQuestInput.status` type from `QuestStatus` to `string`
+7. ✅ Update `src/components/CharacterSheet.tsx`:
+   - Changed completed quests count from `status === QuestStatus.COMPLETED` to `completedDate` check
+   - Removed unused `QuestStatus` import
+8. ✅ Update `src/store/questStore.ts`:
+   - Removed hardcoded `QuestStatus.COMPLETED` check in `updateQuestStatus()`
+   - Completion logic now delegated to `QuestActionsService`
+
+#### Key Files Modified:
+- `src/modals/CreateQuestModal.ts` (UPDATE)
+- `src/modals/AIQuestGeneratorModal.ts` (UPDATE)
+- `src/services/AIQuestService.ts` (UPDATE)
+- `src/components/CharacterSheet.tsx` (UPDATE)
+- `src/store/questStore.ts` (UPDATE)
+
+#### Testing Checklist:
+- [x] Create Quest modal uses first column as default status
+- [x] AI Quest Generator shows dynamic columns in status dropdown
+- [x] CharacterSheet shows correct completed quests count
+- [x] No TypeScript errors (build passes)
+- [x] Deployed to test vault and manually verified
+
+#### Tech Debt:
+- **Archived quests not included in completed count:** The CharacterSheet now checks `completedDate` but only counts in-memory quests. Archived quests are in a separate folder and not loaded into the quest store. Would require separate loading mechanism to include them.
+- **FilterBar.tsx:** No changes needed - it filters by Type/Category/Priority/Tags, not by Kanban status columns. The filtering is orthogonal to column status.
+
+#### Notes:
+- Build passes with 0 TypeScript errors
+- Feature flag `enableCustomColumns` is still OFF
+
+---
+
+### Phase 7: Cleanup, Migration, & Testing ✅ COMPLETE
+**Estimated Time:** 1.5-2 hours
+**Actual Time:** ~45 minutes (2026-02-05)
+**Goal:** Add migration helpers, enable feature flag, comprehensive testing
+
+#### Tasks Completed:
+1. ✅ Created `src/utils/columnMigration.ts`:
+   - `migrateQuestsFromDeletedColumn()` - migrates quests in-memory and updates frontmatter
+   - `updateQuestStatusInFile()` - helper to update status in quest file frontmatter
+   - `findQuestsWithInvalidStatus()` - utility to detect quests needing migration
+
+2. ✅ Updated `ColumnManagerModal.ts` delete handler:
+   - Now async with proper Promise handling
+   - Calls migration function before removing column
+   - Shows notice with migration count: "Column X deleted. N quest(s) moved to Y."
+
+3. ✅ Updated `RecurringQuestService.ts`:
+   - Import `ColumnConfigService`
+   - Added `getDefaultColumn()` helper method that uses ColumnConfigService
+   - `generateQuestInstance()` now uses dynamic default column instead of hardcoded `'available'`
+   - Archive check changed from `status: completed` to `completedDate` check for consistency
+
+4. ✅ Set `enableCustomColumns: true` as default in `DEFAULT_SETTINGS`
+
+5. ✅ Cleaned up `questStatusConfig.ts`:
+   - Removed unused dynamic functions: `getStatusConfigs()`, `getSidebarStatuses()`, `getKanbanStatuses()`
+   - These were made obsolete by ColumnConfigService
+   - Kept legacy static config and `getStatusConfig()` for backward compatibility
+
+#### Key Files Modified:
+- `src/utils/columnMigration.ts` (NEW - 115 lines)
+- `src/modals/ColumnManagerModal.ts` (UPDATE - async delete with migration)
+- `src/services/RecurringQuestService.ts` (UPDATE - dynamic column + completedDate)
+- `src/settings.ts` (UPDATE - enableCustomColumns: true)
+- `src/config/questStatusConfig.ts` (UPDATE - removed unused functions)
+
+#### Testing Checklist:
+- [x] Build passes with 0 TypeScript errors
+- [x] `npm run deploy:test` succeeds
+- [ ] All column CRUD operations work (user testing)
+- [ ] Quest movement between columns works (user testing)
+- [ ] Complete/Reopen/Archive buttons work (user testing)
+- [ ] Deleting column migrates quests (user testing)
+- [ ] Recurring quest generation uses default column (user testing)
+
+#### Tech Debt:
+- ~~**Recurring quest validation on load:** Handled implicitly by `resolveStatus()` method in ColumnConfigService~~ ✓
+- ~~**Dead code: `questStatusConfig.ts`:** File was completely dead after Phase 5-6 migration.~~ **CLEANED UP** - File deleted
+- ~~**Hardcoded `QuestStatus.AVAILABLE` and `QuestStatus.IN_PROGRESS` checks:** In `QuestActionsService.ts`~~ **CLEANED UP** - Replaced with dynamic `ColumnConfigService` calls
+- **Archived quests in completed count:** Still not included (as noted in Phase 6 tech debt). Would require separate loading mechanism.
+- **`enableCustomColumns` feature flag:** Remains in settings. Could be removed entirely in future version since feature is always-on now.
+- **`LEGACY_STATUS_MAP`:** Still in `CustomColumn.ts` for migration support. Can be removed after v2.0 stable.
+
+#### Notes:
+- This is the final implementation phase
+- Feature is now fully enabled by default
+- User testing required for comprehensive validation
+
+---
+
+## Complete Files List
+
+### Files to Create (NEW):
+- `src/models/CustomColumn.ts`
+- `src/services/ColumnConfigService.ts`
+- `src/utils/columnMigration.ts`
+
+### Files to Modify (UPDATE):
+
+#### Phase 1:
+- `src/settings.ts`
+
+#### Phase 2:
+- `src/models/Quest.ts`
+- `src/services/QuestService.ts`
+
+#### Phase 3:
+- `src/store/questStore.ts`
+- `src/utils/validator.ts`
+- `src/config/questStatusConfig.ts`
+
+#### Phase 4:
+- `src/services/QuestActionsService.ts`
+
+#### Phase 5:
+- `src/components/QuestCard.tsx`
+- `src/styles/kanban.css`
+
+#### Phase 6:
+- `src/components/FullKanban.tsx`
+- `src/components/SidebarQuests.tsx`
+- `src/hooks/useDndQuests.ts`
+- `src/modals/CreateQuestModal.ts`
+- `src/modals/AIQuestGeneratorModal.ts`
+
+#### Phase 7:
+- `src/services/RecurringQuestService.ts`
+
+### Files That May Need Minor Updates:
+- `src/services/StreakService.ts` (if used directly by components)
+- `src/services/PowerUpService.ts` (if used directly by components)
+- `src/services/BountyService.ts` (if used directly by components)
+
+---
+
+## Verification Checklist (Final)
+
+- [ ] Settings UI: Add/remove/reorder columns works
+- [ ] Settings UI: Column ID validation works
+- [ ] Settings UI: Cannot delete last column
+- [ ] Settings UI: Can edit columns after creation
+- [ ] Existing quests: Legacy status values load correctly
+- [ ] New quests: Use custom column IDs in frontmatter
+- [ ] Move buttons: Show all columns except current (pre-completion)
+- [ ] Complete button: Awards loot, streaks, power-ups, bounty, stamina (NOT XP)
+- [ ] Complete button: Sets `completedDate`
+- [ ] Complete button: Auto-moves to completion column (if exists)
+- [ ] XP system: Still works via useXPAward hook (separate from Complete button)
+- [ ] Reopen button: Clears `completedDate`
+- [ ] Reopen button: Logs reopen event
+- [ ] Archive button: Moves file to archive folder
+- [ ] Post-completion: Only Reopen + Archive buttons visible (no move buttons)
+- [ ] Drag-and-drop: Works for both incomplete and completed quests
+- [ ] Completed count: Based on `completedDate`, not column
+- [ ] Completed styling: Green border/background on completed quests
+- [ ] **Archive bug fixed**: Toggling task on archived quest doesn't create duplicate
+- [ ] **UI state**: Custom columns render correctly, collapse toggles work
+- [ ] **Mobile**: Swipe mode shows one column at a time
+- [ ] **Mobile**: Checkbox mode shows selected columns
+- [ ] **Training mode**: Works with custom columns
+- [ ] **Recurring quests**: Instances use valid column IDs
+- [ ] **AI quests**: Use correct status values from dropdown
+- [ ] **Column deletion**: Quests migrate to first column
+- [ ] **TypeScript**: No compilation errors
+- [ ] **Build**: `npm run build` succeeds
+- [ ] **Deploy**: Plugin loads in Obsidian without errors
+
+---
+
+## Rollback Plan
+
+If issues arise:
+
+1. **Immediate rollback:**
+   - Set `enableCustomColumns: false` in settings
+   - Plugin reverts to legacy QuestStatus enum behavior
+
+2. **Partial rollback:**
+   - Keep ColumnConfigService and settings UI
+   - Disable dynamic columns in components
+
+3. **Full rollback:**
+   - Revert to commit before Phase 1
+   - Archive bug fix can stay (independent feature)
+
+---
+
+## Post-Implementation Considerations
+
+### Future Architecture Flexibility
+
+This implementation is designed to support future enhancements:
+
+1. **XP Integration:**
+   - Currently XP awarded by `useXPAward` hook (task file watcher)
+   - To integrate XP into Complete button later:
+     - Add XP calculation to `completeQuest()` method
+     - Check if all tasks completed OR if quest is AI-generated
+     - Award `quest.completionBonus` XP with class bonus
+     - Trigger level-up checks
+   - **Architecture supports this with minimal changes**
+
+2. **Granular Archiving:**
+   - Currently one global archive folder
+   - To support per-column or per-quest-type archiving:
+     - Add `archiveFolder?: string` to `CustomColumn`
+     - Update `archiveQuest()` to check column-level folder first
+     - Fallback to global `settings.archiveFolder`
+   - **Architecture supports this with minimal changes**
+
+3. **Column-Specific Behaviors:**
+   - Add more flags like `triggersCompletion`:
+     - `hideFromMobile?: boolean`
+     - `requiresConfirmation?: boolean`
+     - `autoArchiveAfterDays?: number`
+   - **ColumnConfigService is extensible**
+
+4. **Multi-Completion Columns:**
+   - Already supported (user can mark multiple columns with `triggersCompletion: true`)
+   - Each column independently awards rewards
+   - No architectural changes needed
+
+---
+
+## Notes
+
+- Emoji field defaults to empty string if not set
+- Minimum 1 column enforced in settings UI
+- Column IDs are editable after creation
+- Archive folder setting already exists (confirmed at settings.ts:73)
+- Legacy `QuestStatus` enum kept for union type during migration
+- Feature flag `enableCustomColumns` allows gradual rollout
+- XP award system remains separate (not part of Complete button)
+- Completion triggers: loot, streaks, power-ups, bounty, stamina, activity logging
+- Reopen behavior: clears date, logs event, doesn't reverse rewards
+- Mobile view modes (swipe/checkbox) work with custom columns
+- All quests in deleted columns auto-migrate to first column
+
+---
+
+## Questions for Brad (Post-Implementation)
+
+After completing all phases, review:
+
+1. ✅ Do you want to integrate XP into the Complete button, or keep separate?
+2. ✅ Do you want granular archiving (per-column), or global is sufficient?
+3. ✅ Do you want to remove the `QuestStatus` enum entirely, or keep for backward compat?
+4. ✅ Do you want to add more column-specific behaviors (auto-archive, mobile visibility, etc.)?
+5. ✅ Should we add column templates (presets like "Sprint Board", "GTD", "Eisenhower Matrix")?
+
+---
+
+**Last Updated:** 2026-02-04
+**Ready for Phase 1 implementation**

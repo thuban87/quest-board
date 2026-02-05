@@ -20,7 +20,7 @@ export interface AIQuestInput {
     objectives: string;
     questType: string;
     category: string;
-    status: QuestStatus;
+    status: string;  // Changed from QuestStatus to support custom columns
     priority: QuestPriority;
 }
 

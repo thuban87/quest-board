@@ -9,7 +9,6 @@ import { useCharacterStore, selectActiveSetBonuses } from '../store/characterSto
 import { setBonusService } from '../services/SetBonusService';
 import { useQuestStore } from '../store/questStore';
 import { CLASS_INFO, getTrainingLevelDisplay, StatType } from '../models/Character';
-import { QuestStatus } from '../models/QuestStatus';
 import { GearSlot, GearItem, TIER_INFO, GEAR_SLOT_NAMES, ALL_GEAR_SLOTS } from '../models/Gear';
 import { getXPProgress, getXPForNextLevel, XP_THRESHOLDS, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 import { getTotalStats, calculateDerivedStats, STAT_ABBREVIATIONS, STAT_NAMES, getStatCap } from '../services/StatsService';
@@ -101,7 +100,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ onBack, onViewAc
     const xpProgress = xpNeeded > 0 ? Math.min(1, xpInLevel / xpNeeded) : 1;
 
     const completedQuests = quests
-        ? Array.from(quests.values()).filter(q => q.status === QuestStatus.COMPLETED).length
+        ? Array.from(quests.values()).filter(q => q.completedDate).length
         : 0;
     const totalQuests = quests ? quests.size : 0;
 

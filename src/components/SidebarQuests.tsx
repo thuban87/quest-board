@@ -1,7 +1,7 @@
 /**
  * SidebarQuests Component
  * 
- * Focused sidebar with stacked quest cards (no Completed).
+ * Focused sidebar with stacked quest cards.
  * Collapsible sections for each status.
  * Tab navigation between Quests and Character Sheet.
  */
@@ -9,15 +9,19 @@
 import React, { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { App as ObsidianApp } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
-import { QuestStatus } from '../models/QuestStatus';
 import { Quest, isManualQuest } from '../models/Quest';
-import { SIDEBAR_STATUSES } from '../config/questStatusConfig';
+import { ColumnConfigService } from '../services/ColumnConfigService';
 import { useQuestStore, selectAllQuests } from '../store/questStore';
 import { useCharacterStore } from '../store/characterStore';
 import { useSidebarFilterStore } from '../store/filterStore';
 import { getXPProgressForCharacter } from '../services/XPSystem';
 import { updateQuestSortOrder } from '../services/QuestService';
 import { AchievementService } from '../services/AchievementService';
+import {
+    completeQuest,
+    reopenQuest,
+    archiveQuest,
+} from '../services/QuestActionsService';
 import { QuestCard } from './QuestCard';
 import { FilterBar } from './FilterBar';
 import { CharacterSheet } from './CharacterSheet';
@@ -58,13 +62,27 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
     // Current view (quests or character sheet)
     const [currentView, setCurrentView] = useState<SidebarView>('quests');
 
-    // Collapsed state for sections
-    const [collapsed, setCollapsed] = useState<Record<QuestStatus, boolean>>({
-        [QuestStatus.AVAILABLE]: false,
-        [QuestStatus.ACTIVE]: false,
-        [QuestStatus.IN_PROGRESS]: false,
-        [QuestStatus.COMPLETED]: true,
-    });
+    // Column configuration service (memoized)
+    const columnConfigService = useMemo(
+        () => new ColumnConfigService(plugin.settings),
+        [plugin.settings.customColumns]
+    );
+
+    const columns = useMemo(
+        () => columnConfigService.getColumns(),
+        [columnConfigService]
+    );
+
+    // Get sidebar columns (exclude completion columns by default, like the old SIDEBAR_STATUSES)
+    const sidebarColumns = useMemo(
+        () => columns.filter(c => !c.triggersCompletion),
+        [columns]
+    );
+
+    // Collapsed state for sections - dynamic based on columns
+    const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
+        Object.fromEntries(columns.map(c => [c.id, c.triggersCompletion ? true : false]))
+    );
 
     // Collapsed state for individual quests (uses consolidated hook)
     const { isCollapsed: isQuestCollapsed, toggle: toggleQuestCollapse } = useCollapsedItems();
@@ -95,6 +113,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
     const { pendingSavesRef } = useQuestLoader({
         vault: app.vault,
         storageFolder: plugin.settings.storageFolder,
+        settings: plugin.settings,
         useSaveLock: true,
     });
 
@@ -102,6 +121,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
     const { moveQuest: handleMoveQuest, toggleTask: handleToggleTask } = useQuestActions({
         vault: app.vault,
         storageFolder: plugin.settings.storageFolder,
+        settings: plugin.settings,
         streakMode: plugin.settings.streakMode,
         pendingSavesRef,  // Pass pending saves ref to prevent file watcher race condition
         onSaveCharacter: handleSaveCharacter,  // Save character after streak updates
@@ -160,8 +180,8 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
     }, []);
 
     // Toggle section collapse
-    const toggleSection = (status: QuestStatus) => {
-        setCollapsed(prev => ({ ...prev, [status]: !prev[status] }));
+    const toggleSection = (columnId: string) => {
+        setCollapsed(prev => ({ ...prev, [columnId]: !prev[columnId] }));
     };
 
     // Collect available categories, tags, and types for filter dropdowns
@@ -197,19 +217,19 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         sectionsMap,
     });
 
-    // Get quests by status from filtered list
-    const getQuestsForSection = useCallback((status: QuestStatus): Quest[] => {
-        return filteredQuests.filter(q => q.status === status);
+    // Get quests by column ID from filtered list
+    const getQuestsForSection = useCallback((columnId: string): Quest[] => {
+        return filteredQuests.filter(q => q.status === columnId);
     }, [filteredQuests]);
 
     // Get quest status for DnD
-    const getQuestStatus = useCallback((questId: string): QuestStatus | undefined => {
+    const getQuestStatus = useCallback((questId: string): string | undefined => {
         const quest = allQuests.find(q => q.questId === questId);
         return quest?.status;
     }, [allQuests]);
 
     // Handle reorder within section
-    const handleReorderQuest = useCallback(async (questId: string, newSortOrder: number, status: QuestStatus) => {
+    const handleReorderQuest = useCallback(async (questId: string, newSortOrder: number, columnId: string) => {
         // Update in store immediately for responsiveness
         const quest = useQuestStore.getState().quests.get(questId);
         if (quest && isManualQuest(quest)) {
@@ -225,6 +245,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         onReorderQuest: handleReorderQuest,
         getQuestStatus,
         getQuestsForStatus: getQuestsForSection,
+        columnIds: columns.map(c => c.id),
     });
 
     // Handle save quest as template
@@ -239,6 +260,30 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         };
         new ScrivenersQuillModal(app, plugin, mockTemplate as any).open();
     }, [app, plugin]);
+
+    // Complete quest handler
+    const handleCompleteQuest = useCallback(async (questId: string) => {
+        await completeQuest(app.vault, questId, {
+            storageFolder: plugin.settings.storageFolder,
+            settings: plugin.settings,
+            streakMode: plugin.settings.streakMode,
+            app,
+            bountyChance: plugin.settings.bountyChance,
+            onBattleStart: () => plugin.activateBattleView(),
+            manifestDir: plugin.manifest.dir,
+            onSaveCharacter: handleSaveCharacter,
+        });
+    }, [app, plugin.settings, handleSaveCharacter]);
+
+    // Reopen quest handler
+    const handleReopenQuest = useCallback(async (questId: string) => {
+        await reopenQuest(app.vault, questId, plugin.settings.storageFolder, plugin.settings);
+    }, [app.vault, plugin.settings]);
+
+    // Archive quest handler
+    const handleArchiveQuest = useCallback(async (questId: string) => {
+        await archiveQuest(app.vault, questId, plugin.settings.archiveFolder);
+    }, [app.vault, plugin.settings.archiveFolder]);
 
     if (!character) {
         return (
@@ -310,15 +355,15 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                         {/* Quest Sections */}
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                             <div className="qb-sb-content">
-                                {SIDEBAR_STATUSES.map(({ status, title, emoji }) => {
-                                    const quests = getQuestsForSection(status);
-                                    const isCollapsed = collapsed[status];
+                                {sidebarColumns.map(({ id, title, emoji }) => {
+                                    const quests = getQuestsForSection(id);
+                                    const isCollapsed = collapsed[id];
 
                                     return (
-                                        <div key={status} className="qb-sb-section">
+                                        <div key={id} className="qb-sb-section">
                                             <div
                                                 className="qb-sb-section-header"
-                                                onClick={() => toggleSection(status)}
+                                                onClick={() => toggleSection(id)}
                                             >
                                                 <span className="qb-sb-collapse-icon">
                                                     {isCollapsed ? '▶' : '▼'}
@@ -329,7 +374,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                                             </div>
 
                                             {!isCollapsed && (
-                                                <Droppable id={status}>
+                                                <Droppable id={id}>
                                                     <SortableContext
                                                         items={quests.map(q => q.questId)}
                                                         strategy={verticalListSortingStrategy}
@@ -352,6 +397,10 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                                                                             app={app}
                                                                             storageFolder={plugin.settings.storageFolder}
                                                                             onSaveAsTemplate={handleSaveAsTemplate}
+                                                                            columns={columns}
+                                                                            onComplete={handleCompleteQuest}
+                                                                            onReopen={handleReopenQuest}
+                                                                            onArchive={handleArchiveQuest}
                                                                         />
                                                                     </SortableCard>
                                                                 ))

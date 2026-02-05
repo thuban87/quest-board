@@ -6,17 +6,19 @@
  * Sections are collapsible "Mini Objectives" with completion badges.
  */
 
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useMemo } from 'react';
 import { App as ObsidianApp, Menu } from 'obsidian';
 import { Quest, isManualQuest } from '../models/Quest';
-import { QuestStatus, QuestPriority } from '../models/QuestStatus';
+import { QuestPriority } from '../models/QuestStatus';
+import { CustomColumn } from '../models/CustomColumn';
 import { CLASS_INFO } from '../models/Character';
 import { useCharacterStore } from '../store/characterStore';
 import { TaskSection, Task } from '../services/TaskFileService';
 
 interface QuestCardProps {
     quest: Quest;
-    onMove: (questId: string, newStatus: QuestStatus) => void;
+    /** Move quest to a new column (by column ID) */
+    onMove: (questId: string, newStatus: string) => void;
     onToggleTask: (questId: string, lineNumber: number) => void;
     taskProgress?: { completed: number; total: number };
     /** Sections with grouped tasks (new) */
@@ -34,6 +36,14 @@ interface QuestCardProps {
     storageFolder?: string;
     /** Callback to save quest as template */
     onSaveAsTemplate?: (quest: Quest) => void;
+    /** Available columns from ColumnConfigService */
+    columns?: CustomColumn[];
+    /** Complete quest (awards rewards) */
+    onComplete?: (questId: string) => void;
+    /** Reopen a completed quest */
+    onReopen?: (questId: string) => void;
+    /** Archive a quest */
+    onArchive?: (questId: string) => void;
 }
 
 /**
@@ -44,26 +54,6 @@ const PRIORITY_COLORS: Record<QuestPriority, string> = {
     [QuestPriority.MEDIUM]: 'var(--interactive-accent)',
     [QuestPriority.HIGH]: '#dc3545',
     [QuestPriority.CRITICAL]: '#ff4500',
-};
-
-/**
- * Status transition map - what statuses can move to what
- */
-const STATUS_TRANSITIONS: Record<QuestStatus, QuestStatus[]> = {
-    [QuestStatus.AVAILABLE]: [QuestStatus.ACTIVE],
-    [QuestStatus.ACTIVE]: [QuestStatus.IN_PROGRESS, QuestStatus.AVAILABLE],
-    [QuestStatus.IN_PROGRESS]: [QuestStatus.COMPLETED, QuestStatus.ACTIVE],
-    [QuestStatus.COMPLETED]: [QuestStatus.IN_PROGRESS], // Can reopen
-};
-
-/**
- * Button labels for moves
- */
-const MOVE_LABELS: Record<QuestStatus, string> = {
-    [QuestStatus.AVAILABLE]: '📋 Available',
-    [QuestStatus.ACTIVE]: '⚡ Start',
-    [QuestStatus.IN_PROGRESS]: '🔨 Working',
-    [QuestStatus.COMPLETED]: '✅ Complete',
 };
 
 const QuestCardComponent: React.FC<QuestCardProps> = ({
@@ -79,11 +69,34 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
     app,
     storageFolder,
     onSaveAsTemplate,
+    columns,
+    onComplete,
+    onReopen,
+    onArchive,
 }) => {
     const character = useCharacterStore((state) => state.character);
 
     // Track which sections are collapsed
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+
+    // Check if quest is in a completion column (based on column config, not just completedDate)
+    const isCompleted = useMemo(() => {
+        if (!columns || columns.length === 0) return false;
+        const currentColumn = columns.find(c => c.id === quest.status);
+        return currentColumn?.triggersCompletion ?? false;
+    }, [columns, quest.status]);
+
+    // Check if there's ANY completion column in the config
+    const hasCompletionColumn = useMemo(() => {
+        if (!columns || columns.length === 0) return false;
+        return columns.some(c => c.triggersCompletion);
+    }, [columns]);
+
+    // Get available moves: all columns except current
+    const availableMoves = useMemo(() => {
+        if (!columns || columns.length === 0) return [];
+        return columns.filter(col => col.id !== quest.status);
+    }, [columns, quest.status]);
 
     // Handler to open the quest file itself
     const handleOpenQuestFile = () => {
@@ -117,15 +130,42 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
         cat => quest.category.toLowerCase().includes(cat.toLowerCase())
     );
 
-    // Get available moves for this quest
-    const availableMoves = STATUS_TRANSITIONS[quest.status] || [];
-
     // Handle right-click context menu
     const handleContextMenu = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
         const menu = new Menu();
+
+        // Complete option (if not completed)
+        if (!isCompleted && onComplete) {
+            menu.addItem((item) => {
+                item
+                    .setTitle('✅ Complete Quest')
+                    .setIcon('check')
+                    .onClick(() => onComplete(quest.questId));
+            });
+        }
+
+        // Archive option (if completed)
+        if (isCompleted && onArchive) {
+            menu.addItem((item) => {
+                item
+                    .setTitle('📦 Archive Quest')
+                    .setIcon('archive')
+                    .onClick(() => onArchive(quest.questId));
+            });
+        }
+
+        // Reopen option (if completed)
+        if (isCompleted && onReopen) {
+            menu.addItem((item) => {
+                item
+                    .setTitle('🔄 Reopen Quest')
+                    .setIcon('undo')
+                    .onClick(() => onReopen(quest.questId));
+            });
+        }
 
         // Save as Template option
         if (onSaveAsTemplate && isManualQuest(quest)) {
@@ -213,7 +253,7 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
         return (
             <div className="qb-card-sections">
                 {sections.map((section) => {
-                    const isCollapsed = collapsedSections.has(section.headerText);
+                    const isSectionCollapsed = collapsedSections.has(section.headerText);
                     const isComplete = section.completion.completed === section.completion.total;
                     const hasIncompleteTasks = section.incompleteTasks.length > 0;
 
@@ -228,7 +268,7 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
                                 onClick={() => toggleSection(section.headerText)}
                             >
                                 <span className="qb-section-toggle">
-                                    {hasIncompleteTasks ? (isCollapsed ? '▶' : '▼') : ''}
+                                    {hasIncompleteTasks ? (isSectionCollapsed ? '▶' : '▼') : ''}
                                 </span>
                                 <span className="qb-section-icon">📋</span>
                                 <span className="qb-section-title">{section.headerText}</span>
@@ -239,7 +279,7 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
                             </div>
 
                             {/* Section Tasks - Only show first N incomplete, hidden when collapsed */}
-                            {!isCollapsed && hasIncompleteTasks && (() => {
+                            {!isSectionCollapsed && hasIncompleteTasks && (() => {
                                 const visibleTasks = section.incompleteTasks.slice(0, visibleTaskCount);
                                 const hiddenCount = section.incompleteTasks.length - visibleTasks.length;
 
@@ -263,7 +303,7 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
 
     return (
         <div
-            className="qb-quest-card"
+            className={`qb-quest-card ${isCompleted ? 'completed' : ''}`}
             onContextMenu={handleContextMenu}
             style={{
                 borderLeftColor: hasClassBonus ? CLASS_INFO[character!.class].primaryColor : undefined,
@@ -360,15 +400,52 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
 
                     {/* Action Buttons */}
                     <div className="qb-card-actions">
-                        {availableMoves.map((targetStatus) => (
-                            <button
-                                key={targetStatus}
-                                className={`qb-card-btn ${targetStatus === QuestStatus.COMPLETED ? 'qb-btn-complete' : ''}`}
-                                onClick={() => onMove(quest.questId, targetStatus)}
-                            >
-                                {MOVE_LABELS[targetStatus]}
-                            </button>
-                        ))}
+                        {/* Not completed: show move buttons and Complete button */}
+                        {!isCompleted && (
+                            <>
+                                {/* Move buttons for each column except current */}
+                                {availableMoves.map((col) => (
+                                    <button
+                                        key={col.id}
+                                        className="qb-card-btn"
+                                        onClick={() => onMove(quest.questId, col.id)}
+                                    >
+                                        {col.emoji} {col.title}
+                                    </button>
+                                ))}
+                                {/* Complete button - only show if NO completion column exists */}
+                                {onComplete && !hasCompletionColumn && (
+                                    <button
+                                        className="qb-card-btn qb-btn-complete"
+                                        onClick={() => onComplete(quest.questId)}
+                                    >
+                                        ✅ Complete
+                                    </button>
+                                )}
+                            </>
+                        )}
+
+                        {/* Completed: show Reopen and Archive buttons */}
+                        {isCompleted && (
+                            <div className="qb-completed-actions">
+                                {onReopen && (
+                                    <button
+                                        className="qb-card-btn"
+                                        onClick={() => onReopen(quest.questId)}
+                                    >
+                                        🔄 Reopen
+                                    </button>
+                                )}
+                                {onArchive && (
+                                    <button
+                                        className="qb-card-btn"
+                                        onClick={() => onArchive(quest.questId)}
+                                    >
+                                        📦 Archive
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </>
             )}

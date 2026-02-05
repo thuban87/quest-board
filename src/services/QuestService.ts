@@ -11,6 +11,8 @@ import { QuestType, QuestStatus, QuestPriority } from '../models/QuestStatus';
 import { validateQuest, validateQuestWithNotice } from '../utils/validator';
 import { safeJsonParse, safeJsonStringify } from '../utils/safeJson';
 import { ensureFolderExists } from '../utils/pathValidator';
+import { ColumnConfigService } from './ColumnConfigService';
+import type { QuestBoardSettings } from '../settings';
 
 /**
  * Quest folder structure
@@ -143,7 +145,8 @@ function parseQuestFrontmatter(content: string, filePath: string): Partial<Manua
                 quest.category = value;
                 break;
             case 'status':
-                quest.status = value as QuestStatus;
+                // Accept any status string (supports custom columns)
+                quest.status = value;
                 break;
             case 'priority':
                 quest.priority = value as QuestPriority;
@@ -209,7 +212,8 @@ function parseQuestFrontmatter(content: string, filePath: string): Partial<Manua
  */
 async function loadMarkdownQuest(
     vault: Vault,
-    file: TFile
+    file: TFile,
+    settings?: QuestBoardSettings
 ): Promise<Quest | null> {
     try {
         const content = await vault.cachedRead(file);
@@ -236,14 +240,25 @@ async function loadMarkdownQuest(
             }
         }
 
-        // Set defaults
+        // Resolve status to valid column (handles invalid/legacy statuses)
+        const rawStatus = parsed.status || 'available';
+        let resolvedStatus = rawStatus;
+        if (settings) {
+            const columnService = new ColumnConfigService(settings);
+            resolvedStatus = columnService.resolveStatus(rawStatus);
+        } else {
+            resolvedStatus = parsed.status || QuestStatus.AVAILABLE;
+        }
+
         const quest: Partial<ManualQuest> = {
+            // Spread parsed first, then override with explicit values
+            ...parsed,
             schemaVersion: QUEST_SCHEMA_VERSION,
             questId: parsed.questId || file.basename,
             questName: parsed.questName || file.basename,
             questType: inferredType,
             category: parsed.category || 'general',
-            status: parsed.status || QuestStatus.AVAILABLE,
+            status: resolvedStatus,  // MUST come after ...parsed to override raw status
             priority: parsed.priority || QuestPriority.MEDIUM,
             tags: parsed.tags || [],
             createdDate: parsed.createdDate || new Date().toISOString(),
@@ -256,7 +271,6 @@ async function loadMarkdownQuest(
             visibleTasks: parsed.visibleTasks || 4,
             milestones: [],
             sortOrder: parsed.sortOrder,  // Preserve sortOrder if present
-            ...parsed,
         };
 
         // Validate
@@ -266,9 +280,10 @@ async function loadMarkdownQuest(
             return null;
         }
 
-        // Add file path for set detection
+        // Add file paths for set detection and save operations
         if (result.data) {
             result.data.path = file.path;
+            result.data.filePath = file.path;
         }
 
         return result.data;
@@ -296,9 +311,10 @@ async function loadJsonQuest(
             return null;
         }
 
-        // Add file path for set detection
+        // Add file paths for set detection and save operations
         if (result.data) {
             result.data.path = file.path;
+            result.data.filePath = file.path;
         }
 
         return result.data;
@@ -313,7 +329,8 @@ async function loadJsonQuest(
  */
 async function loadQuestsFromFolder(
     vault: Vault,
-    folderPath: string
+    folderPath: string,
+    settings?: QuestBoardSettings
 ): Promise<Quest[]> {
     const folder = vault.getAbstractFileByPath(folderPath);
     if (!folder || !(folder instanceof TFolder)) {
@@ -328,7 +345,7 @@ async function loadQuestsFromFolder(
         let quest: Quest | null = null;
 
         if (file.extension === 'md') {
-            quest = await loadMarkdownQuest(vault, file);
+            quest = await loadMarkdownQuest(vault, file, settings);
         } else if (file.extension === 'json') {
             quest = await loadJsonQuest(vault, file);
         }
@@ -347,7 +364,8 @@ async function loadQuestsFromFolder(
  */
 export async function loadAllQuests(
     vault: Vault,
-    baseFolder: string
+    baseFolder: string,
+    settings?: QuestBoardSettings
 ): Promise<QuestLoadResult> {
     const errors: string[] = [];
     const allQuests: Quest[] = [];
@@ -368,7 +386,7 @@ export async function loadAllQuests(
                 }
 
                 try {
-                    const quests = await loadQuestsFromFolder(vault, child.path);
+                    const quests = await loadQuestsFromFolder(vault, child.path, settings);
                     allQuests.push(...quests);
                 } catch (error) {
                     errors.push(`Failed to load from ${child.path}: ${error}`);
@@ -380,7 +398,7 @@ export async function loadAllQuests(
         for (const subFolder of Object.values(QUEST_FOLDERS)) {
             const fullPath = `${baseFolder}/${subFolder}`;
             try {
-                const quests = await loadQuestsFromFolder(vault, fullPath);
+                const quests = await loadQuestsFromFolder(vault, fullPath, settings);
                 allQuests.push(...quests);
             } catch (error) {
                 errors.push(`Failed to load from ${fullPath}: ${error}`);
@@ -390,7 +408,7 @@ export async function loadAllQuests(
 
     // Also load from the base folder directly (for simple setups)
     try {
-        const baseQuests = await loadQuestsFromFolder(vault, baseFolder);
+        const baseQuests = await loadQuestsFromFolder(vault, baseFolder, settings);
         allQuests.push(...baseQuests);
     } catch (error) {
         // Base folder might not have quests directly, that's okay
@@ -409,7 +427,8 @@ export async function loadAllQuests(
  */
 export async function loadSingleQuest(
     vault: Vault,
-    filePath: string
+    filePath: string,
+    settings?: QuestBoardSettings
 ): Promise<SingleQuestResult> {
     const file = vault.getAbstractFileByPath(filePath);
 
@@ -425,7 +444,7 @@ export async function loadSingleQuest(
     let quest: Quest | null = null;
 
     if (file.extension === 'md') {
-        quest = await loadMarkdownQuest(vault, file);
+        quest = await loadMarkdownQuest(vault, file, settings);
     } else if (file.extension === 'json') {
         quest = await loadJsonQuest(vault, file);
     }
@@ -504,12 +523,17 @@ export async function saveManualQuest(
 ): Promise<boolean> {
     try {
         const safeQuestId = sanitizeQuestId(quest.questId);
-        // Use questType directly as folder name (lowercase)
-        const subFolder = `quests/${quest.questType.toLowerCase()}`;
-        const folderPath = `${baseFolder}/${subFolder}`;
-        const filePath = `${folderPath}/${safeQuestId}.md`;
 
-        await ensureFolderExists(vault, folderPath);
+        // Use existing filePath if available (preserves archive location)
+        // Otherwise compute default path based on quest type
+        const defaultSubFolder = `quests/${quest.questType.toLowerCase()}`;
+        const defaultFolderPath = `${baseFolder}/${defaultSubFolder}`;
+        const defaultFilePath = `${defaultFolderPath}/${safeQuestId}.md`;
+        const filePath = quest.filePath ?? defaultFilePath;
+
+        // Ensure the target folder exists
+        const targetFolder = filePath.substring(0, filePath.lastIndexOf('/'));
+        await ensureFolderExists(vault, targetFolder);
 
         const existingFile = vault.getAbstractFileByPath(filePath);
 
@@ -673,10 +697,16 @@ export async function saveAIQuest(
 ): Promise<boolean> {
     try {
         const safeQuestId = sanitizeQuestId(quest.questId);
-        const folderPath = `${baseFolder}/${QUEST_FOLDERS.aiGenerated}`;
-        const filePath = `${folderPath}/${safeQuestId}.json`;
 
-        await ensureFolderExists(vault, folderPath);
+        // Use existing filePath if available (preserves archive location)
+        // Otherwise compute default path for AI-generated quests
+        const defaultFolderPath = `${baseFolder}/${QUEST_FOLDERS.aiGenerated}`;
+        const defaultFilePath = `${defaultFolderPath}/${safeQuestId}.json`;
+        const filePath = quest.filePath ?? defaultFilePath;
+
+        // Ensure the target folder exists
+        const targetFolder = filePath.substring(0, filePath.lastIndexOf('/'));
+        await ensureFolderExists(vault, targetFolder);
 
         const content = safeJsonStringify(quest);
 
@@ -757,13 +787,14 @@ export function watchQuestFolderGranular(
         /** Called if granular handling fails and full reload is needed */
         onFullReloadNeeded?: () => void;
     },
-    debounceMs: number = 300
+    debounceMs: number = 300,
+    settings?: QuestBoardSettings
 ): () => void {
     // Track pending events for debouncing per-file
     const pendingModifies = new Map<string, ReturnType<typeof setTimeout>>();
 
     const handleModify = async (filePath: string) => {
-        const result = await loadSingleQuest(vault, filePath);
+        const result = await loadSingleQuest(vault, filePath, settings);
         callbacks.onQuestModified(filePath, result.quest);
     };
 
@@ -771,7 +802,7 @@ export function watchQuestFolderGranular(
         if (file.path.startsWith(baseFolder) && file instanceof TFile) {
             // Small delay to ensure file is fully written
             setTimeout(async () => {
-                const result = await loadSingleQuest(vault, file.path);
+                const result = await loadSingleQuest(vault, file.path, settings);
                 if (result.quest) {
                     callbacks.onQuestCreated(file.path, result.quest);
                 }
@@ -806,7 +837,7 @@ export function watchQuestFolderGranular(
     const onRename = vault.on('rename', async (file, oldPath) => {
         if (file.path.startsWith(baseFolder) || oldPath.startsWith(baseFolder)) {
             if (file instanceof TFile) {
-                const result = await loadSingleQuest(vault, file.path);
+                const result = await loadSingleQuest(vault, file.path, settings);
                 callbacks.onQuestRenamed(file.path, oldPath, result.quest);
             } else {
                 callbacks.onQuestRenamed(file.path, oldPath, null);

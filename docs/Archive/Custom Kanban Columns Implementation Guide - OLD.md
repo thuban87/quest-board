@@ -1,4 +1,4 @@
-# Custom Kanban Columns - Implementation Guide
+# Custom Kanban Columns - Implementation Guide - OLD
 
 **Status:** Ready for implementation  
 **Estimated Effort:** ~7-8 hours  

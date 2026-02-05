@@ -231,3 +231,23 @@
   opacity: 0.9;
 }
 
+/* ===========================================
+   Completed Quest Card Styling
+   =========================================== */
+.qb-quest-card.completed {
+  border-color: var(--color-green, #28a745);
+  border-left: 3px solid var(--color-green, #28a745);
+  background: linear-gradient(to right,
+      rgba(40, 167, 69, 0.1),
+      transparent 40%);
+}
+
+.qb-quest-card.completed .qb-card-title {
+  color: var(--text-muted);
+}
+
+.qb-completed-actions {
+  display: flex;
+  gap: var(--qb-spacing-xs);
+  flex-wrap: wrap;
+}
