@@ -79,12 +79,11 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
     // Track which sections are collapsed
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
-    // Check if quest is in a completion column (based on column config, not just completedDate)
+    // Check if quest is completed (based on completedDate, not column)
+    // A quest is completed if it has a completedDate, regardless of which column it's in
     const isCompleted = useMemo(() => {
-        if (!columns || columns.length === 0) return false;
-        const currentColumn = columns.find(c => c.id === quest.status);
-        return currentColumn?.triggersCompletion ?? false;
-    }, [columns, quest.status]);
+        return !!quest.completedDate;
+    }, [quest.completedDate]);
 
     // Check if there's ANY completion column in the config
     const hasCompletionColumn = useMemo(() => {

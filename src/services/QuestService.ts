@@ -542,7 +542,7 @@ export async function saveManualQuest(
             const existingContent = await vault.read(existingFile);
             const updatedContent = updateFrontmatterFields(existingContent, {
                 status: quest.status,
-                completedDate: quest.completedDate || undefined,
+                completedDate: quest.completedDate,  // Pass null to clear from file
             });
 
             await vault.modify(existingFile, updatedContent);
@@ -563,10 +563,11 @@ export async function saveManualQuest(
 /**
  * Surgically update specific frontmatter fields in a markdown file.
  * Only touches the specified fields, leaves everything else untouched.
+ * Pass null to REMOVE a field from frontmatter.
  */
 function updateFrontmatterFields(
     content: string,
-    updates: Record<string, string | number | boolean | undefined>
+    updates: Record<string, string | number | boolean | null | undefined>
 ): string {
     const lines = content.split('\n');
 
@@ -590,6 +591,9 @@ function updateFrontmatterFields(
         return content;
     }
 
+    // Track lines to remove (indices shift, so collect first, remove later)
+    const linesToRemove: number[] = [];
+
     // Update only the specified fields within frontmatter
     for (let i = frontmatterStart + 1; i < frontmatterEnd; i++) {
         const line = lines[i];
@@ -602,6 +606,12 @@ function updateFrontmatterFields(
             const newValue = updates[key];
             if (newValue === undefined) {
                 // Skip - don't update undefined values
+                continue;
+            }
+
+            if (newValue === null) {
+                // Mark line for removal (e.g., clearing completedDate)
+                linesToRemove.push(i);
                 continue;
             }
 
@@ -621,6 +631,12 @@ function updateFrontmatterFields(
 
             lines[i] = `${key}: ${formattedValue}`;
         }
+    }
+
+    // Remove lines marked for deletion (in reverse order to preserve indices)
+    for (let i = linesToRemove.length - 1; i >= 0; i--) {
+        lines.splice(linesToRemove[i], 1);
+        frontmatterEnd--;  // Adjust for removed line
     }
 
     // Handle adding completedDate if it doesn't exist but should

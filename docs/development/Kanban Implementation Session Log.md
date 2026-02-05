@@ -533,6 +533,98 @@ Custom Kanban Columns feature complete and tested!
 
 ---
 
+## 2026-02-05 - Post-Release Bug Fixes
+
+**Focus:** Fix completion column edge cases discovered during user testing
+
+### Issues Reported:
+
+User unchecked "Completed" column's `triggersCompletion` flag (no completion columns configured). Expected behavior:
+1. ✅ "Complete" button appears (working)
+2. ❌ Completed quests should show Reopen/Archive buttons (was showing column buttons)
+3. ❌ Completed quests should have green styling (no styling applied)
+4. ❌ Reopening a quest reverted after 1 second (completedDate not cleared from file)
+
+### Bugs Fixed:
+
+#### 1. `isCompleted` Checking Column Instead of Quest State
+- **Issue:** `QuestCard.tsx` determined completion by checking if current column has `triggersCompletion: true`
+- **Root Cause:** When no completion column exists, all quests appeared "not completed" even if they had `completedDate` set
+- **Fix:** Changed `isCompleted` to check `!!quest.completedDate` instead of column config
+
+**Before:**
+```typescript
+const isCompleted = useMemo(() => {
+    const currentColumn = columns.find(c => c.id === quest.status);
+    return currentColumn?.triggersCompletion ?? false;
+}, [columns, quest.status]);
+```
+
+**After:**
+```typescript
+const isCompleted = useMemo(() => {
+    return !!quest.completedDate;
+}, [quest.completedDate]);
+```
+
+#### 2. `completedDate` Not Cleared From File on Reopen
+- **Issue:** Clicking "Reopen" button updated store but quest reverted to completed after ~1 second
+- **Root Cause:** In `saveManualQuest()`, `completedDate: quest.completedDate || undefined` converted `null` to `undefined`, which `updateFrontmatterFields()` was designed to skip
+- **Fix:** 
+  1. Pass `null` directly: `completedDate: quest.completedDate`
+  2. Updated `updateFrontmatterFields()` to REMOVE the line when value is `null`
+
+**Before:**
+```typescript
+completedDate: quest.completedDate || undefined,  // null → undefined → SKIPPED
+```
+
+**After:**
+```typescript
+completedDate: quest.completedDate,  // null → removes line from frontmatter
+```
+
+### Files Changed:
+
+**Modified:**
+- `src/components/QuestCard.tsx` - Fixed `isCompleted` logic
+- `src/services/QuestService.ts` - Fixed `completedDate` clearing in `saveManualQuest()` and `updateFrontmatterFields()`
+
+### Testing Results:
+- ✅ Quests with `completedDate` show Reopen/Archive buttons
+- ✅ Quests with `completedDate` have green completion styling
+- ✅ Complete button appears when no completion column configured
+- ✅ Reopening quest clears `completedDate` from file (verified in frontmatter)
+- ✅ Quest stays reopened (no revert)
+- ✅ Build passes with 0 TypeScript errors
+- ✅ Deployed to production
+
+---
+
+## Git Commit Message
+
+```
+fix(kanban): Fix completion column edge cases
+
+Two bugs fixed when no completion columns are configured:
+
+1. QuestCard.isCompleted was checking column.triggersCompletion
+   instead of quest.completedDate. Quests with completedDate now
+   correctly show Reopen/Archive buttons and green styling.
+
+2. Reopening quest didn't clear completedDate from file.
+   - saveManualQuest was converting null → undefined (skipped)
+   - updateFrontmatterFields now removes line when value is null
+
+Files changed:
+- src/components/QuestCard.tsx (isCompleted logic)
+- src/services/QuestService.ts (completedDate clearing)
+
+Build: 0 TypeScript errors
+```
+
+---
+
 ## Next Session Prompt
 
 ```
