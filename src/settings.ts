@@ -42,7 +42,7 @@ export interface QuestBoardSettings {
     // Storage configuration
     storageFolder: string;
     spriteFolder: string;  // Path to sprite folder (e.g., 'Quest Board/assets/sprites/paladin')
-    badgeFolder: string;   // Path to achievement badge images
+    badgeFolder: string;   // Path to badge images for achievements
 
     // Game settings
     weeklyGoal: number;
@@ -132,7 +132,7 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     geminiApiKey: '',
     storageFolder: 'Quest Board',
     spriteFolder: 'Quest Board/assets',
-    badgeFolder: 'Quest Board/assets',
+    badgeFolder: 'Quest Board/assets/badges',
     weeklyGoal: 8,
     enableTrainingMode: true,
     character: null,
@@ -217,43 +217,20 @@ export class QuestBoardSettingTab extends PluginSettingTab {
 
         containerEl.createEl('h2', { text: 'Quest Board Settings' });
 
-        // API Key Section
-        containerEl.createEl('h3', { text: 'AI Integration' });
-
-        new Setting(containerEl)
-            .setName('Gemini API Key')
-            .setDesc('Required for AI quest generation. Get one at makersuite.google.com')
-            .addText(text => {
-                text
-                    .setPlaceholder('Enter your API key')
-                    .setValue(this.plugin.settings.geminiApiKey)
-                    .onChange(async (value) => {
-                        this.plugin.settings.geminiApiKey = value;
-                        await this.plugin.saveSettings();
-                    });
-                // Hide the key for security
-                text.inputEl.type = 'password';
-                return text;
-            });
-
-        new Setting(containerEl)
-            .setName('Skip AI Quest Preview')
-            .setDesc('When enabled, AI-generated quests save directly without a preview/edit step')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.aiQuestSkipPreview ?? false)
-                .onChange(async (value) => {
-                    this.plugin.settings.aiQuestSkipPreview = value;
-                    await this.plugin.saveSettings();
-                }));
-
-        // Storage Section
-        containerEl.createEl('h3', { text: 'Storage' });
+        // ═══════════════════════════════════════════════════════════════════
+        // SECTION 1: ESSENTIAL SETTINGS
+        // ═══════════════════════════════════════════════════════════════════
+        containerEl.createEl('h3', { text: 'Essential Settings' });
+        containerEl.createEl('p', {
+            text: 'Core settings required for the plugin to function.',
+            cls: 'qb-section-description'
+        });
 
         new Setting(containerEl)
             .setName('Quest Storage Folder')
-            .setDesc('Path to the folder where quest files are stored')
+            .setDesc('Root folder where quest files are stored')
             .addText(text => text
-                .setPlaceholder('Life/Quest Board')
+                .setPlaceholder('Quest Board')
                 .setValue(this.plugin.settings.storageFolder)
                 .onChange(async (value) => {
                     this.plugin.settings.storageFolder = value;
@@ -261,127 +238,50 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
+            .setName('Gemini API Key')
+            .setDesc(this.plugin.settings.geminiApiKey
+                ? '✓ API Key configured - AI features enabled'
+                : '⚠ No API key set - AI features disabled. Get one at makersuite.google.com')
+            .addText(text => {
+                text
+                    .setPlaceholder('Enter your API key')
+                    .setValue(this.plugin.settings.geminiApiKey)
+                    .onChange(async (value) => {
+                        this.plugin.settings.geminiApiKey = value;
+                        await this.plugin.saveSettings();
+                        this.display(); // Refresh to update status message
+                    });
+                // Hide the key for security
+                text.inputEl.type = 'password';
+                return text;
+            });
+
+        // ═══════════════════════════════════════════════════════════════════
+        // SECTION 2: FILE PATHS (Collapsible)
+        // ═══════════════════════════════════════════════════════════════════
+        const filePathsDetails = containerEl.createEl('details', { cls: 'qb-settings-collapsible' });
+        filePathsDetails.createEl('summary', {
+            text: 'File Paths',
+            cls: 'qb-settings-section-header'
+        });
+        const filePathsContent = filePathsDetails.createDiv({ cls: 'qb-settings-collapsible-content' });
+        filePathsContent.createEl('p', {
+            text: 'Configure where different types of files are stored.',
+            cls: 'qb-section-description'
+        });
+
+        new Setting(filePathsContent)
             .setName('Sprite Folder')
             .setDesc('Path to character sprite folder (must contain south.png)')
             .addText(text => text
-                .setPlaceholder('Life/Quest Board/assets/sprites/paladin')
+                .setPlaceholder('Quest Board/assets/sprites/paladin')
                 .setValue(this.plugin.settings.spriteFolder)
                 .onChange(async (value) => {
                     this.plugin.settings.spriteFolder = value;
                     await this.plugin.saveSettings();
                 }));
 
-        // Kanban Column Configuration Section
-        containerEl.createEl('h3', { text: 'Kanban Columns' });
-
-        new Setting(containerEl)
-            .setName('Enable Custom Columns')
-            .setDesc('Customize Kanban column names, order, and completion behavior')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.enableCustomColumns ?? false)
-                .onChange(async (value) => {
-                    this.plugin.settings.enableCustomColumns = value;
-                    await this.plugin.saveSettings();
-                    this.display(); // Refresh to show/hide column manager button
-                }));
-
-        if (this.plugin.settings.enableCustomColumns) {
-            new Setting(containerEl)
-                .setName('Manage Columns')
-                .setDesc('Add, edit, reorder, or remove Kanban columns')
-                .addButton(button => button
-                    .setButtonText('Open Column Manager')
-                    .onClick(async () => {
-                        const { ColumnManagerModal } = await import('./modals/ColumnManagerModal');
-                        new ColumnManagerModal(this.app, this.plugin).open();
-                    }));
-
-            // Show current column count
-            const columnCount = (this.plugin.settings.customColumns || DEFAULT_COLUMNS).length;
-            containerEl.createEl('p', {
-                text: `Current columns: ${columnCount}`,
-                cls: 'setting-item-description'
-            });
-        }
-
-        // Quest Folder Settings Section
-        containerEl.createEl('h3', { text: 'Quest Folder Settings' });
-
-        // Helper to get all folders for autocomplete
-        const getAllFolders = (): string[] => {
-            const folders: string[] = [];
-            const recurse = (folder: TFolder) => {
-                folders.push(folder.path);
-                folder.children.forEach(child => {
-                    if (child instanceof TFolder) {
-                        recurse(child);
-                    }
-                });
-            };
-            this.app.vault.getAllLoadedFiles().forEach(file => {
-                if (file instanceof TFolder && file.path !== '/') {
-                    recurse(file);
-                }
-            });
-            return [...new Set(folders)].sort();
-        };
-
-        new Setting(containerEl)
-            .setName('Excluded Folders')
-            .setDesc('Folders to hide from Kanban view (quests still indexed for XP). Comma-separated.')
-            .addText(text => text
-                .setPlaceholder('archive, completed')
-                .setValue(this.plugin.settings.excludedFolders.join(', '))
-                .onChange(async (value) => {
-                    this.plugin.settings.excludedFolders = value
-                        .split(',')
-                        .map(s => s.trim())
-                        .filter(s => s.length > 0);
-                    await this.plugin.saveSettings();
-                }));
-
-        new Setting(containerEl)
-            .setName('Archive Folder')
-            .setDesc('Folder for archived/completed quests (relative to storage folder)')
-            .addText(text => text
-                .setPlaceholder('quests/archive')
-                .setValue(this.plugin.settings.archiveFolder)
-                .onChange(async (value) => {
-                    this.plugin.settings.archiveFolder = value;
-                    await this.plugin.saveSettings();
-                }));
-
-        // Dungeon Configuration Section
-        containerEl.createEl('h3', { text: 'Dungeon Configuration' });
-
-        new Setting(containerEl)
-            .setName('User Dungeon Folder')
-            .setDesc('Folder for custom dungeon markdown files. A format guide will be created here on first use.')
-            .addText(text => text
-                .setPlaceholder('Life/Quest Board/dungeons')
-                .setValue(this.plugin.settings.userDungeonFolder || 'Life/Quest Board/dungeons')
-                .onChange(async (value) => {
-                    this.plugin.settings.userDungeonFolder = value;
-                    await this.plugin.saveSettings();
-                }));
-
-        new Setting(containerEl)
-            .setName('Create Dungeon Template')
-            .setDesc('Create the format guide document in your dungeon folder')
-            .addButton(button => button
-                .setButtonText('Create Template')
-                .onClick(async () => {
-                    const { createDungeonTemplateDoc } = await import('./services/UserDungeonLoader');
-                    const folder = this.plugin.settings.userDungeonFolder || 'Life/Quest Board/dungeons';
-                    await createDungeonTemplateDoc(this.app.vault, folder);
-                    const Notice = (await import('obsidian')).Notice;
-                    new Notice(`📜 Template created at ${folder}/DUNGEON_FORMAT.md`);
-                }));
-
-        // Template Configuration Section
-        containerEl.createEl('h3', { text: 'Template Configuration' });
-
-        new Setting(containerEl)
+        new Setting(filePathsContent)
             .setName('Template Folder')
             .setDesc('Folder containing quest templates')
             .addText(text => text
@@ -392,89 +292,36 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
-        new Setting(containerEl)
-            .setName('Default Quest Tags')
-            .setDesc('Tags to add by default when creating quests. Comma-separated.')
+        new Setting(filePathsContent)
+            .setName('Archive Folder')
+            .setDesc('Folder for archived/completed quests')
             .addText(text => text
-                .setPlaceholder('quest, active')
-                .setValue(this.plugin.settings.defaultQuestTags.join(', '))
+                .setPlaceholder('Quest Board/quests/archive')
+                .setValue(this.plugin.settings.archiveFolder)
                 .onChange(async (value) => {
-                    this.plugin.settings.defaultQuestTags = value
-                        .split(',')
-                        .map(s => s.trim())
-                        .filter(s => s.length > 0);
+                    this.plugin.settings.archiveFolder = value;
                     await this.plugin.saveSettings();
                 }));
 
-        // Daily Notes Integration Section
-        containerEl.createEl('h3', { text: 'Daily Notes Integration' });
-
-        new Setting(containerEl)
-            .setName('Enable Daily Note Logging')
-            .setDesc('Log quest completions to your daily notes')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.enableDailyNoteLogging)
+        new Setting(filePathsContent)
+            .setName('User Dungeon Folder')
+            .setDesc('Folder for custom dungeon markdown files')
+            .addText(text => text
+                .setPlaceholder('Quest Board/dungeons')
+                .setValue(this.plugin.settings.userDungeonFolder || 'Quest Board/dungeons')
                 .onChange(async (value) => {
-                    this.plugin.settings.enableDailyNoteLogging = value;
+                    this.plugin.settings.userDungeonFolder = value;
                     await this.plugin.saveSettings();
-                    this.display(); // Refresh to show/hide dependent settings
                 }));
 
-        // Only show these settings if daily note logging is enabled
-        if (this.plugin.settings.enableDailyNoteLogging) {
-            const folderSetting = new Setting(containerEl)
-                .setName('Daily Note Folder')
-                .setDesc('Folder where your daily notes are stored');
-
-            folderSetting.addText(text => {
-                text.setPlaceholder('Daily')
-                    .setValue(this.plugin.settings.dailyNoteFolder || 'Daily')
-                    .onChange(async (value) => {
-                        this.plugin.settings.dailyNoteFolder = value;
-                        await this.plugin.saveSettings();
-                    });
-
-                // Add folder autocomplete
-                import('./utils/FolderSuggest').then(({ FolderSuggest }) => {
-                    new FolderSuggest(this.app, text.inputEl);
-                });
-            });
-
-            new Setting(containerEl)
-                .setName('Daily Note Format')
-                .setDesc('Date format for daily note filenames (YYYY-MM-DD, YYYY-MM-DD ddd, etc.)')
-                .addText(text => text
-                    .setPlaceholder('YYYY-MM-DD')
-                    .setValue(this.plugin.settings.dailyNoteFormat || 'YYYY-MM-DD')
-                    .onChange(async (value) => {
-                        this.plugin.settings.dailyNoteFormat = value;
-                        await this.plugin.saveSettings();
-                    }));
-
-            new Setting(containerEl)
-                .setName('Log Heading')
-                .setDesc('Heading to append quest completion logs under')
-                .addText(text => text
-                    .setPlaceholder('## Quest Board Activity')
-                    .setValue(this.plugin.settings.dailyNoteHeading || '## Quest Board Activity')
-                    .onChange(async (value) => {
-                        this.plugin.settings.dailyNoteHeading = value;
-                        await this.plugin.saveSettings();
-                    }));
-
-            new Setting(containerEl)
-                .setName('Create Daily Note If Missing')
-                .setDesc('Create a new daily note if one doesn\'t exist. Disable if you use another daily notes plugin.')
-                .addToggle(toggle => toggle
-                    .setValue(this.plugin.settings.createDailyNoteIfMissing ?? false)
-                    .onChange(async (value) => {
-                        this.plugin.settings.createDailyNoteIfMissing = value;
-                        await this.plugin.saveSettings();
-                    }));
-        }
-
-        // Game Settings Section
-        containerEl.createEl('h3', { text: 'Game Settings' });
+        // ═══════════════════════════════════════════════════════════════════
+        // SECTION 3: GAMEPLAY SETTINGS
+        // ═══════════════════════════════════════════════════════════════════
+        containerEl.createEl('h3', { text: 'Gameplay Settings' });
+        containerEl.createEl('p', {
+            text: 'Core game mechanics and progression settings.',
+            cls: 'qb-section-description'
+        });
 
         new Setting(containerEl)
             .setName('Weekly Quest Goal')
@@ -552,8 +399,104 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
-        // Mobile Settings Section
-        containerEl.createEl('h3', { text: 'Mobile Settings' });
+        // ═══════════════════════════════════════════════════════════════════
+        // SECTION 4: QUEST MANAGEMENT
+        // ═══════════════════════════════════════════════════════════════════
+        containerEl.createEl('h3', { text: 'Quest Management' });
+        containerEl.createEl('p', {
+            text: 'Configure quest creation, templates, and folder settings.',
+            cls: 'qb-section-description'
+        });
+
+        new Setting(containerEl)
+            .setName('Default Quest Tags')
+            .setDesc('Tags to add by default when creating quests. Comma-separated.')
+            .addText(text => text
+                .setPlaceholder('quest, active')
+                .setValue(this.plugin.settings.defaultQuestTags.join(', '))
+                .onChange(async (value) => {
+                    this.plugin.settings.defaultQuestTags = value
+                        .split(',')
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0);
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Excluded Folders')
+            .setDesc('Folders to hide from Kanban view (quests still indexed for XP). Comma-separated.')
+            .addText(text => text
+                .setPlaceholder('archive, completed')
+                .setValue(this.plugin.settings.excludedFolders.join(', '))
+                .onChange(async (value) => {
+                    this.plugin.settings.excludedFolders = value
+                        .split(',')
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0);
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Template Builder')
+            .setDesc('Create and edit quest templates (including watched folder templates)')
+            .addButton(button => button
+                .setButtonText('Open Template Builder')
+                .onClick(async () => {
+                    const { ScrivenersQuillModal } = await import('./modals/ScrivenersQuillModal');
+                    new ScrivenersQuillModal(this.app, this.plugin).open();
+                }));
+
+        new Setting(containerEl)
+            .setName('Create Dungeon Template')
+            .setDesc('Create the format guide document in your dungeon folder')
+            .addButton(button => button
+                .setButtonText('Create Template')
+                .onClick(async () => {
+                    const { createDungeonTemplateDoc } = await import('./services/UserDungeonLoader');
+                    const folder = this.plugin.settings.userDungeonFolder || 'Quest Board/dungeons';
+                    await createDungeonTemplateDoc(this.app.vault, folder);
+                    const Notice = (await import('obsidian')).Notice;
+                    new Notice(`📜 Template created at ${folder}/DUNGEON_FORMAT.md`);
+                }));
+
+        // ═══════════════════════════════════════════════════════════════════
+        // SECTION 5: KANBAN BOARD
+        // ═══════════════════════════════════════════════════════════════════
+        containerEl.createEl('h3', { text: 'Kanban Board' });
+        containerEl.createEl('p', {
+            text: 'Customize Kanban columns and mobile display options.',
+            cls: 'qb-section-description'
+        });
+
+        new Setting(containerEl)
+            .setName('Enable Custom Columns')
+            .setDesc('Customize Kanban column names, order, and completion behavior')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableCustomColumns ?? false)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableCustomColumns = value;
+                    await this.plugin.saveSettings();
+                    this.display(); // Refresh to show/hide column manager button
+                }));
+
+        if (this.plugin.settings.enableCustomColumns) {
+            new Setting(containerEl)
+                .setName('Manage Columns')
+                .setDesc('Add, edit, reorder, or remove Kanban columns')
+                .addButton(button => button
+                    .setButtonText('Open Column Manager')
+                    .onClick(async () => {
+                        const { ColumnManagerModal } = await import('./modals/ColumnManagerModal');
+                        new ColumnManagerModal(this.app, this.plugin).open();
+                    }));
+
+            // Show current column count
+            const columnCount = (this.plugin.settings.customColumns || DEFAULT_COLUMNS).length;
+            containerEl.createEl('p', {
+                text: `Current columns: ${columnCount}`,
+                cls: 'setting-item-description'
+            });
+        }
 
         new Setting(containerEl)
             .setName('Mobile Kanban Mode')
@@ -581,11 +524,126 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
-        // Balance Testing Section (DEV ONLY - hidden in production builds)
-        if (DEV_FEATURES_ENABLED) {
-            containerEl.createEl('h3', { text: '🧪 Balance Testing' });
+        // ═══════════════════════════════════════════════════════════════════
+        // SECTION 6: DAILY NOTES INTEGRATION
+        // ═══════════════════════════════════════════════════════════════════
+        containerEl.createEl('h3', { text: 'Daily Notes Integration' });
+        containerEl.createEl('p', {
+            text: 'Log quest activity to your daily notes.',
+            cls: 'qb-section-description'
+        });
+
+        new Setting(containerEl)
+            .setName('Enable Daily Note Logging')
+            .setDesc('Log quest completions to your daily notes')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableDailyNoteLogging)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableDailyNoteLogging = value;
+                    await this.plugin.saveSettings();
+                    this.display(); // Refresh to show/hide dependent settings
+                }));
+
+        // Only show these settings if daily note logging is enabled
+        if (this.plugin.settings.enableDailyNoteLogging) {
+            const folderSetting = new Setting(containerEl)
+                .setName('Daily Note Folder')
+                .setDesc('Folder where your daily notes are stored');
+
+            folderSetting.addText(text => {
+                text.setPlaceholder('Daily')
+                    .setValue(this.plugin.settings.dailyNoteFolder || 'Daily')
+                    .onChange(async (value) => {
+                        this.plugin.settings.dailyNoteFolder = value;
+                        await this.plugin.saveSettings();
+                    });
+
+                // Add folder autocomplete
+                import('./utils/FolderSuggest').then(({ FolderSuggest }) => {
+                    new FolderSuggest(this.app, text.inputEl);
+                });
+            });
 
             new Setting(containerEl)
+                .setName('Daily Note Format')
+                .setDesc('Date format for daily note filenames (YYYY-MM-DD, YYYY-MM-DD ddd, etc.)')
+                .addText(text => text
+                    .setPlaceholder('YYYY-MM-DD')
+                    .setValue(this.plugin.settings.dailyNoteFormat || 'YYYY-MM-DD')
+                    .onChange(async (value) => {
+                        this.plugin.settings.dailyNoteFormat = value;
+                        await this.plugin.saveSettings();
+                    }));
+
+            new Setting(containerEl)
+                .setName('Log Heading')
+                .setDesc('Heading to append quest completion logs under')
+                .addText(text => text
+                    .setPlaceholder('## Quest Board Activity')
+                    .setValue(this.plugin.settings.dailyNoteHeading || '## Quest Board Activity')
+                    .onChange(async (value) => {
+                        this.plugin.settings.dailyNoteHeading = value;
+                        await this.plugin.saveSettings();
+                    }));
+
+            new Setting(containerEl)
+                .setName('Create Daily Note If Missing')
+                .setDesc('Create a new daily note if one doesn\'t exist. Disable if you use another daily notes plugin.')
+                .addToggle(toggle => toggle
+                    .setValue(this.plugin.settings.createDailyNoteIfMissing ?? false)
+                    .onChange(async (value) => {
+                        this.plugin.settings.createDailyNoteIfMissing = value;
+                        await this.plugin.saveSettings();
+                    }));
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // SECTION 7: AI FEATURES
+        // ═══════════════════════════════════════════════════════════════════
+        containerEl.createEl('h3', { text: 'AI Features' });
+        containerEl.createEl('p', {
+            text: 'Configure AI-powered quest generation and dungeon creation.',
+            cls: 'qb-section-description'
+        });
+
+        // Show API key status
+        const hasApiKey = !!this.plugin.settings.geminiApiKey;
+        if (!hasApiKey) {
+            containerEl.createEl('p', {
+                text: '⚠ Configure your Gemini API key in Essential Settings to enable AI features.',
+                cls: 'qb-warning-text'
+            });
+        }
+
+        new Setting(containerEl)
+            .setName('Skip AI Quest Preview')
+            .setDesc('When enabled, AI-generated quests save directly without a preview/edit step')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.aiQuestSkipPreview ?? false)
+                .onChange(async (value) => {
+                    this.plugin.settings.aiQuestSkipPreview = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        // ═══════════════════════════════════════════════════════════════════
+        // SECTION 8: ADVANCED CONFIGURATION (Collapsible)
+        // ═══════════════════════════════════════════════════════════════════
+        const advancedDetails = containerEl.createEl('details', { cls: 'qb-settings-collapsible' });
+        advancedDetails.createEl('summary', {
+            text: 'Advanced Configuration',
+            cls: 'qb-settings-section-header'
+        });
+        const advancedContent = advancedDetails.createDiv({ cls: 'qb-settings-collapsible-content' });
+        advancedContent.createEl('p', {
+            text: 'Gear drops, stat mappings, and balance testing options for power users.',
+            cls: 'qb-section-description'
+        });
+
+        // Balance Testing Section (DEV ONLY - hidden in production builds)
+        if (DEV_FEATURES_ENABLED) {
+            advancedContent.createEl('h4', { text: '🧪 Balance Testing' });
+
+            new Setting(advancedContent)
                 .setName('Enable Balance Test Logging')
                 .setDesc('Log battle data to a note for balance testing and analysis')
                 .addToggle(toggle => toggle
@@ -598,7 +656,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
 
             // Only show these settings if balance testing is enabled
             if (this.plugin.settings.enableBalanceTesting) {
-                const folderSetting = new Setting(containerEl)
+                const folderSetting = new Setting(advancedContent)
                     .setName('Balance Testing Folder')
                     .setDesc('Folder where balance test notes are stored');
 
@@ -616,7 +674,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     });
                 });
 
-                new Setting(containerEl)
+                new Setting(advancedContent)
                     .setName('Current Test Note')
                     .setDesc('Note name for logging (without .md extension). E.g., "Paladin Testing"')
                     .addText(text => text
@@ -628,8 +686,8 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         }));
 
                 // Test Character Generator
-                containerEl.createEl('h4', { text: '⚡ Quick Test Character' });
-                containerEl.createEl('p', {
+                advancedContent.createEl('h5', { text: '⚡ Quick Test Character' });
+                advancedContent.createEl('p', {
                     text: 'Generate a test character with appropriate stats, gear, and skills for the selected level.',
                     cls: 'setting-item-description'
                 });
@@ -638,7 +696,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 let selectedClass: import('./models/Character').CharacterClass = 'warrior';
                 let selectedLevel: number = 20;
 
-                new Setting(containerEl)
+                new Setting(advancedContent)
                     .setName('Test Class')
                     .setDesc('Character class to generate')
                     .addDropdown(dropdown => {
@@ -652,7 +710,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         });
                     });
 
-                new Setting(containerEl)
+                new Setting(advancedContent)
                     .setName('Test Level')
                     .setDesc('Character level (1-40)')
                     .addDropdown(dropdown => {
@@ -665,7 +723,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         });
                     });
 
-                new Setting(containerEl)
+                new Setting(advancedContent)
                     .setName('Generate Test Character')
                     .setDesc('⚠️ This will REPLACE your current character with a test character!')
                     .addButton(button => button
@@ -694,8 +752,8 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         }
 
         // Quest → Gear Slot Mapping Section
-        containerEl.createEl('h3', { text: 'Quest → Gear Slot Mapping' });
-        containerEl.createEl('p', {
+        advancedContent.createEl('h4', { text: 'Quest → Gear Slot Mapping' });
+        advancedContent.createEl('p', {
             text: 'Configure which gear slots can drop from each quest type. Separate slots with commas.',
             cls: 'setting-item-description'
         });
@@ -707,7 +765,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         const questTypes = Object.keys(questSlotMapping);
         questTypes.forEach(questType => {
             const slots = questSlotMapping[questType] || [];
-            new Setting(containerEl)
+            new Setting(advancedContent)
                 .setName(`${questType.charAt(0).toUpperCase() + questType.slice(1)} Quests`)
                 .setDesc(`Slots: ${slots.length > 0 ? slots.join(', ') : '(no gear drops)'}`)
                 .addText(text => text
@@ -728,7 +786,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         // Add new quest type mapping
         let newQuestType = '';
         let newSlots = '';
-        new Setting(containerEl)
+        new Setting(advancedContent)
             .setName('Add Custom Quest Type')
             .setDesc('Add a mapping for a custom quest type folder')
             .addText(text => text
@@ -753,13 +811,13 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 }));
 
         // Excluded Set Folders Section
-        containerEl.createEl('h3', { text: 'Set Bonus Configuration' });
-        containerEl.createEl('p', {
+        advancedContent.createEl('h4', { text: 'Set Bonus Configuration' });
+        advancedContent.createEl('p', {
             text: 'Quest folders that should NOT form gear sets. Gear from these folders will have no set membership.',
             cls: 'setting-item-description'
         });
 
-        new Setting(containerEl)
+        new Setting(advancedContent)
             .setName('Excluded Folders')
             .setDesc('Comma-separated list of folder names (e.g., main, side, training)')
             .addText(text => text
@@ -776,9 +834,9 @@ export class QuestBoardSettingTab extends PluginSettingTab {
 
         // Character Section (if character exists)
         if (this.plugin.settings.character) {
-            containerEl.createEl('h3', { text: 'Character' });
+            advancedContent.createEl('h4', { text: 'Character' });
 
-            new Setting(containerEl)
+            new Setting(advancedContent)
                 .setName('Character Name')
                 .setDesc(this.plugin.settings.character.name)
                 .addButton(button => button
@@ -787,14 +845,14 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         // TODO: Open character edit modal
                     }));
 
-            new Setting(containerEl)
+            new Setting(advancedContent)
                 .setName('Class')
                 .setDesc(`${this.plugin.settings.character.class} (Level ${this.plugin.settings.character.level})`);
         }
 
         // Stat Mapping Section
-        containerEl.createEl('h3', { text: 'Custom Stat Mappings' });
-        containerEl.createEl('p', {
+        advancedContent.createEl('h4', { text: 'Custom Stat Mappings' });
+        advancedContent.createEl('p', {
             text: 'Map your custom quest categories to stats. Format: category → stat (e.g., "gardening" → "constitution")',
             cls: 'setting-item-description'
         });
@@ -804,7 +862,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
 
         // Show existing mappings
         Object.entries(mappings).forEach(([category, stat]) => {
-            new Setting(containerEl)
+            new Setting(advancedContent)
                 .setName(category)
                 .setDesc(`Currently mapped to: ${stat}`)
                 .addDropdown(dropdown => dropdown
@@ -830,7 +888,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
 
         // If we have known categories, show dropdown + option to add new
         if (knownCategories.length > 0) {
-            new Setting(containerEl)
+            new Setting(advancedContent)
                 .setName('Map Existing Category')
                 .setDesc('Select from categories you\'ve used in quests')
                 .addDropdown(dropdown => {
@@ -856,7 +914,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         }
 
         // Always allow adding a completely new category by typing
-        new Setting(containerEl)
+        new Setting(advancedContent)
             .setName('Add New Category')
             .setDesc('Type a new category name to map')
             .addText(text => text
@@ -880,11 +938,22 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     }
                 }));
 
-        // Debug Section (only in development)
-        containerEl.createEl('h3', { text: 'Debug' });
+        // ═══════════════════════════════════════════════════════════════════
+        // SECTION 9: DANGER ZONE (Always visible, collapsed by default)
+        // ═══════════════════════════════════════════════════════════════════
+        const dangerDetails = containerEl.createEl('details', { cls: 'qb-settings-collapsible qb-danger-zone' });
+        dangerDetails.createEl('summary', {
+            text: '⚠️ Danger Zone',
+            cls: 'qb-settings-section-header qb-danger-header'
+        });
+        const dangerContent = dangerDetails.createDiv({ cls: 'qb-settings-collapsible-content' });
+        dangerContent.createEl('p', {
+            text: 'These actions cannot be undone. Use with caution.',
+            cls: 'qb-section-description qb-warning-text'
+        });
 
         // Reset Stats Only - surgical fix for corrupted stat data
-        new Setting(containerEl)
+        new Setting(dangerContent)
             .setName('Reset Stats Only')
             .setDesc('Reset statBonuses, category XP accumulators, and streak to zero (keeps XP, level, achievements)')
             .addButton(button => button
@@ -910,7 +979,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     }
                 }));
 
-        new Setting(containerEl)
+        new Setting(dangerContent)
             .setName('Reset All Data')
             .setDesc('⚠️ This will delete all character progress, achievements, and inventory')
             .addButton(button => button
@@ -926,64 +995,78 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     }
                 }));
 
-        // === Gemini Test Section ===
-        containerEl.createEl('h3', { text: '🧪 Gemini AI Testing' });
+        // ═══════════════════════════════════════════════════════════════════
+        // SECTION 10: DEVELOPER TOOLS (DEV mode only)
+        // ═══════════════════════════════════════════════════════════════════
+        if (DEV_FEATURES_ENABLED) {
+            const devDetails = containerEl.createEl('details', { cls: 'qb-settings-collapsible' });
+            devDetails.createEl('summary', {
+                text: '🛠️ Developer Tools',
+                cls: 'qb-settings-section-header'
+            });
+            const devContent = devDetails.createDiv({ cls: 'qb-settings-collapsible-content' });
+            devContent.createEl('p', {
+                text: 'Debug utilities and testing features (only visible in DEV mode).',
+                cls: 'qb-section-description'
+            });
+            devContent.createEl('h4', { text: '🧪 Gemini AI Testing' });
 
-        new Setting(containerEl)
-            .setName('Test Set Bonus Generation')
-            .setDesc('Enter a set name and test Gemini generation. Results shown in console.')
-            .addText(text => text
-                .setPlaceholder('e.g., Fitness, Work, Study')
-                .setValue('')
-                .onChange(() => { }))
-            .addButton(button => button
-                .setButtonText('Generate')
-                .onClick(async () => {
-                    const textInput = containerEl.querySelector('.setting-item:last-of-type input') as HTMLInputElement;
-                    const setName = textInput?.value?.trim() || 'Test Set';
+            new Setting(devContent)
+                .setName('Test Set Bonus Generation')
+                .setDesc('Enter a set name and test Gemini generation. Results shown in console.')
+                .addText(text => text
+                    .setPlaceholder('e.g., Fitness, Work, Study')
+                    .setValue('')
+                    .onChange(() => { }))
+                .addButton(button => button
+                    .setButtonText('Generate')
+                    .onClick(async () => {
+                        const textInput = devContent.querySelector('.setting-item:last-of-type input') as HTMLInputElement;
+                        const setName = textInput?.value?.trim() || 'Test Set';
 
-                    button.setButtonText('Generating...');
-                    button.setDisabled(true);
+                        button.setButtonText('Generating...');
+                        button.setDisabled(true);
 
-                    const { setBonusService } = await import('./services/SetBonusService');
-                    const result = await setBonusService.testGeneration(setName);
+                        const { setBonusService } = await import('./services/SetBonusService');
+                        const result = await setBonusService.testGeneration(setName);
 
-                    if (result.success && result.bonuses) {
-                        console.log(`[Gemini Test] SUCCESS for "${setName}":`, result.bonuses);
-                        const bonusStr = result.bonuses.map(b =>
-                            `(${b.pieces}) ${setBonusService.formatBonusEffect(b.effect)}`
-                        ).join('\n');
-                        alert(`✅ Generated bonuses for "${setName}":\n\n${bonusStr}`);
-                    } else {
-                        console.error(`[Gemini Test] FAILED for "${setName}":`, result.error);
-                        alert(`❌ Generation failed:\n${result.error}`);
-                    }
+                        if (result.success && result.bonuses) {
+                            console.log(`[Gemini Test] SUCCESS for "${setName}":`, result.bonuses);
+                            const bonusStr = result.bonuses.map(b =>
+                                `(${b.pieces}) ${setBonusService.formatBonusEffect(b.effect)}`
+                            ).join('\n');
+                            alert(`✅ Generated bonuses for "${setName}":\n\n${bonusStr}`);
+                        } else {
+                            console.error(`[Gemini Test] FAILED for "${setName}":`, result.error);
+                            alert(`❌ Generation failed:\n${result.error}`);
+                        }
 
-                    button.setButtonText('Generate');
-                    button.setDisabled(false);
-                }));
+                        button.setButtonText('Generate');
+                        button.setDisabled(false);
+                    }));
 
-        new Setting(containerEl)
-            .setName('Cache Status')
-            .setDesc('View current set bonus cache status')
-            .addButton(button => button
-                .setButtonText('Show Status')
-                .onClick(async () => {
-                    const { setBonusService } = await import('./services/SetBonusService');
-                    const status = setBonusService.getCacheStatus();
-                    console.log('[Cache Status]', status);
-                    alert(`📦 Cache Status:\nCached: ${status.cached}\nPending: ${status.pending}\nSets: ${status.setIds.join(', ') || 'none'}`);
-                }));
+            new Setting(devContent)
+                .setName('Cache Status')
+                .setDesc('View current set bonus cache status')
+                .addButton(button => button
+                    .setButtonText('Show Status')
+                    .onClick(async () => {
+                        const { setBonusService } = await import('./services/SetBonusService');
+                        const status = setBonusService.getCacheStatus();
+                        console.log('[Cache Status]', status);
+                        alert(`📦 Cache Status:\nCached: ${status.cached}\nPending: ${status.pending}\nSets: ${status.setIds.join(', ') || 'none'}`);
+                    }));
 
-        new Setting(containerEl)
-            .setName('Clear Set Bonus Cache')
-            .setDesc('Clear cached set bonuses (keeps first entry for comparison)')
-            .addButton(button => button
-                .setButtonText('Clear Cache')
-                .onClick(async () => {
-                    const { setBonusService } = await import('./services/SetBonusService');
-                    setBonusService.clearCacheExceptFirst();
-                    alert('🗑️ Cache cleared (kept first entry)');
-                }));
+            new Setting(devContent)
+                .setName('Clear Set Bonus Cache')
+                .setDesc('Clear cached set bonuses (keeps first entry for comparison)')
+                .addButton(button => button
+                    .setButtonText('Clear Cache')
+                    .onClick(async () => {
+                        const { setBonusService } = await import('./services/SetBonusService');
+                        setBonusService.clearCacheExceptFirst();
+                        alert('🗑️ Cache cleared (kept first entry)');
+                    }));
+        }
     }
 }
