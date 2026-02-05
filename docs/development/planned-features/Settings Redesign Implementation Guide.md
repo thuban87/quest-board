@@ -1,11 +1,11 @@
 # Settings Redesign Implementation Guide
 
-**Version:** 1.1
-**Status:** Phase 1 Complete ✅
+**Version:** 1.2
+**Status:** Phase 2 Complete ✅
 **Target:** Quest Board v1.0.0
 **Author:** Claude Sonnet 4.5
 **Date:** 2026-02-05
-**Revision:** 2026-02-05 - Phase 1 implemented with 10 sections (added Danger Zone)
+**Revision:** 2026-02-05 - Phase 2 Modal Extraction complete
 
 ---
 
@@ -14,14 +14,19 @@
 | Phase | Description | Status |
 |-------|-------------|--------|
 | Phase 1 | Section Reorganization | ✅ Complete |
-| Phase 2 | CSS Styling | 🔲 Not Started |
-| Phase 3 | Modal Extraction | 🔲 Not Started |
+| Phase 2 | Modal Extraction | ✅ Complete |
+| Phase 3 | Polish & Refinement | 🔲 Not Started |
 
 **Phase 1 Notes:**
 - Implemented 10 sections (originally planned 9, added Danger Zone)
 - `badgeFolder` kept - actually used by AchievementService
 - AI quota display deferred (needs new interface properties)
 - `enableDebugLogging` toggle deferred (property doesn't exist)
+
+**Phase 2 Notes:**
+- Created 4 new modals: WatchedFolderManager, GearSlotMapping, StatMappings, AITestLab
+- Added ~200 lines of modal CSS styling
+- Removed ~150 lines of legacy inline UI from settings.ts
 
 ---
 

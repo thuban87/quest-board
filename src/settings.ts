@@ -459,6 +459,16 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     new Notice(`📜 Template created at ${folder}/DUNGEON_FORMAT.md`);
                 }));
 
+        new Setting(containerEl)
+            .setName('Watched Folders')
+            .setDesc('Manage automatic quest generation from watched folders')
+            .addButton(button => button
+                .setButtonText('Manage Watched Folders')
+                .onClick(async () => {
+                    const { WatchedFolderManagerModal } = await import('./modals/WatchedFolderManagerModal');
+                    new WatchedFolderManagerModal(this.app, this.plugin).open();
+                }));
+
         // ═══════════════════════════════════════════════════════════════════
         // SECTION 5: KANBAN BOARD
         // ═══════════════════════════════════════════════════════════════════
@@ -751,63 +761,25 @@ export class QuestBoardSettingTab extends PluginSettingTab {
             }
         }
 
-        // Quest → Gear Slot Mapping Section
-        advancedContent.createEl('h4', { text: 'Quest → Gear Slot Mapping' });
-        advancedContent.createEl('p', {
-            text: 'Configure which gear slots can drop from each quest type. Separate slots with commas.',
-            cls: 'setting-item-description'
-        });
-
-        const gearSlotOptions = ['head', 'chest', 'legs', 'boots', 'weapon', 'shield', 'accessory1', 'accessory2', 'accessory3'];
-        const questSlotMapping = this.plugin.settings.questSlotMapping || {};
-
-        // Show existing quest type mappings
-        const questTypes = Object.keys(questSlotMapping);
-        questTypes.forEach(questType => {
-            const slots = questSlotMapping[questType] || [];
-            new Setting(advancedContent)
-                .setName(`${questType.charAt(0).toUpperCase() + questType.slice(1)} Quests`)
-                .setDesc(`Slots: ${slots.length > 0 ? slots.join(', ') : '(no gear drops)'}`)
-                .addText(text => text
-                    .setPlaceholder('e.g., chest, weapon, head')
-                    .setValue(slots.join(', '))
-                    .onChange(async (value) => {
-                        const newSlots = value
-                            .split(',')
-                            .map(s => s.trim().toLowerCase())
-                            .filter(s => gearSlotOptions.includes(s));
-                        this.plugin.settings.questSlotMapping[questType] = newSlots;
-                        await this.plugin.saveSettings();
-                        // Update loot service with new mapping
-                        this.applyQuestSlotMapping();
-                    }));
-        });
-
-        // Add new quest type mapping
-        let newQuestType = '';
-        let newSlots = '';
+        // Modal buttons for advanced configuration
         new Setting(advancedContent)
-            .setName('Add Custom Quest Type')
-            .setDesc('Add a mapping for a custom quest type folder')
-            .addText(text => text
-                .setPlaceholder('Quest type (e.g., fitness)')
-                .onChange(value => { newQuestType = value.toLowerCase().trim(); }))
-            .addText(text => text
-                .setPlaceholder('Slots (e.g., chest, legs)')
-                .onChange(value => { newSlots = value; }))
+            .setName('Gear Slot Mapping')
+            .setDesc('Configure which gear slots can drop from each quest type')
             .addButton(button => button
-                .setButtonText('Add')
+                .setButtonText('Open Gear Slot Mapping')
                 .onClick(async () => {
-                    if (newQuestType) {
-                        const parsedSlots = newSlots
-                            .split(',')
-                            .map(s => s.trim().toLowerCase())
-                            .filter(s => gearSlotOptions.includes(s));
-                        this.plugin.settings.questSlotMapping[newQuestType] = parsedSlots;
-                        await this.plugin.saveSettings();
-                        this.applyQuestSlotMapping();
-                        this.display(); // Refresh
-                    }
+                    const { GearSlotMappingModal } = await import('./modals/GearSlotMappingModal');
+                    new GearSlotMappingModal(this.app, this.plugin).open();
+                }));
+
+        new Setting(advancedContent)
+            .setName('Stat Mappings')
+            .setDesc('Map quest categories to character stats for XP distribution')
+            .addButton(button => button
+                .setButtonText('Open Stat Mappings')
+                .onClick(async () => {
+                    const { StatMappingsModal } = await import('./modals/StatMappingsModal');
+                    new StatMappingsModal(this.app, this.plugin).open();
                 }));
 
         // Excluded Set Folders Section
@@ -849,94 +821,6 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 .setName('Class')
                 .setDesc(`${this.plugin.settings.character.class} (Level ${this.plugin.settings.character.level})`);
         }
-
-        // Stat Mapping Section
-        advancedContent.createEl('h4', { text: 'Custom Stat Mappings' });
-        advancedContent.createEl('p', {
-            text: 'Map your custom quest categories to stats. Format: category → stat (e.g., "gardening" → "constitution")',
-            cls: 'setting-item-description'
-        });
-
-        const statOptions = ['strength', 'intelligence', 'wisdom', 'constitution', 'dexterity', 'charisma'];
-        const mappings = this.plugin.settings.categoryStatMappings || {};
-
-        // Show existing mappings
-        Object.entries(mappings).forEach(([category, stat]) => {
-            new Setting(advancedContent)
-                .setName(category)
-                .setDesc(`Currently mapped to: ${stat}`)
-                .addDropdown(dropdown => dropdown
-                    .addOptions(Object.fromEntries(statOptions.map(s => [s, s.toUpperCase()])))
-                    .setValue(stat)
-                    .onChange(async (value) => {
-                        this.plugin.settings.categoryStatMappings[category] = value;
-                        await this.plugin.saveSettings();
-                    }))
-                .addButton(button => button
-                    .setButtonText('Remove')
-                    .onClick(async () => {
-                        delete this.plugin.settings.categoryStatMappings[category];
-                        await this.plugin.saveSettings();
-                        this.display(); // Refresh
-                    }));
-        });
-
-        // Add new mapping - dropdown for known categories or text for new
-        const knownCategories = this.plugin.settings.knownCategories || [];
-        let newCategory = '';
-        let newStat = 'strength';
-
-        // If we have known categories, show dropdown + option to add new
-        if (knownCategories.length > 0) {
-            new Setting(advancedContent)
-                .setName('Map Existing Category')
-                .setDesc('Select from categories you\'ve used in quests')
-                .addDropdown(dropdown => {
-                    dropdown.addOption('', '-- Select category --');
-                    knownCategories
-                        .filter(c => !mappings[c]) // Exclude already mapped
-                        .forEach(cat => dropdown.addOption(cat, cat));
-                    dropdown.onChange(value => { newCategory = value.toLowerCase().trim(); });
-                })
-                .addDropdown(dropdown => dropdown
-                    .addOptions(Object.fromEntries(statOptions.map(s => [s, s.toUpperCase()])))
-                    .setValue('strength')
-                    .onChange(value => { newStat = value; }))
-                .addButton(button => button
-                    .setButtonText('Add')
-                    .onClick(async () => {
-                        if (newCategory) {
-                            this.plugin.settings.categoryStatMappings[newCategory] = newStat;
-                            await this.plugin.saveSettings();
-                            this.display();
-                        }
-                    }));
-        }
-
-        // Always allow adding a completely new category by typing
-        new Setting(advancedContent)
-            .setName('Add New Category')
-            .setDesc('Type a new category name to map')
-            .addText(text => text
-                .setPlaceholder('e.g., gardening')
-                .onChange(value => { newCategory = value.toLowerCase().trim(); }))
-            .addDropdown(dropdown => dropdown
-                .addOptions(Object.fromEntries(statOptions.map(s => [s, s.toUpperCase()])))
-                .setValue('strength')
-                .onChange(value => { newStat = value; }))
-            .addButton(button => button
-                .setButtonText('Add')
-                .onClick(async () => {
-                    if (newCategory) {
-                        this.plugin.settings.categoryStatMappings[newCategory] = newStat;
-                        // Also add to known categories if not already there
-                        if (!this.plugin.settings.knownCategories.includes(newCategory)) {
-                            this.plugin.settings.knownCategories.push(newCategory);
-                        }
-                        await this.plugin.saveSettings();
-                        this.display();
-                    }
-                }));
 
         // ═══════════════════════════════════════════════════════════════════
         // SECTION 9: DANGER ZONE (Always visible, collapsed by default)
@@ -1009,7 +893,18 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 text: 'Debug utilities and testing features (only visible in DEV mode).',
                 cls: 'qb-section-description'
             });
-            devContent.createEl('h4', { text: '🧪 Gemini AI Testing' });
+            // AI Test Lab Modal Button
+            new Setting(devContent)
+                .setName('AI Test Lab')
+                .setDesc('Test Gemini AI features and manage caches')
+                .addButton(button => button
+                    .setButtonText('Open AI Test Lab')
+                    .onClick(async () => {
+                        const { AITestLabModal } = await import('./modals/AITestLabModal');
+                        new AITestLabModal(this.app, this.plugin).open();
+                    }));
+
+            devContent.createEl('h4', { text: '🧪 Gemini AI Testing (Inline - Legacy)' });
 
             new Setting(devContent)
                 .setName('Test Set Bonus Generation')

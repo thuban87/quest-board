@@ -1583,6 +1583,199 @@
   margin-top: var(--qb-spacing-md);
 }
 /* ===========================================
+   Settings Modals (Phase 2)
+   - WatchedFolderManager
+   - GearSlotMapping
+   - StatMappings
+   - AITestLab
+   =========================================== */
+/* Modal description text */
+.modal-description {
+  color: var(--text-muted);
+  margin: 0 0 var(--qb-spacing-lg) 0;
+  font-size: 0.9rem;
+}
+/* Watched Folder Manager - wider modal for table content */
+.modal:has(.qb-watched-folder-manager) {
+  --dialog-width: 650px;
+  width: 650px;
+}
+/* Empty state styling */
+.qb-empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: var(--qb-spacing-xl) var(--qb-spacing-lg);
+  font-style: italic;
+}
+/* Modal tables (watcher and mappings) */
+.qb-watcher-table,
+.qb-mappings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--qb-spacing-lg);
+}
+.qb-watcher-table th,
+.qb-mappings-table th {
+  text-align: left;
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  border-bottom: 2px solid var(--background-modifier-border);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.qb-watcher-table td,
+.qb-mappings-table td {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  border-bottom: 1px solid var(--background-modifier-border);
+  vertical-align: middle;
+}
+.qb-watcher-table tr:hover,
+.qb-mappings-table tr:hover {
+  background: var(--background-secondary);
+}
+/* Status indicators */
+.qb-status-ok {
+  color: var(--text-success, #00cc66);
+  font-weight: 500;
+}
+.qb-status-error {
+  color: var(--text-error, #ff4444);
+  font-weight: 600;
+}
+.qb-status-warning {
+  color: var(--text-warning, #ffaa00);
+  font-weight: 500;
+}
+.qb-status-disabled {
+  color: var(--text-muted);
+  font-style: italic;
+}
+/* Toggle container in table cells */
+.qb-toggle-container .setting-item {
+  border: none;
+  padding: 0;
+}
+.qb-toggle-container .setting-item-info {
+  display: none;
+}
+/* Watcher actions buttons */
+.qb-watcher-actions {
+  display: flex;
+  gap: var(--qb-spacing-xs);
+}
+.qb-watcher-actions button {
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  font-size: 0.8rem;
+}
+/* Gear slot mapping section */
+.qb-mapping-section {
+  padding: var(--qb-spacing-md);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-md);
+  margin-bottom: var(--qb-spacing-md);
+}
+.qb-mapping-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--qb-spacing-sm);
+}
+.qb-mapping-header h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+.qb-delete-btn {
+  padding: var(--qb-spacing-xs) var(--qb-spacing-sm);
+  font-size: 0.8rem;
+}
+/* Gear slot checkbox grid */
+.qb-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--qb-spacing-sm);
+}
+.qb-slot-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-xs);
+  border-radius: var(--qb-radius-sm);
+}
+.qb-slot-checkbox:hover {
+  background: var(--background-secondary);
+}
+.qb-slot-checkbox input[type="checkbox"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--interactive-accent);
+}
+.qb-slot-checkbox label {
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+/* Add new mapping section */
+.qb-add-mapping {
+  margin-top: var(--qb-spacing-lg);
+  padding-top: var(--qb-spacing-md);
+  border-top: 1px solid var(--background-modifier-border);
+}
+.qb-add-mapping h4 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+/* Test section (AI Test Lab) */
+.qb-test-section {
+  margin-bottom: var(--qb-spacing-lg);
+  padding: var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+}
+.qb-test-section h3 {
+  margin: 0 0 var(--qb-spacing-sm) 0;
+  font-size: 1rem;
+}
+/* Warning text */
+.qb-warning-text {
+  color: var(--text-error);
+  background: rgba(255, 100, 100, 0.1);
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  border-radius: var(--qb-radius-sm);
+  margin-bottom: var(--qb-spacing-md);
+}
+/* Settings section description */
+.qb-section-description {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: -0.5em 0 1em 0;
+}
+/* Settings collapsible sections */
+.qb-settings-collapsible {
+  margin: var(--qb-spacing-lg) 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--qb-radius-md);
+}
+.qb-settings-section-header {
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--qb-spacing-md);
+  user-select: none;
+}
+.qb-settings-section-header:hover {
+  background: var(--background-secondary);
+}
+.qb-settings-collapsible-content {
+  padding: 0 var(--qb-spacing-md) var(--qb-spacing-md);
+}
+/* Danger zone styling */
+.qb-danger-zone {
+  border-color: var(--text-error);
+}
+.qb-danger-header {
+  color: var(--text-error);
+}
+/* ===========================================
    Task List on Quest Cards
    =========================================== */
 .qb-card-tasks {

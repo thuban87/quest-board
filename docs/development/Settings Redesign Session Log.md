@@ -51,22 +51,59 @@ Development log for the Settings Redesign feature.
 ## Next Session Prompt
 
 ```
-Continue Settings Redesign Phase 2 - Add CSS styling for section headers and collapsible sections. Consider adding validation feedback and reset safety measures per implementation guide.
+Continue Settings Redesign Phase 3 - Polish & Refinement: Add validation feedback, reset safety confirmations, and any remaining UX improvements per implementation guide.
 ```
+
+---
+
+## 2026-02-05 - Phase 2: Modal Extraction ✅
+
+**Focus:** Extract complex inline UIs into dedicated modals
+
+### Completed:
+
+- [x] WatchedFolderManagerModal - table view with status validation, enable/disable, edit/delete
+- [x] GearSlotMappingModal - checkbox grid for slot selection per quest type
+- [x] StatMappingsModal - category → stat mappings with add/delete
+- [x] AITestLabModal (DEV-only) - set bonus generation testing, cache management
+- [x] Added ~200 lines of CSS styling for modal tables, grids, status indicators
+- [x] Integrated modal buttons into settings.ts
+- [x] Removed legacy inline UIs for Gear Slot Mapping and Stat Mappings
+
+### Files Changed:
+
+**New:**
+- `src/modals/WatchedFolderManagerModal.ts` (~170 lines)
+- `src/modals/GearSlotMappingModal.ts` (~155 lines)
+- `src/modals/StatMappingsModal.ts` (~165 lines)
+- `src/modals/AITestLabModal.ts` (~125 lines)
+
+**Modified:**
+- `src/settings.ts` - Added modal buttons, removed ~150 lines of legacy inline UI
+- `src/styles/modals.css` - Added ~200 lines for Phase 2 modal styles
+
+### Testing Notes:
+
+- ✅ All 4 modals open and close correctly
+- ✅ Watched Folder Manager shows correct status indicators
+- ✅ Gear Slot Mapping checkbox grid persists changes
+- ✅ Stat Mappings add/delete works
+- ✅ AI Test Lab (DEV) bonus generation functional
+- ✅ Build passes successfully
 
 ---
 
 ## Git Commit Message
 
 ```
-feat(settings): redesign settings panel into 10 organized sections
+feat(settings): extract complex UIs into dedicated modals (Phase 2)
 
-- Reorganize settings into logical groups: Essential, File Paths, 
-  Gameplay, Quest Management, Kanban, Daily Notes, AI Features,
-  Advanced Configuration, Danger Zone, Developer Tools
-- Add collapsible sections for File Paths, Advanced Config, Danger Zone
-- Move Reset buttons to always-visible Danger Zone section
-- Add API key status warning in AI Features section
-- Gate Developer Tools (Gemini testing) behind DEV_FEATURES_ENABLED
-- Version bump to 1.0.0
+- Add WatchedFolderManagerModal for watched folder config management
+- Add GearSlotMappingModal with visual checkbox grid for slots
+- Add StatMappingsModal for category → stat mapping
+- Add AITestLabModal (DEV) for AI testing and cache management
+- Add 200+ lines of modal CSS (tables, grids, status indicators)
+- Remove legacy inline UIs for gear slots and stat mappings
+- Integrate modal buttons into settings panel
 ```
+
