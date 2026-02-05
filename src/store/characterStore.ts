@@ -22,6 +22,11 @@ import { InventoryItem } from '../models/Consumable';
 import { Achievement } from '../models/Achievement';
 import { calculateTrainingLevel, calculateLevel, XP_THRESHOLDS } from '../services/XPSystem';
 import { createStarterEquippedGear } from '../data/starterGear';
+import {
+    MAX_STAMINA,
+    MAX_DAILY_STAMINA,
+    STAMINA_PER_TASK,
+} from '../config/combatConfig';
 
 interface CharacterState {
     /** Current character (null if not created) */
@@ -791,7 +796,7 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         });
     },
 
-    awardStamina: (amount = 2) => {
+    awardStamina: (amount = STAMINA_PER_TASK) => {
         const { character } = get();
         if (!character) return;
 
@@ -803,14 +808,12 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             todayGained = 0;
         }
 
-        // Check daily cap (500 stamina/day max - raised for testing)
-        const MAX_DAILY = 500;
-        if (todayGained >= MAX_DAILY) return;
+        // Check daily cap
+        if (todayGained >= MAX_DAILY_STAMINA) return;
 
-        // Grant up to daily cap, max 10 current
-        const MAX_CURRENT = 10;
-        const granted = Math.min(amount, MAX_DAILY - todayGained);
-        const newStamina = Math.min(character.stamina + granted, MAX_CURRENT);
+        // Grant up to daily cap, respecting max current stamina
+        const granted = Math.min(amount, MAX_DAILY_STAMINA - todayGained);
+        const newStamina = Math.min(character.stamina + granted, MAX_STAMINA);
 
         set({
             character: {

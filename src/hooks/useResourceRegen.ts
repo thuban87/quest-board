@@ -1,8 +1,9 @@
 /**
  * useResourceRegen Hook
  * 
- * Watches for task completions and restores HP/Mana.
+ * Watches for task completions and restores HP/Mana/Stamina.
  * 7% of max HP and Mana restored per task completion.
+ * 1 stamina point per task completion.
  * Should be mounted in a top-level component (e.g., QuestBoardView).
  */
 
@@ -20,7 +21,7 @@ interface UseResourceRegenOptions {
 let globalLastRegenTaskCount = -1;
 
 /**
- * Hook that watches for task completions and restores HP/Mana.
+ * Hook that watches for task completions and restores HP/Mana/Stamina.
  * Should be mounted in a top-level component (e.g., QuestBoardView).
  * @param options.onSave - Callback to save character after resource restoration
  */
@@ -28,6 +29,7 @@ export function useResourceRegen(options: UseResourceRegenOptions = {}): void {
     const { onSave } = options;
     const tasksCompletedToday = useCharacterStore(s => s.character?.tasksCompletedToday ?? 0);
     const restoreResources = useCharacterStore(s => s.restoreResources);
+    const awardStamina = useCharacterStore(s => s.awardStamina);
     const character = useCharacterStore(s => s.character);
 
     // Track if we've initialized the global counter for this session
@@ -55,15 +57,14 @@ export function useResourceRegen(options: UseResourceRegenOptions = {}): void {
         // Update global tracker
         globalLastRegenTaskCount = currentCount;
 
-        // New task(s) completed! Restore resources
+        // New task(s) completed! Restore resources and award stamina
         const { restoredHP, restoredMana } = restoreResources(TASK_REGEN_PERCENT);
+        awardStamina(); // Uses STAMINA_PER_TASK (1) as default
 
         if (restoredHP > 0 || restoredMana > 0) {
-            new Notice(`⚡ Task power! +${restoredHP} HP, +${restoredMana} Mana`, 3000);
+            new Notice(`⚡ Task power! +${restoredHP} HP, +${restoredMana} Mana, +1 Stamina`, 3000);
             // Persist the change to disk
             onSave?.();
         }
-    }, [tasksCompletedToday, character, restoreResources, onSave]);
+    }, [tasksCompletedToday, character, restoreResources, awardStamina, onSave]);
 }
-
-
