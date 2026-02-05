@@ -35,6 +35,7 @@ import { checkBountyTrigger } from './BountyService';
 import { showBountyModal } from '../modals/BountyModal';
 import { showBountyReviveModal } from '../modals/BountyReviveModal';
 import { dailyNoteService } from './DailyNoteService';
+import { STAMINA_PER_QUEST } from '../config/combatConfig';
 
 /**
  * Result of moving a quest
@@ -412,7 +413,7 @@ export async function moveQuest(
     // === STAMINA AWARD ===
     // Award stamina on quest completion (Phase 3B)
     if (newStatus === QuestStatus.COMPLETED) {
-        useCharacterStore.getState().awardStamina();
+        useCharacterStore.getState().awardStamina(STAMINA_PER_QUEST);
 
         // === ACTIVITY LOGGING ===
         // Log quest completion for progress tracking (Phase 4)

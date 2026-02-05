@@ -349,13 +349,16 @@ export const RAID_BOSS_TANK_PENALTY = 0.85;
 export const MAX_STAMINA = 10;
 
 /** Stamina earned per completed task */
-export const STAMINA_PER_TASK = 2;
+export const STAMINA_PER_TASK = 1;
+
+/** Stamina earned per completed quest */
+export const STAMINA_PER_QUEST = 5;
 
 /** Stamina cost per random fight */
 export const STAMINA_PER_FIGHT = 1;
 
 /** Maximum stamina that can be earned per day */
-export const MAX_DAILY_STAMINA = 50;
+export const MAX_DAILY_STAMINA = 500;
 
 /** Quest bounty fights are free (no stamina cost) */
 export const QUEST_BOUNTY_FREE = true;
