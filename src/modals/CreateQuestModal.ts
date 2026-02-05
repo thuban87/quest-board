@@ -9,6 +9,7 @@ import type QuestBoardPlugin from '../../main';
 import { QuestPriority, QuestDifficulty } from '../models/QuestStatus';
 import { ManualQuest, QUEST_SCHEMA_VERSION } from '../models/Quest';
 import { saveManualQuest, loadAllQuests } from '../services/QuestService';
+import { ColumnConfigService } from '../services/ColumnConfigService';
 
 /**
  * File Suggest Modal for selecting a file from the vault
@@ -415,13 +416,14 @@ export class CreateQuestModal extends Modal {
         const linkedTaskFile = this.formData.linkedTaskFile.trim() || questFilePath;
 
         // Build the quest object
+        const columnConfigService = new ColumnConfigService(this.plugin.settings);
         const quest: ManualQuest = {
             schemaVersion: QUEST_SCHEMA_VERSION,
             questId,
             questName: this.formData.questName.trim(),
             questType: this.formData.questType,
             category: this.formData.category.trim() || 'general',
-            status: 'available' as any,
+            status: columnConfigService.getDefaultColumn(),
             priority: this.formData.priority,
             tags: [],
             createdDate: new Date().toISOString(),

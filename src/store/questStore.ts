@@ -90,12 +90,11 @@ export const useQuestStore = create<QuestStore>((set, get) => ({
         const quests = new Map(get().quests);
         const quest = quests.get(questId);
         if (quest) {
+            // Note: completedDate is now managed by QuestActionsService.moveQuest()
+            // which uses ColumnConfigService.isCompletionColumn() for dynamic detection
             quests.set(questId, {
                 ...quest,
                 status,
-                completedDate: status === QuestStatus.COMPLETED
-                    ? new Date().toISOString()
-                    : quest.completedDate,
             });
             set({ quests });
         }

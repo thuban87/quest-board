@@ -1,10 +1,11 @@
 # Settings Redesign Implementation Guide
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Planning
 **Target:** Quest Board v1.x
 **Author:** Claude Sonnet 4.5
 **Date:** 2026-02-05
+**Revision:** 2026-02-05 - Added Template Builder button, validation feedback, and reset safety
 
 ---
 
@@ -18,8 +19,11 @@ The Quest Board settings panel has grown organically to 16+ sections with ~1000 
 - Consolidate folder paths into single section
 - Add collapsible sections for advanced/dev features
 - Establish clear separation between user settings and developer tools
+- Add Template Builder entry point for better discoverability
+- Add validation feedback in modals to help debug issues
+- Add reset safety with confirmation to prevent accidents
 
-**Estimated Effort:** 4-6 hours total (3 phases)
+**Estimated Effort:** 4.5-6.5 hours total (3 phases)
 
 ---
 
@@ -210,8 +214,9 @@ interface QuestBoardSettings {
 4. QUEST MANAGEMENT
    - Default Quest Tags
    - Excluded Folders (from Kanban)
+   - [Button] Open Template Builder → ScrivenersQuillModal
    - [Button] Manage Watched Folders → WatchedFolderManagerModal
-   [Quest-related features]
+   [Quest-related features and template management]
 
 5. KANBAN BOARD
    - Enable Custom Columns
@@ -271,6 +276,7 @@ interface QuestBoardSettings {
 │ QUEST MANAGEMENT                    │
 │ ▪ Default Tags: quest, active       │
 │ ▪ Excluded Folders: archive         │
+│ ▪ [Open Template Builder]           │ ← Opens Scriveners Quill
 │ ▪ [Manage Watched Folders]          │ ← Modal button
 │                                     │
 │ KANBAN BOARD                        │
@@ -292,6 +298,13 @@ interface QuestBoardSettings {
 │ ▪ [Set Bonus Config]                │
 │                                     │
 │ [DEV MODE: Developer Tools ▾]       │ ← Collapsible, red
+│   ▪ Balance Testing: ✗ Off          │
+│   ▪ Test Character Generator        │
+│   ▪ [AI Test Lab]                   │
+│   ▪ ─────────────────────           │ ← Spacer
+│   ▪ [Reset Stats Only]              │
+│   ▪ Type 'RESET': [____]            │ ← Text input
+│   ▪ [Reset All Data] (Warning)      │ ← Requires confirmation
 │                                     │
 └─────────────────────────────────────┘
 ```
@@ -362,8 +375,22 @@ interface QuestBoardSettings {
    });
    ```
 
+7. **Add Template Builder Button**
+   ```typescript
+   // In Quest Management section
+   new Setting(containerEl)
+     .setName('Template Builder')
+     .setDesc('Create and edit quest templates (including watched folder templates)')
+     .addButton(button => button
+       .setButtonText('Open Template Builder')
+       .onClick(async () => {
+         const { ScrivenersQuillModal } = await import('./modals/ScrivenersQuillModal');
+         new ScrivenersQuillModal(this.app, this.plugin).open();
+       }));
+   ```
+
 **Files Modified:**
-- `src/settings.ts` (reorganize only, ~200 line moves)
+- `src/settings.ts` (reorganize only, ~200 line moves, +8 lines for template builder button)
 
 **Testing:**
 - All existing settings still work
@@ -383,10 +410,11 @@ interface QuestBoardSettings {
 
 **Features:**
 - Table view of all `watchedFolderConfigs`
-- Columns: Template Name, Folder, Quest Type, Enabled
+- Columns: Template Name, Folder, Quest Type, Status, Enabled
+- Status validation (shows warnings for missing templates/folders)
 - Enable/Disable toggle per watcher
 - Delete button (removes config from array)
-- "Open Template" button (opens template in Scriveners Quill for editing)
+- "Edit Template" button (opens template in Scriveners Quill for editing)
 
 **Implementation:**
 ```typescript
@@ -426,6 +454,7 @@ export class WatchedFolderManagerModal extends Modal {
     headerRow.createEl('th', { text: 'Template' });
     headerRow.createEl('th', { text: 'Folder' });
     headerRow.createEl('th', { text: 'Type' });
+    headerRow.createEl('th', { text: 'Status' });
     headerRow.createEl('th', { text: 'Enabled' });
     headerRow.createEl('th', { text: 'Actions' });
 
@@ -444,6 +473,25 @@ export class WatchedFolderManagerModal extends Modal {
       // Quest type
       const typeText = config.questType === 'daily-quest' ? 'Daily Note' : 'Watched Folder';
       row.createEl('td', { text: typeText });
+
+      // Status validation
+      const statusCell = row.createEl('td');
+      const templateFile = this.app.vault.getAbstractFileByPath(config.templatePath);
+      const templateExists = templateFile instanceof TFile;
+      const watchFolder = this.app.vault.getAbstractFileByPath(config.watchFolder);
+      const folderExists = watchFolder instanceof TFolder;
+
+      if (!templateExists && !folderExists) {
+        statusCell.innerHTML = '<span class="qb-status-error">⚠ Template & Folder Missing</span>';
+      } else if (!templateExists) {
+        statusCell.innerHTML = '<span class="qb-status-error">⚠ Template Missing</span>';
+      } else if (!folderExists) {
+        statusCell.innerHTML = '<span class="qb-status-warning">⚠ Folder Missing</span>';
+      } else if (!config.enabled) {
+        statusCell.innerHTML = '<span class="qb-status-disabled">Disabled</span>';
+      } else {
+        statusCell.innerHTML = '<span class="qb-status-ok">✓ Active</span>';
+      }
 
       // Enabled toggle
       const toggleCell = row.createEl('td');

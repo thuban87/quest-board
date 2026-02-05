@@ -305,31 +305,85 @@ After initial testing, three bugs were identified and fixed:
 
 ---
 
+## 2026-02-05 - Phase 6: Modal Dropdowns & Remaining Hardcoded References
+
+**Focus:** Update CreateQuestModal, AIQuestGeneratorModal, CharacterSheet, and questStore to use dynamic columns
+
+### Completed:
+
+#### CreateQuestModal.ts
+- ✅ Import `ColumnConfigService`
+- ✅ Use `columnConfigService.getDefaultColumn()` for new quest status instead of hardcoded `'available'`
+
+#### AIQuestGeneratorModal.ts
+- ✅ Import `ColumnConfigService`
+- ✅ Dynamic status dropdown populated from `columnConfigService.getColumns()`
+- ✅ Status options now show custom column emoji and title
+- ✅ Default status set dynamically to first column
+
+#### AIQuestService.ts
+- ✅ Changed `AIQuestInput.status` type from `QuestStatus` to `string` for custom column support
+
+#### CharacterSheet.tsx
+- ✅ Changed completed quests count: `q.status === QuestStatus.COMPLETED` → `q.completedDate`
+- ✅ Removed unused `QuestStatus` import
+
+#### questStore.ts
+- ✅ Removed hardcoded `QuestStatus.COMPLETED` check in `updateQuestStatus()`
+- ✅ Completion logic now delegated to `QuestActionsService.moveQuest()`
+
+### Files Changed:
+
+**Modified:**
+- `src/modals/CreateQuestModal.ts` - Dynamic default status
+- `src/modals/AIQuestGeneratorModal.ts` - Dynamic status dropdown
+- `src/services/AIQuestService.ts` - AIQuestInput type change
+- `src/components/CharacterSheet.tsx` - completedDate-based count
+- `src/store/questStore.ts` - Removed hardcoded completion logic
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`) - 0 TypeScript errors
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Create Quest: defaults to first column
+- ✅ AI Quest Generator: shows all dynamic columns
+- ✅ CharacterSheet: shows correct completed count
+
+### Blockers/Issues:
+- None
+
+### Tech Debt:
+- **Archived quests not in completed count:** CharacterSheet counts quests with `completedDate` but only from in-memory store. Archived quests are in separate folder and not loaded. Would need separate mechanism to include them.
+- **FilterBar.tsx:** No changes needed - filters by Type/Category/Priority/Tags, not status columns.
+
+---
+
 ## Next Session Prompt
 
 ```
-Continuing Custom Kanban Columns implementation. Phases 1-5 complete.
+Continuing Custom Kanban Columns implementation. Phases 1-6 complete.
 
 What was done last session:
-- ✅ Phase 5: Quest Card & UI Components complete
-  - QuestCard uses dynamic columns from props
-  - Complete/Reopen/Archive buttons and handlers added
-  - Bug fixes: isCompleted logic, reopenQuest status change, archive immediate removal
-  - FullKanban, SidebarQuests, useDndQuests all updated
-  - Completed quest styling (green border/gradient)
+- ✅ Phase 6: Modal Dropdowns & Remaining Hardcoded References complete
+  - CreateQuestModal uses ColumnConfigService.getDefaultColumn()
+  - AIQuestGeneratorModal has dynamic status dropdown
+  - CharacterSheet counts by completedDate instead of status
+  - questStore completion logic delegated to service layer
   - Build passes with 0 errors, all tests green
 
-Phase 5 also completed most of Phase 6 tasks. Remaining work:
-1. CreateQuestModal - Update status dropdown to use dynamic columns
-2. FilterBar - Update dropdown to use dynamic columns
-3. Any remaining hardcoded QuestStatus references
-4. Settings UI for custom columns (Phase 7)
-5. End-to-end testing with custom column configurations
+Remaining work (Phase 7):
+1. Migration helper for deleted columns (move quests if column removed)
+2. RecurringQuestService column validation
+3. Enable `enableCustomColumns: true` by default
+4. Comprehensive end-to-end testing with custom configurations
+
+Tech debt to consider:
+- Archived quests not included in completed count (CharacterSheet)
+- questStatusConfig.ts dynamic functions may be redundant with ColumnConfigService
 
 Key files to reference:
-- docs/development/planned-features/Custom Kanban Columns Implementation Guide.md (Phase 6-7)
-- src/modals/CreateQuestModal.ts
-- src/components/FilterBar.tsx (if exists)
+- docs/development/planned-features/Custom Kanban Columns Implementation Guide.md (Phase 7)
+- src/utils/columnMigration.ts (to be created)
+- src/services/RecurringQuestService.ts
 ```
 
 ---
@@ -337,36 +391,29 @@ Key files to reference:
 ## Git Commit Message
 
 ```
-feat(kanban): Phase 5 - QuestCard & UI components with dynamic columns
+feat(kanban): Phase 6 - Modal dropdowns & hardcoded reference cleanup
 
-QuestCard.tsx:
-- Remove hardcoded STATUS_TRANSITIONS and MOVE_LABELS
-- Add columns, onComplete, onReopen, onArchive props  
-- Dynamic move buttons from columns prop
-- Complete button only shows when NO completion column
-- isCompleted checks column config, not just completedDate
-- Context menu options for quest actions
-- .completed CSS class for visual distinction
+CreateQuestModal.ts:
+- Import ColumnConfigService
+- Use getDefaultColumn() for new quest status
 
-FullKanban.tsx & SidebarQuests.tsx:
-- Replace KANBAN_STATUSES/SIDEBAR_STATUSES with ColumnConfigService
-- Add Complete/Reopen/Archive handlers using service methods
-- Pass settings to useQuestActions hook
-- Update state types from QuestStatus to string
+AIQuestGeneratorModal.ts:
+- Dynamic status dropdown from column config
+- Shows emoji + title for each column
 
-useDndQuests.ts:
-- Add columnIds param for dynamic column detection
-- Update type signatures to string
+AIQuestService.ts:
+- Change AIQuestInput.status type: QuestStatus → string
 
-QuestActionsService.ts:
-- reopenQuest: move to first non-completion column (not just clear completedDate)
-- archiveQuest: removeQuest() for immediate Kanban removal
+CharacterSheet.tsx:
+- Count completed by completedDate, not status column
+- Remove unused QuestStatus import
 
-CSS:
-- Completed quest styling (green border, gradient bg)
-- .qb-completed-actions container
+questStore.ts:
+- Remove hardcoded QuestStatus.COMPLETED check
+- Completion logic delegated to QuestActionsService
 
-Build: 0 errors (down from 21)
-All tests pass
+Build: 0 TypeScript errors
+All Phase 6 tests pass
 ```
+
 

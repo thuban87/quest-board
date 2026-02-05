@@ -622,132 +622,54 @@ export class ColumnConfigService {
 
 ---
 
-### Phase 6: Kanban Views, DnD, & Modals
+### Phase 6: Kanban Views, DnD, & Modals ✅ COMPLETE
 **Estimated Time:** 2-2.5 hours
+**Actual Time:** ~1 hour (2026-02-05, split across Phases 5 & 6)
 **Goal:** Update FullKanban, SidebarQuests, useDndQuests, and modal components
 
-#### Tasks:
-1. Update `src/components/FullKanban.tsx`:
+**Note:** Most of Phase 6 was completed during Phase 5. This phase covered the remaining items.
+
+#### Tasks Completed:
+1. ✅ Update `src/components/FullKanban.tsx`: (Completed in Phase 5)
+2. ✅ Update `src/components/SidebarQuests.tsx`: (Completed in Phase 5)
+3. ✅ Update `src/hooks/useDndQuests.ts`: (Completed in Phase 5)
+4. ✅ Update `src/modals/CreateQuestModal.ts`:
    - Import `ColumnConfigService`
-   - Memoize columns:
-     ```typescript
-     const columnConfigService = useMemo(
-         () => new ColumnConfigService(plugin.settings),
-         [plugin.settings.customColumns]
-     );
-
-     const columns = useMemo(
-         () => columnConfigService.getColumns(),
-         [columnConfigService]
-     );
-     ```
-
-   - Update collapsed state:
-     ```typescript
-     const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>(
-         () => Object.fromEntries(columns.map(c => [c.id, false]))
-     );
-     ```
-
-   - Update column rendering to iterate `columns` instead of `KANBAN_STATUSES`
-
-   - Update mobile view logic (line 192-198):
-     ```typescript
-     const isColumnVisibleOnMobile = useCallback((columnId: string, index: number): boolean => {
-         if (!isMobile) return true;
-         if (mobileMode === 'swipe') {
-             return index === mobileColumnIndex;
-         }
-         return mobileVisibleColumns.includes(columnId);
-     }, [isMobile, mobileMode, mobileColumnIndex, mobileVisibleColumns]);
-     ```
-
-   - Add handlers for Complete/Reopen/Archive:
-     ```typescript
-     const handleCompleteQuest = useCallback(async (questId: string) => {
-         await completeQuest(app.vault, questId, {
-             vault: app.vault,
-             storageFolder: plugin.settings.storageFolder,
-             enableLoot: true,
-             streakMode: 'quest',
-             onSaveCharacter: handleSaveCharacter,
-         });
-     }, [app.vault, plugin.settings, handleSaveCharacter]);
-
-     const handleReopenQuest = useCallback(async (questId: string) => {
-         await reopenQuest(app.vault, questId);
-     }, [app.vault]);
-
-     const handleArchiveQuest = useCallback(async (questId: string) => {
-         await archiveQuest(app.vault, questId, plugin.settings.archiveFolder);
-     }, [app.vault, plugin.settings.archiveFolder]);
-     ```
-
-   - Pass handlers to QuestCard:
-     ```typescript
-     <QuestCard
-         // ... existing props
-         columns={columns}
-         onComplete={handleCompleteQuest}
-         onReopen={handleReopenQuest}
-         onArchive={handleArchiveQuest}
-     />
-     ```
-
-2. Update `src/components/SidebarQuests.tsx`:
-   - Apply same changes as FullKanban
-   - Update completed count to check `completedDate`:
-     ```typescript
-     const completedCount = allQuests.filter(q => q.completedDate).length;
-     ```
-
-3. Update `src/hooks/useDndQuests.ts`:
-   - Replace `Object.values(QuestStatus)` with column IDs:
-     ```typescript
-     const columnIds = columnConfigService.getColumns().map(c => c.id);
-     const isDroppedOnStatus = columnIds.includes(overId as string);
-     ```
-
-4. Update `src/modals/CreateQuestModal.ts`:
-   - Default status to first column:
-     ```typescript
-     status: columnConfigService.getDefaultColumn()
-     ```
-
-5. Update `src/modals/AIQuestGeneratorModal.ts`:
-   - Dynamic status dropdown:
-     ```typescript
-     const columns = new ColumnConfigService(plugin.settings).getColumns();
-
-     columns.forEach(col => {
-         statusDropdown.addOption(col.id, `${col.emoji} ${col.title}`);
-     });
-     ```
+   - Use `columnConfigService.getDefaultColumn()` for new quest status
+5. ✅ Update `src/modals/AIQuestGeneratorModal.ts`:
+   - Import `ColumnConfigService`
+   - Dynamic status dropdown from columns configuration
+   - Status dropdown now shows all custom columns
+6. ✅ Update `src/services/AIQuestService.ts`:
+   - Changed `AIQuestInput.status` type from `QuestStatus` to `string`
+7. ✅ Update `src/components/CharacterSheet.tsx`:
+   - Changed completed quests count from `status === QuestStatus.COMPLETED` to `completedDate` check
+   - Removed unused `QuestStatus` import
+8. ✅ Update `src/store/questStore.ts`:
+   - Removed hardcoded `QuestStatus.COMPLETED` check in `updateQuestStatus()`
+   - Completion logic now delegated to `QuestActionsService`
 
 #### Key Files Modified:
-- `src/components/FullKanban.tsx` (MAJOR UPDATE)
-- `src/components/SidebarQuests.tsx` (MAJOR UPDATE)
-- `src/hooks/useDndQuests.ts` (UPDATE)
 - `src/modals/CreateQuestModal.ts` (UPDATE)
 - `src/modals/AIQuestGeneratorModal.ts` (UPDATE)
+- `src/services/AIQuestService.ts` (UPDATE)
+- `src/components/CharacterSheet.tsx` (UPDATE)
+- `src/store/questStore.ts` (UPDATE)
 
 #### Testing Checklist:
-- [ ] FullKanban renders dynamic columns
-- [ ] SidebarQuests renders dynamic columns
-- [ ] Drag-and-drop works between custom columns
-- [ ] Complete button awards rewards
-- [ ] Reopen button clears completedDate
-- [ ] Archive button moves file to archive
-- [ ] Completed count accurate (based on completedDate)
-- [ ] Mobile swipe mode works with custom columns
-- [ ] Create Quest modal uses first column as default
-- [ ] AI Quest Generator shows custom columns
-- [ ] No TypeScript errors
+- [x] Create Quest modal uses first column as default status
+- [x] AI Quest Generator shows dynamic columns in status dropdown
+- [x] CharacterSheet shows correct completed quests count
+- [x] No TypeScript errors (build passes)
+- [x] Deployed to test vault and manually verified
+
+#### Tech Debt:
+- **Archived quests not included in completed count:** The CharacterSheet now checks `completedDate` but only counts in-memory quests. Archived quests are in a separate folder and not loaded into the quest store. Would require separate loading mechanism to include them.
+- **FilterBar.tsx:** No changes needed - it filters by Type/Category/Priority/Tags, not by Kanban status columns. The filtering is orthogonal to column status.
 
 #### Notes:
-- This phase wires up all UI components
-- All handlers now functional
-- Feature still behind `enableCustomColumns` flag
+- Build passes with 0 TypeScript errors
+- Feature flag `enableCustomColumns` is still OFF
 
 ---
 

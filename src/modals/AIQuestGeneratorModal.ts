@@ -7,10 +7,11 @@
 
 import { App, Modal, Setting, TFile, TFolder, Notice, ToggleComponent } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
-import { QuestStatus, QuestPriority } from '../models/QuestStatus';
+import { QuestPriority } from '../models/QuestStatus';
 import { loadAllQuests } from '../services/QuestService';
 import { aiQuestService, AIQuestInput } from '../services/AIQuestService';
 import { AIQuestPreviewModal } from './AIQuestPreviewModal';
+import { ColumnConfigService } from '../services/ColumnConfigService';
 
 export class AIQuestGeneratorModal extends Modal {
     private plugin: QuestBoardPlugin;
@@ -24,7 +25,7 @@ export class AIQuestGeneratorModal extends Modal {
         objectives: '',
         questType: 'main',
         category: '',
-        status: QuestStatus.AVAILABLE,
+        status: '', // Will be set in onOpen with dynamic default
         priority: QuestPriority.MEDIUM,
     };
 
@@ -173,16 +174,26 @@ export class AIQuestGeneratorModal extends Modal {
             this.formData.category = (e.target as HTMLInputElement).value;
         });
 
-        // Status dropdown
+        // Status dropdown - use dynamic columns
+        const columnConfigService = new ColumnConfigService(this.plugin.settings);
+        const columns = columnConfigService.getColumns();
+
+        // Set default status to first column if not already set
+        if (!this.formData.status) {
+            this.formData.status = columnConfigService.getDefaultColumn();
+        }
+
         new Setting(contentEl)
             .setName('Status')
             .addDropdown(dropdown => {
+                // Add options from dynamic columns
+                for (const col of columns) {
+                    const display = col.emoji ? `${col.emoji} ${col.title}` : col.title;
+                    dropdown.addOption(col.id, display);
+                }
                 dropdown
-                    .addOption(QuestStatus.AVAILABLE, '📋 Available')
-                    .addOption(QuestStatus.IN_PROGRESS, '🔄 In Progress')
-                    .addOption(QuestStatus.ACTIVE, '⚡ Active')
                     .setValue(this.formData.status)
-                    .onChange(value => this.formData.status = value as QuestStatus);
+                    .onChange(value => this.formData.status = value);
             });
 
         // Priority dropdown
