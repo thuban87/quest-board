@@ -191,18 +191,21 @@ export function rollPrefix(): MonsterPrefix {
 // =====================
 
 /**
- * Select a random monster template.
+ * Select a random monster template (excludes bosses).
  * Optionally filter by category.
+ * Bosses are dungeon-only and should be spawned via getBossTemplates().
  */
 export function getRandomMonsterTemplate(category?: string): MonsterTemplate {
-    let pool = MONSTER_TEMPLATES;
+    // Filter out bosses - they're dungeon-only
+    let pool = MONSTER_TEMPLATES.filter(t => t.isBoss !== true);
 
     if (category) {
         pool = pool.filter(t => t.category === category);
     }
 
     if (pool.length === 0) {
-        pool = MONSTER_TEMPLATES; // Fallback to all
+        // Fallback to all non-boss monsters
+        pool = MONSTER_TEMPLATES.filter(t => t.isBoss !== true);
     }
 
     return pool[Math.floor(Math.random() * pool.length)];
