@@ -14,6 +14,7 @@ import { Vault, TFile, TFolder, normalizePath } from 'obsidian';
 import { QuestPriority } from '../models/QuestStatus';
 import { QUEST_SCHEMA_VERSION } from '../models/Quest';
 import type QuestBoardPlugin from '../../main';
+import { ColumnConfigService } from './ColumnConfigService';
 
 /** Day name to number mapping */
 const DAY_MAP: Record<string, number> = {
@@ -70,6 +71,12 @@ export class RecurringQuestService {
     /** Get archive folder from settings */
     private get archiveFolder(): string {
         return this.plugin.settings.archiveFolder || 'Quest Board/quests/archive';
+    }
+
+    /** Get default column for new quests using ColumnConfigService */
+    private getDefaultColumn(): string {
+        const columnService = new ColumnConfigService(this.plugin.settings);
+        return columnService.getDefaultColumn();
     }
 
     /**
@@ -457,7 +464,7 @@ questId: "${questId}"
 questName: "${questName}"
 questType: main
 category: ${template.category}
-status: available
+status: ${this.getDefaultColumn()}
 priority: ${template.priority}
 tags:
   - recurring
@@ -497,8 +504,8 @@ instanceDate: ${date}
                 const content = await this.vault.read(file);
                 if (!content.includes(`instanceDate: ${yesterday}`)) continue;
 
-                // Check if completed
-                if (!content.includes('status: completed')) continue;
+                // Check if completed (has completedDate set)
+                if (!content.includes('completedDate:') || content.includes('completedDate: null')) continue;
 
                 // Move to archive
                 const archiveFolderPath = normalizePath(`${this.archiveFolder}/${yesterdayMonth}`);

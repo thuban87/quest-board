@@ -1099,11 +1099,80 @@ export class AITestLabModal extends Modal {
    .qb-slot-checkbox input[type="checkbox"] {
      margin: 0;
    }
+
+   /* Status indicators for watched folder validation */
+   .qb-status-ok { color: var(--text-success); }
+   .qb-status-error { color: var(--text-error); font-weight: 600; }
+   .qb-status-warning { color: var(--text-warning); }
+   .qb-status-disabled { color: var(--text-muted); }
+   ```
+
+5. **Add Reset Safety (Developer Tools)**
+   ```typescript
+   // Developer Tools section - reorganize reset buttons
+   // Move them to absolute bottom with safety measures
+
+   // Reset Stats Only (less dangerous, no extra confirmation)
+   new Setting(containerEl)
+     .setName('Reset Stats Only')
+     .setDesc('Reset statBonuses, category XP accumulators, and streak to zero (keeps XP, level, achievements)')
+     .addButton(button => button
+       .setButtonText('Reset Stats')
+       .onClick(async () => {
+         if (this.plugin.settings.character) {
+           this.plugin.settings.character.statBonuses = {
+             strength: 0,
+             intelligence: 0,
+             wisdom: 0,
+             constitution: 0,
+             dexterity: 0,
+             charisma: 0,
+           };
+           this.plugin.settings.character.categoryXPAccumulator = {};
+           this.plugin.settings.character.currentStreak = 0;
+           this.plugin.settings.character.highestStreak = 0;
+           this.plugin.settings.character.lastQuestCompletionDate = null;
+           this.plugin.settings.character.shieldUsedThisWeek = false;
+           await this.plugin.saveSettings();
+           new Notice('✓ Stats and streak reset');
+         }
+       }));
+
+   // Reset All Data (DESTRUCTIVE - requires text confirmation)
+   let confirmTextComponent: TextComponent;
+
+   new Setting(containerEl)
+     .setName('Reset All Data')
+     .setDesc('⚠️ DANGER: Deletes all character progress, achievements, and inventory. Type RESET to confirm.')
+     .addText(text => {
+       confirmTextComponent = text;
+       text.setPlaceholder('Type RESET');
+     })
+     .addButton(button => button
+       .setButtonText('Reset All Data')
+       .setWarning()
+       .onClick(async () => {
+         if (confirmTextComponent.getValue() !== 'RESET') {
+           new Notice('❌ Type RESET in the box to confirm');
+           return;
+         }
+
+         // Extra confirm dialog as second layer of protection
+         if (confirm('Are you ABSOLUTELY sure? This cannot be undone.')) {
+           this.plugin.settings.character = null;
+           this.plugin.settings.achievements = [];
+           this.plugin.settings.inventory = [];
+           await this.plugin.saveSettings();
+           confirmTextComponent.setValue(''); // Clear input
+           this.display(); // Refresh settings
+           new Notice('✅ All data reset');
+         }
+       }));
    ```
 
 **Files Modified:**
-- `src/styles/modals.css` (add ~80 lines of CSS)
-- `src/settings.ts` (add validation + stats, ~50 lines)
+- `src/styles/modals.css` (add ~90 lines of CSS including status indicators)
+- `src/settings.ts` (add validation + stats + reset safety, ~100 lines)
 
 ---
 
@@ -1156,12 +1225,19 @@ src/styles/modals.css
 - [ ] All existing settings still functional
 - [ ] Settings save/load correctly
 - [ ] No data loss on reload
+- [ ] Template Builder button opens Scriveners Quill modal
+- [ ] Template Builder button appears in Quest Management section
 
 ### Phase 2: Modals
 
 #### Watched Folder Manager
 - [ ] Modal opens from settings button
 - [ ] Table shows all watched folders
+- [ ] Status column shows "✓ Active" for working watchers
+- [ ] Status shows "⚠ Template Missing" when template file deleted
+- [ ] Status shows "⚠ Folder Missing" when watch folder deleted
+- [ ] Status shows "⚠ Template & Folder Missing" when both missing
+- [ ] Status shows "Disabled" when watcher is disabled
 - [ ] Enable/disable toggle works
 - [ ] Edit button opens Scriveners Quill with correct template
 - [ ] Delete button removes config
@@ -1203,6 +1279,12 @@ src/styles/modals.css
 - [ ] CSS styling looks good on mobile
 - [ ] No console errors
 - [ ] No layout shifts
+- [ ] Reset buttons appear at bottom of Developer Tools
+- [ ] Reset Stats Only works without confirmation
+- [ ] Reset All Data requires typing "RESET"
+- [ ] Reset All Data shows error if text doesn't match
+- [ ] Reset All Data requires secondary confirm dialog
+- [ ] Reset All Data clears input after successful reset
 
 ### Regression Testing
 
@@ -1575,6 +1657,26 @@ Examples:
 5. **Settings Version:** Add now or wait for actual migration need?
    - **Recommendation:** Add now (easy, prevents future pain)
 
+### Improvements Incorporated (v1.1)
+
+Based on developer review feedback, the following enhancements have been added to the implementation plan:
+
+1. **Template Builder Entry Point** ✅
+   - Added "Open Template Builder" button in Quest Management section
+   - Improves discoverability of Scriveners Quill
+   - Creates logical workflow: manage templates → manage watchers
+
+2. **Validation Feedback in Modals** ✅
+   - Added Status column to Watched Folder Manager
+   - Shows real-time validation (missing templates, missing folders, disabled status)
+   - Helps users debug why watchers aren't working
+
+3. **Reset Safety** ✅
+   - Moved reset buttons to absolute bottom of Developer Tools
+   - Added text input confirmation ("Type RESET") for Reset All Data
+   - Added secondary confirm dialog as extra protection
+   - Prevents accidental data loss from misclicks
+
 ---
 
 ## Conclusion
@@ -1584,9 +1686,12 @@ This redesign significantly improves the Quest Board settings UX by:
 - Improving organization (16 → 9 sections)
 - Establishing clear patterns (modals for complexity)
 - Exposing hidden features (watched folder manager)
+- Adding Template Builder entry point for better discoverability
+- Adding validation feedback to help debug issues
+- Adding reset safety to prevent accidental data loss
 - Maintaining backward compatibility (no migration needed)
 
-**Total effort:** 4-6 hours across 3 phases
+**Total effort:** 4.5-6.5 hours across 3 phases
 **Risk level:** Low (incremental, well-tested)
 **User impact:** High (immediate UX improvement)
 

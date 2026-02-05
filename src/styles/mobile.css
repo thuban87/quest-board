@@ -256,4 +256,58 @@
         padding: 6px 10px;
         font-size: 0.75rem;
     }
+
+    /* ===========================================
+       Mobile Modal Fixes
+       =========================================== */
+    /* Ensure modals are properly sized and visible on mobile */
+    .modal {
+        max-width: calc(100vw - 16px) !important;
+        max-height: calc(100vh - 32px) !important;
+        width: calc(100vw - 16px) !important;
+        margin: 16px auto !important;
+        top: 0 !important;
+    }
+
+    /* Reduce padding in modal content on mobile */
+    .modal .modal-content {
+        padding: var(--qb-spacing-sm);
+    }
+
+    /* Ensure modal header is always visible */
+    .modal .modal-title {
+        position: sticky;
+        top: 0;
+        background: var(--modal-background);
+        z-index: 1;
+        padding: var(--qb-spacing-sm) 0;
+        margin-bottom: var(--qb-spacing-sm);
+    }
+
+    /* Quest creation modal - make scrollable */
+    .modal .vertical-tab-content {
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
+        padding-right: var(--qb-spacing-xs);
+    }
+
+    /* Setting items in modals - stack on mobile */
+    .modal .setting-item {
+        flex-wrap: wrap;
+    }
+
+    .modal .setting-item-info {
+        flex-basis: 100%;
+        margin-bottom: var(--qb-spacing-xs);
+    }
+
+    .modal .setting-item-control {
+        flex-basis: 100%;
+    }
+
+    /* Dropdown selects take full width on mobile */
+    .modal .setting-item-control select,
+    .modal .setting-item-control .dropdown {
+        width: 100%;
+    }
 }

@@ -13,10 +13,13 @@ import { useTaskSectionsStore } from '../store/taskSectionsStore';
 import { loadAllQuests, loadSingleQuest, watchQuestFolderGranular } from '../services/QuestService';
 import { readTasksFromMultipleFiles, getTaskCompletion, TaskCompletion, TaskSection } from '../services/TaskFileService';
 import { isManualQuest, Quest } from '../models/Quest';
+import type { QuestBoardSettings } from '../settings';
 
 interface UseQuestLoaderOptions {
     vault: Vault;
     storageFolder: string;
+    /** Settings for status resolution */
+    settings?: QuestBoardSettings;
     /** If true, skip reload when save is in progress (prevents race condition) */
     useSaveLock?: boolean;
 }
@@ -39,6 +42,7 @@ interface UseQuestLoaderResult {
 export function useQuestLoader({
     vault,
     storageFolder,
+    settings,
     useSaveLock = false,
 }: UseQuestLoaderOptions): UseQuestLoaderResult {
     const setQuests = useQuestStore((state) => state.setQuests);
@@ -96,7 +100,7 @@ export function useQuestLoader({
 
         setLoading(true);
         try {
-            const result = await loadAllQuests(vault, storageFolder);
+            const result = await loadAllQuests(vault, storageFolder, settings);
 
             setQuests(result.quests);
 
@@ -120,7 +124,7 @@ export function useQuestLoader({
             setError(`Failed to load quests: ${error}`);
         }
         setLoading(false);
-    }, [vault, storageFolder, setQuests, setLoading, setError, setAllSections, updateLinkedFileMap]);
+    }, [vault, storageFolder, settings, setQuests, setLoading, setError, setAllSections, updateLinkedFileMap]);
 
     // Set up file watchers
     useEffect(() => {
@@ -137,7 +141,6 @@ export function useQuestLoader({
                 }
 
                 if (quest) {
-
                     upsertQuest(quest);
 
                     // Update linked file map for this quest
@@ -207,7 +210,7 @@ export function useQuestLoader({
                     await loadSectionsForQuest(quest);
                 }
             },
-        });
+        }, 300, settings);  // Pass settings for status resolution
 
         // Watch linked task files (outside quest folder)
         const onLinkedFileModify = vault.on('modify', async (file) => {

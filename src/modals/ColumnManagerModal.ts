@@ -19,6 +19,7 @@ import {
     validateColumn,
     COLUMN_VALIDATION
 } from '../models/CustomColumn';
+import { migrateQuestsFromDeletedColumn } from '../utils/columnMigration';
 
 /**
  * Modal for managing Kanban column configuration
@@ -416,7 +417,7 @@ export class ColumnManagerModal extends Modal {
         });
     }
 
-    private handleDeleteColumn(index: number): void {
+    private async handleDeleteColumn(index: number): Promise<void> {
         const column = this.columns[index];
 
         if (this.columns.length <= COLUMN_VALIDATION.MIN_COLUMNS) {
@@ -425,10 +426,30 @@ export class ColumnManagerModal extends Modal {
         }
 
         if (confirm(`Delete column "${column.title}"? Quests in this column will migrate to the first column.`)) {
+            // Get the target column (first column that's not being deleted)
+            const targetColumn = this.columns.find((_, i) => i !== index);
+            if (!targetColumn) {
+                new Notice('Error: No target column for migration');
+                return;
+            }
+
+            // Migrate quests before removing the column
+            const migratedCount = await migrateQuestsFromDeletedColumn(
+                this.app.vault,
+                column.id,
+                targetColumn.id
+            );
+
+            // Remove the column from our local array
             this.columns.splice(index, 1);
             this.editingIndex = null;
             this.renderContent();
-            new Notice(`Column "${column.title}" deleted`);
+
+            if (migratedCount > 0) {
+                new Notice(`Column "${column.title}" deleted. ${migratedCount} quest(s) moved to "${targetColumn.title}".`);
+            } else {
+                new Notice(`Column "${column.title}" deleted`);
+            }
         }
     }
 

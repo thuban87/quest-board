@@ -8,7 +8,6 @@
 
 import { Vault, Notice, App, TFile } from 'obsidian';
 import { Quest, isAIGeneratedQuest, isManualQuest } from '../models/Quest';
-import { QuestStatus } from '../models/QuestStatus';
 import { ColumnConfigService } from './ColumnConfigService';
 import type { QuestBoardSettings } from '../settings';
 import { Character } from '../models/Character';
@@ -194,8 +193,9 @@ export async function moveQuest(
     if (isCompletion) {
         const character = useCharacterStore.getState().character;
         if (character) {
-            // Detect "One-Shot" = Available → Completed directly (not via In Progress)
-            const wasOneShot = quest.status === QuestStatus.AVAILABLE;
+            // Detect "One-Shot" = Default column → Completed directly (not via intermediate columns)
+            const defaultColumn = columnConfigService.getDefaultColumn();
+            const wasOneShot = quest.status === defaultColumn;
             const now = new Date();
             const dayOfWeek = now.getDay();  // 0=Sun, 1=Mon, ... 6=Sat
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -204,11 +204,14 @@ export async function moveQuest(
             const today = now.toLocaleDateString('en-CA');
             const isFirstTaskOfDay = character.lastTaskDate !== today;
 
-            // Count quests still in In Progress (excluding the one we just completed)
+            // Count quests in work columns (not default, not completion)
             const allQuests = useQuestStore.getState().quests;
             let inProgressCount = 0;
             for (const [, q] of allQuests) {
-                if (q.questId !== questId && q.status === QuestStatus.IN_PROGRESS) {
+                // Count quests that are in intermediate "work" columns
+                const isInDefaultColumn = q.status === defaultColumn;
+                const isInCompletionColumn = columnConfigService.isCompletionColumn(q.status as string);
+                if (q.questId !== questId && !isInDefaultColumn && !isInCompletionColumn) {
                     inProgressCount++;
                 }
             }

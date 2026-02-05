@@ -239,7 +239,7 @@ export class AIQuestGeneratorModal extends Modal {
 
     private async loadExistingCategories() {
         try {
-            const result = await loadAllQuests(this.app.vault, this.plugin.settings.storageFolder);
+            const result = await loadAllQuests(this.app.vault, this.plugin.settings.storageFolder, this.plugin.settings);
             const categorySet = new Set<string>();
             result.quests.forEach(quest => {
                 if (quest.category) {

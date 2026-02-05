@@ -182,8 +182,8 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     // Folder Watch Configurations
     watchedFolderConfigs: [],
 
-    // Custom Kanban Columns (default to OFF for gradual rollout)
-    enableCustomColumns: false,
+    // Custom Kanban Columns (feature enabled by default)
+    enableCustomColumns: true,
     customColumns: [...DEFAULT_COLUMNS],
 };
 

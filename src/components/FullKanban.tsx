@@ -78,6 +78,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     const { pendingSavesRef } = useQuestLoader({
         vault: app.vault,
         storageFolder: plugin.settings.storageFolder,
+        settings: plugin.settings,
         useSaveLock: true,
     });
 
