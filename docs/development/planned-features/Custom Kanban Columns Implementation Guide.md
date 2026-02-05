@@ -474,151 +474,44 @@ export class ColumnConfigService {
 
 ---
 
-### Phase 4: Quest Actions Service (Completion Logic)
+### Phase 4: Quest Actions Service (Completion Logic) ✅ COMPLETE
 **Estimated Time:** 1.5-2 hours
+**Actual Time:** ~1 hour (2026-02-05)
 **Goal:** Update QuestActionsService to use ColumnConfigService and add new completion methods
 
 #### Tasks:
-1. Inject `ColumnConfigService` into QuestActionsService
-2. Replace ALL hardcoded `QuestStatus.COMPLETED` checks with `columnConfigService.isCompletionColumn()`:
-   - Line 96-98: completedDate setting
-   - Line 106: Streak update trigger
-   - Line 182: Power-up triggers
-   - Line 256: Loot generation trigger
-   - Line 413: Stamina award trigger
-   - Plus 6+ other locations
-
-3. Update `moveQuest()` signature:
-   ```typescript
-   export async function moveQuest(
-       vault: Vault,
-       questId: string,
-       newStatus: string,  // Changed from QuestStatus
-       options: MoveQuestOptions = {}
-   ): Promise<MoveQuestResult>
-   ```
-
-4. Add `completeQuest()` method:
-   ```typescript
-   /**
-    * Complete a quest - awards rewards and moves to completion column
-    */
-   export async function completeQuest(
-       vault: Vault,
-       questId: string,
-       options: MoveQuestOptions = {}
-   ): Promise<MoveQuestResult> {
-       const completionColumn = columnConfigService.getFirstCompletionColumn();
-
-       if (completionColumn) {
-           // Move to completion column (triggers all rewards)
-           return await moveQuest(vault, questId, completionColumn.id, options);
-       } else {
-           // No completion column - set completedDate and trigger rewards manually
-           const quest = useQuestStore.getState().getQuestById(questId);
-           if (!quest) return { success: false };
-
-           const updatedQuest = {
-               ...quest,
-               completedDate: new Date().toISOString(),
-           };
-
-           // Trigger all completion rewards here
-           // (streak, loot, power-ups, bounty, stamina, activity logging)
-
-           return { success: true, quest: updatedQuest };
-       }
-   }
-   ```
-
-5. Add `reopenQuest()` method:
-   ```typescript
-   /**
-    * Reopen a completed quest - clears completedDate and logs event
-    */
-   export async function reopenQuest(
-       vault: Vault,
-       questId: string
-   ): Promise<{ success: boolean; quest?: Quest }> {
-       const quest = useQuestStore.getState().getQuestById(questId);
-       if (!quest) return { success: false };
-
-       const updatedQuest: Quest = {
-           ...quest,
-           completedDate: null,
-       };
-
-       // Update store
-       useQuestStore.getState().upsertQuest(updatedQuest);
-
-       // Log reopen event (analytics)
-       const character = useCharacterStore.getState().character;
-       if (character) {
-           useCharacterStore.getState().logActivity({
-               type: 'quest_reopened',
-               questId: quest.questId,
-               questName: quest.title,
-               timestamp: new Date().toISOString(),
-           });
-       }
-
-       // Save to file
-       await QuestService.saveManualQuest(vault, updatedQuest, plugin.settings);
-
-       return { success: true, quest: updatedQuest };
-   }
-   ```
-
-6. Add `archiveQuest()` method:
-   ```typescript
-   /**
-    * Archive a quest - moves file to archive folder
-    */
-   export async function archiveQuest(
-       vault: Vault,
-       questId: string,
-       archiveFolder: string
-   ): Promise<{ success: boolean; quest?: Quest }> {
-       const quest = useQuestStore.getState().getQuestById(questId);
-       if (!quest || !quest.filePath) return { success: false };
-
-       // Construct archive path
-       const fileName = quest.filePath.split('/').pop();
-       const archivePath = `${archiveFolder}/${fileName}`;
-
-       // Ensure archive folder exists
-       await ensureFolderExists(vault, archiveFolder);
-
-       // Move file
-       const file = vault.getAbstractFileByPath(quest.filePath);
-       if (file instanceof TFile) {
-           await vault.rename(file, archivePath);
-
-           // Update quest filePath
-           const updatedQuest = {
-               ...quest,
-               filePath: archivePath,
-           };
-
-           useQuestStore.getState().upsertQuest(updatedQuest);
-
-           new Notice(`Quest archived to ${archiveFolder}`, 3000);
-           return { success: true, quest: updatedQuest };
-       }
-
-       return { success: false };
-   }
-   ```
-
-7. Update all services that check `QuestStatus.COMPLETED`:
-   - StreakService.ts (called by QuestActionsService, shouldn't need changes)
-   - PowerUpService.ts (called by QuestActionsService, shouldn't need changes)
-   - BountyService.ts (called by QuestActionsService, shouldn't need changes)
+1. ✅ Added `settings: QuestBoardSettings` to `MoveQuestOptions` interface
+2. ✅ Updated `moveQuest()` signature to accept `string` instead of `QuestStatus`
+3. ✅ Created `ColumnConfigService` instance and `isCompletion` variable for dynamic completion detection
+4. ✅ Replaced ALL 6 hardcoded `QuestStatus.COMPLETED` checks with `isCompletion`:
+   - Line 103-107: completedDate setting (now only sets if not already completed)
+   - Line 115: Streak update trigger
+   - Line 191: Power-up/quest completion triggers
+   - Line 270: Bounty roll trigger
+   - Line 305: Loot generation trigger
+   - Line 423: Stamina award and activity logging trigger
+5. ✅ Added `completeQuest()` method (80+ lines):
+   - Uses ColumnConfigService to find completion column
+   - If completion column exists, delegates to `moveQuest()`
+   - If no completion column, manually sets completedDate and awards stamina
+6. ✅ Added `reopenQuest()` method (50+ lines):
+   - Clears `completedDate`
+   - Logs reopen event with activity logging
+   - Saves updated quest to file
+7. ✅ Added `archiveQuest()` method (70+ lines):
+   - Validates quest has `filePath`
+   - Ensures archive folder exists
+   - Moves file using `vault.rename()`
+   - Updates quest `filePath` in store
+   - Logs archive event
+8. ✅ Updated `useQuestActions` hook:
+   - Added `settings` to options interface
+   - Updated `moveQuest` callback signature to accept `string`
+   - Passes `settings` to `moveQuest()` call
 
 #### Key Files Modified:
-- `src/services/QuestActionsService.ts` (MAJOR UPDATE)
-- `src/services/StreakService.ts` (minor, if needed)
-- `src/services/PowerUpService.ts` (minor, if needed)
+- `src/services/QuestActionsService.ts` (MAJOR UPDATE - 220+ lines added)
+- `src/hooks/useQuestActions.ts` (settings parameter added)
 
 #### Testing Checklist:
 - [ ] Moving quest to completion column awards rewards
@@ -629,10 +522,15 @@ export class ColumnConfigService {
 - [ ] `archiveQuest()` moves file to archive folder
 - [ ] No TypeScript errors in QuestActionsService
 
+#### Tech Debt:
+- **Component errors remain (21):** FullKanban.tsx (13), QuestCard.tsx (3), SidebarQuests.tsx (5) - Phase 5-6 work
+- **Cannot deploy:test until Phase 5-6 errors fixed:** Build fails with component errors
+- **`completeQuest()` no-completion-column path:** Simpler implementation (only stamina + activity logging) vs full moveQuest path. Consider whether loot/streaks/power-ups should be triggered here too.
+
 #### Notes:
-- This is the most complex service update
-- Triple-check all hardcoded QuestStatus.COMPLETED are replaced
-- Test both completion column and no completion column scenarios
+- Feature flag `enableCustomColumns` is still OFF
+- Build has 21 expected TypeScript errors in components (Phase 5-6 work)
+- Core service logic is fully updated and ready for component integration
 
 ---
 

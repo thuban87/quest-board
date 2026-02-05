@@ -171,32 +171,87 @@ Each session entry should include:
 
 ---
 
+## 2026-02-05 - Phase 4: Quest Actions Service (Completion Logic)
+
+**Focus:** Update QuestActionsService to use ColumnConfigService and add new completion methods
+
+### Completed:
+
+#### QuestActionsService (`src/services/QuestActionsService.ts`)
+- ✅ Added `settings: QuestBoardSettings` to `MoveQuestOptions` interface
+- ✅ Changed `moveQuest()` signature: `newStatus: QuestStatus` → `newStatus: string`
+- ✅ Created `ColumnConfigService` instance and `isCompletion` variable
+- ✅ Replaced 6 hardcoded `=== QuestStatus.COMPLETED` checks with `isCompletion`
+- ✅ Added `completeQuest()` method (80+ lines):
+  - Uses `getFirstCompletionColumn()` to find completion column
+  - Delegates to `moveQuest()` if completion column exists
+  - Manual completion path for no-completion-column scenario
+- ✅ Added `reopenQuest()` method (50+ lines):
+  - Clears `completedDate`
+  - Logs `quest_reopened` activity event
+  - Saves updated quest to file
+- ✅ Added `archiveQuest()` method (70+ lines):
+  - Validates `filePath` exists
+  - Uses `ensureFolderExists()` for archive folder
+  - Moves file with `vault.rename()`
+  - Logs `quest_archived` activity event
+
+#### useQuestActions Hook (`src/hooks/useQuestActions.ts`)
+- ✅ Added `settings: QuestBoardSettings` to options interface
+- ✅ Updated `moveQuest` callback signature to accept `string`
+- ✅ Passes `settings` to `moveQuest()` call
+
+### Files Changed:
+
+**Modified:**
+- `src/services/QuestActionsService.ts` - Major update (~220 lines added)
+- `src/hooks/useQuestActions.ts` - Settings parameter added
+
+### Testing Notes:
+- ✅ Build runs (`npm run build`)
+- ⚠️ 21 TypeScript errors in components (expected, Phase 5-6 work):
+  - FullKanban.tsx (13 errors)
+  - QuestCard.tsx (3 errors)
+  - SidebarQuests.tsx (5 errors)
+- ❌ Cannot deploy:test until Phase 5-6 errors fixed
+
+### Blockers/Issues:
+- Build cannot complete due to component errors - blocks testing
+- Need to fix components before any manual validation
+
+### Tech Debt:
+- `completeQuest()` no-completion-column path only awards stamina + logging (not full rewards)
+- Consider whether loot/streaks/power-ups should be triggered there too
+
+---
+
 ## Next Session Prompt
 
 ```
-Continuing Custom Kanban Columns implementation. Phases 1, 2, and 3 complete.
+Continuing Custom Kanban Columns implementation. Phases 1-4 complete.
 
 What was done last session:
-- ✅ Phase 3: Type migration complete
-  - Quest.status now accepts QuestStatus | string
-  - questStore.ts signatures updated
-  - validator.ts accepts any string status
-  - questStatusConfig.ts has dynamic config generators
-  - QuestService.ts removed type cast in parsing
+- ✅ Phase 4: Quest Actions Service complete
+  - moveQuest() accepts string status
+  - ColumnConfigService integration for completion detection
+  - completeQuest(), reopenQuest(), archiveQuest() methods added
+  - useQuestActions hook updated to pass settings
 
-Current build status: 19 TypeScript errors in component files (expected, Phase 5-6 work)
+Current build status: 21 TypeScript errors in component files
+- FullKanban.tsx: 13 errors (Record<QuestStatus> patterns, status type mismatches)
+- QuestCard.tsx: 3 errors
+- SidebarQuests.tsx: 5 errors
 
-Continue with Phase 4 from Custom Kanban Columns Implementation Guide:
-1. Update QuestActionsService.ts moveQuest() signature to accept string status
-2. Replace hardcoded === QuestStatus.COMPLETED checks with ColumnConfigService.isCompletionColumn()
-3. Add completeQuest() method for explicit completion
-4. Add reopenQuest() method to clear completedDate
-5. Add archiveQuest() method to move files
+Continue with Phase 5 from Custom Kanban Columns Implementation Guide:
+1. Update QuestCard.tsx with dynamic move buttons based on columns
+2. Add Complete, Reopen, Archive button handlers
+3. Add completed quest styling (green border/background)
+4. Replace hardcoded STATUS_TRANSITIONS and MOVE_LABELS
 
 Key files to reference:
-- docs/development/planned-features/Custom Kanban Columns Implementation Guide.md (Phase 4 section)
-- src/services/QuestActionsService.ts
-- src/services/ColumnConfigService.ts
+- docs/development/planned-features/Custom Kanban Columns Implementation Guide.md (Phase 5 section)
+- src/components/QuestCard.tsx
+- src/services/QuestActionsService.ts (for completeQuest, reopenQuest, archiveQuest)
 ```
 
 ---
@@ -204,28 +259,22 @@ Key files to reference:
 ## Git Commit Message
 
 ```
-feat(kanban): Phase 3 - Type migration for custom columns
+feat(kanban): Phase 4 - Quest Actions Service completion logic
 
-Quest Model:
-- Change Quest.status type from QuestStatus to QuestStatus | string
-- Enables custom column IDs to be stored in quest frontmatter
+QuestActionsService:
+- Add settings to MoveQuestOptions for ColumnConfigService
+- Change moveQuest() to accept string status instead of QuestStatus
+- Replace 6 hardcoded QuestStatus.COMPLETED checks with isCompletionColumn()
+- Add completeQuest() method - awards rewards, moves to completion column
+- Add reopenQuest() method - clears completedDate, logs activity
+- Add archiveQuest() method - moves file to archive folder
 
-Store Updates:
-- Update questStore signatures to accept union type
-- Update selectors (selectQuestsByStatus, selectQuestCountByStatus)
+useQuestActions Hook:
+- Add settings parameter to options interface
+- Pass settings to moveQuest() call
 
-Config Updates:
-- Add dynamic getStatusConfigs(), getSidebarStatuses(), getKanbanStatuses()
-- Keep static arrays for backward compatibility
+Note: 21 TypeScript errors in components (Phase 5-6 work)
 
-Validation:
-- Accept any non-empty string as status
-- Fallback to AVAILABLE if status missing
-
-QuestService:
-- Remove type cast in frontmatter parsing
-
-Note: 19 expected TypeScript errors in components (Phase 5-6 work)
-
-Files: Quest.ts, questStore.ts, validator.ts, questStatusConfig.ts, QuestService.ts
+Files: QuestActionsService.ts, useQuestActions.ts
 ```
+

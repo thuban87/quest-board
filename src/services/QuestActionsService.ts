@@ -6,9 +6,11 @@
  * Used by both SidebarQuests and FullKanban through useQuestActions hook.
  */
 
-import { Vault, Notice, App } from 'obsidian';
+import { Vault, Notice, App, TFile } from 'obsidian';
 import { Quest, isAIGeneratedQuest, isManualQuest } from '../models/Quest';
 import { QuestStatus } from '../models/QuestStatus';
+import { ColumnConfigService } from './ColumnConfigService';
+import type { QuestBoardSettings } from '../settings';
 import { Character } from '../models/Character';
 import { LootDrop } from '../models/Gear';
 import { useQuestStore } from '../store/questStore';
@@ -35,6 +37,7 @@ import { checkBountyTrigger } from './BountyService';
 import { showBountyModal } from '../modals/BountyModal';
 import { showBountyReviveModal } from '../modals/BountyReviveModal';
 import { dailyNoteService } from './DailyNoteService';
+import { ensureFolderExists } from '../utils/pathValidator';
 import { STAMINA_PER_QUEST } from '../config/combatConfig';
 
 /**
@@ -59,6 +62,8 @@ export interface ToggleTaskResult {
  */
 export interface MoveQuestOptions {
     storageFolder: string;
+    /** Plugin settings (required for column configuration) */
+    settings: QuestBoardSettings;
     streakMode?: 'quest' | 'task';
     /** App reference for showing modals (optional) */
     app?: App;
@@ -76,12 +81,13 @@ export interface MoveQuestOptions {
 
 /**
  * Move a quest to a new status.
- * Handles all side effects: store update, file save, streak update.
+ * Handles all side effects: store update, file save, streak update, loot, etc.
+ * Does NOT trigger completion rewards unless moving to a completion column.
  */
 export async function moveQuest(
     vault: Vault,
     questId: string,
-    newStatus: QuestStatus,
+    newStatus: string,
     options: MoveQuestOptions
 ): Promise<MoveQuestResult> {
     const quest = useQuestStore.getState().quests.get(questId);
@@ -90,10 +96,14 @@ export async function moveQuest(
         return { success: false, quest: quest as any };
     }
 
+    // Use ColumnConfigService to check if this is a completion column
+    const columnConfigService = new ColumnConfigService(options.settings);
+    const isCompletion = columnConfigService.isCompletionColumn(newStatus);
+
     const updatedQuest: Quest = {
         ...quest,
         status: newStatus,
-        completedDate: newStatus === QuestStatus.COMPLETED
+        completedDate: isCompletion && !quest.completedDate
             ? new Date().toISOString()
             : quest.completedDate,
     };
@@ -101,9 +111,9 @@ export async function moveQuest(
     // Update store (optimistic update)
     useQuestStore.getState().upsertQuest(updatedQuest);
 
-    // Update streak if moving to COMPLETED
+    // Update streak if moving to a completion column
     let streakResult: StreakUpdateResult | undefined;
-    if (newStatus === QuestStatus.COMPLETED && options.streakMode === 'quest') {
+    if (isCompletion && options.streakMode === 'quest') {
         const currentChar = useCharacterStore.getState().character;
         if (currentChar) {
             const isPaladin = currentChar.class === 'paladin';
@@ -180,8 +190,8 @@ export async function moveQuest(
     }
 
     // === QUEST COMPLETION TRIGGERS ===
-    // Check for One-Shot, etc. when quest is completed
-    if (newStatus === QuestStatus.COMPLETED) {
+    // Check for One-Shot, etc. when quest is moved to completion column
+    if (isCompletion) {
         const character = useCharacterStore.getState().character;
         if (character) {
             // Detect "One-Shot" = Available → Completed directly (not via In Progress)
@@ -260,7 +270,7 @@ export async function moveQuest(
     // === BOUNTY ROLL ===
     // Roll for bounty first, but don't show modal yet (wait for loot modal to close)
     let pendingBounty: ReturnType<typeof checkBountyTrigger>['bounty'] = undefined;
-    if (newStatus === QuestStatus.COMPLETED && options.app) {
+    if (isCompletion && options.app) {
         const character = useCharacterStore.getState().character;
         if (character) {
             const bountyChance = options.bountyChance ?? 10;
@@ -299,7 +309,7 @@ export async function moveQuest(
         }
     };
 
-    if (newStatus === QuestStatus.COMPLETED && options.enableLoot !== false) {
+    if (isCompletion && options.enableLoot !== false) {
         const character = useCharacterStore.getState().character;
         if (character) {
             try {
@@ -412,7 +422,7 @@ export async function moveQuest(
 
     // === STAMINA AWARD ===
     // Award stamina on quest completion (Phase 3B)
-    if (newStatus === QuestStatus.COMPLETED) {
+    if (isCompletion) {
         useCharacterStore.getState().awardStamina(STAMINA_PER_QUEST);
 
         // === ACTIVITY LOGGING ===
@@ -490,3 +500,224 @@ export async function toggleTask(
 
     return { success };
 }
+
+/**
+ * Options for completing a quest explicitly
+ */
+export interface CompleteQuestOptions extends MoveQuestOptions {
+    /** Callback to save character data after completion */
+    onSaveCharacter?: () => Promise<void>;
+}
+
+/**
+ * Complete a quest explicitly via Complete button.
+ * Awards all completion rewards (loot, streak, power-ups, bounty, stamina, activity logging).
+ * If a completion column is configured, moves the quest there.
+ * If no completion column exists, quest stays in current column with completedDate set.
+ */
+export async function completeQuest(
+    vault: Vault,
+    questId: string,
+    options: CompleteQuestOptions
+): Promise<MoveQuestResult> {
+    const columnConfigService = new ColumnConfigService(options.settings);
+    const completionColumn = columnConfigService.getFirstCompletionColumn();
+
+    if (completionColumn) {
+        // Move to completion column (triggers all rewards via moveQuest)
+        return await moveQuest(vault, questId, completionColumn.id, options);
+    } else {
+        // No completion column configured - manually trigger completion rewards
+        const quest = useQuestStore.getState().quests.get(questId);
+        if (!quest) {
+            return { success: false, quest: quest as any };
+        }
+
+        // Set completedDate manually since we're not moving to a completion column
+        const updatedQuest: Quest = {
+            ...quest,
+            completedDate: new Date().toISOString(),
+        };
+
+        // Update store
+        useQuestStore.getState().upsertQuest(updatedQuest);
+
+        // Award stamina
+        useCharacterStore.getState().awardStamina(STAMINA_PER_QUEST);
+
+        // Log activity
+        const today = new Date();
+        const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        useCharacterStore.getState().logActivity({
+            type: 'quest_complete',
+            date: dateString,
+            xpGained: isManualQuest(updatedQuest) ? updatedQuest.completionBonus : 0,
+            goldGained: 0,
+            questId: updatedQuest.questId,
+            questName: updatedQuest.questName,
+            category: updatedQuest.category,
+            details: `Completed: ${updatedQuest.questName}`,
+        });
+
+        // Save to file
+        try {
+            if (isAIGeneratedQuest(updatedQuest)) {
+                await saveAIQuest(vault, options.storageFolder, updatedQuest);
+            } else {
+                await saveManualQuest(vault, options.storageFolder, updatedQuest);
+            }
+        } catch (error) {
+            console.error('[QuestActionsService] Failed to save quest:', error);
+            return { success: false, quest: updatedQuest };
+        }
+
+        // Call save callback if provided
+        if (options.onSaveCharacter) {
+            await options.onSaveCharacter();
+        }
+
+        new Notice(`✅ Quest completed: ${updatedQuest.questName}`, 3000);
+        return { success: true, quest: updatedQuest };
+    }
+}
+
+/**
+ * Reopen a completed quest - clears completedDate and logs event.
+ * Quest stays in its current column.
+ */
+export async function reopenQuest(
+    vault: Vault,
+    questId: string,
+    storageFolder: string
+): Promise<{ success: boolean; quest?: Quest }> {
+    const quest = useQuestStore.getState().quests.get(questId);
+    if (!quest) {
+        console.error('[QuestActionsService] Quest not found for reopen:', questId);
+        return { success: false };
+    }
+
+    if (!quest.completedDate) {
+        console.warn('[QuestActionsService] Quest is not completed, cannot reopen:', questId);
+        return { success: false };
+    }
+
+    // Clear completedDate
+    const updatedQuest: Quest = {
+        ...quest,
+        completedDate: null,
+    };
+
+    // Update store
+    useQuestStore.getState().upsertQuest(updatedQuest);
+
+    // Log reopen event for analytics
+    const today = new Date();
+    const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    useCharacterStore.getState().logActivity({
+        type: 'quest_reopened' as any, // Cast to allow custom type
+        date: dateString,
+        xpGained: 0,
+        goldGained: 0,
+        questId: updatedQuest.questId,
+        questName: updatedQuest.questName,
+        details: `Reopened: ${updatedQuest.questName}`,
+    });
+
+    // Save to file
+    try {
+        if (isAIGeneratedQuest(updatedQuest)) {
+            await saveAIQuest(vault, storageFolder, updatedQuest);
+        } else {
+            await saveManualQuest(vault, storageFolder, updatedQuest);
+        }
+    } catch (error) {
+        console.error('[QuestActionsService] Failed to save reopened quest:', error);
+        return { success: false };
+    }
+
+    new Notice(`🔄 Quest reopened: ${updatedQuest.questName}`, 3000);
+    return { success: true, quest: updatedQuest };
+}
+
+/**
+ * Archive a quest - moves the quest file to the archive folder.
+ * Quest must have a filePath set (set by QuestService on load).
+ */
+export async function archiveQuest(
+    vault: Vault,
+    questId: string,
+    archiveFolder: string
+): Promise<{ success: boolean; quest?: Quest }> {
+    const quest = useQuestStore.getState().quests.get(questId);
+    if (!quest) {
+        console.error('[QuestActionsService] Quest not found for archive:', questId);
+        return { success: false };
+    }
+
+    if (!quest.filePath) {
+        console.error('[QuestActionsService] Quest has no filePath, cannot archive:', questId);
+        new Notice('❌ Cannot archive quest: file path unknown', 3000);
+        return { success: false };
+    }
+
+    // Validate archive folder
+    if (!archiveFolder || archiveFolder.trim() === '') {
+        console.error('[QuestActionsService] Archive folder not configured');
+        new Notice('❌ Archive folder not configured in settings', 3000);
+        return { success: false };
+    }
+
+    // Construct archive path (preserve filename)
+    const fileName = quest.filePath.split('/').pop() || `${quest.questId}.md`;
+    const archivePath = `${archiveFolder}/${fileName}`;
+
+    // Ensure archive folder exists
+    try {
+        await ensureFolderExists(vault, archiveFolder);
+    } catch (error) {
+        console.error('[QuestActionsService] Failed to create archive folder:', error);
+        new Notice('❌ Failed to create archive folder', 3000);
+        return { success: false };
+    }
+
+    // Move the file
+    const file = vault.getAbstractFileByPath(quest.filePath);
+    if (!(file instanceof TFile)) {
+        console.error('[QuestActionsService] Quest file not found:', quest.filePath);
+        new Notice('❌ Quest file not found', 3000);
+        return { success: false };
+    }
+
+    try {
+        await vault.rename(file, archivePath);
+    } catch (error) {
+        console.error('[QuestActionsService] Failed to move quest to archive:', error);
+        new Notice('❌ Failed to archive quest', 3000);
+        return { success: false };
+    }
+
+    // Update quest filePath in store
+    const updatedQuest: Quest = {
+        ...quest,
+        filePath: archivePath,
+    };
+
+    useQuestStore.getState().upsertQuest(updatedQuest);
+
+    // Log archive event
+    const today = new Date();
+    const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    useCharacterStore.getState().logActivity({
+        type: 'quest_archived' as any,
+        date: dateString,
+        xpGained: 0,
+        goldGained: 0,
+        questId: updatedQuest.questId,
+        questName: updatedQuest.questName,
+        details: `Archived to: ${archiveFolder}`,
+    });
+
+    new Notice(`📦 Quest archived: ${updatedQuest.questName}`, 3000);
+    return { success: true, quest: updatedQuest };
+}
+

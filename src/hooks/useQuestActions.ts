@@ -7,13 +7,14 @@
 
 import { useCallback, MutableRefObject } from 'react';
 import { Vault, App } from 'obsidian';
-import { QuestStatus } from '../models/QuestStatus';
 import { moveQuest, toggleTask, MoveQuestResult, ToggleTaskResult } from '../services/QuestActionsService';
 import { useCharacterStore } from '../store/characterStore';
+import type { QuestBoardSettings } from '../settings';
 
 interface UseQuestActionsOptions {
     vault: Vault;
     storageFolder: string;
+    settings: QuestBoardSettings;
     streakMode?: 'quest' | 'task';
     /** Pending saves Set from useQuestLoader - tracks quest IDs being saved */
     pendingSavesRef?: MutableRefObject<Set<string>>;
@@ -31,7 +32,7 @@ interface UseQuestActionsOptions {
 
 interface UseQuestActionsResult {
     /** Move a quest to a new status (handles streak, save, notifications) */
-    moveQuest: (questId: string, newStatus: QuestStatus) => Promise<MoveQuestResult>;
+    moveQuest: (questId: string, newStatus: string) => Promise<MoveQuestResult>;
     /** Toggle a task checkbox in a quest's linked file */
     toggleTask: (questId: string, lineNumber: number) => Promise<ToggleTaskResult>;
 }
@@ -42,6 +43,7 @@ interface UseQuestActionsResult {
 export function useQuestActions({
     vault,
     storageFolder,
+    settings,
     streakMode = 'quest',
     pendingSavesRef,
     onSaveCharacter,
@@ -52,7 +54,7 @@ export function useQuestActions({
 }: UseQuestActionsOptions): UseQuestActionsResult {
 
     const handleMoveQuest = useCallback(
-        async (questId: string, newStatus: QuestStatus) => {
+        async (questId: string, newStatus: string) => {
             // Add to pending saves BEFORE the save operation
             if (pendingSavesRef) {
                 pendingSavesRef.current.add(questId);
@@ -61,6 +63,7 @@ export function useQuestActions({
             try {
                 const result = await moveQuest(vault, questId, newStatus, {
                     storageFolder,
+                    settings,
                     streakMode,
                     app,
                     bountyChance,
@@ -85,7 +88,7 @@ export function useQuestActions({
                 }
             }
         },
-        [vault, storageFolder, streakMode, pendingSavesRef, onSaveCharacter, app, bountyChance, onBattleStart, manifestDir]
+        [vault, storageFolder, settings, streakMode, pendingSavesRef, onSaveCharacter, app, bountyChance, onBattleStart, manifestDir]
     );
 
     const handleToggleTask = useCallback(
