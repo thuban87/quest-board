@@ -83,6 +83,9 @@ export interface BaseQuest {
 
     /** Path to the quest markdown file (populated during loading) */
     path?: string;
+
+    /** Actual file path for save operations (respects archive location) */
+    filePath?: string;
 }
 /**
  * Manual Quest (Markdown-based)

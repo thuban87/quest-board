@@ -84,29 +84,61 @@ Each session entry should include:
 
 ---
 
+## 2026-02-05 - Phase 2: Archive Bug Fix & Quest Model Prep
+
+**Focus:** Fix archive duplicate file bug and add `filePath` tracking to Quest model
+
+### Completed:
+
+#### Quest Model (`src/models/Quest.ts`)
+- ✅ Added `filePath?: string` to `BaseQuest` interface
+- ✅ Separate from existing `path` property (parallel development consideration)
+
+#### QuestService Updates (`src/services/QuestService.ts`)
+- ✅ `loadMarkdownQuest()` now sets both `path` and `filePath` when loading
+- ✅ `loadJsonQuest()` now sets both `path` and `filePath` when loading
+- ✅ `saveManualQuest()` respects existing `filePath` instead of computing new path
+- ✅ `saveAIQuest()` respects existing `filePath` instead of computing new path
+
+### Files Changed:
+
+**Modified:**
+- `src/models/Quest.ts` - Added `filePath` property to BaseQuest
+- `src/services/QuestService.ts` - Updated load/save functions to use filePath
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`) - no TypeScript errors
+- ✅ Deployed to test vault
+- ✅ Existing quests load correctly
+- ✅ New quests save to correct folder
+- ✅ Archived quests stay in archive folder when tasks toggled
+
+### Blockers/Issues:
+- None
+
+---
+
 ## Next Session Prompt
 
 ```
-Continuing Custom Kanban Columns implementation. Phase 1 complete.
+Continuing Custom Kanban Columns implementation. Phase 1 and 2 complete.
 
 What was done last session:
-- ✅ CustomColumn.ts - Interface, validation, DEFAULT_COLUMNS
-- ✅ ColumnConfigService.ts - Central service with caching
-- ✅ ColumnManagerModal.ts - Full CRUD UI with DnD reordering
-- ✅ settings.ts - enableCustomColumns flag, UI section
-- ✅ Build passes
+- ✅ Phase 1: CustomColumn model, ColumnConfigService, ColumnManagerModal, settings UI
+- ✅ Phase 2: Added filePath to Quest model, updated QuestService load/save to respect archive paths
 
-Manual testing pending for Column Manager modal.
-
-Continue with Phase 2 from Custom Kanban Columns Implementation Guide:
-1. Fix archive duplicate file bug
-2. Add filePath to Quest model
-3. Create QuestMigrationService
+Continue with Phase 3 from Custom Kanban Columns Implementation Guide:
+1. Change Quest.status type from QuestStatus enum to QuestStatus | string
+2. Update questStore.ts with new status handling
+3. Update validator.ts to accept custom status strings
+4. Update questStatusConfig.ts with dynamic config generator
+5. Fix TypeScript errors in models/stores/services
 
 Key files to reference:
 - docs/development/planned-features/Custom Kanban Columns Implementation Guide.md
-- src/models/CustomColumn.ts - Column interface
-- src/services/ColumnConfigService.ts - Column service
+- src/models/Quest.ts
+- src/store/questStore.ts
+- src/config/questStatusConfig.ts
 ```
 
 ---
@@ -114,33 +146,20 @@ Key files to reference:
 ## Git Commit Message
 
 ```
-feat(kanban): Phase 1 - Custom Kanban Columns foundation
+feat(kanban): Phase 2 - Archive bug fix & Quest model prep
 
-Data Model:
-- Add CustomColumn interface with id, title, emoji, triggersCompletion
-- Add DEFAULT_COLUMNS matching existing QuestStatus enum
-- Add LEGACY_STATUS_MAP for migration support
-- Add validation functions and constants
+Quest Model:
+- Add filePath property to BaseQuest for tracking actual file location
+- Enables archived quests to save back to correct location
 
-Service Layer:
-- Create ColumnConfigService with caching
-- Add status resolution with legacy fallback
-- Add completion column detection helpers
+QuestService:
+- Update loadMarkdownQuest() to set filePath when loading
+- Update loadJsonQuest() to set filePath when loading
+- Update saveManualQuest() to respect existing filePath
+- Update saveAIQuest() to respect existing filePath
 
-Settings:
-- Add enableCustomColumns feature flag (default OFF)
-- Add customColumns array to settings
-- Add "Kanban Columns" section with toggle and modal button
+This prevents duplicate file creation when toggling tasks in archived quests.
 
-Column Manager Modal:
-- Create ColumnManagerModal with drag-and-drop reordering
-- Implement add/edit/delete with inline validation
-- Add reset to defaults functionality
-- Enforce minimum 1 column rule
-
-CSS:
-- Add ~260 lines of Column Manager modal styles
-
-Files: CustomColumn.ts, ColumnConfigService.ts, ColumnManagerModal.ts,
-settings.ts, modals.css
+Files: Quest.ts, QuestService.ts
 ```
+

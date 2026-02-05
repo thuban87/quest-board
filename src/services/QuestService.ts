@@ -266,9 +266,10 @@ async function loadMarkdownQuest(
             return null;
         }
 
-        // Add file path for set detection
+        // Add file paths for set detection and save operations
         if (result.data) {
             result.data.path = file.path;
+            result.data.filePath = file.path;
         }
 
         return result.data;
@@ -296,9 +297,10 @@ async function loadJsonQuest(
             return null;
         }
 
-        // Add file path for set detection
+        // Add file paths for set detection and save operations
         if (result.data) {
             result.data.path = file.path;
+            result.data.filePath = file.path;
         }
 
         return result.data;
@@ -504,12 +506,17 @@ export async function saveManualQuest(
 ): Promise<boolean> {
     try {
         const safeQuestId = sanitizeQuestId(quest.questId);
-        // Use questType directly as folder name (lowercase)
-        const subFolder = `quests/${quest.questType.toLowerCase()}`;
-        const folderPath = `${baseFolder}/${subFolder}`;
-        const filePath = `${folderPath}/${safeQuestId}.md`;
 
-        await ensureFolderExists(vault, folderPath);
+        // Use existing filePath if available (preserves archive location)
+        // Otherwise compute default path based on quest type
+        const defaultSubFolder = `quests/${quest.questType.toLowerCase()}`;
+        const defaultFolderPath = `${baseFolder}/${defaultSubFolder}`;
+        const defaultFilePath = `${defaultFolderPath}/${safeQuestId}.md`;
+        const filePath = quest.filePath ?? defaultFilePath;
+
+        // Ensure the target folder exists
+        const targetFolder = filePath.substring(0, filePath.lastIndexOf('/'));
+        await ensureFolderExists(vault, targetFolder);
 
         const existingFile = vault.getAbstractFileByPath(filePath);
 
@@ -673,10 +680,16 @@ export async function saveAIQuest(
 ): Promise<boolean> {
     try {
         const safeQuestId = sanitizeQuestId(quest.questId);
-        const folderPath = `${baseFolder}/${QUEST_FOLDERS.aiGenerated}`;
-        const filePath = `${folderPath}/${safeQuestId}.json`;
 
-        await ensureFolderExists(vault, folderPath);
+        // Use existing filePath if available (preserves archive location)
+        // Otherwise compute default path for AI-generated quests
+        const defaultFolderPath = `${baseFolder}/${QUEST_FOLDERS.aiGenerated}`;
+        const defaultFilePath = `${defaultFolderPath}/${safeQuestId}.json`;
+        const filePath = quest.filePath ?? defaultFilePath;
+
+        // Ensure the target folder exists
+        const targetFolder = filePath.substring(0, filePath.lastIndexOf('/'));
+        await ensureFolderExists(vault, targetFolder);
 
         const content = safeJsonStringify(quest);
 

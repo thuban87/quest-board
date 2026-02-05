@@ -356,25 +356,26 @@ export class ColumnConfigService {
 
 ---
 
-### Phase 2: Archive Bug Fix & Quest Model Prep
+### Phase 2: Archive Bug Fix & Quest Model Prep ✅ COMPLETE
 **Estimated Time:** 1.5-2 hours
+**Actual Time:** ~15 minutes (2026-02-05)
 **Goal:** Fix archive duplicate file bug and prepare Quest model for type migration
 
 #### Tasks:
-1. Add `filePath?: string` to Quest interface (`src/models/Quest.ts`)
-2. Update `QuestService.loadQuests()` to set `filePath` when loading:
+1. ✅ Add `filePath?: string` to Quest interface (`src/models/Quest.ts`)
+2. ✅ Update `QuestService.loadQuests()` to set `filePath` when loading:
    ```typescript
    // In loadQuests() after parsing quest data
    quest.filePath = file.path;
    ```
-3. Update `QuestService.saveManualQuest()` to respect existing `filePath`:
+3. ✅ Update `QuestService.saveManualQuest()` to respect existing `filePath`:
    ```typescript
    // At path determination (line ~507)
    const targetPath = quest.filePath
        ?? `${baseFolder}/${subFolder}/${safeQuestId}.md`;
    ```
-4. Update `QuestService.saveAIQuest()` similarly
-5. Test archive bug fix:
+4. ✅ Update `QuestService.saveAIQuest()` similarly
+5. ✅ Test archive bug fix:
    - Create quest
    - Archive it (move file to archive folder)
    - Toggle a task in the archived quest
@@ -386,16 +387,16 @@ export class ColumnConfigService {
 - `src/services/QuestService.ts` (UPDATE)
 
 #### Testing Checklist:
-- [ ] Existing quests load correctly
-- [ ] New quests save to correct folder
-- [ ] Archived quests respect archive folder
-- [ ] Toggling task in archived quest doesn't create duplicate
-- [ ] Quest files have correct `filePath` property in memory
+- [x] Existing quests load correctly
+- [x] New quests save to correct folder
+- [x] Archived quests respect archive folder
+- [x] Toggling task in archived quest doesn't create duplicate
+- [x] Quest files have correct `filePath` property in memory
 
 #### Notes:
 - This phase is independent of custom columns feature
 - Fixes a critical bug in existing functionality
-- No TypeScript errors expected
+- No TypeScript errors
 
 ---
 
