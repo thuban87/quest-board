@@ -14,9 +14,11 @@ import { lootGenerationService } from './services/LootGenerationService';
 import { GearSlot } from './models/Gear';
 import { DEV_FEATURES_ENABLED } from './config/combatConfig';
 import type { WatchedFolderConfig } from './services/FolderWatchService';
+import type { CustomColumn } from './models/CustomColumn';
+import { DEFAULT_COLUMNS } from './models/CustomColumn';
 
 // Re-export for convenience
-export type { Achievement };
+export type { Achievement, CustomColumn };
 
 /**
  * UI state that persists across reloads
@@ -111,6 +113,10 @@ export interface QuestBoardSettings {
 
     // Folder Watch Configurations (Daily Quest & Watched Folder)
     watchedFolderConfigs: WatchedFolderConfig[];
+
+    // Custom Kanban Columns
+    enableCustomColumns: boolean;       // Feature flag for custom columns
+    customColumns: CustomColumn[];      // User-defined column configuration
 }
 
 /**
@@ -175,6 +181,10 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
 
     // Folder Watch Configurations
     watchedFolderConfigs: [],
+
+    // Custom Kanban Columns (default to OFF for gradual rollout)
+    enableCustomColumns: false,
+    customColumns: [...DEFAULT_COLUMNS],
 };
 
 /**
@@ -260,6 +270,39 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     this.plugin.settings.spriteFolder = value;
                     await this.plugin.saveSettings();
                 }));
+
+        // Kanban Column Configuration Section
+        containerEl.createEl('h3', { text: 'Kanban Columns' });
+
+        new Setting(containerEl)
+            .setName('Enable Custom Columns')
+            .setDesc('Customize Kanban column names, order, and completion behavior')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableCustomColumns ?? false)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableCustomColumns = value;
+                    await this.plugin.saveSettings();
+                    this.display(); // Refresh to show/hide column manager button
+                }));
+
+        if (this.plugin.settings.enableCustomColumns) {
+            new Setting(containerEl)
+                .setName('Manage Columns')
+                .setDesc('Add, edit, reorder, or remove Kanban columns')
+                .addButton(button => button
+                    .setButtonText('Open Column Manager')
+                    .onClick(async () => {
+                        const { ColumnManagerModal } = await import('./modals/ColumnManagerModal');
+                        new ColumnManagerModal(this.app, this.plugin).open();
+                    }));
+
+            // Show current column count
+            const columnCount = (this.plugin.settings.customColumns || DEFAULT_COLUMNS).length;
+            containerEl.createEl('p', {
+                text: `Current columns: ${columnCount}`,
+                cls: 'setting-item-description'
+            });
+        }
 
         // Quest Folder Settings Section
         containerEl.createEl('h3', { text: 'Quest Folder Settings' });

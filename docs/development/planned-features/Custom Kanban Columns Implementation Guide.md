@@ -1,4 +1,4 @@
-# Custom Kanban Columns - Implementation Guide (REVISED)
+# Custom Kanban Columns - Implementation Guide
 
 **Status:** Ready for implementation
 **Estimated Effort:** 10-12 hours across 5-6 phases
@@ -305,53 +305,54 @@ export class ColumnConfigService {
 
 ## Implementation Phases
 
-### Phase 1: Foundation (Settings UI & Service)
+### Phase 1: Foundation (Settings UI & Service) ✅ COMPLETE
 **Estimated Time:** 2-2.5 hours
+**Actual Time:** ~1.5 hours (2026-02-05)
 **Goal:** Add settings UI and ColumnConfigService without breaking existing functionality
 
 #### Tasks:
-1. Create `CustomColumn` interface in `src/models/CustomColumn.ts`
-2. Update `QuestBoardSettings` in `src/settings.ts`:
-   - Add `customColumns: CustomColumn[]`
-   - Add `enableCustomColumns: boolean` (default `false`)
-   - Confirm `archiveFolder` exists (it does, line 73)
-3. Update `DEFAULT_SETTINGS` with default columns
-4. Create `ColumnConfigService` in `src/services/ColumnConfigService.ts`
-5. Build settings UI in `QuestBoardSettingTab.display()`:
+1. ✅ Create `CustomColumn` interface in `src/models/CustomColumn.ts`
+2. ✅ Update `QuestBoardSettings` in `src/settings.ts`:
+   - Added `customColumns: CustomColumn[]`
+   - Added `enableCustomColumns: boolean` (default `false`)
+   - Confirmed `archiveFolder` exists (line 73)
+3. ✅ Update `DEFAULT_SETTINGS` with default columns
+4. ✅ Create `ColumnConfigService` in `src/services/ColumnConfigService.ts`
+5. ✅ Build settings UI:
+   - Created separate `ColumnManagerModal.ts` (opened from settings)
    - Show existing columns with edit/reorder/delete
-   - Add new column form
-   - Implement validation (ID format, uniqueness, min 1 column)
-   - Add confirmation modal for deletion
-   - Add warning box about behavior
-6. Test settings UI thoroughly:
-   - Add column
-   - Edit column ID/name/emoji
-   - Toggle `triggersCompletion`
-   - Reorder with up/down arrows
-   - Delete column (with confirmation if quests exist)
-   - Try to delete last column (should block)
-   - Try invalid column IDs (should show error)
+   - Add new column form with validation
+   - Implemented validation (ID format, uniqueness, min 1 column)
+   - Confirmation for deletion via `confirm()` dialog
+   - Warning box about ID changes affecting quests
+6. 🔲 Manual testing in Obsidian (handed off to user)
 
 #### Key Files Modified:
 - `src/models/CustomColumn.ts` (NEW)
 - `src/services/ColumnConfigService.ts` (NEW)
+- `src/modals/ColumnManagerModal.ts` (NEW)
 - `src/settings.ts` (UPDATE)
+- `src/styles/modals.css` (UPDATE - ~260 lines added)
 
 #### Testing Checklist:
 - [ ] Settings UI renders correctly
 - [ ] Can add new column with valid ID
 - [ ] Cannot add column with invalid ID (shows error)
 - [ ] Cannot add duplicate column ID (shows error)
-- [ ] Can reorder columns with up/down buttons
-- [ ] Can delete column (shows confirmation if quests exist)
+- [ ] Can reorder columns with drag-and-drop
+- [ ] Can delete column (shows confirmation)
 - [ ] Cannot delete last column
 - [ ] Can edit column after creation
 - [ ] `triggersCompletion` checkbox works
 
+#### Tech Debt:
+- **Up/Down Arrow Reordering:** Original spec called for up/down arrow buttons; implemented DnD instead. More intuitive but could add arrows as a future enhancement.
+- **Confirmation for "Quests Exist" Deletion:** Currently shows generic confirmation. Future enhancement could check if quests exist in that column and show a more specific warning.
+
 #### Notes:
 - Feature flag `enableCustomColumns` is OFF - existing functionality unchanged
 - No quest files modified
-- No TypeScript errors expected in this phase
+- Build passes with no TypeScript errors
 
 ---
 
