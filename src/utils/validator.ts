@@ -89,7 +89,9 @@ export function validateQuest(data: unknown): ValidationResult<Quest> {
     }
 
     // Enum validation with defaults
-    if (!quest.status || !VALID_STATUSES.includes(quest.status as QuestStatus)) {
+    // Accept any non-empty string for status (supports custom columns)
+    // If empty/missing, default to first column (available)
+    if (!quest.status || typeof quest.status !== 'string' || quest.status.trim().length === 0) {
         quest.status = QuestStatus.AVAILABLE;
     }
     if (!quest.priority || !VALID_PRIORITIES.includes(quest.priority as QuestPriority)) {

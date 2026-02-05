@@ -118,27 +118,85 @@ Each session entry should include:
 
 ---
 
+## 2026-02-05 - Phase 3: Type Migration & Core Services
+
+**Focus:** Change Quest.status type to union and update models/stores/services
+
+### Completed:
+
+#### Quest Model (`src/models/Quest.ts`)
+- ✅ Changed `status: QuestStatus` to `status: QuestStatus | string` in BaseQuest interface
+
+#### Quest Store (`src/store/questStore.ts`)
+- ✅ Updated `updateQuestStatus()` signature to accept `QuestStatus | string`
+- ✅ Updated `getQuestsByStatus()` to accept `QuestStatus | string`
+- ✅ Updated selectors (`selectQuestsByStatus`, `selectQuestCountByStatus`)
+
+#### Validator (`src/utils/validator.ts`)
+- ✅ Removed enum-only validation, now accepts any non-empty string
+- ✅ Added fallback to `QuestStatus.AVAILABLE` if status missing/empty
+
+#### Quest Status Config (`src/config/questStatusConfig.ts`)
+- ✅ Added `getStatusConfigs(settings)` dynamic generator
+- ✅ Added `getSidebarStatuses(settings)` function
+- ✅ Added `getKanbanStatuses(settings)` function
+- ✅ Updated `StatusConfig.status` type to `QuestStatus | string`
+- ✅ Kept static arrays for backward compatibility
+
+#### Quest Service (`src/services/QuestService.ts`)
+- ✅ Removed `as QuestStatus` cast in status parsing (line 146)
+
+### Files Changed:
+
+**Modified:**
+- `src/models/Quest.ts` - Status type changed to union
+- `src/store/questStore.ts` - Updated signatures and selectors
+- `src/utils/validator.ts` - Accepts any string status
+- `src/config/questStatusConfig.ts` - Added dynamic config functions
+- `src/services/QuestService.ts` - Removed type cast in parsing
+
+### Testing Notes:
+- ✅ Build runs (`npm run build`)
+- ⚠️ 19 TypeScript errors in components (expected, deferred to Phases 5-6):
+  - FullKanban.tsx (12 errors)
+  - QuestCard.tsx (3 errors)
+  - SidebarQuests.tsx (4 errors)
+
+### Blockers/Issues:
+- Fewer errors than estimated (19 vs 80-150) due to TypeScript's permissive union type handling
+
+### Tech Debt:
+- `questStore.ts` line 96 still has hardcoded `QuestStatus.COMPLETED` check (Phase 4)
+- Component `Record<QuestStatus>` patterns need updating (Phases 5-6)
+
+---
+
 ## Next Session Prompt
 
 ```
-Continuing Custom Kanban Columns implementation. Phase 1 and 2 complete.
+Continuing Custom Kanban Columns implementation. Phases 1, 2, and 3 complete.
 
 What was done last session:
-- ✅ Phase 1: CustomColumn model, ColumnConfigService, ColumnManagerModal, settings UI
-- ✅ Phase 2: Added filePath to Quest model, updated QuestService load/save to respect archive paths
+- ✅ Phase 3: Type migration complete
+  - Quest.status now accepts QuestStatus | string
+  - questStore.ts signatures updated
+  - validator.ts accepts any string status
+  - questStatusConfig.ts has dynamic config generators
+  - QuestService.ts removed type cast in parsing
 
-Continue with Phase 3 from Custom Kanban Columns Implementation Guide:
-1. Change Quest.status type from QuestStatus enum to QuestStatus | string
-2. Update questStore.ts with new status handling
-3. Update validator.ts to accept custom status strings
-4. Update questStatusConfig.ts with dynamic config generator
-5. Fix TypeScript errors in models/stores/services
+Current build status: 19 TypeScript errors in component files (expected, Phase 5-6 work)
+
+Continue with Phase 4 from Custom Kanban Columns Implementation Guide:
+1. Update QuestActionsService.ts moveQuest() signature to accept string status
+2. Replace hardcoded === QuestStatus.COMPLETED checks with ColumnConfigService.isCompletionColumn()
+3. Add completeQuest() method for explicit completion
+4. Add reopenQuest() method to clear completedDate
+5. Add archiveQuest() method to move files
 
 Key files to reference:
-- docs/development/planned-features/Custom Kanban Columns Implementation Guide.md
-- src/models/Quest.ts
-- src/store/questStore.ts
-- src/config/questStatusConfig.ts
+- docs/development/planned-features/Custom Kanban Columns Implementation Guide.md (Phase 4 section)
+- src/services/QuestActionsService.ts
+- src/services/ColumnConfigService.ts
 ```
 
 ---
@@ -146,20 +204,28 @@ Key files to reference:
 ## Git Commit Message
 
 ```
-feat(kanban): Phase 2 - Archive bug fix & Quest model prep
+feat(kanban): Phase 3 - Type migration for custom columns
 
 Quest Model:
-- Add filePath property to BaseQuest for tracking actual file location
-- Enables archived quests to save back to correct location
+- Change Quest.status type from QuestStatus to QuestStatus | string
+- Enables custom column IDs to be stored in quest frontmatter
+
+Store Updates:
+- Update questStore signatures to accept union type
+- Update selectors (selectQuestsByStatus, selectQuestCountByStatus)
+
+Config Updates:
+- Add dynamic getStatusConfigs(), getSidebarStatuses(), getKanbanStatuses()
+- Keep static arrays for backward compatibility
+
+Validation:
+- Accept any non-empty string as status
+- Fallback to AVAILABLE if status missing
 
 QuestService:
-- Update loadMarkdownQuest() to set filePath when loading
-- Update loadJsonQuest() to set filePath when loading
-- Update saveManualQuest() to respect existing filePath
-- Update saveAIQuest() to respect existing filePath
+- Remove type cast in frontmatter parsing
 
-This prevents duplicate file creation when toggling tasks in archived quests.
+Note: 19 expected TypeScript errors in components (Phase 5-6 work)
 
-Files: Quest.ts, QuestService.ts
+Files: Quest.ts, questStore.ts, validator.ts, questStatusConfig.ts, QuestService.ts
 ```
-

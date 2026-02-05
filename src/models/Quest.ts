@@ -60,8 +60,8 @@ export interface BaseQuest {
     /** Category for filtering (admin, shopping, school, etc.) */
     category: string;
 
-    /** Current quest status */
-    status: QuestStatus;
+    /** Current quest status (enum value or custom column ID) */
+    status: QuestStatus | string;
 
     /** Priority level */
     priority: QuestPriority;

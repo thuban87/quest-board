@@ -33,7 +33,7 @@ interface QuestActions {
     removeQuest: (questId: string) => void;
 
     /** Update quest status */
-    updateQuestStatus: (questId: string, status: QuestStatus) => void;
+    updateQuestStatus: (questId: string, status: QuestStatus | string) => void;
 
     /** Set loading state */
     setLoading: (loading: boolean) => void;
@@ -45,7 +45,7 @@ interface QuestActions {
     clear: () => void;
 
     /** Get quests by status (imperative, for use in callbacks) */
-    getQuestsByStatus: (status: QuestStatus) => Quest[];
+    getQuestsByStatus: (status: QuestStatus | string) => Quest[];
 }
 
 type QuestStore = QuestState & QuestActions;
@@ -131,14 +131,14 @@ export const selectAllQuests = (state: QuestStore): Quest[] =>
 /**
  * Get quests filtered by status
  */
-export const selectQuestsByStatus = (status: QuestStatus) =>
+export const selectQuestsByStatus = (status: QuestStatus | string) =>
     (state: QuestStore): Quest[] =>
         Array.from(state.quests.values()).filter((q) => q.status === status);
 
 /**
  * Get quest count by status
  */
-export const selectQuestCountByStatus = (status: QuestStatus) =>
+export const selectQuestCountByStatus = (status: QuestStatus | string) =>
     (state: QuestStore): number =>
         Array.from(state.quests.values()).filter((q) => q.status === status).length;
 

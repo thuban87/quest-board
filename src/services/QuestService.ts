@@ -143,7 +143,8 @@ function parseQuestFrontmatter(content: string, filePath: string): Partial<Manua
                 quest.category = value;
                 break;
             case 'status':
-                quest.status = value as QuestStatus;
+                // Accept any status string (supports custom columns)
+                quest.status = value;
                 break;
             case 'priority':
                 quest.priority = value as QuestPriority;
