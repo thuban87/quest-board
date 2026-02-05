@@ -93,17 +93,54 @@ Continue Settings Redesign Phase 3 - Polish & Refinement: Add validation feedbac
 
 ---
 
+## 2026-02-05 - Phase 3: Polish ✅
+
+**Focus:** Add validation feedback, usage stats, and reset safety confirmations
+
+### Completed:
+
+- [x] Folder validation warning for storage folder (shows warning when folder doesn't exist)
+- [x] Usage stats for Gear Slot Mapping ("X type(s) configured")
+- [x] Usage stats for Stat Mappings ("X mapping(s) configured")
+- [x] Reset Stats button - OK/Cancel confirmation dialog before action
+- [x] Reset All Data button - Requires typing "RESET" + secondary confirm dialog
+- [x] Added `.qb-warning` CSS class for folder validation warnings
+- [x] Replaced `alert()` calls with Obsidian `Notice()` for better UX
+
+### Files Changed:
+
+**Modified:**
+- `src/settings.ts` - Added folder validation, usage stats, enhanced reset confirmations (~50 lines changed)
+- `src/styles/modals.css` - Added `.qb-warning` CSS class (~10 lines)
+
+### Testing Notes:
+
+- ✅ Folder validation warning appears/disappears correctly
+- ✅ Usage stats show correct counts
+- ✅ Reset Stats shows OK/Cancel confirmation
+- ✅ Reset All Data requires RESET text + secondary confirm
+- ✅ No console errors
+- ✅ Settings panel styling looks good
+
+---
+
 ## Git Commit Message
 
 ```
-feat(settings): extract complex UIs into dedicated modals (Phase 2)
+feat(settings): add Phase 3 polish (validation, usage stats, reset safety)
 
-- Add WatchedFolderManagerModal for watched folder config management
-- Add GearSlotMappingModal with visual checkbox grid for slots
-- Add StatMappingsModal for category → stat mapping
-- Add AITestLabModal (DEV) for AI testing and cache management
-- Add 200+ lines of modal CSS (tables, grids, status indicators)
-- Remove legacy inline UIs for gear slots and stat mappings
-- Integrate modal buttons into settings panel
+- Add folder validation warning for storage folder
+- Show usage stats for gear/stat mappings in Advanced section
+- Add OK/Cancel confirmation to Reset Stats button
+- Add RESET text input + secondary confirm to Reset All Data
+- Replace alert() with Obsidian Notice() for better UX
+- Add .qb-warning CSS class
 ```
 
+---
+
+## Next Session Prompt
+
+```
+Settings Redesign is complete! All 3 phases finished. Ready to move on to the next feature or any additional polish items from the improvements list.
+```

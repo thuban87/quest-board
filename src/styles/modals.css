@@ -1225,6 +1225,16 @@
   margin-bottom: var(--qb-spacing-md);
 }
 
+/* Folder validation warning */
+.qb-warning {
+  color: var(--text-error);
+  background: rgba(255, 100, 100, 0.1);
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  border-radius: var(--qb-radius-sm);
+  margin: var(--qb-spacing-sm) 0;
+  font-size: 0.85rem;
+}
+
 /* Settings section description */
 .qb-section-description {
   color: var(--text-muted);

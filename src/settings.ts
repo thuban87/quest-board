@@ -5,7 +5,7 @@
  * API keys and sensitive data stored here via loadData/saveData.
  */
 
-import { App, PluginSettingTab, Setting, TFolder } from 'obsidian';
+import { App, PluginSettingTab, Setting, TFolder, TextComponent, Notice } from 'obsidian';
 import type QuestBoardPlugin from '../main';
 import type { Character } from './models/Character';
 import type { InventoryItem } from './models/Consumable';
@@ -226,6 +226,13 @@ export class QuestBoardSettingTab extends PluginSettingTab {
             cls: 'qb-section-description'
         });
 
+        // Helper to validate folder exists
+        const validateFolder = (path: string): boolean => {
+            if (!path) return false;
+            const folder = this.app.vault.getAbstractFileByPath(path);
+            return folder instanceof TFolder;
+        };
+
         new Setting(containerEl)
             .setName('Quest Storage Folder')
             .setDesc('Root folder where quest files are stored')
@@ -235,7 +242,16 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.storageFolder = value;
                     await this.plugin.saveSettings();
+                    this.display(); // Refresh to update validation
                 }));
+
+        // Folder validation warning
+        if (this.plugin.settings.storageFolder && !validateFolder(this.plugin.settings.storageFolder)) {
+            containerEl.createEl('p', {
+                text: `⚠ Storage folder "${this.plugin.settings.storageFolder}" not found - create it or update the path`,
+                cls: 'qb-warning'
+            });
+        }
 
         new Setting(containerEl)
             .setName('Gemini API Key')
@@ -762,9 +778,10 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         }
 
         // Modal buttons for advanced configuration
+        const gearMappingCount = Object.keys(this.plugin.settings.questSlotMapping || {}).length;
         new Setting(advancedContent)
             .setName('Gear Slot Mapping')
-            .setDesc('Configure which gear slots can drop from each quest type')
+            .setDesc(`Configure which gear slots can drop from each quest type (${gearMappingCount} type${gearMappingCount !== 1 ? 's' : ''} configured)`)
             .addButton(button => button
                 .setButtonText('Open Gear Slot Mapping')
                 .onClick(async () => {
@@ -772,9 +789,10 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     new GearSlotMappingModal(this.app, this.plugin).open();
                 }));
 
+        const statMappingCount = Object.keys(this.plugin.settings.categoryStatMappings || {}).length;
         new Setting(advancedContent)
             .setName('Stat Mappings')
-            .setDesc('Map quest categories to character stats for XP distribution')
+            .setDesc(`Map quest categories to character stats for XP distribution (${statMappingCount} mapping${statMappingCount !== 1 ? 's' : ''} configured)`)
             .addButton(button => button
                 .setButtonText('Open Stat Mappings')
                 .onClick(async () => {
@@ -843,7 +861,11 @@ export class QuestBoardSettingTab extends PluginSettingTab {
             .addButton(button => button
                 .setButtonText('Reset Stats')
                 .onClick(async () => {
-                    if (this.plugin.settings.character) {
+                    if (!this.plugin.settings.character) {
+                        new Notice('❌ No character to reset');
+                        return;
+                    }
+                    if (confirm('Reset all stats and streaks? Your XP, level, and achievements will be preserved.')) {
                         this.plugin.settings.character.statBonuses = {
                             strength: 0,
                             intelligence: 0,
@@ -859,23 +881,37 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         this.plugin.settings.character.lastQuestCompletionDate = null;
                         this.plugin.settings.character.shieldUsedThisWeek = false;
                         await this.plugin.saveSettings();
-                        alert('Stats and streak reset! Reload Obsidian to see changes.');
+                        new Notice('✓ Stats and streak reset');
+                        this.display(); // Refresh settings
                     }
                 }));
 
+        // Reset All Data - DESTRUCTIVE - requires text confirmation
+        let resetConfirmText: TextComponent;
         new Setting(dangerContent)
             .setName('Reset All Data')
-            .setDesc('⚠️ This will delete all character progress, achievements, and inventory')
+            .setDesc('⚠️ DANGER: Deletes all character progress, achievements, and inventory. Type RESET to confirm.')
+            .addText(text => {
+                resetConfirmText = text;
+                text.setPlaceholder('Type RESET');
+            })
             .addButton(button => button
-                .setButtonText('Reset')
+                .setButtonText('Reset All Data')
                 .setWarning()
                 .onClick(async () => {
-                    if (confirm('Are you sure? This cannot be undone.')) {
+                    if (resetConfirmText.getValue() !== 'RESET') {
+                        new Notice('❌ Type RESET in the box to confirm');
+                        return;
+                    }
+                    // Extra confirm dialog as second layer of protection
+                    if (confirm('Are you ABSOLUTELY sure? This will delete all character progress, achievements, and inventory. This cannot be undone.')) {
                         this.plugin.settings.character = null;
                         this.plugin.settings.achievements = [];
                         this.plugin.settings.inventory = [];
                         await this.plugin.saveSettings();
+                        resetConfirmText.setValue(''); // Clear input
                         this.display(); // Refresh the settings tab
+                        new Notice('✅ All data reset');
                     }
                 }));
 
