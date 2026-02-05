@@ -582,13 +582,13 @@ export async function completeQuest(
 }
 
 /**
- * Reopen a completed quest - clears completedDate and logs event.
- * Quest stays in its current column.
+ * Reopen a completed quest - clears completedDate, moves to first column, and logs event.
  */
 export async function reopenQuest(
     vault: Vault,
     questId: string,
-    storageFolder: string
+    storageFolder: string,
+    settings?: QuestBoardSettings
 ): Promise<{ success: boolean; quest?: Quest }> {
     const quest = useQuestStore.getState().quests.get(questId);
     if (!quest) {
@@ -601,10 +601,21 @@ export async function reopenQuest(
         return { success: false };
     }
 
-    // Clear completedDate
+    // Determine the target status - first non-completion column
+    let newStatus = 'available';
+    if (settings) {
+        const columnConfigService = new ColumnConfigService(settings);
+        // Find first non-completion column
+        const columns = columnConfigService.getColumns();
+        const nonCompletionColumn = columns.find(c => !c.triggersCompletion);
+        newStatus = nonCompletionColumn?.id || columns[0]?.id || 'available';
+    }
+
+    // Clear completedDate and move to non-completion column
     const updatedQuest: Quest = {
         ...quest,
         completedDate: null,
+        status: newStatus,
     };
 
     // Update store
@@ -638,6 +649,7 @@ export async function reopenQuest(
     new Notice(`🔄 Quest reopened: ${updatedQuest.questName}`, 3000);
     return { success: true, quest: updatedQuest };
 }
+
 
 /**
  * Archive a quest - moves the quest file to the archive folder.
@@ -696,13 +708,8 @@ export async function archiveQuest(
         return { success: false };
     }
 
-    // Update quest filePath in store
-    const updatedQuest: Quest = {
-        ...quest,
-        filePath: archivePath,
-    };
-
-    useQuestStore.getState().upsertQuest(updatedQuest);
+    // Remove quest from store (no longer in Kanban)
+    useQuestStore.getState().removeQuest(questId);
 
     // Log archive event
     const today = new Date();
@@ -712,12 +719,12 @@ export async function archiveQuest(
         date: dateString,
         xpGained: 0,
         goldGained: 0,
-        questId: updatedQuest.questId,
-        questName: updatedQuest.questName,
+        questId: quest.questId,
+        questName: quest.questName,
         details: `Archived to: ${archiveFolder}`,
     });
 
-    new Notice(`📦 Quest archived: ${updatedQuest.questName}`, 3000);
-    return { success: true, quest: updatedQuest };
+    new Notice(`📦 Quest archived: ${quest.questName}`, 3000);
+    return { success: true, quest };
 }
 

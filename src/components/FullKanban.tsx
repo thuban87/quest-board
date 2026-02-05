@@ -1,7 +1,7 @@
 /**
  * FullKanban Component
  * 
- * Full-page Kanban board with 4 columns and RPG-themed styling.
+ * Full-page Kanban board with dynamic columns and RPG-themed styling.
  * Columns can be collapsed horizontally.
  * Quest cards can be collapsed individually.
  */
@@ -9,14 +9,18 @@
 import React, { useEffect, useCallback, useState, useMemo } from 'react';
 import { App as ObsidianApp, Platform } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
-import { QuestStatus } from '../models/QuestStatus';
 import { Quest, isManualQuest } from '../models/Quest';
-import { KANBAN_STATUSES } from '../config/questStatusConfig';
+import { ColumnConfigService } from '../services/ColumnConfigService';
 import { useQuestStore, selectAllQuests } from '../store/questStore';
 import { useCharacterStore } from '../store/characterStore';
 import { useKanbanFilterStore } from '../store/filterStore';
 import { getXPProgressForCharacter, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 import { updateQuestSortOrder } from '../services/QuestService';
+import {
+    completeQuest,
+    reopenQuest,
+    archiveQuest,
+} from '../services/QuestActionsService';
 import { QuestCard } from './QuestCard';
 import { FilterBar } from './FilterBar';
 import { CLASS_INFO, getTrainingLevelDisplay } from '../models/Character';
@@ -58,6 +62,17 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     // Save character callback (uses consolidated hook)
     const handleSaveCharacter = useSaveCharacter(plugin);
 
+    // Column configuration service (memoized)
+    const columnConfigService = useMemo(
+        () => new ColumnConfigService(plugin.settings),
+        [plugin.settings.customColumns]
+    );
+
+    const columns = useMemo(
+        () => columnConfigService.getColumns(),
+        [columnConfigService]
+    );
+
     // === SHARED HOOKS ===
     // Quest loading and file watching (replaces duplicated loadQuests/watchQuestFolder logic)
     const { pendingSavesRef } = useQuestLoader({
@@ -70,6 +85,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     const { moveQuest: handleMoveQuest, toggleTask: handleToggleTask } = useQuestActions({
         vault: app.vault,
         storageFolder: plugin.settings.storageFolder,
+        settings: plugin.settings,
         streakMode: plugin.settings.streakMode,
         pendingSavesRef,  // Pass pending saves ref to prevent file watcher race condition
         onSaveCharacter: handleSaveCharacter,  // Save character after streak updates
@@ -100,13 +116,10 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     // Resource regen hook - restores HP/Mana on task completion (7% per task)
     useResourceRegen({ onSave: handleSaveCharacter });
 
-    // Collapsed columns state
-    const [collapsedColumns, setCollapsedColumns] = useState<Record<QuestStatus, boolean>>({
-        [QuestStatus.AVAILABLE]: false,
-        [QuestStatus.ACTIVE]: false,
-        [QuestStatus.IN_PROGRESS]: false,
-        [QuestStatus.COMPLETED]: false,
-    });
+    // Collapsed columns state - dynamic based on columns
+    const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>(() =>
+        Object.fromEntries(columns.map(c => [c.id, false]))
+    );
 
     // Mobile column visibility state
     const isMobile = Platform.isMobile;
@@ -115,25 +128,15 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     // For swipe mode: track current column index
     const [mobileColumnIndex, setMobileColumnIndex] = useState<number>(() => {
         const defaultCol = plugin.settings.mobileDefaultColumn || 'active';
-        const statusMap: Record<string, number> = {
-            'available': 0,
-            'active': 1,
-            'in_progress': 2,
-            'completed': 3
-        };
-        return statusMap[defaultCol] ?? 1;
+        const idx = columns.findIndex(c => c.id === defaultCol);
+        return idx >= 0 ? idx : Math.min(1, columns.length - 1);
     });
 
     // For checkbox mode: track which columns are visible
-    const [mobileVisibleColumns, setMobileVisibleColumns] = useState<QuestStatus[]>(() => {
+    const [mobileVisibleColumns, setMobileVisibleColumns] = useState<string[]>(() => {
         const defaultCol = plugin.settings.mobileDefaultColumn || 'active';
-        const statusMap: Record<string, QuestStatus> = {
-            'available': QuestStatus.AVAILABLE,
-            'active': QuestStatus.ACTIVE,
-            'in_progress': QuestStatus.IN_PROGRESS,
-            'completed': QuestStatus.COMPLETED
-        };
-        return [statusMap[defaultCol] || QuestStatus.ACTIVE];
+        const found = columns.find(c => c.id === defaultCol);
+        return [found?.id || columns[0]?.id || 'available'];
     });
 
     // Collapsed cards state (uses consolidated hook)
@@ -145,13 +148,13 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     } = useCollapsedItems();
 
     // Toggle column collapse
-    const toggleColumn = (status: QuestStatus) => {
-        setCollapsedColumns(prev => ({ ...prev, [status]: !prev[status] }));
+    const toggleColumn = (columnId: string) => {
+        setCollapsedColumns(prev => ({ ...prev, [columnId]: !prev[columnId] }));
     };
 
     // Toggle all cards in a column (collapse or expand all)
-    const toggleAllCardsInColumn = (status: QuestStatus, collapse: boolean) => {
-        const questIds = useQuestStore.getState().getQuestsByStatus(status)
+    const toggleAllCardsInColumn = (columnId: string, collapse: boolean) => {
+        const questIds = useQuestStore.getState().getQuestsByStatus(columnId)
             .map(q => q.questId);
         if (collapse) {
             collapseCards(questIds);
@@ -161,8 +164,8 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     };
 
     // Check if all cards in a column are collapsed
-    const areAllCardsCollapsed = (status: QuestStatus): boolean => {
-        const questIds = useQuestStore.getState().getQuestsByStatus(status)
+    const areAllCardsCollapsed = (columnId: string): boolean => {
+        const questIds = useQuestStore.getState().getQuestsByStatus(columnId)
             .map(q => q.questId);
         return questIds.length > 0 && questIds.every(id => isCardCollapsed(id));
     };
@@ -173,28 +176,28 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     }, []);
 
     const goToNextColumn = useCallback(() => {
-        setMobileColumnIndex(prev => Math.min(KANBAN_STATUSES.length - 1, prev + 1));
-    }, []);
+        setMobileColumnIndex(prev => Math.min(columns.length - 1, prev + 1));
+    }, [columns.length]);
 
     // Mobile toggle column visibility - checkbox mode
-    const toggleMobileColumn = useCallback((status: QuestStatus) => {
+    const toggleMobileColumn = useCallback((columnId: string) => {
         setMobileVisibleColumns(prev => {
-            if (prev.includes(status)) {
+            if (prev.includes(columnId)) {
                 // Don't allow removing the last visible column
                 if (prev.length <= 1) return prev;
-                return prev.filter(s => s !== status);
+                return prev.filter(s => s !== columnId);
             }
-            return [...prev, status];
+            return [...prev, columnId];
         });
     }, []);
 
     // Check if a column should be visible on mobile
-    const isColumnVisibleOnMobile = useCallback((status: QuestStatus, index: number): boolean => {
+    const isColumnVisibleOnMobile = useCallback((columnId: string, index: number): boolean => {
         if (!isMobile) return true;
         if (mobileMode === 'swipe') {
             return index === mobileColumnIndex;
         }
-        return mobileVisibleColumns.includes(status);
+        return mobileVisibleColumns.includes(columnId);
     }, [isMobile, mobileMode, mobileColumnIndex, mobileVisibleColumns]);
 
     // Load character on mount and save if migration occurred
@@ -243,19 +246,19 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         sectionsMap,
     });
 
-    // Get quests by status from filtered list
-    const getQuestsForColumn = useCallback((status: QuestStatus): Quest[] => {
-        return filteredQuests.filter(q => q.status === status);
+    // Get quests by column ID from filtered list
+    const getQuestsForColumn = useCallback((columnId: string): Quest[] => {
+        return filteredQuests.filter(q => q.status === columnId);
     }, [filteredQuests]);
 
     // Get quest status for DnD
-    const getQuestStatus = useCallback((questId: string): QuestStatus | undefined => {
+    const getQuestStatus = useCallback((questId: string): string | undefined => {
         const quest = allQuests.find(q => q.questId === questId);
         return quest?.status;
     }, [allQuests]);
 
     // Handle reorder within column
-    const handleReorderQuest = useCallback(async (questId: string, newSortOrder: number, status: QuestStatus) => {
+    const handleReorderQuest = useCallback(async (questId: string, newSortOrder: number, columnId: string) => {
         // Update in store immediately for responsiveness
         const quest = useQuestStore.getState().quests.get(questId);
         if (quest && isManualQuest(quest)) {
@@ -271,6 +274,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         onReorderQuest: handleReorderQuest,
         getQuestStatus,
         getQuestsForStatus: getQuestsForColumn,
+        columnIds: columns.map(c => c.id),
     });
 
     // Handle save quest as template
@@ -285,6 +289,30 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         };
         new ScrivenersQuillModal(app, plugin, mockTemplate as any).open();
     }, [app, plugin]);
+
+    // Complete quest handler
+    const handleCompleteQuest = useCallback(async (questId: string) => {
+        await completeQuest(app.vault, questId, {
+            storageFolder: plugin.settings.storageFolder,
+            settings: plugin.settings,
+            streakMode: plugin.settings.streakMode,
+            app,
+            bountyChance: plugin.settings.bountyChance,
+            onBattleStart: () => plugin.activateBattleView(),
+            manifestDir: plugin.manifest.dir,
+            onSaveCharacter: handleSaveCharacter,
+        });
+    }, [app, plugin.settings, handleSaveCharacter]);
+
+    // Reopen quest handler
+    const handleReopenQuest = useCallback(async (questId: string) => {
+        await reopenQuest(app.vault, questId, plugin.settings.storageFolder, plugin.settings);
+    }, [app.vault, plugin.settings]);
+
+    // Archive quest handler
+    const handleArchiveQuest = useCallback(async (questId: string) => {
+        await archiveQuest(app.vault, questId, plugin.settings.archiveFolder);
+    }, [app.vault, plugin.settings.archiveFolder]);
 
     if (!character) {
         return (
@@ -371,15 +399,15 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                                 ◀
                             </button>
                             <span className="qb-mobile-column-label">
-                                {KANBAN_STATUSES[mobileColumnIndex].emoji} {KANBAN_STATUSES[mobileColumnIndex].title}
+                                {columns[mobileColumnIndex]?.emoji} {columns[mobileColumnIndex]?.title}
                                 <span className="qb-mobile-count">
-                                    ({getQuestsForColumn(KANBAN_STATUSES[mobileColumnIndex].status).length})
+                                    ({getQuestsForColumn(columns[mobileColumnIndex]?.id || '').length})
                                 </span>
                             </span>
                             <button
                                 className="qb-mobile-nav-btn"
                                 onClick={goToNextColumn}
-                                disabled={mobileColumnIndex === KANBAN_STATUSES.length - 1}
+                                disabled={mobileColumnIndex === columns.length - 1}
                             >
                                 ▶
                             </button>
@@ -387,11 +415,11 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                     ) : (
                         // Checkbox mode: show toggleable chips
                         <div className="qb-mobile-column-chips">
-                            {KANBAN_STATUSES.map(({ status, title, emoji }) => (
+                            {columns.map(({ id, title, emoji }) => (
                                 <button
-                                    key={status}
-                                    className={`qb-mobile-column-chip ${mobileVisibleColumns.includes(status) ? 'active' : ''}`}
-                                    onClick={() => toggleMobileColumn(status)}
+                                    key={id}
+                                    className={`qb-mobile-column-chip ${mobileVisibleColumns.includes(id) ? 'active' : ''}`}
+                                    onClick={() => toggleMobileColumn(id)}
                                 >
                                     {emoji} {title}
                                 </button>
@@ -404,49 +432,52 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
             {/* Columns */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <div className={`qb-fullpage-columns ${isMobile ? 'qb-mobile-columns' : ''}`}>
-                    {KANBAN_STATUSES.map(({ status, title, emoji, themeClass }, index) => {
-                        const quests = getQuestsForColumn(status);
-                        const isCollapsed = collapsedColumns[status];
+                    {columns.map((col, index) => {
+                        const quests = getQuestsForColumn(col.id);
+                        const isCollapsed = collapsedColumns[col.id];
 
                         // On mobile, only render visible columns
-                        if (!isColumnVisibleOnMobile(status, index)) {
+                        if (!isColumnVisibleOnMobile(col.id, index)) {
                             return null;
                         }
 
+                        // Determine theme class based on column position or triggersCompletion
+                        const themeClass = col.triggersCompletion ? 'theme-completed' : `theme-col-${index % 4}`;
+
                         return (
                             <div
-                                key={status}
+                                key={col.id}
                                 className={`qb-fp-column ${themeClass} ${isCollapsed ? 'collapsed' : ''} ${isMobile ? 'qb-mobile-column' : ''}`}
                             >
                                 {/* Column Header - clickable to toggle */}
                                 <div
                                     className="qb-fp-column-header"
-                                    onClick={() => toggleColumn(status)}
+                                    onClick={() => toggleColumn(col.id)}
                                     title={isCollapsed ? 'Click to expand' : 'Click to collapse'}
                                 >
                                     {isCollapsed ? (
                                         /* Collapsed: Vertical title */
                                         <div className="qb-fp-col-collapsed">
-                                            <span className="qb-fp-column-emoji">{emoji}</span>
-                                            <span className="qb-fp-col-vertical-title">{title}</span>
+                                            <span className="qb-fp-column-emoji">{col.emoji}</span>
+                                            <span className="qb-fp-col-vertical-title">{col.title}</span>
                                             <span className="qb-fp-column-count">{quests.length}</span>
                                         </div>
                                     ) : (
                                         /* Expanded: Normal header */
                                         <>
-                                            <span className="qb-fp-column-emoji">{emoji}</span>
-                                            <span className="qb-fp-column-title">{title}</span>
+                                            <span className="qb-fp-column-emoji">{col.emoji}</span>
+                                            <span className="qb-fp-column-title">{col.title}</span>
                                             <span className="qb-fp-column-count">{quests.length}</span>
                                             {quests.length > 0 && (
                                                 <button
                                                     className="qb-fp-toggle-all"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        toggleAllCardsInColumn(status, !areAllCardsCollapsed(status));
+                                                        toggleAllCardsInColumn(col.id, !areAllCardsCollapsed(col.id));
                                                     }}
-                                                    title={areAllCardsCollapsed(status) ? 'Expand all cards' : 'Collapse all cards'}
+                                                    title={areAllCardsCollapsed(col.id) ? 'Expand all cards' : 'Collapse all cards'}
                                                 >
-                                                    {areAllCardsCollapsed(status) ? '▼' : '▲'}
+                                                    {areAllCardsCollapsed(col.id) ? '▼' : '▲'}
                                                 </button>
                                             )}
                                         </>
@@ -455,7 +486,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
 
                                 {/* Column Content - hidden when collapsed */}
                                 {!isCollapsed && (
-                                    <Droppable id={status}>
+                                    <Droppable id={col.id}>
                                         <SortableContext
                                             items={quests.map(q => q.questId)}
                                             strategy={verticalListSortingStrategy}
@@ -506,6 +537,10 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
                                                                             app={app}
                                                                             storageFolder={plugin.settings.storageFolder}
                                                                             onSaveAsTemplate={handleSaveAsTemplate}
+                                                                            columns={columns}
+                                                                            onComplete={handleCompleteQuest}
+                                                                            onReopen={handleReopenQuest}
+                                                                            onArchive={handleArchiveQuest}
                                                                         />
                                                                     )}
                                                                 </div>

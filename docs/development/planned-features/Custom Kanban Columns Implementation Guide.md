@@ -534,114 +534,91 @@ export class ColumnConfigService {
 
 ---
 
-### Phase 5: Quest Card & UI Components Part 1
+### Phase 5: Quest Card & UI Components Part 1 ✅ COMPLETE
 **Estimated Time:** 2-2.5 hours
-**Goal:** Update QuestCard with dynamic buttons and questStatusConfig
+**Actual Time:** ~1.5 hours (2026-02-05)
+**Goal:** Update QuestCard with dynamic buttons and integrate with ColumnConfigService
 
-#### Tasks:
-1. Update `src/config/questStatusConfig.ts`:
-   - Export dynamic `getStatusConfigs(settings)` function
-   - Keep static arrays for backward compatibility
-   - Add backward compat helper:
-   ```typescript
-   export function getStatusConfig(
-       status: string,
-       settings: QuestBoardSettings
-   ): StatusConfig | undefined {
-       const configs = getStatusConfigs(settings);
-       return configs.find(c => c.status === status);
-   }
-   ```
+#### Tasks Completed:
+1. ✅ Updated `src/components/QuestCard.tsx`:
+   - Removed hardcoded `STATUS_TRANSITIONS` object
+   - Removed hardcoded `MOVE_LABELS` object
+   - Added props: `columns`, `onComplete`, `onReopen`, `onArchive`
+   - Changed `onMove` signature to accept `string` instead of `QuestStatus`
+   - Used `useMemo` to compute `availableMoves` from columns prop
+   - Fixed `isCompleted` to check column config (not just `completedDate`)
+   - Added `hasCompletionColumn` check - Complete button only shows when NO completion column
 
-2. Update `src/components/QuestCard.tsx`:
-   - Remove hardcoded `STATUS_TRANSITIONS` object
-   - Remove hardcoded `MOVE_LABELS` object
-   - Add props:
-     ```typescript
-     interface QuestCardProps {
-         // ... existing props
-         columns: CustomColumn[];           // From ColumnConfigService
-         onComplete: (questId: string) => void;
-         onReopen: (questId: string) => void;
-         onArchive: (questId: string) => void;
-     }
-     ```
+2. ✅ Added dynamic move buttons:
+   - Renders button for each column except current status
+   - Uses emoji + title from column config
 
-3. Add dynamic move buttons:
-   ```typescript
-   // Show move button for each column EXCEPT current
-   const availableColumns = columns.filter(col => col.id !== quest.status);
+3. ✅ Added Complete button:
+   - Only visible when `!hasCompletionColumn` (no redundancy with Completed column button)
+   - Calls `onComplete` handler
 
-   {availableColumns.map(col => (
-       <button
-           key={col.id}
-           onClick={() => onMove(quest.questId, col.id)}
-       >
-           {col.emoji} {col.title}
-       </button>
-   ))}
-   ```
+4. ✅ Added Reopen + Archive buttons:
+   - Visible when quest is in a completion column
+   - Reopen moves to first non-completion column
+   - Archive removes quest from Kanban immediately
 
-4. Add Complete button (bottom of card):
-   ```typescript
-   {!quest.completedDate && (
-       <button
-           className="qb-complete-button"
-           onClick={() => onComplete(quest.questId)}
-       >
-           ✅ Complete
-       </button>
-   )}
-   ```
+5. ✅ Added context menu Complete/Archive/Reopen options
 
-5. Add Reopen + Archive buttons (when completed):
-   ```typescript
-   {quest.completedDate && (
-       <div className="qb-completed-actions">
-           <button onClick={() => onReopen(quest.questId)}>
-               🔄 Reopen
-           </button>
-           <button onClick={() => onArchive(quest.questId)}>
-               📦 Archive
-           </button>
-       </div>
-   )}
-   ```
+6. ✅ Added completed quest styling in `kanban.css`:
+   - Green border and left accent
+   - Gradient background (green → transparent)
+   - Muted title color
+   - `.qb-completed-actions` container
 
-6. Add context menu Complete/Archive options
-7. Add completed quest styling:
-   ```css
-   /* In src/styles/kanban.css */
-   .qb-quest-card.completed {
-       border: 2px solid var(--color-green);
-       background: linear-gradient(
-           to right,
-           var(--color-green-faint),
-           transparent
-       );
-   }
-   ```
+7. ✅ Updated `FullKanban.tsx` & `SidebarQuests.tsx`:
+   - Imported and memoized ColumnConfigService
+   - Added `handleCompleteQuest`, `handleReopenQuest`, `handleArchiveQuest` handlers
+   - Pass `columns` and action handlers to QuestCard
+   - Pass `settings` to `useQuestActions` hook
+   - Updated collapsed state to use dynamic column IDs
+   - `SidebarQuests` filters to non-completion columns only
 
-8. Update card CSS classes to apply `.completed` when `quest.completedDate` exists
+8. ✅ Updated `useDndQuests.ts`:
+   - Added `columnIds` parameter for dynamic column detection
+   - Updated all type signatures from `QuestStatus` to `string`
+   - Replaced `Object.values(QuestStatus)` with `columnIds.includes()`
+
+9. ✅ Fixed `reopenQuest()` in `QuestActionsService.ts`:
+   - Now accepts optional `settings` parameter
+   - Moves quest to first non-completion column (not just clears completedDate)
+
+10. ✅ Fixed `archiveQuest()` in `QuestActionsService.ts`:
+    - Now calls `removeQuest()` to immediately remove from Kanban store
 
 #### Key Files Modified:
-- `src/config/questStatusConfig.ts` (UPDATE)
 - `src/components/QuestCard.tsx` (MAJOR UPDATE)
-- `src/styles/kanban.css` (UPDATE - add completed styling)
+- `src/components/FullKanban.tsx` (MAJOR UPDATE)
+- `src/components/SidebarQuests.tsx` (MAJOR UPDATE)
+- `src/hooks/useDndQuests.ts` (UPDATE)
+- `src/services/QuestActionsService.ts` (UPDATE - reopenQuest, archiveQuest)
+- `src/styles/kanban.css` (UPDATE - completed styling)
 
 #### Testing Checklist:
-- [ ] Move buttons show all columns except current
-- [ ] Complete button visible when quest not completed
-- [ ] Complete button calls `onComplete` handler
-- [ ] Reopen button visible when quest completed
-- [ ] Archive button visible when quest completed
-- [ ] Completed quests have green border/background
-- [ ] Context menu has Complete/Archive options
-- [ ] No TypeScript errors in QuestCard
+- [x] Move buttons show all columns except current
+- [x] Complete button only visible when NO completion column exists
+- [x] Complete button calls `onComplete` handler
+- [x] Reopen button visible when quest in completion column
+- [x] Reopen moves quest to first non-completion column
+- [x] Archive button visible when quest in completion column
+- [x] Archive removes quest from Kanban immediately
+- [x] Completed quests have green border/background
+- [x] Context menu has Complete/Archive/Reopen options
+- [x] No TypeScript errors (0 errors, down from 21)
+- [x] Deployed to test vault and manually verified
+
+#### Tech Debt:
+- `questStatusConfig.ts` dynamic functions (getStatusConfigs, getSidebarStatuses, getKanbanStatuses) were created in Phase 3 but not required by Phase 5 - components now use ColumnConfigService directly
+- Consider consolidating `questStatusConfig.ts` and `ColumnConfigService.ts` in future refactor
 
 #### Notes:
-- QuestCard is now fully dynamic
-- Handlers (onComplete, onReopen, onArchive) will be wired up in Phase 6
+- Phase 5 also completed most of Phase 6 tasks (FullKanban, SidebarQuests, useDndQuests)
+- Only remaining Phase 6 work: modal dropdowns (CreateQuestModal, FilterBar)
+- Feature flag `enableCustomColumns` is still OFF
 
 ---
 

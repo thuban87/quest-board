@@ -225,33 +225,111 @@ Each session entry should include:
 
 ---
 
+## 2026-02-05 - Phase 5: Quest Card & UI Components
+
+**Focus:** Update QuestCard, FullKanban, and SidebarQuests to use dynamic columns from ColumnConfigService
+
+### Completed:
+
+#### QuestCard.tsx
+- ✅ Removed hardcoded `STATUS_TRANSITIONS` and `MOVE_LABELS` objects
+- ✅ Added new props: `columns`, `onComplete`, `onReopen`, `onArchive`
+- ✅ Used `useMemo` to compute `availableMoves` from columns prop (excludes current status)
+- ✅ Dynamic move buttons render for each column except current
+- ✅ Added Complete button (visible when `!quest.completedDate`)
+- ✅ Added Reopen + Archive buttons (visible when `quest.completedDate` set)
+- ✅ Added context menu options for Complete, Archive, Reopen
+- ✅ Added `.completed` CSS class to card wrapper
+
+#### FullKanban.tsx
+- ✅ Replaced `KANBAN_STATUSES` import with ColumnConfigService
+- ✅ Created `columnConfigService` with `useMemo` keyed on `plugin.settings.customColumns`
+- ✅ Added `handleCompleteQuest`, `handleReopenQuest`, `handleArchiveQuest` callbacks
+- ✅ Passes `columns`, `onComplete`, `onReopen`, `onArchive` to QuestCard
+- ✅ Passes `settings` to `useQuestActions` hook
+- ✅ Updated column iteration to use `columns` array instead of hardcoded statuses
+- ✅ Updated `collapsedColumns` state to use dynamic column IDs
+
+#### SidebarQuests.tsx
+- ✅ Same updates as FullKanban
+- ✅ Added `sidebarColumns` filter to exclude completion columns (replaces `SIDEBAR_STATUSES`)
+- ✅ Passes all required props to QuestCard
+
+#### useDndQuests.ts
+- ✅ Added `columnIds?: string[]` parameter to options
+- ✅ Replaced `Object.values(QuestStatus)` check with `columnIds.includes(overId)`
+- ✅ Updated all type signatures from `QuestStatus` to `string`
+
+#### CSS (kanban.css)
+- ✅ Added `.qb-quest-card.completed` styles:
+  - Green border and left accent
+  - Gradient background (green → transparent)
+  - Muted title color
+- ✅ Added `.qb-completed-actions` container for Reopen/Archive buttons
+
+### Files Changed:
+
+**Modified:**
+- `src/components/QuestCard.tsx` - Major rewrite (~380 → 410 lines)
+- `src/components/FullKanban.tsx` - Major rewrite (~528 → 430 lines)
+- `src/components/SidebarQuests.tsx` - Major rewrite (~404 → 400 lines)
+- `src/hooks/useDndQuests.ts` - Updated for string-based column IDs
+- `src/styles/kanban.css` - Added completed quest styling
+
+### Bug Fixes (Post-Testing):
+After initial testing, three bugs were identified and fixed:
+
+1. **Reopen reverting** - `reopenQuest()` only cleared `completedDate` but left status in completion column. File watcher reloaded and quest reverted.
+   - **Fix:** Added optional `settings` param; now moves quest to first non-completion column
+
+2. **Quests incorrectly showing as completed** - `isCompleted` only checked `completedDate`, not column config.
+   - **Fix:** Changed to check if current column has `triggersCompletion` flag
+
+3. **Redundant Complete button** - Showed both "✅ Complete" button AND "✅ Completed" column button.
+   - **Fix:** Complete button only shows when NO completion column exists in config
+
+4. **Archive not removing card** - `archiveQuest()` called `upsertQuest()` which kept card in Kanban.
+   - **Fix:** Changed to `removeQuest()` for immediate removal from store
+
+### Testing Results:
+- ✅ All 6 test items passed after bug fixes
+- ✅ Build passes with 0 TypeScript errors
+- ✅ Deployed to test vault and manually verified
+
+### Blockers/Issues:
+- None
+
+### Tech Debt:
+- Consider visual distinction between move buttons and Complete button (if Complete button is later shown)
+- `questStatusConfig.ts` has unused dynamic functions - consider consolidating with `ColumnConfigService.ts`
+
+---
+
 ## Next Session Prompt
 
 ```
-Continuing Custom Kanban Columns implementation. Phases 1-4 complete.
+Continuing Custom Kanban Columns implementation. Phases 1-5 complete.
 
 What was done last session:
-- ✅ Phase 4: Quest Actions Service complete
-  - moveQuest() accepts string status
-  - ColumnConfigService integration for completion detection
-  - completeQuest(), reopenQuest(), archiveQuest() methods added
-  - useQuestActions hook updated to pass settings
+- ✅ Phase 5: Quest Card & UI Components complete
+  - QuestCard uses dynamic columns from props
+  - Complete/Reopen/Archive buttons and handlers added
+  - Bug fixes: isCompleted logic, reopenQuest status change, archive immediate removal
+  - FullKanban, SidebarQuests, useDndQuests all updated
+  - Completed quest styling (green border/gradient)
+  - Build passes with 0 errors, all tests green
 
-Current build status: 21 TypeScript errors in component files
-- FullKanban.tsx: 13 errors (Record<QuestStatus> patterns, status type mismatches)
-- QuestCard.tsx: 3 errors
-- SidebarQuests.tsx: 5 errors
-
-Continue with Phase 5 from Custom Kanban Columns Implementation Guide:
-1. Update QuestCard.tsx with dynamic move buttons based on columns
-2. Add Complete, Reopen, Archive button handlers
-3. Add completed quest styling (green border/background)
-4. Replace hardcoded STATUS_TRANSITIONS and MOVE_LABELS
+Phase 5 also completed most of Phase 6 tasks. Remaining work:
+1. CreateQuestModal - Update status dropdown to use dynamic columns
+2. FilterBar - Update dropdown to use dynamic columns
+3. Any remaining hardcoded QuestStatus references
+4. Settings UI for custom columns (Phase 7)
+5. End-to-end testing with custom column configurations
 
 Key files to reference:
-- docs/development/planned-features/Custom Kanban Columns Implementation Guide.md (Phase 5 section)
-- src/components/QuestCard.tsx
-- src/services/QuestActionsService.ts (for completeQuest, reopenQuest, archiveQuest)
+- docs/development/planned-features/Custom Kanban Columns Implementation Guide.md (Phase 6-7)
+- src/modals/CreateQuestModal.ts
+- src/components/FilterBar.tsx (if exists)
 ```
 
 ---
@@ -259,22 +337,36 @@ Key files to reference:
 ## Git Commit Message
 
 ```
-feat(kanban): Phase 4 - Quest Actions Service completion logic
+feat(kanban): Phase 5 - QuestCard & UI components with dynamic columns
 
-QuestActionsService:
-- Add settings to MoveQuestOptions for ColumnConfigService
-- Change moveQuest() to accept string status instead of QuestStatus
-- Replace 6 hardcoded QuestStatus.COMPLETED checks with isCompletionColumn()
-- Add completeQuest() method - awards rewards, moves to completion column
-- Add reopenQuest() method - clears completedDate, logs activity
-- Add archiveQuest() method - moves file to archive folder
+QuestCard.tsx:
+- Remove hardcoded STATUS_TRANSITIONS and MOVE_LABELS
+- Add columns, onComplete, onReopen, onArchive props  
+- Dynamic move buttons from columns prop
+- Complete button only shows when NO completion column
+- isCompleted checks column config, not just completedDate
+- Context menu options for quest actions
+- .completed CSS class for visual distinction
 
-useQuestActions Hook:
-- Add settings parameter to options interface
-- Pass settings to moveQuest() call
+FullKanban.tsx & SidebarQuests.tsx:
+- Replace KANBAN_STATUSES/SIDEBAR_STATUSES with ColumnConfigService
+- Add Complete/Reopen/Archive handlers using service methods
+- Pass settings to useQuestActions hook
+- Update state types from QuestStatus to string
 
-Note: 21 TypeScript errors in components (Phase 5-6 work)
+useDndQuests.ts:
+- Add columnIds param for dynamic column detection
+- Update type signatures to string
 
-Files: QuestActionsService.ts, useQuestActions.ts
+QuestActionsService.ts:
+- reopenQuest: move to first non-completion column (not just clear completedDate)
+- archiveQuest: removeQuest() for immediate Kanban removal
+
+CSS:
+- Completed quest styling (green border, gradient bg)
+- .qb-completed-actions container
+
+Build: 0 errors (down from 21)
+All tests pass
 ```
 
