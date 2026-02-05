@@ -13,6 +13,7 @@
 -Clean up settings menu. Need ot reorganize according to topic/subject and then put in a better order: more used items up top, less used below. Make sub menu modals where needed if possible.
 -HP/Mana regen is spotty reward-wise on task completion. I'd say it's firing maybe 80% of the time
 -Need to whittle down power up triggers to like 5-8
+-Need kanban link in ribbon, especially for mobile
 
 ## Mobile issues checklist:
 
