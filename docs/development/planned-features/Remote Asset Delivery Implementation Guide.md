@@ -2,7 +2,8 @@
 
 **Status:** Not Started  
 **Estimated Sessions:** 2-3  
-**Last Updated:** 2025-02-02
+**Last Updated:** 2026-02-05  
+**Peer Review Status:** ✅ Reviewed (consolidated suggestions applied)
 
 ---
 
@@ -114,9 +115,9 @@ Create `assets/manifest.json` in the repo:
 #### Tasks
 - [ ] Create `AssetService` class with methods:
   - `checkForUpdates()` - Compare local vs remote manifest + verify file existence
-  - `downloadAssets(files: string[], onProgress)` - Fetch with concurrency queue
+  - `downloadAssets(files: string[], onProgress)` - Fetch with priority queue (class sprites first)
   - `cleanupOrphanedFiles()` - Remove files not in remote manifest
-  - `getStoragePath(relativePath: string)` - Vault-relative path for file I/O
+  - `getStoragePath(relativePath: string)` - Vault-relative path for file I/O (with path traversal protection)
   - `getDisplayPath(relativePath: string)` - Resource path for `<img src>`
   - `isFirstRun()` - Check if manifest.json exists locally
 - [ ] Implement concurrency queue (max 5 parallel downloads) to avoid rate limits
@@ -125,7 +126,14 @@ Create `assets/manifest.json` in the repo:
 - [ ] Write manifest.json LAST after all files verified (atomic install)
 - [ ] Verify file existence during update check (don't trust manifest alone)
 - [ ] Add settings for asset folder path (default: `QuestBoard/assets`)
-- [ ] Create asset manifest generation script for build process
+- [ ] Asset manifest generation script already exists (`scripts/generate-asset-manifest.js`)
+
+#### Security Hardening (Phase 1)
+- [ ] **Path traversal protection:** Use `pathValidator.ts` to sanitize relative paths in `getStoragePath()`
+- [ ] **Content-Type validation:** Reject non-image responses (catches CDN error pages)
+- [ ] **Safe JSON parsing:** Use `safeJson.ts` for manifest parsing (prevents prototype pollution)
+- [ ] **Request timeout:** Add 15-second timeout to `requestUrl` calls
+- [ ] **File type allowlist:** Only download `.png`, `.gif`, `.jpg`, `.jpeg`, `.webp` files
 
 #### [NEW] [AssetService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/AssetService.ts)
 
@@ -148,6 +156,7 @@ Create `assets/manifest.json` in the repo:
  */
 
 import { App, Vault, DataAdapter, requestUrl } from 'obsidian';
+import { safeJsonParse } from '../utils/safeJson';
 
 const CDN_BASE = 'https://cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets';
 const MAX_RETRIES = 3;
@@ -176,14 +185,15 @@ export class AssetService {
     /**
      * Compare local vs remote manifest, return files that need downloading.
      * IMPORTANT: Also verifies file existence - don't trust manifest alone!
+     * Returns the fetched remote manifest to avoid TOCTOU bugs.
      */
-    async checkForUpdates(): Promise<{needsUpdate: boolean, files: string[], orphaned: string[]}> {
+    async checkForUpdates(): Promise<{needsUpdate: boolean, files: string[], orphaned: string[], remoteManifest: AssetManifest}> {
         const remote = await this.fetchRemoteManifest();
         const local = await this.getLocalManifest();
         
         if (!local) {
             // First run - need all files
-            return { needsUpdate: true, files: Object.keys(remote.files), orphaned: [] };
+            return { needsUpdate: true, files: Object.keys(remote.files), orphaned: [], remoteManifest: remote };
         }
         
         const filesToUpdate: string[] = [];
@@ -210,7 +220,8 @@ export class AssetService {
         return { 
             needsUpdate: filesToUpdate.length > 0, 
             files: filesToUpdate,
-            orphaned: orphanedFiles
+            orphaned: orphanedFiles,
+            remoteManifest: remote
         };
     }
     
@@ -229,10 +240,12 @@ export class AssetService {
     
     /**
      * Download files with concurrency limit to avoid rate limits.
-     * Writes manifest LAST to ensure atomic installation.
+     * Writes the provided manifest LAST to ensure atomic installation.
+     * IMPORTANT: Pass the same manifest from checkForUpdates() to avoid TOCTOU bugs.
      */
     async downloadAssets(
-        files: string[], 
+        files: string[],
+        manifest: AssetManifest,
         onProgress?: (current: number, total: number, file: string) => void
     ): Promise<void> {
         const queue = [...files];
@@ -269,19 +282,27 @@ export class AssetService {
             throw new Error(`Failed to download ${errors.length} files:\n${errors.join('\n')}`);
         }
         
-        // CRITICAL: Write manifest LAST after all files verified
-        const remoteManifest = await this.fetchRemoteManifest();
+        // CRITICAL: Write the SAME manifest we checked against (avoids TOCTOU)
         await this.adapter.write(
             this.getStoragePath('manifest.json'),
-            JSON.stringify(remoteManifest, null, 2)
+            JSON.stringify(manifest, null, 2)
         );
     }
     
     /**
-     * Get vault-relative path for file I/O operations
+     * Get vault-relative path for file I/O operations.
+     * Uses reject-on-suspicious approach for path traversal protection.
      */
     getStoragePath(relativePath: string): string {
-        return `${this.assetFolder}/${relativePath}`;
+        // Normalize backslashes to forward slashes
+        const normalized = relativePath.replace(/\\/g, '/');
+        
+        // Reject anything suspicious rather than trying to sanitize
+        if (normalized.includes('..') || normalized.startsWith('/')) {
+            throw new Error(`Invalid asset path: ${relativePath}`);
+        }
+        
+        return `${this.assetFolder}/${normalized}`;
     }
     
     /**
@@ -296,17 +317,33 @@ export class AssetService {
      * Download a single file with retry and exponential backoff.
      * Uses requestUrl instead of fetch for mobile compatibility.
      */
+    // Allowed file extensions for download
+    private static readonly ALLOWED_EXTENSIONS = ['.png', '.gif', '.jpg', '.jpeg', '.webp'];
+    
     private async downloadFileWithRetry(relativePath: string): Promise<void> {
+        // Validate file extension
+        const ext = relativePath.substring(relativePath.lastIndexOf('.')).toLowerCase();
+        if (!AssetService.ALLOWED_EXTENSIONS.includes(ext)) {
+            throw new Error(`Unsupported file type: ${ext}`);
+        }
+        
         const url = `${CDN_BASE}/${relativePath}`;
         let lastError: Error | null = null;
         
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
                 // Use Obsidian's requestUrl - bypasses CORS, works on mobile
-                const response = await requestUrl({ url });
+                // 15 second timeout prevents indefinite hangs
+                const response = await requestUrl({ url, timeout: 15000 });
                 
                 if (response.status !== 200) {
                     throw new Error(`HTTP ${response.status}`);
+                }
+                
+                // Validate Content-Type (reject error pages served as HTML)
+                const contentType = response.headers?.['content-type'] ?? '';
+                if (contentType && !contentType.startsWith('image/') && !contentType.includes('octet-stream')) {
+                    throw new Error(`Expected image, got ${contentType}`);
                 }
                 
                 // VALIDATION: Ensure we actually got bytes (prevents silent corruption)
@@ -340,15 +377,17 @@ export class AssetService {
     }
     
     private async fetchRemoteManifest(): Promise<AssetManifest> {
-        const response = await requestUrl({ url: `${CDN_BASE}/manifest.json` });
-        return response.json;
+        const response = await requestUrl({ url: `${CDN_BASE}/manifest.json`, timeout: 15000 });
+        // Use response.text directly with safeJsonParse
+        return safeJsonParse<AssetManifest>(response.text);
     }
     
     private async getLocalManifest(): Promise<AssetManifest | null> {
         const path = this.getStoragePath('manifest.json');
         if (!(await this.adapter.exists(path))) return null;
         const content = await this.adapter.read(path);
-        return JSON.parse(content);
+        // Use safeJsonParse to prevent prototype pollution
+        return safeJsonParse<AssetManifest>(content);
     }
     
     private sleep(ms: number): Promise<void> {
@@ -365,65 +404,19 @@ interface AssetManifest {
 
 ---
 
-### Phase 2: Asset Context (Eliminate Prop Drilling)
-**Files:** New `src/context/AssetContext.tsx`
+### ~~Phase 2: Asset Context~~ (REMOVED)
 
-> [!TIP]
-> Using React Context eliminates the need to thread `manifestDir` through 10+ components.
-
-#### Tasks
-- [ ] Create `AssetContext` and `AssetProvider`
-- [ ] Create `useAssets()` hook for easy access
-- [ ] Wrap the app in `AssetProvider`
-
-#### [NEW] [AssetContext.tsx](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/context/AssetContext.tsx)
-
-```typescript
-import { createContext, useContext, ReactNode } from 'react';
-import { DataAdapter } from 'obsidian';
-
-interface AssetContextValue {
-    assetFolder: string;
-    adapter: DataAdapter;
-    getStoragePath: (relativePath: string) => string;
-    getDisplayPath: (relativePath: string) => string;
-}
-
-const AssetContext = createContext<AssetContextValue | null>(null);
-
-export function AssetProvider({ 
-    children, 
-    assetFolder, 
-    adapter 
-}: { 
-    children: ReactNode; 
-    assetFolder: string; 
-    adapter: DataAdapter;
-}) {
-    const value: AssetContextValue = {
-        assetFolder,
-        adapter,
-        getStoragePath: (path) => `${assetFolder}/${path}`,
-        getDisplayPath: (path) => adapter.getResourcePath(`${assetFolder}/${path}`),
-    };
-    
-    return (
-        <AssetContext.Provider value={value}>
-            {children}
-        </AssetContext.Provider>
-    );
-}
-
-export function useAssets(): AssetContextValue {
-    const ctx = useContext(AssetContext);
-    if (!ctx) throw new Error('useAssets must be used within AssetProvider');
-    return ctx;
-}
-```
+> [!IMPORTANT]
+> **Phase 2 has been eliminated.** React Context cannot reach Obsidian modals (`BountyModal`, `EliteEncounterModal`) or cross between the 4 independent React roots (`FullKanban`, `SidebarQuests`, `BattleItemView`, `DungeonItemView`).
+>
+> **Instead:** Store `AssetService` on the plugin instance (`this.assetService`) and pass it where needed:
+> - React components: Access via `plugin.assetService` prop
+> - Modals: Pass as constructor option (same pattern as `manifestDir` today)
+> - Hooks: Accept `assetService` parameter
 
 ---
 
-### Phase 3: Download Modal & First-Run Experience
+### Phase 2: Download Modal & First-Run Experience
 **Files:** New `src/modals/AssetDownloadModal.ts`
 
 #### Tasks
@@ -431,9 +424,13 @@ export function useAssets(): AssetContextValue {
   - Progress bar showing files downloaded
   - Current file name being downloaded
   - Cancel button (with warning about incomplete state)
+- [ ] **Priority queue:** Download current character class sprites first, then background tiles
+- [ ] **Lazy loading:** Consider loading dungeon tiles only when entering dungeons
+- [ ] **Cancel cleanup:** Delete any partially-written files on cancel
+- [ ] **Emoji fallback:** Show emoji for truly missing/failed assets (not for slow loading)
 - [ ] Show modal automatically on first plugin load if assets missing
 - [ ] Add "Check for Asset Updates" command to command menu
-- [ ] Handle path change in settings (offer Move vs Re-download)
+- [ ] On path change: auto-delete old assets and re-download (no Move vs Re-download modal)
 
 #### [NEW] [AssetDownloadModal.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/modals/AssetDownloadModal.ts)
 
@@ -448,8 +445,10 @@ export class AssetDownloadModal extends Modal {
         const statusText = this.contentEl.createEl('p');
         
         try {
+            // Note: manifest comes from checkForUpdates() call in caller
             await this.assetService.downloadAssets(
                 this.filesToDownload,
+                this.manifest, // Pass the manifest from checkForUpdates()
                 (current, total, file) => {
                     if (this.cancelled) throw new Error('Cancelled');
                     progressBar.value = current;
@@ -473,16 +472,18 @@ export class AssetDownloadModal extends Modal {
 
 ---
 
-### Phase 4: SpriteService & Component Migration
+### Phase 3: SpriteService & Component Migration
 **Files:** Modify existing files - FULL LIST
 
 > [!IMPORTANT]
-> ALL files using `manifestDir` must be updated. Complete list below.
+> ALL files using `manifestDir` must be updated. This includes inline path building that duplicates SpriteService logic.
 
 #### Tasks
-- [ ] Update `SpriteService.ts` to use `AssetContext` or accept `assetFolder`
-- [ ] Create `useAssets()` hook usage in components
-- [ ] Remove `manifestDir` prop drilling from all components
+- [ ] Update `SpriteService.ts` to accept `assetFolder` instead of `manifestDir`
+- [ ] Access service via `plugin.assetService` (no Context needed)
+- [ ] **Consolidate DungeonView inline helpers:** Remove local `getPlayerSpritePath`/`getTileSpritePath` and use SpriteService
+- [ ] Remove `manifestDir` prop from all components
+- [ ] Remove unused `spriteFolder` setting from `settings.ts`
 
 #### Files Requiring manifestDir Removal
 
@@ -490,80 +491,69 @@ export class AssetDownloadModal extends Modal {
 |------|---------------|--------------|
 | `SpriteService.ts` | `manifestDir` param | Accept `assetFolder` directly |
 | `TileRegistry.ts` | `manifestDir` param | Accept `assetFolder` directly |
-| `DungeonView.tsx` | Prop threading | `useAssets()` hook |
-| `DungeonItemView.tsx` | `manifest.dir` | `useAssets()` hook |
-| `BattleItemView.tsx` | `manifest.dir` | `useAssets()` hook |
-| `CharacterCreationModal.ts` | Hardcoded path | Use `AssetService` |
-| `BountyModal.ts` | `manifestDir` option | Use `AssetService` |
-| `EliteEncounterModal.ts` | `manifestDir` option | Use `AssetService` |
-| `useQuestActions.ts` | `manifestDir` param | Get from settings/context |
-| `useCharacterSprite.ts` | `manifestDir` param | `useAssets()` hook |
+| `DungeonView.tsx` | Prop threading + **inline helpers** | Use SpriteService; get `assetFolder` from plugin |
+| `DungeonItemView.tsx` | `manifest.dir` | Get `assetFolder` from plugin |
+| `BattleItemView.tsx` | `manifest.dir` + **hardcoded bg** | Get `assetFolder` from plugin; fix `battle-bg.jpg` path |
+| `CharacterCreationModal.ts` | Vault path (`Life/Quest Board/...`) | Use `getClassPreviewSprite()` from SpriteService |
+| `BountyModal.ts` | `manifestDir` option | Accept `assetService` option |
+| `EliteEncounterModal.ts` | `manifestDir` option | Accept `assetService` option |
+| `useQuestActions.ts` | `manifestDir` param | Get from plugin/settings |
+| `useCharacterSprite.ts` | `manifestDir` param | Accept `assetFolder` param |
 
-#### [MODIFY] [SpriteService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/SpriteService.ts)
+#### DungeonView.tsx Inline Paths to Consolidate
 
-```diff
--function getBasePath(manifestDir: string): string {
--    return `${manifestDir}/assets/sprites`;
-+function getBasePath(assetFolder: string): string {
-+    return `${assetFolder}/sprites`;
- }
-
- export function getPlayerGifPath(
--    manifestDir: string,
-+    assetFolder: string,
-     adapter: DataAdapter,
-     className: string,
-     tier: number
- ): string {
--    const basePath = getBasePath(manifestDir);
-+    const basePath = getBasePath(assetFolder);
-     const classLower = className.toLowerCase();
--    const filePath = `${basePath}/player/${classLower}/tier${tier}/${classLower}-tier-${tier}.gif`;
-+    const filePath = `${basePath}/player/${classLower}/tier${tier}/${classLower}-tier-${tier}.gif`;
-     return adapter.getResourcePath(filePath);
- }
-```
+| Line | Current Code | Consolidate Into |
+|------|--------------|------------------|
+| ~69 | Local `getPlayerSpritePath()` helper | `SpriteService.getPlayerSpritePath()` |
+| ~83 | Local `getTileSpritePath()` helper | `TileRegistry.getSpritePath()` |
+| ~126 | Inline chest sprite path | New `SpriteService.getChestSpritePath()` |
+| ~1325 | Monster sprite for battle | `SpriteService.getMonsterSpritePath()` |
+| ~1330 | Player sprite for battle | `SpriteService.getPlayerSpritePath()` |
 
 ---
 
-### Phase 5: Main Plugin Integration
+### Phase 4: Main Plugin Integration
 **Files:** Modify `main.ts`, `src/settings.ts`
 
 #### Tasks
-- [ ] Initialize `AssetService` on plugin load
-- [ ] Check for first run and show download modal if needed
-- [ ] Add periodic update check (configurable: daily/weekly/manual)
+- [ ] Initialize `AssetService` on plugin load and store as `this.assetService`
+- [ ] **Non-blocking startup:** Run update checks in background, don't await on plugin load
+- [ ] Check for first run and show download modal if needed (first run only blocks)
+- [ ] Add periodic update check (configurable: daily/weekly/manual, **default: weekly**)
 - [ ] Add "Check for Asset Updates" command
-- [ ] Handle asset folder path change in settings
+- [ ] On path change: auto-delete old folder and trigger fresh download (simplified)
+- [ ] **Max file size check:** Reject files over 2MB to prevent corrupted CDN responses
+- [ ] For critical updates: use jsDelivr purge API (optional)
 
 #### Settings Changes
 
 ```typescript
-// New settings fields
+// New settings fields (minimal)
 assetFolder: string;           // Default: 'QuestBoard/assets'
-assetUpdateFrequency: 'daily' | 'weekly' | 'manual';
+assetUpdateFrequency: 'daily' | 'weekly' | 'manual'; // Default: 'weekly'
 lastAssetCheck: number;        // Timestamp
 
-// Path change handling
+// Simplified path change handling
 if (oldPath !== newPath) {
-    // Show modal: "Move existing assets or re-download?"
-    if (userChooseMove) {
-        await moveAssets(oldPath, newPath);
-    } else {
-        await assetService.downloadAssets(allFiles);
-    }
+    // Just delete old and re-download - ~7MB takes seconds
+    await deleteFolder(oldPath);
+    const { files, remoteManifest } = await assetService.checkForUpdates();
+    await assetService.downloadAssets(files, remoteManifest);
 }
 ```
 
 ---
 
-### Phase 6: Existing User Migration
+### Phase 5: Existing User Migration (Simplified)
+
+> [!TIP]
+> Since old assets used plugin-relative paths with different hash formats, copying is unreliable. Just download fresh.
 
 #### Tasks
 - [ ] Detect assets in old location (`manifest.dir/assets/`)
-- [ ] Copy to new vault location
+- [ ] Delete old assets automatically (they won't work anyway)
+- [ ] Trigger fresh download to new vault location
 - [ ] Show "Migration complete" notice
-- [ ] Clean up: Add button to delete old assets (optional, user-controlled)
 
 ---
 
@@ -572,26 +562,26 @@ if (oldPath !== newPath) {
 ### New Files
 | File | Purpose | Lines Est. |
 |------|---------|------------|
-| `src/services/AssetService.ts` | Remote fetching, caching, versioning | ~150 |
-| `src/context/AssetContext.tsx` | React context for asset paths | ~40 |
+| `src/services/AssetService.ts` | Remote fetching, caching, versioning | ~200 |
 | `src/modals/AssetDownloadModal.ts` | First-run download UI | ~100 |
-| `scripts/generate-asset-manifest.js` | Build script for manifest.json | ~50 |
+
+> **Note:** `scripts/generate-asset-manifest.js` already exists.
 
 ### Modified Files
 | File | Changes |
 |------|---------|
 | `src/services/SpriteService.ts` | Use `assetFolder` instead of `manifestDir` |
 | `src/data/TileRegistry.ts` | Use `assetFolder` for tile sprites |
-| `src/components/DungeonView.tsx` | Use `useAssets()` hook |
-| `src/views/DungeonItemView.tsx` | Use `useAssets()` hook |
-| `src/views/BattleItemView.tsx` | Use `useAssets()` hook |
-| `src/modals/CharacterCreationModal.ts` | Use `AssetService` |
-| `src/modals/BountyModal.ts` | Use `AssetService` |
-| `src/modals/EliteEncounterModal.ts` | Use `AssetService` |
+| `src/components/DungeonView.tsx` | Remove inline helpers, use SpriteService, get `assetFolder` from plugin |
+| `src/views/DungeonItemView.tsx` | Get `assetFolder` from plugin |
+| `src/views/BattleItemView.tsx` | Get `assetFolder` from plugin, fix hardcoded `battle-bg.jpg` |
+| `src/modals/CharacterCreationModal.ts` | Use `getClassPreviewSprite()` from SpriteService |
+| `src/modals/BountyModal.ts` | Accept `assetService` option |
+| `src/modals/EliteEncounterModal.ts` | Accept `assetService` option |
 | `src/hooks/useQuestActions.ts` | Remove `manifestDir` param |
-| `src/hooks/useCharacterSprite.ts` | Use `useAssets()` hook |
-| `src/settings.ts` | Add asset folder settings |
-| `main.ts` | Initialize AssetService, first-run check |
+| `src/hooks/useCharacterSprite.ts` | Accept `assetFolder` param |
+| `src/settings.ts` | Add asset folder settings, remove unused `spriteFolder` |
+| `main.ts` | Initialize AssetService as `this.assetService`, first-run check |
 
 ---
 
@@ -630,8 +620,14 @@ if (oldPath !== newPath) {
 
 ### Settings
 - [ ] Default path works for new users
-- [ ] Path change prompts Move vs Re-download
-- [ ] Move operation works correctly
+- [ ] Path change auto-deletes and re-downloads (no prompt)
+- [ ] Update check runs in background (doesn't block startup)
+
+### Security
+- [ ] Path traversal attempts (../) are blocked
+- [ ] Non-image Content-Types are rejected
+- [ ] Manifest parsing uses safeJsonParse
+- [ ] Only allowed file extensions download (.png, .gif, .jpg, .jpeg, .webp)
 
 ---
 
@@ -658,14 +654,13 @@ https://cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets/sprites/monsters/go
 
 ### Session 1 (Not Started)
 - [ ] Phase 1: AssetService foundation
-- [ ] Phase 2: AssetContext
+- [ ] Phase 2: Download modal & first-run experience
 
 ### Session 2 (Not Started)
-- [ ] Phase 3: Download modal
-- [ ] Phase 4: SpriteService & component migration (partial)
+- [ ] Phase 3: SpriteService & component migration (partial)
+- [ ] Phase 4: Main plugin integration
 
 ### Session 3 (Not Started)
-- [ ] Phase 4: Complete component migration
-- [ ] Phase 5: Main plugin integration
-- [ ] Phase 6: Existing user migration
+- [ ] Phase 3: Complete component migration
+- [ ] Phase 5: Existing user migration
 - [ ] Testing & polish
