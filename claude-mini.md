@@ -1,7 +1,3 @@
----
-trigger: always_on
----
-
 # Quest Board - Quick Reference
 
 **v1.0.0** | TypeScript + React + Obsidian API | Last Updated: 2026-02-05
