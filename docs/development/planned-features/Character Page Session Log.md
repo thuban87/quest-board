@@ -3,7 +3,7 @@
 Development log for the full-page character view, sub-component extraction, and shared architecture refactor.
 
 > **Feature:** Full-Page Character View
-> **Started:** TBD
+> **Started:** 2026-02-06
 > **Related Docs:** [[Character Page Implementation Guide]] for specs, [[Feature Roadmap v2]] for current state, [[Phase 4 Implementation Session Log]] for prior work
 
 ---
@@ -20,7 +20,7 @@ Each session entry should include:
 
 ---
 
-## Session 1 - Sub-Component Extraction & CharacterSidebar Refactor
+## 2026-02-06 - Session 1: Sub-Component Extraction & CharacterSidebar Refactor
 
 **Focus:** Decompose `CharacterSheet.tsx` into shared sub-components, rename to `CharacterSidebar`, add accessory slots. Zero visual changes to sidebar.
 
@@ -29,30 +29,30 @@ Each session entry should include:
 ### Completed:
 
 #### Phase 1A: Create Shared Sub-Components
-- [ ] Created `src/components/character/` folder
-- [ ] `CharacterIdentity.tsx` - Name, class, level, sprite, active buffs
-- [ ] `ResourceBars.tsx` - HP/Mana/Stamina bars
-- [ ] `StreakDisplay.tsx` - Current/best streak + message
-- [ ] `EquipmentGrid.tsx` - Compact gear grid using `ALL_GEAR_SLOTS` from `Gear.ts`
-- [ ] `SetBonuses.tsx` - Active set bonuses display
-- [ ] `AttributeGrid.tsx` - 6 D&D stats (3x2 grid)
-- [ ] `CombatStatsGrid.tsx` - Derived combat stats
-- [ ] `ClassPerkCard.tsx` - Class perk display
-- [ ] `CharacterStats.tsx` - Gold, quests, XP, achievements
-- [ ] `index.ts` - Barrel export for all sub-components
+- [x] Created `src/components/character/` folder
+- [x] `CharacterIdentity.tsx` - Name, class, level, sprite, active buffs
+- [x] `ResourceBars.tsx` - HP/Mana/Stamina bars
+- [x] `StreakDisplay.tsx` - Current/best streak + message
+- [x] `EquipmentGrid.tsx` - Compact gear grid using `ALL_GEAR_SLOTS` from `Gear.ts`
+- [x] `SetBonuses.tsx` - Active set bonuses display (imports `ActiveSetBonus` type from `Gear.ts`)
+- [x] `AttributeGrid.tsx` - 6 D&D stats (3x2 grid), supports `compact` prop for abbreviations vs full names
+- [x] `CombatStatsGrid.tsx` - Derived combat stats
+- [x] `ClassPerkCard.tsx` - Class perk display
+- [x] `CharacterStats.tsx` - Gold, quests, XP, achievements
+- [x] `index.ts` - Barrel export for all sub-components
 
 #### Phase 1B: Refactor CharacterSheet → CharacterSidebar
-- [ ] Renamed `CharacterSheet.tsx` → `CharacterSidebar.tsx`
-- [ ] Renamed export `CharacterSheet` → `CharacterSidebar`
-- [ ] Updated import in `SidebarQuests.tsx`
-- [ ] Rewrote `CharacterSidebar` to compose extracted sub-components
-- [ ] Verified props interface unchanged (no API change for SidebarQuests)
+- [x] Created `CharacterSidebar.tsx` (new file, ~170 lines vs old 514 lines)
+- [x] Renamed export `CharacterSheet` → `CharacterSidebar`
+- [x] Updated import in `SidebarQuests.tsx` (line 27 + line 420)
+- [x] Rewrote `CharacterSidebar` to compose extracted sub-components
+- [x] Verified props interface unchanged (no API change for SidebarQuests)
 
 #### Phase 1C: Add Accessory Slots
-- [ ] `EquipmentGrid` uses `ALL_GEAR_SLOTS` (9 slots including accessories)
-- [ ] CSS grid updated to accommodate 3x3 layout
-- [ ] Accessory slots show `💍` emoji and "Empty" when unequipped
-- [ ] Click accessory slot opens inventory filtered to that slot
+- [x] `EquipmentGrid` uses `ALL_GEAR_SLOTS` (9 slots including accessories)
+- [x] CSS grid already `repeat(3, 1fr)` — 9 slots naturally form 3x3, no CSS change needed
+- [x] Accessory slots show `💍` emoji and "Empty" when unequipped
+- [x] Click accessory slot opens inventory filtered to that slot
 
 ### Files Changed:
 
@@ -67,29 +67,37 @@ Each session entry should include:
 - `src/components/character/ClassPerkCard.tsx`
 - `src/components/character/CharacterStats.tsx`
 - `src/components/character/index.ts`
+- `src/components/CharacterSidebar.tsx`
 
 **Modified Files:**
-- `src/components/CharacterSheet.tsx` → Renamed to `src/components/CharacterSidebar.tsx`
-- `src/components/SidebarQuests.tsx` - Updated import
-- `src/styles/character.css` - Updated gear grid for 9 slots
+- `src/components/SidebarQuests.tsx` - Updated import from `CharacterSheet` to `CharacterSidebar`
+
+**Superseded Files (safe to delete):**
+- `src/components/CharacterSheet.tsx` - Replaced by `CharacterSidebar.tsx` + sub-components
 
 ### Testing Notes:
-- [ ] `npm run build` passes
+- [x] `npm run build` passes (clean, no warnings)
+- [x] `npm run deploy:test` - Plugin deploys to test vault successfully
 - [ ] Sidebar character view renders identically to before (minus 3 new accessory slots)
 - [ ] All 9 gear slots visible and clickable
 - [ ] Equipped gear shows tier coloring and tooltips
 - [ ] Active buffs, resource bars, streak, stats all display correctly
 - [ ] Training mode notice shows when applicable
 - [ ] Back button returns to quest list
-- [ ] `npm run deploy:test` - Plugin loads in test vault
 
 ### Blockers/Issues:
--
+
+- **Type mismatch on SetBonuses** - Initial implementation defined a local `ActiveSetBonus` interface with `{ type: string; value: number }` for bonus effects, which didn't match the real `SetBonusEffect` discriminated union from `Gear.ts` (which includes `xp_bonus` and `gold_bonus` variants without a `value` field). Fixed by importing the real `ActiveSetBonus` type directly from `Gear.ts`.
 
 ### Design Decisions:
--
+
+- **`getGearTooltip()` moved to `EquipmentGrid.tsx`** - The tooltip function from `CharacterSheet.tsx` was co-located with `EquipmentGrid` since that's the only consumer. `gearFormatters.ts` has a more sophisticated WoW-style comparison tooltip for modals; this simpler version is for the slot hover. Could consolidate later if needed.
+- **XP bar kept inline in `CharacterSidebar`** - Not extracted as a sub-component because the XP section has sidebar-specific layout (header + bar + total text). The full-page will likely have a different XP bar layout (full-width top bar). If both converge, can extract later.
+- **Old `CharacterSheet.tsx` left in place** - Not deleted yet so Brad can verify the refactor before cleanup.
 
 ### Next Steps:
+- Brad to verify sidebar in test vault
+- Delete old `CharacterSheet.tsx` after verification
 - Session 2: Build full-page character view using extracted sub-components
 
 ---

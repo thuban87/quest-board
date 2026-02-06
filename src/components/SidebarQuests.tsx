@@ -24,7 +24,7 @@ import {
 } from '../services/QuestActionsService';
 import { QuestCard } from './QuestCard';
 import { FilterBar } from './FilterBar';
-import { CharacterSheet } from './CharacterSheet';
+import { CharacterSidebar } from './CharacterSidebar';
 import { AchievementsSidebar } from './AchievementsSidebar';
 import { CLASS_INFO, getTrainingLevelDisplay } from '../models/Character';
 import { useXPAward } from '../hooks/useXPAward';
@@ -417,7 +417,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                     </>
                 ) : currentView === 'character' ? (
                     /* Full Character Sheet */
-                    <CharacterSheet
+                    <CharacterSidebar
                         onBack={() => setCurrentView('quests')}
                         onViewAchievements={() => setCurrentView('achievements')}
                         onOpenInventory={() => showInventoryModal(app, {
