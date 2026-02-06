@@ -247,3 +247,406 @@
   color: var(--text-muted);
 }
 
+/* ===========================================
+   Full-Page Character View
+   =========================================== */
+.qb-charpage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--qb-spacing-lg);
+  overflow-y: auto;
+}
+
+/* --- Top bar: back button + XP bar --- */
+.qb-charpage-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  margin-bottom: var(--qb-spacing-lg);
+  flex-shrink: 0;
+}
+
+.qb-charpage .qb-back-btn {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.qb-charpage-xp {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  flex: 1;
+}
+
+.qb-charpage-xp-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-normal);
+  white-space: nowrap;
+}
+
+.qb-charpage-xp-bar {
+  flex: 1;
+  height: 14px;
+  background: var(--qb-xp-bar-bg);
+  border-radius: 7px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.qb-charpage-xp-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width var(--qb-transition-normal);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+}
+
+.qb-charpage-xp-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* --- Two-panel layout --- */
+.qb-charpage-content {
+  display: flex;
+  gap: var(--qb-spacing-xl);
+  flex: 1;
+  min-height: 0;
+}
+
+.qb-charpage-left {
+  flex: 0 0 40%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-lg);
+}
+
+.qb-charpage-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-lg);
+}
+
+/* --- Large sprite override for full-page --- */
+.qb-charpage .qb-sheet-header {
+  flex-direction: column;
+  text-align: center;
+  gap: var(--qb-spacing-md);
+}
+
+.qb-charpage .qb-sheet-info {
+  text-align: center;
+}
+
+.qb-charpage .qb-sheet-name {
+  font-size: 1.8rem;
+}
+
+.qb-charpage .qb-sheet-sprite {
+  border: 3px solid;
+  box-shadow: 0 0 20px rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.35),
+              0 0 40px rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.15);
+  border-radius: var(--qb-radius-lg);
+}
+
+.qb-charpage .qb-sprite-image {
+  image-rendering: pixelated;
+}
+
+.qb-charpage .qb-active-buffs {
+  justify-content: center;
+}
+
+/* --- Section card styling for panels --- */
+.qb-charpage .qb-sheet-perk,
+.qb-charpage .qb-sheet-stats,
+.qb-charpage .qb-sheet-sets {
+  background: var(--background-secondary);
+  border-radius: var(--qb-radius-md);
+  padding: var(--qb-spacing-md);
+}
+
+/* ===========================================
+   Equipment Paperdoll
+   =========================================== */
+.qb-paperdoll h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+}
+
+.qb-paperdoll-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 120px));
+  justify-content: center;
+  grid-template-rows: auto;
+  gap: var(--qb-spacing-sm);
+  grid-template-areas:
+    ".       head    .      "
+    "shield  sprite  weapon "
+    "chest   .       legs   "
+    "acc1    boots   acc2   "
+    ".       acc3    .      ";
+}
+
+.qb-paperdoll-slot-head       { grid-area: head; }
+.qb-paperdoll-slot-shield     { grid-area: shield; }
+.qb-paperdoll-slot-weapon     { grid-area: weapon; }
+.qb-paperdoll-slot-chest      { grid-area: chest; }
+.qb-paperdoll-slot-accessory1 { grid-area: acc1; }
+.qb-paperdoll-slot-legs       { grid-area: legs; }
+.qb-paperdoll-slot-accessory2 { grid-area: acc2; }
+.qb-paperdoll-slot-boots      { grid-area: boots; }
+.qb-paperdoll-slot-accessory3 { grid-area: acc3; }
+
+/* Center sprite silhouette */
+.qb-paperdoll-sprite {
+  grid-area: sprite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-lg);
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+
+.qb-paperdoll-sprite-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.qb-paperdoll-sprite-emoji {
+  font-size: 3rem;
+}
+
+.qb-paperdoll-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-sm);
+  background: var(--background-secondary);
+  border: 2px dashed var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  cursor: pointer;
+  transition: all var(--qb-transition-fast);
+  text-align: center;
+  min-width: 0;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+/* Equipped slot gets solid border */
+.qb-paperdoll-slot[class*="qb-tier-"] {
+  border-style: solid;
+}
+
+.qb-paperdoll-slot:hover {
+  background: var(--background-modifier-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.qb-paperdoll-slot-icon {
+  font-size: 1.5rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-primary);
+  transition: border-color var(--qb-transition-fast);
+}
+
+.qb-paperdoll-slot-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.qb-paperdoll-slot-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.qb-paperdoll-slot-empty {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* Tier glow effects on paperdoll icons */
+.qb-paperdoll-slot.qb-tier-epic .qb-paperdoll-slot-icon {
+  box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
+}
+
+.qb-paperdoll-slot.qb-tier-legendary .qb-paperdoll-slot-icon {
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+}
+
+/* ===========================================
+   Action Menu (RPG-Styled)
+   =========================================== */
+.qb-action-menu h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+}
+
+/* When action menu is in the charpage top area, display as single row */
+.qb-charpage > .qb-action-menu {
+  margin-bottom: var(--qb-spacing-lg);
+  flex-shrink: 0;
+}
+
+.qb-charpage > .qb-action-menu h3 {
+  display: none;
+}
+
+.qb-charpage > .qb-action-menu .qb-action-menu-grid {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.qb-action-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--qb-spacing-md);
+}
+
+.qb-action-menu-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-lg) var(--qb-spacing-md);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--qb-radius-md);
+  color: var(--text-normal);
+  cursor: pointer;
+  transition: all var(--qb-transition-fast);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06),
+              0 2px 6px rgba(0, 0, 0, 0.2);
+  min-height: 80px;
+}
+
+.qb-action-menu-btn:hover {
+  transform: scale(1.04) translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3),
+              0 0 12px rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.3);
+  border-color: var(--interactive-accent);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.qb-action-menu-btn:active {
+  transform: scale(0.97);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.4);
+  border-color: var(--interactive-accent);
+}
+
+.qb-action-menu-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.qb-action-menu-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+/* Light theme override — use semi-transparent dark instead of transparent */
+.theme-light .qb-action-menu-btn {
+  background: var(--background-secondary-alt, var(--background-secondary));
+  border: 1px solid var(--qb-card-border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.theme-light .qb-action-menu-btn:hover {
+  background: var(--background-secondary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+              0 0 8px rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.2);
+}
+
+/* ===========================================
+   Consumables Belt
+   =========================================== */
+.qb-consumables h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+}
+
+.qb-consumables-belt {
+  display: flex;
+  gap: var(--qb-spacing-sm);
+  flex-wrap: wrap;
+}
+
+.qb-consumables-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--background-secondary);
+  border: 2px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  cursor: pointer;
+  transition: all var(--qb-transition-fast);
+}
+
+.qb-consumables-item:hover {
+  background: var(--background-modifier-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  border-color: var(--interactive-accent);
+}
+
+.qb-consumables-emoji {
+  font-size: 1.4rem;
+}
+
+.qb-consumables-qty {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  background: var(--interactive-accent);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.qb-consumables-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-faint);
+  font-style: italic;
+  padding: var(--qb-spacing-sm);
+}
+
