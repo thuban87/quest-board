@@ -200,33 +200,43 @@ Each session entry should include:
 ### Completed:
 
 #### Phase 3A: Full-Page Layout CSS
-- [ ] Added `qb-charpage-*` classes to `src/styles/character.css`
-- [ ] Full-page container, top bar, two-panel flex layout
-- [ ] Large sprite container (200px) with class-colored glow
-- [ ] Uses existing CSS variables from `variables.css`
+- [x] Added `qb-charpage-*` classes to `src/styles/character.css`
+- [x] Full-page container, top bar with background card, two-panel flex layout
+- [x] Large sprite container (200px) with class-colored glow/box-shadow
+- [x] Uses existing CSS variables from `variables.css`
+- [x] Sprite image uses `image-rendering: pixelated` for pixel art
+- [x] Centered header layout for full-page (column direction, centered text)
 
 #### Phase 3B: RPG Button Theming
-- [ ] Action menu buttons styled with dark panel aesthetic
-- [ ] Hover: scale + class-color border glow
-- [ ] Active/pressed: inset shadow
-- [ ] Works in both light and dark Obsidian themes
+- [x] Action menu buttons styled with `background-secondary-alt`, inset highlight shadow
+- [x] Hover: scale(1.04) + accent border glow + elevated shadow
+- [x] Active/pressed: scale(0.97) + deep inset shadow
+- [x] Works in both light and dark Obsidian themes
+- [x] Paperdoll: dashed borders for empty slots, solid for equipped, tier glow on epic/legendary
+- [x] Consumables: larger 48px items, accent border on hover, shadow on qty badge
 
 #### Phase 3C: Mobile Responsiveness
-- [ ] Two-panel collapses to single column at mobile breakpoint
-- [ ] Paperdoll simplifies to compact grid on mobile
-- [ ] Action menu adapts to smaller grid
-- [ ] Sprite reduces to ~120px on mobile
-- [ ] Consumables belt scrolls horizontally if needed
+- [x] Two-panel collapses to single column at 600px breakpoint
+- [x] Paperdoll simplifies to compact 3x3 grid on mobile (drops named grid areas)
+- [x] Action menu stays 3-col but with smaller padding/font
+- [x] Sprite reduces to 120px on mobile
+- [x] Consumables belt scrolls horizontally (`flex-wrap: nowrap`, `overflow-x: auto`)
+- [x] Reduced overall page padding on mobile
+
+#### Additional
+- [x] Added "Character Page" button to `QuestBoardCommandMenu.ts` (Character section, first item)
 
 ### Files Changed:
 
 **Modified Files:**
-- `src/styles/character.css` - Full-page layout, paperdoll, action menu styles
-- `src/styles/mobile.css` - Mobile responsiveness for character page
+- `src/styles/character.css` - Full CSS polish: layout, sprite glow, paperdoll theming, RPG buttons, consumables belt
+- `src/styles/mobile.css` - Mobile responsiveness for character page (single column, compact grid, smaller sprite)
+- `src/modals/QuestBoardCommandMenu.ts` - Added "Character Page" command to Character section
 
 ### Testing Notes:
-- [ ] `npm run build` passes
-- [ ] `npm run css:build` passes
+- [x] `npm run build` passes (clean)
+- [x] `npm run css:build` passes
+- [x] `npm run deploy:test` - Plugin loads in test vault
 - [ ] Light theme: all elements visible with proper contrast
 - [ ] Dark theme: all elements visible, no contrast issues
 - [ ] Action menu hover/active effects work
@@ -237,18 +247,105 @@ Each session entry should include:
 - [ ] Mobile: compact gear grid replaces paperdoll
 - [ ] Mobile: smaller sprite (~120px)
 - [ ] Window resize: layout adapts smoothly, no overflow
-- [ ] `npm run deploy:test` - Final visual check in test vault
 
 ### Blockers/Issues:
--
+- **BUG: "No character found" on reload** - CharacterPage shows "No character found. Create one first!" approximately 50% of the time when reloading the character page tab. The `useCharacterStore` has `character: null` when the view renders. This is a race condition — Obsidian restores the view before the plugin's `onload()` has finished initializing the character store from `loadData()`. The sidebar doesn't have this problem because it's opened by user action (after init completes), but the character page can be restored automatically by Obsidian's workspace state. **Fix needed:** Either (a) have `CharacterView.tsx` wait for/ensure the store is populated from `plugin.settings.character` before rendering, similar to how `BattleItemView` calls `useCharacterStore.getState().character` in `onOpen()`, or (b) add a loading/retry pattern in `CharacterPage.tsx` that watches for the store to populate.
 
 ### Design Decisions:
--
+- **Top bar gets background card** - Added `background: var(--background-secondary)` and border-radius to the top bar for visual separation, matching the sidebar header pattern.
+- **Sprite glow uses `box-shadow`** - Applied to `.qb-sheet-sprite` inside `.qb-charpage` with class-colored glow. Two-layer shadow (20px tight glow + 40px diffuse) for depth.
+- **Paperdoll dashed/solid border distinction** - Empty slots use `border: 2px dashed` to visually indicate "slot available", equipped slots switch to solid via `[class*="qb-tier-"]` selector.
+- **Command menu placement** - "Character Page" added as first item in Character category since it's the primary character view entry point.
+
+### Next Steps:
+- ~~Fix the "No character found" race condition bug (see Blockers above)~~ Fixed in Session 4
+- ~~Brad's CSS feedback items (deferred to next session)~~ Done in Session 4
+- Update CLAUDE.md file structure if needed
+- Update Feature Roadmap v2 to mark character page as complete
+
+---
+
+## Session 4 - Bug Fixes & Layout Polish
+
+**Focus:** Fix race condition bug (blank page on reload), fix Rules of Hooks violation, rearrange page layout per Brad's feedback, improve paperdoll grid, restyle action menu, fix mobile paperdoll.
+
+### Completed:
+
+#### Bug Fix: Race Condition (Blank Page on Reload)
+- [x] Added `useEffect` initialization pattern to `CharacterPage.tsx` — loads character from `plugin.settings` into the Zustand store on mount, matching the pattern used by `SidebarQuests.tsx` and `FullKanban.tsx`
+- [x] Added `AchievementService` initialization for achievements/inventory in same effect
+
+#### Bug Fix: Rules of Hooks Violation (Blank Page After Init)
+- [x] Moved `useMemo` hooks for `allBuffs` and `combatStats` above the `if (!character) return` early exit guard
+- [x] Both hooks now handle `character === null` gracefully (return `[]` / `null`)
+- [x] Guard updated to `if (!character || !combatStats)` to cover both cases
+- [x] This was the actual cause of the blank page — React crashed silently when hook count changed between renders (6 hooks on first render with early return, 8 hooks on second render after store populated)
+
+#### Layout Restructure
+- [x] **Action menu → top bar**: Moved `ActionMenu` out of left panel, now renders directly below XP bar as a single horizontal row of 6 buttons (`grid-template-columns: repeat(6, 1fr)`)
+- [x] **"Actions" header hidden** when inside `.qb-charpage` since it's now a toolbar
+- [x] **Stats section → left panel**: Moved `CharacterStats` from bottom-right to left panel (where actions used to be)
+- [x] **Activity Streak → bottom of left**: Moved `StreakDisplay` to last position in left panel
+- [x] Right panel now contains only: Attributes, Combat Stats, Paperdoll, Set Bonuses
+
+#### Paperdoll Rearrangement
+- [x] New grid layout — chest under shield, legs under weapon (more compact):
+  ```
+           [Head]
+  [Shield] [Sprite] [Weapon]
+  [Chest]           [Legs]
+  [Acc 1]  [Boots]  [Acc 2]
+           [Acc 3]
+  ```
+- [x] Added character sprite to paperdoll center between shield/weapon slots
+- [x] Sprite accepts `spriteUrl`, `classColor`, `classEmoji` props for display
+- [x] Columns capped at `120px` max width with `justify-content: center`
+- [x] Slots use `aspect-ratio: 1` for square shape
+
+#### Action Menu Restyle
+- [x] Dark semi-transparent background (`rgba(0,0,0,0.25)`) with subtle border highlight
+- [x] `min-height: 80px`, larger padding (`lg/md`), icon size 2rem
+- [x] Uppercase labels with wider letter-spacing
+- [x] Hover: `scale(1.04)`, accent glow, deeper shadow
+- [x] Active: `scale(0.97)`, deep inset shadow
+- [x] Light theme override: uses `background-secondary-alt` since dark `rgba` doesn't look right on light backgrounds
+
+#### Mobile Fixes
+- [x] Paperdoll sprite hidden on mobile (`display: none`) — 9 gear slots flow into clean 3x3 grid
+- [x] Slot `aspect-ratio` reset to `auto` on mobile to prevent excessive height
+- [x] Action bar falls back to 3x2 grid on mobile (overrides the 6-col desktop layout)
+
+### Files Changed:
+
+**Modified Files:**
+- `src/components/CharacterPage.tsx` - Added store initialization useEffect, fixed hooks order, restructured layout (actions to top, stats to left, streak to bottom)
+- `src/components/character/EquipmentPaperdoll.tsx` - Added sprite center element, new props (`spriteUrl`, `classColor`, `classEmoji`)
+- `src/styles/character.css` - Rearranged paperdoll grid areas, square slots, action menu single-row in charpage, dark RPG button restyle, sprite center styling
+- `src/styles/mobile.css` - Hide paperdoll sprite on mobile, action menu 3x2 override, aspect-ratio reset
+
+### Testing Notes:
+- [x] `npm run build` passes (clean)
+- [x] `npm run deploy:test` - Plugin loads in test vault
+- [x] Character page loads on reload without blank page or error (race condition fixed)
+- [x] Desktop layout: action bar as single row, two-panel content below
+- [x] Paperdoll: sprite centered, gear arranged around it, square slots
+- [x] Action buttons: dark themed, good sizing, hover/active effects
+- [x] Mobile: paperdoll renders as clean 3x3 grid, no squished items
+- [x] Mobile: action bar falls back to 3x2
+
+### Blockers/Issues:
+- **Consumables belt click does nothing** - By design per implementation guide. Belt is display-only; potion use during combat is handled by BattleView. Out-of-combat use is a future feature.
+
+### Design Decisions:
+- **Initialization pattern matches SidebarQuests** - Used the exact same `useRef(false)` + `useEffect` guard pattern for store initialization, ensuring consistency across views.
+- **Hooks moved above guard rather than removing guard** - The early return for null character is still needed (shows fallback message if no character exists at all). Moving hooks above it preserves the guard while satisfying React's Rules of Hooks.
+- **Action menu 6-col via CSS scope** - `.qb-charpage > .qb-action-menu .qb-action-menu-grid` targets only the charpage context, so the ActionMenu component stays reusable elsewhere at its default 3-col.
+- **Paperdoll sprite inserted via Fragment** - Shield slot render returns a `React.Fragment` containing both the shield slot and the sprite div, keeping the PAPERDOLL_LAYOUT array clean.
+- **Mobile hides sprite rather than switching to EquipmentGrid** - Simpler CSS-only solution; hiding the sprite lets the 9 slots naturally flow into a 3x3 grid without needing conditional React rendering.
 
 ### Next Steps:
 - Update CLAUDE.md file structure if needed
 - Update Feature Roadmap v2 to mark character page as complete
-- Provide commit message for Brad
 
 ---
 
@@ -257,10 +354,12 @@ Each session entry should include:
 _Space for notes after all sessions are complete._
 
 ### What Went Well
--
+- Shared sub-component architecture paid off — restructuring the layout was just moving JSX blocks around, no logic changes needed
+- CSS Grid named areas made paperdoll rearrangement trivial
 
 ### What Could Be Improved
--
+- Session 3 CSS should have been tested more carefully before marking complete — the race condition and hooks bug were both pre-existing from Session 2 but surfaced during Session 3 testing
+- The `useMemo` hooks-after-guard issue was a latent bug from Session 2 that only manifested once the initialization useEffect was added
 
 ### Follow-Up Tasks
 - [ ] Update CLAUDE.md architecture section with new `character/` folder

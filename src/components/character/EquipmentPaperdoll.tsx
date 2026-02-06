@@ -16,6 +16,12 @@ import { GearSlot, GearItem, EquippedGearMap, TIER_INFO, GEAR_SLOT_NAMES, GEAR_S
 interface EquipmentPaperdollProps {
     equippedGear: EquippedGearMap;
     onSlotClick?: (slot: GearSlot) => void;
+    /** Sprite URL for the center silhouette */
+    spriteUrl?: string;
+    /** Class color for sprite border/glow */
+    classColor?: string;
+    /** Class emoji fallback */
+    classEmoji?: string;
 }
 
 /** Generate a tooltip string for a gear item */
@@ -92,19 +98,55 @@ const PAPERDOLL_LAYOUT: GearSlot[] = [
 export const EquipmentPaperdoll: React.FC<EquipmentPaperdollProps> = ({
     equippedGear,
     onSlotClick,
+    spriteUrl,
+    classColor,
+    classEmoji,
 }) => {
     return (
         <div className="qb-paperdoll">
             <h3>Equipment</h3>
             <div className="qb-paperdoll-grid">
-                {PAPERDOLL_LAYOUT.map((slot) => (
-                    <PaperdollSlot
-                        key={slot}
-                        slot={slot}
-                        item={equippedGear?.[slot] ?? null}
-                        onClick={() => onSlotClick?.(slot)}
-                    />
-                ))}
+                {PAPERDOLL_LAYOUT.map((slot) => {
+                    // Insert the sprite silhouette after shield (center of row 2)
+                    if (slot === 'shield') {
+                        return (
+                            <React.Fragment key={slot}>
+                                <PaperdollSlot
+                                    slot={slot}
+                                    item={equippedGear?.[slot] ?? null}
+                                    onClick={() => onSlotClick?.(slot)}
+                                />
+                                <div
+                                    className="qb-paperdoll-sprite"
+                                    style={{
+                                        borderColor: classColor,
+                                        backgroundColor: classColor ? classColor + '15' : undefined,
+                                    }}
+                                >
+                                    {spriteUrl ? (
+                                        <img
+                                            src={spriteUrl}
+                                            alt="Character"
+                                            className="qb-paperdoll-sprite-img"
+                                        />
+                                    ) : (
+                                        <span className="qb-paperdoll-sprite-emoji">
+                                            {classEmoji || '🧙'}
+                                        </span>
+                                    )}
+                                </div>
+                            </React.Fragment>
+                        );
+                    }
+                    return (
+                        <PaperdollSlot
+                            key={slot}
+                            slot={slot}
+                            item={equippedGear?.[slot] ?? null}
+                            onClick={() => onSlotClick?.(slot)}
+                        />
+                    );
+                })}
             </div>
         </div>
     );

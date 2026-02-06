@@ -6,9 +6,10 @@
  * Right panel: attributes, combat stats, paperdoll, set bonuses, character stats.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { App } from 'obsidian';
 import { useCharacterStore, selectActiveSetBonuses, selectInventory } from '../store/characterStore';
+import { AchievementService } from '../services/AchievementService';
 import { useQuestStore } from '../store/questStore';
 import { CLASS_INFO } from '../models/Character';
 import { GearSlot } from '../models/Gear';
@@ -45,12 +46,38 @@ interface CharacterPageProps {
 
 export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => {
     const character = useCharacterStore((state) => state.character);
+    const setCharacter = useCharacterStore((state) => state.setCharacter);
+    const setInventoryAndAchievements = useCharacterStore((state) => state.setInventoryAndAchievements);
     const achievements = useCharacterStore((state) => state.achievements);
     const activeSetBonuses = useCharacterStore(selectActiveSetBonuses);
     const inventory = useCharacterStore(selectInventory);
     const quests = useQuestStore((state) => state.quests);
 
     const saveCharacter = useSaveCharacter(plugin);
+
+    // Load character on mount — handles race condition when Obsidian restores
+    // this tab before plugin.onload() has populated the store
+    const initializedRef = useRef(false);
+    useEffect(() => {
+        if (initializedRef.current) return;
+        initializedRef.current = true;
+
+        if (plugin.settings.character) {
+            const oldVersion = plugin.settings.character.schemaVersion;
+            setCharacter(plugin.settings.character);
+            const newCharacter = useCharacterStore.getState().character;
+            if (newCharacter && newCharacter.schemaVersion !== oldVersion) {
+                saveCharacter();
+            }
+        }
+        const achievementService = new AchievementService(app.vault, plugin.settings.badgeFolder);
+        const savedAchievements = plugin.settings.achievements || [];
+        const initializedAchievements = achievementService.initializeAchievements(savedAchievements);
+        setInventoryAndAchievements(
+            plugin.settings.inventory || [],
+            initializedAchievements
+        );
+    }, []);
 
     const spriteUrl = useCharacterSprite({
         character,
@@ -59,7 +86,20 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
         animated: true,
     });
 
-    if (!character) {
+    // These hooks MUST be above the early return to satisfy Rules of Hooks
+    const allBuffs = useMemo(() => {
+        if (!character) return [];
+        const classPerk = getClassPerkAsPowerUp(character);
+        const activePowerUps = expirePowerUps(character.activePowerUps || []);
+        return [classPerk, ...activePowerUps];
+    }, [character]);
+
+    const combatStats = useMemo(
+        () => character ? deriveCombatStats(character) : null,
+        [character]
+    );
+
+    if (!character || !combatStats) {
         return (
             <div className="qb-charpage">
                 <p style={{ padding: 'var(--qb-spacing-lg)', color: 'var(--text-muted)' }}>
@@ -89,16 +129,6 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
         ? Array.from(quests.values()).filter(q => q.completedDate).length
         : 0;
     const totalQuests = quests ? quests.size : 0;
-
-    // Active buffs
-    const allBuffs = useMemo(() => {
-        const classPerk = getClassPerkAsPowerUp(character);
-        const activePowerUps = expirePowerUps(character.activePowerUps || []);
-        return [classPerk, ...activePowerUps];
-    }, [character]);
-
-    // Combat stats
-    const combatStats = useMemo(() => deriveCombatStats(character), [character]);
 
     // Save callback for modals
     const onSave = async () => {
@@ -161,6 +191,16 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
                 </div>
             </div>
 
+            {/* Action bar — single row below XP bar */}
+            <ActionMenu
+                onOpenInventory={handleOpenInventory}
+                onOpenBlacksmith={handleOpenBlacksmith}
+                onOpenStore={handleOpenStore}
+                onOpenSkillLoadout={handleOpenSkillLoadout}
+                onOpenAchievements={handleOpenAchievements}
+                onOpenProgressDashboard={handleOpenProgressDashboard}
+            />
+
             {/* Two-panel content */}
             <div className="qb-charpage-content">
                 {/* Left panel: Hero */}
@@ -175,11 +215,6 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
 
                     <ResourceBars character={character} combatStats={combatStats} />
 
-                    <StreakDisplay
-                        currentStreak={character.currentStreak || 0}
-                        highestStreak={character.highestStreak || 0}
-                    />
-
                     <ClassPerkCard classInfo={classInfo} />
 
                     <ConsumablesBelt
@@ -187,13 +222,17 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
                         character={character}
                     />
 
-                    <ActionMenu
-                        onOpenInventory={handleOpenInventory}
-                        onOpenBlacksmith={handleOpenBlacksmith}
-                        onOpenStore={handleOpenStore}
-                        onOpenSkillLoadout={handleOpenSkillLoadout}
-                        onOpenAchievements={handleOpenAchievements}
-                        onOpenProgressDashboard={handleOpenProgressDashboard}
+                    <CharacterStats
+                        character={character}
+                        completedQuests={completedQuests}
+                        activeQuests={totalQuests - completedQuests}
+                        achievementCount={achievements.filter(a => a.unlockedAt).length}
+                        onViewAchievements={handleOpenAchievements}
+                    />
+
+                    <StreakDisplay
+                        currentStreak={character.currentStreak || 0}
+                        highestStreak={character.highestStreak || 0}
                     />
 
                     {isTraining && (
@@ -213,17 +252,12 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
                     <EquipmentPaperdoll
                         equippedGear={character.equippedGear}
                         onSlotClick={handleSlotClick}
+                        spriteUrl={spriteUrl}
+                        classColor={classInfo.primaryColor}
+                        classEmoji={classInfo.emoji}
                     />
 
                     <SetBonuses activeSetBonuses={activeSetBonuses} />
-
-                    <CharacterStats
-                        character={character}
-                        completedQuests={completedQuests}
-                        activeQuests={totalQuests - completedQuests}
-                        achievementCount={achievements.filter(a => a.unlockedAt).length}
-                        onViewAchievements={handleOpenAchievements}
-                    />
                 </div>
             </div>
         </div>

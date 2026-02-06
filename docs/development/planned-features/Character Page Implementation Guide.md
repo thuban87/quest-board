@@ -1,7 +1,7 @@
 # Character Page Implementation Guide
 
-**Status:** Session 2 Complete
-**Estimated Sessions:** 2-3
+**Status:** Complete (Sessions 1-4 done)
+**Estimated Sessions:** 2-3 (+1 polish/bugfix) → Actual: 4
 **Created:** 2026-02-05
 **Last Updated:** 2026-02-06
 
@@ -630,17 +630,19 @@ At mobile breakpoints (matching existing mobile.css patterns):
 
 | Test | Expected | Status |
 |------|----------|--------|
-| `npm run build` passes | No TypeScript errors | |
-| `npm run css:build` passes | CSS compiles without errors | |
-| Light theme appearance | All elements visible, proper contrast | |
-| Dark theme appearance | All elements visible, no white-on-white | |
-| Action menu hover effects | Buttons glow/lift on hover | |
-| Paperdoll slot styling | Tier colors, borders, empty state all styled | |
-| Sprite glow effect | Class-colored glow around large sprite | |
-| Consumables belt styling | Clean horizontal strip, quantity badges visible | |
-| Mobile layout (resize window) | Single column, smaller sprite, compact grid | |
-| Obsidian window resize | Layout adapts smoothly, no overflow/scroll issues | |
-| `npm run deploy:test` | Final visual check in test vault | |
+| `npm run build` passes | No TypeScript errors | PASS |
+| `npm run css:build` passes | CSS compiles without errors | PASS |
+| Light theme appearance | All elements visible, proper contrast | PASS |
+| Dark theme appearance | All elements visible, no white-on-white | PASS |
+| Action menu hover effects | Buttons glow/lift on hover | PASS |
+| Paperdoll slot styling | Tier colors, borders, empty state all styled | PASS |
+| Sprite glow effect | Class-colored glow around large sprite | PASS |
+| Consumables belt styling | Clean horizontal strip, quantity badges visible | PASS |
+| Mobile layout (resize window) | Single column, smaller sprite, compact grid | PASS |
+| Obsidian window resize | Layout adapts smoothly, no overflow/scroll issues | PASS |
+| `npm run deploy:test` | Final visual check in test vault | PASS |
+
+> **Note:** Several bugs from Sessions 2-3 were fixed in Session 4 before these tests passed: race condition on reload (missing store init), Rules of Hooks violation (useMemo after early return), paperdoll layout rearrangement, and mobile paperdoll fix. See Session Log Session 4 for details.
 
 ---
 
@@ -678,6 +680,10 @@ At mobile breakpoints (matching existing mobile.css patterns):
 | `src/styles/character.css` | Full-page layout, paperdoll, action menu styles | 3 |
 | `src/styles/mobile.css` | Mobile responsiveness for full page | 3 |
 | `src/styles/index.css` | No changes needed if character.css is already imported | 3 |
+| `src/components/CharacterPage.tsx` | Bug fixes (race condition, hooks order), layout restructure | 4 |
+| `src/components/character/EquipmentPaperdoll.tsx` | Added center sprite, new props | 4 |
+| `src/styles/character.css` | Paperdoll rearrange, action menu single-row, dark RPG buttons | 4 |
+| `src/styles/mobile.css` | Hide paperdoll sprite, action menu 3x2 fallback | 4 |
 
 ### Deleted Files
 
