@@ -12,10 +12,12 @@ import {
     QUEST_SIDEBAR_VIEW_TYPE,
     BATTLE_VIEW_TYPE,
     DUNGEON_VIEW_TYPE,
+    CHARACTER_VIEW_TYPE,
     QuestBoardView,
     QuestSidebarView,
     BattleItemView,
-    DungeonItemView
+    DungeonItemView,
+    CharacterView
 } from './src/views';
 import { useDungeonStore } from './src/store/dungeonStore';
 import { getAllDungeonTemplates, registerUserDungeons, clearUserDungeons, getRandomDungeon } from './src/data/dungeonTemplates';
@@ -213,6 +215,12 @@ export default class QuestBoardPlugin extends Plugin {
         this.registerView(
             DUNGEON_VIEW_TYPE,
             (leaf: WorkspaceLeaf) => new DungeonItemView(leaf, this)
+        );
+
+        // Register the character page view (opens in its own tab)
+        this.registerView(
+            CHARACTER_VIEW_TYPE,
+            (leaf: WorkspaceLeaf) => new CharacterView(leaf, this)
         );
 
         // Add ribbon icon to open focused sidebar
@@ -543,6 +551,15 @@ export default class QuestBoardPlugin extends Plugin {
             },
         });
 
+        // Add command to open full-page character view
+        this.addCommand({
+            id: 'open-character-page',
+            name: 'Open Character Page',
+            callback: () => {
+                this.activateCharacterView();
+            },
+        });
+
         // Add migration command to add difficulty field to existing quests
         this.addCommand({
             id: 'migrate-add-difficulty',
@@ -684,6 +701,30 @@ export default class QuestBoardPlugin extends Plugin {
         const leaf = workspace.getLeaf('tab');
         if (leaf) {
             await leaf.setViewState({ type: DUNGEON_VIEW_TYPE, active: true });
+            workspace.revealLeaf(leaf);
+        }
+    }
+
+    /**
+     * Activates the character page view in a new tab (or reveals existing)
+     */
+    async activateCharacterView(): Promise<void> {
+        const { workspace } = this.app;
+
+        // Reuse existing character page tab if open in main area
+        const leaves = workspace.getLeavesOfType(CHARACTER_VIEW_TYPE);
+        for (const existingLeaf of leaves) {
+            const root = existingLeaf.getRoot();
+            if (root === workspace.rootSplit) {
+                workspace.revealLeaf(existingLeaf);
+                return;
+            }
+        }
+
+        // Open in a new tab in the main area
+        const leaf = workspace.getLeaf('tab');
+        if (leaf) {
+            await leaf.setViewState({ type: CHARACTER_VIEW_TYPE, active: true });
             workspace.revealLeaf(leaf);
         }
     }

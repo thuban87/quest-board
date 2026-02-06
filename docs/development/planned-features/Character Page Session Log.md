@@ -111,39 +111,39 @@ Each session entry should include:
 ### Completed:
 
 #### Phase 2A: View Registration & Wiring
-- [ ] Added `CHARACTER_VIEW_TYPE` to `src/views/constants.ts`
-- [ ] Created `src/views/CharacterView.tsx` (ItemView wrapper)
-- [ ] Updated `src/views/index.ts` barrel export
-- [ ] Registered view in `main.ts` `onload()`
-- [ ] Added `open-character-page` command
-- [ ] Added `activateCharacterView()` method to plugin
+- [x] Added `CHARACTER_VIEW_TYPE` to `src/views/constants.ts`
+- [x] Created `src/views/CharacterView.tsx` (ItemView wrapper)
+- [x] Updated `src/views/index.ts` barrel export
+- [x] Registered view in `main.ts` `onload()`
+- [x] Added `open-character-page` command
+- [x] Added `activateCharacterView()` method to plugin
 
 #### Phase 2B: CharacterPage Component
-- [ ] Created `src/components/CharacterPage.tsx`
-- [ ] Two-panel layout: left (hero) + right (stats/gear)
-- [ ] Top bar with back button and full-width XP bar
-- [ ] Composes shared sub-components from `character/`
-- [ ] Wired hooks: `useCharacterStore`, `useQuestStore`, `useCharacterSprite`, `useSaveCharacter`
+- [x] Created `src/components/CharacterPage.tsx`
+- [x] Two-panel layout: left (hero) + right (stats/gear)
+- [x] Top bar with back button and full-width XP bar
+- [x] Composes shared sub-components from `character/`
+- [x] Wired hooks: `useCharacterStore`, `useQuestStore`, `useCharacterSprite`, `useSaveCharacter`
 
 #### Phase 2C: Equipment Paperdoll
-- [ ] Created `src/components/character/EquipmentPaperdoll.tsx`
-- [ ] Slots arranged around silhouette: Head, Shield, Weapon, Chest, Acc1, Legs, Acc2, Boots, Acc3
-- [ ] Uses `GEAR_SLOT_NAMES` and `GEAR_SLOT_ICONS` from `Gear.ts`
-- [ ] Click slot opens inventory modal with `initialSlotFilter`
-- [ ] Tier-colored borders on equipped items
-- [ ] Tooltips from existing gear tooltip logic
+- [x] Created `src/components/character/EquipmentPaperdoll.tsx`
+- [x] Slots arranged around silhouette: Head, Shield, Weapon, Chest, Acc1, Legs, Acc2, Boots, Acc3
+- [x] Uses `GEAR_SLOT_NAMES` and `GEAR_SLOT_ICONS` from `Gear.ts`
+- [x] Click slot opens inventory modal with `initialSlotFilter`
+- [x] Tier-colored borders on equipped items
+- [x] Tooltips from existing gear tooltip logic
 
 #### Phase 2D: Action Menu (RPG-Styled)
-- [ ] Created `src/components/character/ActionMenu.tsx`
-- [ ] 6 buttons: Inventory, Blacksmith, Store, Skills, Achievements, Progress
-- [ ] Wired to existing modal openers (`showInventoryModal`, `showBlacksmithModal`, etc.)
-- [ ] RPG-themed dark panel styling
+- [x] Created `src/components/character/ActionMenu.tsx`
+- [x] 6 buttons: Inventory, Blacksmith, Store, Skills, Achievements, Progress
+- [x] Wired to existing modal openers (`showInventoryModal`, `showBlacksmithModal`, etc.)
+- [x] RPG-themed dark panel styling (basic — Session 3 will polish)
 
 #### Phase 2E: Consumables Belt
-- [ ] Created `src/components/character/ConsumablesBelt.tsx`
-- [ ] Reads `inventory` from characterStore, cross-references `CONSUMABLES`
-- [ ] Shows owned consumables with emoji + quantity badge
-- [ ] Empty state: "No consumables - visit the Store" hint
+- [x] Created `src/components/character/ConsumablesBelt.tsx`
+- [x] Reads `inventory` from characterStore via `selectInventory`, cross-references `CONSUMABLES`
+- [x] Shows owned consumables with emoji + quantity badge
+- [x] Empty state: "No consumables — visit the Store" hint
 
 ### Files Changed:
 
@@ -157,10 +157,13 @@ Each session entry should include:
 **Modified Files:**
 - `src/views/constants.ts` - Added `CHARACTER_VIEW_TYPE`
 - `src/views/index.ts` - Added exports
+- `src/components/character/index.ts` - Added barrel exports for new sub-components
 - `main.ts` - Registered view, added command, added `activateCharacterView()`
+- `src/styles/character.css` - Added functional CSS for charpage, paperdoll, action menu, consumables belt
 
 ### Testing Notes:
-- [ ] `npm run build` passes
+- [x] `npm run build` passes (clean, no warnings)
+- [x] `npm run deploy:test` - Plugin loads, character page accessible
 - [ ] Command palette → "Open Character Page" opens full-page view
 - [ ] Two-panel layout renders correctly
 - [ ] Big sprite (200x200+) displays with class-colored border
@@ -171,15 +174,19 @@ Each session entry should include:
 - [ ] Empty consumables belt shows hint text
 - [ ] Sidebar character view still works independently
 - [ ] Both views can be open simultaneously without conflict
-- [ ] `npm run deploy:test` - Plugin loads, character page accessible
 
 ### Blockers/Issues:
--
+- No blockers encountered. All existing modal opener signatures matched expectations.
 
 ### Design Decisions:
--
+- **`activateCharacterView()` reuses existing tab** - Follows the `activateFullPageView()` pattern (finds existing tab in main area before opening new one), unlike `activateBattleView()` which always opens fresh. Character page is a persistent view, not a transient one.
+- **`getGearTooltip()` duplicated in `EquipmentPaperdoll.tsx`** - Same tooltip logic as `EquipmentGrid.tsx`. Could extract a shared `GearSlotItem` component or move tooltip to `gearFormatters.ts` during Session 3 polish, but works fine as-is for now.
+- **Paperdoll uses CSS Grid with named areas** - Clean semantic layout (`grid-template-areas`) for the silhouette pattern. Easy to rearrange slots later.
+- **Functional CSS included in Session 2** - Guide spec'd CSS for Session 3, but basic layout/spacing CSS was needed for the page to render meaningfully. Session 3 focuses on polish (glow effects, RPG theming, hover animations, mobile responsive).
+- **Back button navigates to Quest Board view** - Uses `setViewState` to open the main quest board in the current leaf, same pattern as sidebar back button.
 
 ### Next Steps:
+- Brad to verify character page in test vault
 - Session 3: CSS polish, RPG button theming, mobile responsiveness
 
 ---

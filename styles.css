@@ -709,6 +709,243 @@
   color: var(--text-muted);
 }
 /* ===========================================
+   Full-Page Character View
+   =========================================== */
+.qb-charpage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--qb-spacing-md);
+  overflow-y: auto;
+}
+/* Top bar: back button + XP bar */
+.qb-charpage-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+  margin-bottom: var(--qb-spacing-lg);
+  flex-shrink: 0;
+}
+.qb-charpage-xp {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-sm);
+  flex: 1;
+}
+.qb-charpage-xp-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-normal);
+  white-space: nowrap;
+}
+.qb-charpage-xp-bar {
+  flex: 1;
+  height: 12px;
+  background: var(--qb-xp-bar-bg);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.qb-charpage-xp-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width var(--qb-transition-normal);
+}
+.qb-charpage-xp-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+/* Two-panel layout */
+.qb-charpage-content {
+  display: flex;
+  gap: var(--qb-spacing-xl);
+  flex: 1;
+  min-height: 0;
+}
+.qb-charpage-left {
+  flex: 0 0 40%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-lg);
+}
+.qb-charpage-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-lg);
+}
+/* ===========================================
+   Equipment Paperdoll
+   =========================================== */
+.qb-paperdoll h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+}
+.qb-paperdoll-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto;
+  gap: var(--qb-spacing-sm);
+  grid-template-areas:
+    ".       head    .      "
+    "shield  .       weapon "
+    ".       chest   .      "
+    "acc1    legs    acc2   "
+    ".       boots   .      "
+    ".       acc3    .      ";
+}
+.qb-paperdoll-slot-head      { grid-area: head; }
+.qb-paperdoll-slot-shield    { grid-area: shield; }
+.qb-paperdoll-slot-weapon    { grid-area: weapon; }
+.qb-paperdoll-slot-chest     { grid-area: chest; }
+.qb-paperdoll-slot-accessory1 { grid-area: acc1; }
+.qb-paperdoll-slot-legs      { grid-area: legs; }
+.qb-paperdoll-slot-accessory2 { grid-area: acc2; }
+.qb-paperdoll-slot-boots     { grid-area: boots; }
+.qb-paperdoll-slot-accessory3 { grid-area: acc3; }
+.qb-paperdoll-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-sm);
+  background: var(--background-secondary);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  cursor: pointer;
+  transition: all var(--qb-transition-fast);
+  text-align: center;
+  min-width: 0;
+}
+.qb-paperdoll-slot:hover {
+  background: var(--background-modifier-hover);
+  transform: translateY(-1px);
+}
+.qb-paperdoll-slot-icon {
+  font-size: 1.5rem;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  background: var(--background-primary);
+}
+.qb-paperdoll-slot-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.qb-paperdoll-slot-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.qb-paperdoll-slot-empty {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+/* ===========================================
+   Action Menu (RPG-Styled)
+   =========================================== */
+.qb-action-menu h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+}
+.qb-action-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--qb-spacing-sm);
+}
+.qb-action-menu-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--qb-spacing-xs);
+  padding: var(--qb-spacing-md) var(--qb-spacing-sm);
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  color: var(--text-normal);
+  cursor: pointer;
+  transition: all var(--qb-transition-fast);
+}
+.qb-action-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.25);
+  transform: scale(1.03);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.qb-action-menu-btn:active {
+  transform: scale(0.98);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.qb-action-menu-icon {
+  font-size: 1.5rem;
+}
+.qb-action-menu-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+/* ===========================================
+   Consumables Belt
+   =========================================== */
+.qb-consumables h3 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1rem;
+}
+.qb-consumables-belt {
+  display: flex;
+  gap: var(--qb-spacing-sm);
+  flex-wrap: wrap;
+}
+.qb-consumables-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: var(--background-secondary);
+  border: 1px solid var(--qb-card-border);
+  border-radius: var(--qb-radius-md);
+  cursor: pointer;
+  transition: all var(--qb-transition-fast);
+}
+.qb-consumables-item:hover {
+  background: var(--background-modifier-hover);
+  transform: translateY(-1px);
+}
+.qb-consumables-emoji {
+  font-size: 1.3rem;
+}
+.qb-consumables-qty {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: var(--interactive-accent);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 600;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+.qb-consumables-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-faint);
+  font-style: italic;
+}
+/* ===========================================
    Modal Styles
    =========================================== */
 .qb-modal-backdrop {
