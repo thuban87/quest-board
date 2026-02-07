@@ -1744,3 +1744,45 @@ DynamicTemplateModal Deprecation:
 Files: TemplatePreviewModal.ts (new), ScrivenersQuillModal.ts,
 SmartTemplateModal.ts, scrivener.css
 ```
+
+---
+
+## 2026-02-07 (Night) - Scroll Library Polish
+
+**Focus:** Combine suggestion sections and add filter/sort to the Scroll Library
+
+### Completed:
+
+#### Quick Picks Row
+- ✅ Merged "Your Favorites" and "Similar to Last Quest" into single "🌟 Quick Picks" row
+- ✅ Side-by-side flexbox layout with CSS vertical divider between groups
+- ✅ Muted italic sub-labels for each group
+- ✅ Hidden when filters/search active (shows only when browsing)
+
+#### Filter & Sort Bar
+- ✅ Added filter bar below action bar with 4 dropdowns:
+  - Quest Type (dynamic from templates)
+  - Template Type (Standard/Recurring/Daily Note/Watched Folder)
+  - Category (dynamic from templates)
+  - Sort (Name A→Z, Name Z→A, Newest first, Oldest first)
+- ✅ Filters apply to All Scrolls only (Quick Picks unaffected)
+- ✅ Search + dropdown filters combine with AND logic
+- ✅ "No scrolls match your filters" empty state
+- ✅ `deriveTemplateType()` helper maps questType → template type
+
+### Files Changed:
+
+**Modified:**
+- `src/modals/ScrollLibraryModal.ts` — Combined Quick Picks row, filter/sort state, `renderFilterBar()`, `renderQuickPicks()`, refactored `renderAllTemplates()` with filter/sort
+- `src/styles/scrivener.css` — Quick Picks row flexbox, vertical divider, filter bar dropdown styles, no-results state
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault
+- ✅ Quick Picks shows favorites + similar side-by-side
+- ✅ Filters populate from actual template data
+- ✅ Sort works correctly (both name and date)
+- ✅ Combined search + filter works
+
+### Blockers/Issues:
+- None
