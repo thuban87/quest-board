@@ -1,6 +1,6 @@
 # Dungeon Templates Modularization Guide
 
-**Status:** Planned
+**Status:** ✅ Complete (2026-02-06)
 **Priority:** Low (quality-of-life refactor, not blocking anything)
 **Risk:** Low (pure data restructuring, zero behavior change)
 **Estimated Scope:** ~30 minutes
@@ -329,20 +329,20 @@ After this refactor, adding a new built-in dungeon is:
 
 ## Verification Checklist
 
-- [ ] All 6 individual dungeon files created and export correctly
-- [ ] `index.ts` imports all 6 and registry functions work
-- [ ] All 4 consuming files updated to new import path
-- [ ] Old `dungeonTemplates.ts` deleted
-- [ ] `npm run build` passes with zero errors
-- [ ] `npm run deploy:test` succeeds
-- [ ] Dungeon selection modal shows all dungeons
-- [ ] Can enter and play through at least one dungeon
-- [ ] User-defined dungeons still load (if any exist in test vault)
-- [ ] CLAUDE.md file tree updated
-- [ ] GENERATION_PROMPT.md instructions updated
-- [ ] Feature Roadmap reference updated
-- [ ] Monster ID validation added to UserDungeonLoader
-- [ ] All 19 unit tests in `dungeon-registry.test.ts` pass
+- [x] All 6 individual dungeon files created and export correctly
+- [x] `index.ts` imports all 6 and registry functions work
+- [x] All 4 consuming files updated to new import path
+- [x] Old `dungeonTemplates.ts` archived as `.bak` (pending deletion after confidence)
+- [x] `npm run build` passes with zero errors
+- [x] `npm run deploy:test` succeeds
+- [x] Dungeon selection modal shows all dungeons
+- [x] Can enter and play through dungeons (2 tested)
+- [x] User-defined dungeons still load
+- [ ] CLAUDE.md file tree updated (pending)
+- [ ] GENERATION_PROMPT.md instructions updated (pending)
+- [x] Feature Roadmap reference updated
+- [x] Monster ID validation added to UserDungeonLoader
+- [x] All 20 unit tests in `dungeon-registry.test.ts` pass (was 19 in plan, added 20th room to Thornwood)
 
 ---
 

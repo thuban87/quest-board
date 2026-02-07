@@ -7,7 +7,7 @@
 
 import { App, Modal, Notice } from 'obsidian';
 import type { DungeonTemplate } from '../models/Dungeon';
-import { getAllDungeonTemplates, getRandomDungeon } from '../data/dungeonTemplates';
+import { getAllDungeonTemplates, getRandomDungeon } from '../data/dungeons';
 
 // Gear slot display emojis
 const SLOT_EMOJIS: Record<string, string> = {

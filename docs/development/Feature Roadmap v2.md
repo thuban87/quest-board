@@ -102,7 +102,7 @@ This document reflects the **actual state of implementation** based on a deep co
 | Tile interactions | `TileRegistry.ts` | Floor, wall, door, chest, portal, monster, trap, switch |
 | Room persistence | `dungeonStore.ts` | Chests opened, monsters killed |
 | Map modal | `DungeonMapModal.ts` | Exploration tracking |
-| Built-in dungeons | `dungeonTemplates.ts` | Multiple templates |
+| Built-in dungeons | `src/data/dungeons/` | 6 templates in individual files, registry in `index.ts` |
 | User dungeons | `UserDungeonLoader.ts` | Markdown-based custom dungeons |
 | Dungeon selection | `DungeonSelectionModal.ts` | Choose from available |
 | Loot bias | `DungeonTemplate` | Slot-specific drops per dungeon |
@@ -389,5 +389,5 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-01-31 (Skills System Phase 9 Complete)
+**Last Updated:** 2026-02-06 (Dungeon Templates Modularization)
 

@@ -1343,3 +1343,110 @@ Ribbon Icon:
 Files: mobile.css, main.ts
 ```
 
+---
+
+## 2026-02-06 (Evening) - Dungeon Templates Modularization
+
+**Focus:** Split monolithic `dungeonTemplates.ts` (1,854 lines) into individual files per dungeon under `src/data/dungeons/`
+
+### Completed:
+
+#### Modularization (Steps 1-6)
+- ✅ Created `src/data/dungeons/` directory
+- ✅ Extracted 6 dungeon templates into individual files (`testCave.ts`, `goblinCave.ts`, `forestRuins.ts`, `castleCrypt.ts`, `banditStronghold.ts`, `thornwoodLabyrinth.ts`)
+- ✅ Created `src/data/dungeons/index.ts` — registry + helper functions + re-exports
+- ✅ Updated 4 import paths (`main.ts`, `DungeonView.tsx`, `dungeonStore.ts`, `DungeonSelectionModal.ts`)
+- ✅ Archived old file as `src/data/dungeonTemplates.ts.bak`
+- ✅ Build passes with zero errors
+
+#### Monster ID Validation (Step 8)
+- ✅ Exported `VALID_MONSTER_IDS` from `AIDungeonService.ts`
+- ✅ Added validation in `UserDungeonLoader.ts` — warns on unknown monster IDs in user dungeons
+
+#### Data Fix: Thornwood Labyrinth
+- ✅ Original had only 19 rooms despite being documented as 20
+- ✅ Added missing 20th room (`dead_end_south_2`) — treasure dead-end branching from `center_south`
+- ✅ Room has 2 chests (adept + journeyman) and 1 wolf encounter
+
+#### Unit Tests (Step 9)
+- ✅ All 20 tests in `dungeon-registry.test.ts` pass
+
+### Files Changed:
+
+**New:**
+- `src/data/dungeons/index.ts` — Registry, helper functions, re-exports
+- `src/data/dungeons/testCave.ts` — Test Cave (easy, 3 rooms)
+- `src/data/dungeons/goblinCave.ts` — Goblin Cave (easy, 5 rooms)
+- `src/data/dungeons/forestRuins.ts` — Forest Ruins (medium, 8 rooms)
+- `src/data/dungeons/castleCrypt.ts` — Castle Crypt (medium, 10 rooms)
+- `src/data/dungeons/banditStronghold.ts` — Bandit Stronghold (hard, 20 rooms)
+- `src/data/dungeons/thornwoodLabyrinth.ts` — Thornwood Labyrinth (hard, 20 rooms)
+
+**Modified:**
+- `main.ts` — Import path updated
+- `src/components/DungeonView.tsx` — Import path updated
+- `src/store/dungeonStore.ts` — Import path updated
+- `src/modals/DungeonSelectionModal.ts` — Import path updated
+- `src/services/AIDungeonService.ts` — Exported `VALID_MONSTER_IDS`
+- `src/services/UserDungeonLoader.ts` — Added monster ID validation
+
+**Archived:**
+- `src/data/dungeonTemplates.ts` → `src/data/dungeonTemplates.ts.bak`
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ All 20 unit tests pass (`dungeon-registry.test.ts`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Tested 2 dungeons — rooms/doors worked correctly
+- ✅ User dungeons still load and play normally
+- ✅ Random dungeon selection works
+- ✅ Dungeon selection modal shows all appropriate dungeons
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Dungeon templates modularization complete.
+
+What was done:
+- Split dungeonTemplates.ts (1,854 lines) into 6 individual files + index.ts
+- Added monster ID validation to UserDungeonLoader.ts
+- Fixed Thornwood Labyrinth missing 20th room
+- All 20 unit tests pass, manual testing confirmed
+
+Remaining from Dungeon Templates Modularization Guide:
+- CLAUDE.md file tree needs updating (dungeons/ directory)
+- GENERATION_PROMPT.md needs updating (new file workflow)
+- Old .bak file can be deleted once confident
+
+Continue with Phase 4 priorities from Feature Roadmap v2.
+```
+
+---
+
+## Git Commit Message
+
+```
+refactor: modularize dungeon templates into individual files
+
+Dungeon Modularization:
+- Split dungeonTemplates.ts (1,854 lines) into src/data/dungeons/
+- 6 individual dungeon files + index.ts registry
+- Updated 4 consuming file import paths
+- Archived original as dungeonTemplates.ts.bak
+
+Monster ID Validation:
+- Exported VALID_MONSTER_IDS from AIDungeonService.ts
+- UserDungeonLoader now warns on unknown monster IDs
+
+Data Fix:
+- Added missing 20th room to Thornwood Labyrinth (dead_end_south_2)
+
+Tests: All 20 dungeon-registry tests pass
+Files: 7 new, 6 modified, 1 archived
+```
+

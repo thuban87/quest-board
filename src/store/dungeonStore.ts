@@ -14,7 +14,7 @@ import type {
     PersistedDungeonState
 } from '../models/Dungeon';
 import type { LootReward } from '../models/Gear';
-import { getDungeonTemplate } from '../data/dungeonTemplates';
+import { getDungeonTemplate } from '../data/dungeons';
 import { findSpawnPosition } from '../data/TileRegistry';
 import { useCharacterStore } from './characterStore';
 
