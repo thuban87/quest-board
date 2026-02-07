@@ -1665,3 +1665,82 @@ Files: ScrivenersQuillModal.ts, ScrollLibraryModal.ts, TemplateService.ts,
 FileSuggest.ts (new), scrivener.css, 26 template files
 ```
 
+---
+
+## 2026-02-07 (Night) - Template Editor Completion (Session 3)
+
+**Focus:** Implementing Preview and Create File buttons, deprecating DynamicTemplateModal
+
+### Completed:
+
+#### Preview Button (👁️)
+- ✅ Created `TemplatePreviewModal.ts` — HTML replica quest card using same CSS classes as `QuestCard.tsx`
+- ✅ Renders: quest name + priority icon, category, section headers with task counts, tasks with checkboxes, progress bar (0%), XP total
+- ✅ Sections parsed from `## Header` lines in body content — only sections with tasks shown (matching real card behavior)
+- ✅ Auto-resolves `{{date}}` and `{{Quest Name}}` placeholders for display
+- ✅ Footer shows quest type, status, and tagline metadata
+
+#### Create File Button (📄)
+- ✅ Added `createQuestFile()` method to `ScrivenersQuillModal.ts`
+- ✅ Validates template name and body content are non-empty
+- ✅ Generates output path from quest type: `storageFolder/quests/{questType}/{slug}.md`
+- ✅ Builds complete frontmatter from form state (all fields)
+- ✅ Self-links `linkedTaskFile` to the output path when user hasn't specified one
+- ✅ Handles file overwrite confirmation for duplicates
+- ✅ Records template usage stats, triggers board refresh, opens file, closes modal
+
+#### DynamicTemplateModal Deprecation
+- ✅ Removed `DynamicTemplateModal` and `TemplatePickerModal` classes from `SmartTemplateModal.ts`
+- ✅ Removed unused constants and imports
+- ✅ Kept `openSmartTemplateModal()` entry point (used in `main.ts`)
+- ✅ File reduced from 231 → 22 lines
+
+### Files Changed:
+
+**New:**
+- `src/modals/TemplatePreviewModal.ts` — Preview modal with HTML replica quest card (~190 lines)
+
+**Modified:**
+- `src/modals/ScrivenersQuillModal.ts` — Added `showPreview()`, `createQuestFile()`, `extractSectionsFromBody()`
+- `src/modals/SmartTemplateModal.ts` — Stripped dead code (231 → 22 lines)
+- `src/styles/scrivener.css` — Added preview modal styles (~40 lines)
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Preview shows kanban-style card with section headers, tasks, progress, XP
+- ✅ Create File produces valid quest file in correct subfolder with self-linking linkedTaskFile
+- ✅ Scroll Library → Use Template → Editor flow working
+- ✅ Command palette "Scrivener's Desk" still works
+- ✅ Mobile tested — looks great end to end
+
+### Blockers/Issues:
+- None
+
+---
+
+## Git Commit Message
+
+```
+feat(templates): Preview button, Create File button, deprecate DynamicTemplateModal
+
+Preview Button:
+- HTML replica quest card using kanban CSS classes
+- Section headers with task counts (## headers parsed from body)
+- Tasks, progress bar, XP total, priority icons
+- Auto-resolves date and name placeholders
+
+Create File Button:
+- Creates quest file directly from template editor state
+- Routes to correct subfolder based on questType field
+- Self-links linkedTaskFile when no custom path specified
+- Records usage stats, triggers refresh, opens file, closes modal
+
+DynamicTemplateModal Deprecation:
+- Removed DynamicTemplateModal and TemplatePickerModal classes
+- SmartTemplateModal.ts reduced from 231 → 22 lines
+- Kept openSmartTemplateModal() entry point for main.ts
+
+Files: TemplatePreviewModal.ts (new), ScrivenersQuillModal.ts,
+SmartTemplateModal.ts, scrivener.css
+```

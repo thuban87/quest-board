@@ -330,9 +330,47 @@
     background: rgba(244, 67, 54, 0.3);
 }
 
-/* Loading state */
 .qb-loading {
     text-align: center;
     color: var(--text-muted);
     padding: 2em;
+}
+
+/* ===========================
+   Template Preview Modal
+   =========================== */
+
+.qb-template-preview-modal.modal {
+    width: 450px;
+    max-width: 90vw;
+    max-height: 80vh;
+}
+
+.qb-template-preview-modal h2 {
+    margin-top: 0;
+    margin-bottom: 0.25em;
+}
+
+.qb-preview-column-wrapper {
+    background: var(--background-secondary-alt);
+    border-radius: 8px;
+    padding: 1em;
+    margin: 1em 0;
+}
+
+.qb-preview-info {
+    margin-top: 0.75em;
+}
+
+.qb-preview-info p {
+    margin: 0.25em 0;
+    font-size: 0.85em;
+}
+
+.qb-preview-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.75em;
+    border-top: 1px solid var(--background-modifier-border);
+    margin-top: 0.75em;
 }

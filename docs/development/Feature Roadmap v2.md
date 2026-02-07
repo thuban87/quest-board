@@ -220,7 +220,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | **AI Quest Generation** | Convert task lists to quest files via Gemini | ✅ Complete |
 | **Daily Note Integration** | Log completed quests to daily notes | ✅ Complete |
 | ~~**Weekly Sprint View**~~ | ✅ **Progress Dashboard** - Activity history, stats, XP/gold tracking | ✅ Complete |
-| **Quest Templates UI** | "The Scrivener's Desk" - Template gallery, builder, usage stats, quest-to-template conversion | ✅ Complete |
+| **Quest Templates UI** | "The Scrivener's Desk" - Template gallery, builder, preview, create file, usage stats | ✅ Complete |
 | **Daily Quest & Watched Folder** | Auto-create quests when files added to watched folders (Daily Notes, custom folders) | ✅ Complete |
 
 #### Tier 2: Power-Ups & Testing (Early Phase 4)
@@ -389,5 +389,5 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-02-07 (Template Editor Refinement - dual type fields, dynamic status/quest type)
+**Last Updated:** 2026-02-07 (Template Editor Session 3 — Preview, Create File, DynamicTemplateModal deprecated)
 

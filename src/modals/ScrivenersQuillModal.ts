@@ -9,6 +9,8 @@
 import { App, Modal, Notice, Setting, TFile, TFolder, TextAreaComponent } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { ParsedTemplate } from '../services/TemplateService';
+import { TemplatePreviewModal, TemplatePreviewData, PreviewSection } from './TemplatePreviewModal';
+import { getTemplateStatsService } from '../services/TemplateStatsService';
 import { ArchiveMode, QuestNamingMode, WatchedFolderConfig } from '../services/FolderWatchService';
 import { ColumnConfigService } from '../services/ColumnConfigService';
 import { detectDailyNotesConfig } from '../utils/dailyNotesDetector';
@@ -470,17 +472,13 @@ export class ScrivenersQuillModal extends Modal {
             text: '👁️ Preview',
             cls: 'qb-btn qb-btn-secondary'
         });
-        previewBtn.addEventListener('click', () => {
-            new Notice('🔮 Preview modal coming in a future session');
-        });
+        previewBtn.addEventListener('click', () => this.showPreview());
 
         const createFileBtn = footer.createEl('button', {
             text: '📄 Create File',
             cls: 'qb-btn qb-btn-secondary'
         });
-        createFileBtn.addEventListener('click', () => {
-            new Notice('🔮 Create File path-picker coming in a future session');
-        });
+        createFileBtn.addEventListener('click', () => this.createQuestFile());
 
         const saveBtn = footer.createEl('button', {
             text: this.isEditing ? '💾 Update Scroll' : '✨ Inscribe Scroll',
@@ -835,6 +833,203 @@ Write your quest description here.
             return this.questType; // main, side, training
         }
         return this.templateType; // recurring, daily-quest, watched-folder
+    }
+
+    /**
+     * Extract sections (## headers) and tasks from body content.
+     * Groups tasks under their parent section header, matching how
+     * QuestCard.tsx renders sections on the kanban board.
+     */
+    private extractSectionsFromBody(): { sections: PreviewSection[]; totalTasks: number } {
+        const sections: PreviewSection[] = [];
+        let currentSection: PreviewSection = { headerText: '', tasks: [] };
+        let totalTasks = 0;
+
+        // Strip frontmatter before parsing
+        let body = this.bodyContent;
+        if (body.startsWith('---')) {
+            const endIndex = body.indexOf('---', 3);
+            if (endIndex !== -1) {
+                body = body.substring(endIndex + 3);
+            }
+        }
+
+        const lines = body.split('\n');
+        for (const line of lines) {
+            const trimmed = line.trim();
+
+            // Check for ## section headers
+            const headerMatch = trimmed.match(/^##\s+(.+)$/);
+            if (headerMatch) {
+                // Push previous section if it has content
+                if (currentSection.headerText || currentSection.tasks.length > 0) {
+                    sections.push(currentSection);
+                }
+                currentSection = { headerText: headerMatch[1].trim(), tasks: [] };
+                continue;
+            }
+
+            // Check for task lines
+            const taskMatch = trimmed.match(/^- \[ \]\s+(.+)$/);
+            if (taskMatch) {
+                currentSection.tasks.push(taskMatch[1].trim());
+                totalTasks++;
+            }
+        }
+
+        // Push the last section
+        if (currentSection.headerText || currentSection.tasks.length > 0) {
+            sections.push(currentSection);
+        }
+
+        return { sections, totalTasks };
+    }
+
+    /**
+     * Show a preview of how the quest card will look on the kanban board
+     */
+    private showPreview(): void {
+        // Get quest name from override or body content
+        const questName = (this as any)._questNameOverride
+            || this.getQuestNameFromContent()
+            || this.templateName
+            || 'Untitled Quest';
+
+        // Resolve placeholders in the quest name for display
+        const resolvedName = questName
+            .replace(/\{\{date\}\}/g, new Date().toISOString().split('T')[0])
+            .replace(/\{\{Quest Name\}\}/gi, this.templateName);
+
+        const { sections, totalTasks } = this.extractSectionsFromBody();
+
+        const previewData: TemplatePreviewData = {
+            questName: resolvedName,
+            category: this.category || 'general',
+            priority: this.priority,
+            xpPerTask: this.xpPerTask,
+            completionBonus: this.completionBonus,
+            visibleTasks: this.visibleTasks,
+            sections,
+            totalTasks,
+            tagline: this.tagline,
+            questType: this.questType,
+            status: this.status,
+        };
+
+        new TemplatePreviewModal(this.app, previewData).open();
+    }
+
+    /**
+     * Create a quest file directly from the current template editor state
+     */
+    private async createQuestFile(): Promise<void> {
+        // Validate
+        if (!this.templateName.trim()) {
+            new Notice('❌ Please enter a template name first');
+            return;
+        }
+
+        if (!this.bodyContent.trim()) {
+            new Notice('❌ Template body content is empty');
+            return;
+        }
+
+        try {
+            const storageFolder = this.plugin.settings.storageFolder;
+            const effectiveType = this.getEffectiveQuestType();
+
+            // Build frontmatter from form state
+            const questNameOverride = (this as any)._questNameOverride;
+            const questName = questNameOverride || this.templateName;
+
+            // Resolve auto-placeholders
+            const today = new Date().toISOString().split('T')[0];
+            const questSlug = questName
+                .toLowerCase()
+                .replace(/\{\{.*?\}\}/g, '')  // strip remaining placeholders
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '')
+                || 'untitled-quest';
+
+            // Generate output path based on quest type
+            const outputPath = `${storageFolder}/quests/${effectiveType.toLowerCase()}/${questSlug}.md`;
+
+            // Build the complete content (frontmatter + body)
+            const questNameLine = `questName: "${questName}"\n`;
+            const taglineLine = this.tagline ? `tagline: "${this.tagline}"\n` : '';
+            const recurrenceLine = this.templateType === 'recurring'
+                ? `recurrence: ${this.getRecurrenceString()}\n`
+                : '';
+            const tagsLines = this.tags.trim()
+                ? `tags:\n${this.tags.split(',').map(t => `  - ${t.trim()}`).filter(t => t !== '  - ').join('\n')}\n`
+                : '';
+            const linkedTaskLine = this.linkedTaskFile
+                ? `linkedTaskFile: "${this.linkedTaskFile}"\n`
+                : `linkedTaskFile: "${outputPath}"\n`;
+
+            const newFrontmatter = `---\n${questNameLine}questType: ${effectiveType}\nstatus: ${this.status}\npriority: ${this.priority}\ncategory: ${this.category || 'general'}\n${taglineLine}xpPerTask: ${this.xpPerTask}\ncompletionBonus: ${this.completionBonus}\nvisibleTasks: ${this.visibleTasks}\n${tagsLines}${linkedTaskLine}created: ${today}\n${recurrenceLine}---`;
+
+            // Strip existing frontmatter from body, resolve placeholders
+            let body = this.bodyContent;
+            if (body.startsWith('---')) {
+                const endIndex = body.indexOf('---', 3);
+                if (endIndex !== -1) {
+                    body = body.substring(endIndex + 3).replace(/^\r?\n/, '');
+                }
+            }
+
+            // Replace common auto-placeholders in body
+            body = body
+                .replace(/\{\{date\}\}/g, today)
+                .replace(/\{\{Quest Name\}\}/gi, questName)
+                .replace(/\{\{quest_type\}\}/gi, effectiveType)
+                .replace(/\{\{questType\}\}/g, effectiveType);
+
+            const content = `${newFrontmatter}\n\n${body}`;
+
+            // Ensure parent folder exists
+            const folderPath = outputPath.substring(0, outputPath.lastIndexOf('/'));
+            const folder = this.app.vault.getAbstractFileByPath(folderPath);
+            if (!folder) {
+                await this.app.vault.createFolder(folderPath);
+            }
+
+            // Check if file already exists
+            const existingFile = this.app.vault.getAbstractFileByPath(outputPath);
+            if (existingFile) {
+                const overwrite = window.confirm(
+                    `A quest file "${questSlug}.md" already exists. Overwrite it?`
+                );
+                if (!overwrite) return;
+                await this.app.vault.modify(existingFile as TFile, content);
+            } else {
+                await this.app.vault.create(outputPath, content);
+            }
+
+            // Record template usage stats
+            const statsService = getTemplateStatsService();
+            if (statsService && this.existingTemplate) {
+                await statsService.recordUsage(
+                    this.existingTemplate.path,
+                    this.existingTemplate.name,
+                    this.category || 'general'
+                );
+            }
+
+            const fileName = outputPath.split('/').pop();
+            new Notice(`✅ Quest created: ${fileName}`);
+
+            // Trigger board refresh
+            this.app.workspace.trigger('quest-board:refresh');
+
+            // Open the created file
+            await this.app.workspace.openLinkText(outputPath, '', false);
+
+            this.close();
+        } catch (error) {
+            console.error('[ScrivenersQuillModal] Failed to create quest file:', error);
+            new Notice('❌ Failed to create quest file');
+        }
     }
 
     /**
