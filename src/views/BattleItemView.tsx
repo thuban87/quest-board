@@ -43,29 +43,29 @@ export class BattleItemView extends ItemView {
         container.empty();
         container.addClass('qb-battle-container');
 
-        const manifestDir = this.plugin.manifest.dir;
+        const assetFolder = this.plugin.settings.assetFolder;
         const adapter = this.app.vault.adapter;
 
         // Get character for class/tier-based sprite
         const character = useCharacterStore.getState().character;
         let playerSpritePath: string | undefined;
 
-        if (manifestDir && character) {
+        if (assetFolder && character) {
             const tier = character.isTrainingMode ? 1 : getLevelTier(character.level);
-            playerSpritePath = getPlayerBattleSprite(manifestDir, adapter, character.class, tier);
+            playerSpritePath = getPlayerBattleSprite(assetFolder, adapter, character.class, tier);
         }
 
         // Get monster sprite path from current battle state
         const monster = useBattleStore.getState().monster;
         let monsterSpritePath: string | undefined;
 
-        if (manifestDir && monster?.templateId) {
-            monsterSpritePath = getMonsterBattleSprite(manifestDir, adapter, monster.templateId);
+        if (assetFolder && monster?.templateId) {
+            monsterSpritePath = getMonsterBattleSprite(assetFolder, adapter, monster.templateId);
         }
 
         // Compute background image path
-        const backgroundPath = manifestDir
-            ? adapter.getResourcePath(`${manifestDir}/assets/backgrounds/battle-bg.jpg`)
+        const backgroundPath = assetFolder
+            ? adapter.getResourcePath(`${assetFolder}/backgrounds/battle-bg.jpg`)
             : undefined;
 
         // Create React root and render

@@ -59,6 +59,9 @@ import { initDailyNoteService, dailyNoteService } from './src/services/DailyNote
 import { initTemplateStatsService } from './src/services/TemplateStatsService';
 import { setBalanceTestingContext } from './src/services/BalanceTestingService';
 import { FolderWatchService } from './src/services/FolderWatchService';
+import { AssetService } from './src/services/AssetService';
+import { AssetDownloadModal } from './src/modals/AssetDownloadModal';
+import { AssetConfigModal } from './src/modals/AssetConfigModal';
 
 
 
@@ -66,6 +69,7 @@ export default class QuestBoardPlugin extends Plugin {
     settings!: QuestBoardSettings;
     recurringQuestService!: RecurringQuestService;
     folderWatchService!: FolderWatchService;
+    assetService!: AssetService;
     monsterService = monsterService; // Expose for testing/debugging
     battleService = battleService; // Expose for testing/debugging
     private lastRecurrenceCheckHour: number = -1;
@@ -73,6 +77,12 @@ export default class QuestBoardPlugin extends Plugin {
     async onload(): Promise<void> {
         // Load settings
         await this.loadSettings();
+
+        // Migration: existing users who have already downloaded assets but don't have the new flag
+        if (!this.settings.assetConfigured && this.settings.lastAssetCheck > 0) {
+            this.settings.assetConfigured = true;
+            await this.saveSettings();
+        }
 
         // Apply custom quest→slot mapping to loot service
         if (this.settings.questSlotMapping) {
@@ -136,6 +146,9 @@ export default class QuestBoardPlugin extends Plugin {
             modal.open();
         });
 
+        // Initialize asset service
+        this.assetService = new AssetService(this.app, this.settings.assetFolder);
+
         // Sync cache with current folders after vault is ready (remove deleted folder entries)
         setTimeout(async () => {
             // Load user dungeons from configured folder
@@ -151,6 +164,9 @@ export default class QuestBoardPlugin extends Plugin {
 
             // Sync set bonus cache
             setBonusService.syncWithFolders();
+
+            // Asset delivery: first-run check or periodic update
+            await this.checkAssetsOnStartup();
         }, 2500); // Slightly after recurring quest processing
 
         // Check and update streak on load (reset if missed days, reset shield weekly)
@@ -336,7 +352,6 @@ export default class QuestBoardPlugin extends Plugin {
             callback: () => {
                 new AchievementHubModal({
                     app: this.app,
-                    badgeFolder: this.settings.badgeFolder,
                     onSave: async () => {
                         this.settings.achievements = useCharacterStore.getState().achievements;
                         await this.saveSettings();
@@ -472,7 +487,7 @@ export default class QuestBoardPlugin extends Plugin {
                 // If elite, show modal first; otherwise start battle directly
                 if (tier === 'elite') {
                     showEliteEncounterModal(this.app, monster, {
-                        manifestDir: this.manifest.dir,
+                        assetFolder: this.settings.assetFolder,
                         onFight: () => {
                             // Consume stamina when fight is accepted
                             useCharacterStore.getState().consumeStamina();
@@ -602,6 +617,39 @@ export default class QuestBoardPlugin extends Plugin {
             },
         });
 
+        // Add command to check for asset updates
+        this.addCommand({
+            id: 'check-asset-updates',
+            name: 'Check for Asset Updates',
+            callback: async () => {
+                const { Notice } = require('obsidian');
+                new Notice('📦 Checking for asset updates...', 2000);
+                try {
+                    const { needsUpdate, files, orphaned, remoteManifest } = await this.assetService.checkForUpdates();
+                    this.settings.lastAssetCheck = Date.now();
+                    await this.saveSettings();
+
+                    if (needsUpdate) {
+                        const character = this.settings.character;
+                        new AssetDownloadModal(this.app, {
+                            assetService: this.assetService,
+                            filesToDownload: files,
+                            manifest: remoteManifest,
+                            orphanedFiles: orphaned,
+                            characterClass: character?.class,
+                            onComplete: () => {
+                                new Notice(`✅ ${files.length} asset(s) updated`);
+                            },
+                        }).open();
+                    } else {
+                        new Notice('✅ All assets are up to date');
+                    }
+                } catch (e) {
+                    new Notice(`❌ Update check failed: ${(e as Error).message}`, 5000);
+                }
+            },
+        });
+
         // Add settings tab
         this.addSettingTab(new QuestBoardSettingTab(this.app, this));
 
@@ -627,6 +675,68 @@ export default class QuestBoardPlugin extends Plugin {
 
     async saveSettings(): Promise<void> {
         await this.saveData(this.settings);
+    }
+
+    /**
+     * Check assets on startup: first-install modal, missing assets notice, or periodic update.
+     * Called from the vault-ready setTimeout in onload().
+     */
+    private async checkAssetsOnStartup(): Promise<void> {
+        const { Notice } = require('obsidian');
+
+        try {
+            // Case 1: True first install — user has never configured assets
+            if (!this.settings.assetConfigured) {
+                console.log('[QuestBoard] First install — showing asset config modal');
+                new AssetConfigModal(this.app, this).open();
+                return;
+            }
+
+            // Case 2: Assets configured — check if they actually exist
+            const manifestExists = await this.assetService.isFirstRun();
+            if (manifestExists) {
+                // isFirstRun() returns true when manifest is MISSING
+                console.log('[QuestBoard] Assets configured but manifest missing — notifying user');
+                new Notice(
+                    '⚠️ Quest Board assets not found at configured path. ' +
+                    'Use the "Check for Asset Updates" command or go to Settings → Asset Delivery to re-download.',
+                    10000
+                );
+                return;
+            }
+
+            // Case 3: Assets exist — check if periodic update is due
+            const frequency = this.settings.assetUpdateFrequency;
+            if (frequency === 'manual') return;
+
+            const lastCheck = this.settings.lastAssetCheck;
+            const now = Date.now();
+            const msPerDay = 86_400_000;
+            const interval = frequency === 'daily' ? msPerDay : msPerDay * 7;
+
+            if (now - lastCheck < interval) {
+                console.log('[QuestBoard] Asset check skipped — not due yet');
+                return;
+            }
+
+            // Time for a check
+            console.log('[QuestBoard] Running periodic asset update check');
+            const { needsUpdate, files, orphaned, remoteManifest } = await this.assetService.checkForUpdates();
+            this.settings.lastAssetCheck = Date.now();
+            await this.saveSettings();
+
+            if (needsUpdate) {
+                new Notice(`📦 ${files.length} asset update(s) available. Use "Check for Asset Updates" command to download.`, 8000);
+            }
+
+            // Clean up orphaned files silently
+            if (orphaned.length > 0) {
+                await this.assetService.cleanupOrphanedFiles(orphaned);
+            }
+        } catch (e) {
+            // Non-blocking: log error but don't interrupt plugin startup
+            console.error('[QuestBoard] Asset check failed:', e);
+        }
     }
 
     /**

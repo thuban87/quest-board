@@ -30,7 +30,6 @@ import {
 interface UseXPAwardOptions {
     app: App;
     vault: Vault;
-    badgeFolder?: string;
     customStatMappings?: Record<string, string>;
     onCategoryUsed?: (category: string) => void;
     onSaveCharacter: () => Promise<void>;
@@ -56,7 +55,7 @@ let subscriberCount = 0;
 /**
  * Hook to watch task files and award XP on completion
  */
-export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/badges', customStatMappings, onCategoryUsed, onSaveCharacter }: UseXPAwardOptions) {
+export function useXPAward({ app, vault, customStatMappings, onCategoryUsed, onSaveCharacter }: UseXPAwardOptions) {
     // Use refs that point to the global singletons (for React pattern compatibility)
     const taskSnapshotsRef = useRef(globalTaskSnapshots);
     const fileWatchersRef = useRef(globalFileWatchers);
@@ -335,13 +334,13 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
 
             // Check for level achievements (after level-up)
             if (!character.isTrainingMode) {
-                const achievementService = new AchievementService(vault, badgeFolder);
+                const achievementService = new AchievementService(vault);
                 const levelCheck = achievementService.checkLevelAchievements(achievements, levelResult.newLevel);
 
                 // Show unlock popups for each new achievement (with delay)
                 levelCheck.newlyUnlocked.forEach((achievement, index) => {
                     setTimeout(() => {
-                        showAchievementUnlock(app, achievement, badgeFolder);
+                        showAchievementUnlock(app, achievement);
                         // Award achievement bonus XP
                         if (achievement.xpBonus > 0) {
                             addXP(achievement.xpBonus);
@@ -425,7 +424,7 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
             }
 
             // Check for quest count achievements
-            const achievementService = new AchievementService(vault, badgeFolder);
+            const achievementService = new AchievementService(vault);
             const questCountCheck = achievementService.checkQuestCountAchievements(achievements, 1); // TODO: track total quest count
 
             // Check for category-specific achievements (category_count type)
@@ -438,7 +437,7 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
             // Show unlock popups for quest count achievements
             questCountCheck.newlyUnlocked.forEach((achievement, index) => {
                 setTimeout(() => {
-                    showAchievementUnlock(app, achievement, badgeFolder);
+                    showAchievementUnlock(app, achievement);
                     if (achievement.xpBonus > 0) {
                         addXP(achievement.xpBonus);
                     }
@@ -448,7 +447,7 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
             // Show unlock popups for category achievements
             categoryCountCheck.newlyUnlocked.forEach((achievement, index) => {
                 setTimeout(() => {
-                    showAchievementUnlock(app, achievement, badgeFolder);
+                    showAchievementUnlock(app, achievement);
                     if (achievement.xpBonus > 0) {
                         addXP(achievement.xpBonus);
                     }
@@ -464,7 +463,7 @@ export function useXPAward({ app, vault, badgeFolder = 'Life/Quest Board/assets/
 
         // Persist character
         await onSaveCharacter();
-    }, [character, achievements, addXP, graduate, setPowerUps, onSaveCharacter, app, vault, badgeFolder]);
+    }, [character, achievements, addXP, graduate, setPowerUps, onSaveCharacter, app, vault]);
 
     // processingRef now points to globalProcessing (defined at module level)
 

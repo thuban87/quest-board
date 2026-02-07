@@ -72,8 +72,8 @@ export interface MoveQuestOptions {
     bountyChance?: number;
     /** Callback to open battle view when bounty fight starts */
     onBattleStart?: () => void;
-    /** Plugin manifest directory for sprite resolution */
-    manifestDir?: string;
+    /** Asset folder path for sprite resolution */
+    assetFolder?: string;
     /** XP awarded for the quest (for daily note logging) */
     xpAwarded?: number;
 }
@@ -170,14 +170,14 @@ export async function moveQuest(
                 // === STREAK ACHIEVEMENTS ===
                 // Check for streak milestone achievements (7-day, 30-day, etc.)
                 const achievements = useCharacterStore.getState().achievements;
-                const achievementService = new AchievementService(null as any, ''); // vault/folder not needed for checks
+                const achievementService = new AchievementService(null as any); // vault not needed for checks
                 const streakAchievementCheck = achievementService.checkStreakAchievements(achievements, newStreak);
 
                 if (streakAchievementCheck.newlyUnlocked.length > 0) {
                     // Show unlock popups
                     streakAchievementCheck.newlyUnlocked.forEach((achievement, index) => {
                         setTimeout(() => {
-                            showAchievementUnlock(null as any, achievement, '');
+                            showAchievementUnlock(null as any, achievement);
                         }, 2000 + (index * 1000));
                     });
 
@@ -307,7 +307,7 @@ export async function moveQuest(
                     // Battle service handles saving
                 },
                 onBattleStart: options.onBattleStart,
-                manifestDir: options.manifestDir,
+                assetFolder: options.assetFolder,
             });
         }
     };

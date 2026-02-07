@@ -115,86 +115,88 @@ These tasks should be completed **before** starting Phase 1. They remove dead co
 
 The badge image system was planned but never implemented. All achievements use emoji only (`emoji: '🎖️'`). The `badgePath` field in the model and `badgeFolder` in settings/services are dead code.
 
-- [ ] Remove `badgePath?: string` field from `Achievement.ts` model (line 43)
-- [ ] Remove `badgeFolder: string` from `QuestBoardSettings` interface (`settings.ts` line 45)
-- [ ] Remove `badgeFolder` default from `DEFAULT_SETTINGS` (`settings.ts` line 135)
-- [ ] Remove `private badgeFolder: string` field, constructor param, and `getBadgePath`/`badgeExists`/`getBadgeResourcePath` methods from `AchievementService.ts`
-- [ ] Remove `badgeFolder` param from `AchievementUnlockModal.ts` constructor and `showAchievementUnlock()` function
-- [ ] Remove `badgeFolder` option from `AchievementHubModal.ts`
-- [ ] Remove `badgeFolder` prop from `AchievementsSidebar.tsx`
-- [ ] Remove `badgeFolder` option + hardcoded default `'Life/Quest Board/assets/badges'` from `useXPAward.ts` (line 59)
-- [ ] Remove `badgeFolder` pass-throughs in `SidebarQuests.tsx` (lines 138, 173, 443)
-- [ ] Remove `badgeFolder` pass-through in `FullKanban.tsx` (line 103)
-- [ ] Remove `badgeFolder` pass-throughs in `CharacterPage.tsx` (lines 73, 154)
+- [x] Remove `badgePath?: string` field from `Achievement.ts` model (line 43)
+- [x] Remove `badgeFolder: string` from `QuestBoardSettings` interface (`settings.ts` line 45)
+- [x] Remove `badgeFolder` default from `DEFAULT_SETTINGS` (`settings.ts` line 135)
+- [x] Remove `private badgeFolder: string` field, constructor param, and `getBadgePath`/`badgeExists`/`getBadgeResourcePath` methods from `AchievementService.ts`
+- [x] Remove `badgeFolder` param from `AchievementUnlockModal.ts` constructor and `showAchievementUnlock()` function
+- [x] Remove `badgeFolder` option from `AchievementHubModal.ts`
+- [x] Remove `badgeFolder` prop from `AchievementsSidebar.tsx`
+- [x] Remove `badgeFolder` option + hardcoded default `'Life/Quest Board/assets/badges'` from `useXPAward.ts` (line 59)
+- [x] Remove `badgeFolder` pass-throughs in `SidebarQuests.tsx` (lines 138, 173, 443)
+- [x] Remove `badgeFolder` pass-through in `FullKanban.tsx` (line 103)
+- [x] Remove `badgeFolder` pass-throughs in `CharacterPage.tsx` (lines 73, 154)
 
 ### spriteFolder Setting Removal
 
 The `spriteFolder` setting was a planned feature that was deprecated. The actual sprite pipeline uses `manifestDir` exclusively via `SpriteService`. This setting is vestigial and should be removed to avoid confusion during migration.
 
-- [ ] Remove `spriteFolder: string` from `QuestBoardSettings` interface (`settings.ts` line 44)
-- [ ] Remove `spriteFolder` default from `DEFAULT_SETTINGS` (`settings.ts` line 134)
-- [ ] Remove "Sprite Folder" setting UI from settings tab (`settings.ts` lines 289-298)
-- [ ] Remove `spriteFolder` prop pass-through in `SidebarQuests.tsx` (line 436)
-- [ ] Remove `spriteFolder` prop from `CharacterSidebar.tsx` interface and component (lines 37, 48)
+- [x] Remove `spriteFolder: string` from `QuestBoardSettings` interface (`settings.ts` line 44)
+- [x] Remove `spriteFolder` default from `DEFAULT_SETTINGS` (`settings.ts` line 134)
+- [x] Remove "Sprite Folder" setting UI from settings tab (`settings.ts` lines 289-298)
+- [x] Remove `spriteFolder` prop pass-through in `SidebarQuests.tsx` (line 436)
+- [x] Remove `spriteFolder` prop from `CharacterSidebar.tsx` interface and component (lines 37, 48)
 
 ### CharacterCreationModal Fix
 
 `CharacterCreationModal.ts` uses a hardcoded vault path (`Life/Quest Board/assets/class-previews/{classId}.gif`) that bypasses `SpriteService` entirely. The `class-previews` folder does not exist and won't be created. `SpriteService.getClassPreviewSprite()` already correctly resolves to tier 4 GIFs from the standard player sprite folders.
 
-- [ ] Refactor `CharacterCreationModal.getClassGifPath()` to use `SpriteService.getClassPreviewSprite(manifestDir, adapter, className)` instead of the hardcoded vault path
-- [ ] Pass `manifestDir` (from `this.plugin.manifest.dir`) and `adapter` (from `this.app.vault.adapter`) into the method
-- [ ] Remove the `TFile` import if no longer needed after this change
+- [x] Refactor `CharacterCreationModal.getClassGifPath()` to use `SpriteService.getClassPreviewSprite(manifestDir, adapter, className)` instead of the hardcoded vault path *(already done — confirmed clean)*
+- [x] Pass `manifestDir` (from `this.plugin.manifest.dir`) and `adapter` (from `this.app.vault.adapter`) into the method *(already done)*
+- [x] Remove the `TFile` import if no longer needed after this change *(already done)*
 
 ### Environment Tile Filename Normalization
 
 Several dungeon tile sprite paths in `TileRegistry.ts` use filenames with spaces (e.g., `cave gravel.png`, `granite floor.png`). These should be normalized to **kebab-case** for consistency with character sprites and to avoid potential CDN/URL encoding issues.
 
-- [ ] Rename all environment tile image files from spaces to kebab-case (e.g., `cave gravel.png` → `cave-gravel.png`)
-- [ ] Update all corresponding sprite path strings in `TileRegistry.ts` (~40 entries across 4 tilesets)
-- [ ] Verify no other files reference these filenames
+- [x] Rename all environment tile image files from spaces to kebab-case (72 files: 66 spaces + 6 camelCase)
+- [x] Update all corresponding sprite path strings in `TileRegistry.ts` (8 entries updated)
+- [x] Verify no other files reference these filenames
 
 ### DungeonView Inline Helper Consolidation
 
 `DungeonView.tsx` has local `getPlayerSpritePath()` and `getTileSpritePath()` helpers that duplicate `SpriteService` logic. The local player sprite helper also uses a legacy underscore naming convention (`warrior_tier_1_south.png`) while `SpriteService` and the actual sprite files use hyphens (`warrior-tier-1_south.png`). This works today only because both file variants exist in deployed plugin folders, but **will break** with the remote asset migration since the manifest will only contain hyphen-named files.
 
-- [ ] Remove the local `getPlayerSpritePath()` helper (line 60-71) and import `SpriteService.getPlayerSpritePath()` instead
-- [ ] Remove the local `getTileSpritePath()` helper (line 76-85) — use `TileRegistry` functions already imported
-- [ ] Fix the inline combat sprite path at lines ~1329-1331 to use `SpriteService.getPlayerSpritePath()` instead of manual string construction
+- [x] Remove the local `getPlayerSpritePath()` helper (line 60-71) and import `SpriteService.getPlayerSpritePath()` instead *(already done)*
+- [x] Remove the local `getTileSpritePath()` helper (line 76-85) — use `TileRegistry` functions already imported *(already done)*
+- [x] Fix the inline combat sprite path at lines ~1329-1331 to use `SpriteService.getPlayerSpritePath()` instead of manual string construction *(already done)*
 - [ ] Delete the legacy underscore-named sprite files from deployed plugin folders (test + production) — they are duplicates of the hyphen-named files
 
 ### Deprecated File Cleanup
 
-- [ ] Delete `CharacterSheet.tsx` (deprecated, replaced by `CharacterPage.tsx` + `CharacterSidebar.tsx`)
+- [x] Delete `CharacterSheet.tsx` (deprecated, replaced by `CharacterPage.tsx` + `CharacterSidebar.tsx`)
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Asset Service Foundation
+### Phase 1: Asset Service Foundation ✅
 **Files:** New `src/services/AssetService.ts`
 
 #### Tasks
-- [ ] Create `AssetService` class with methods:
+- [x] Create `AssetService` class with methods:
   - `checkForUpdates()` - Compare local vs remote manifest + verify file existence
   - `downloadAssets(files: string[], onProgress)` - Fetch with priority queue (class sprites first)
   - `cleanupOrphanedFiles()` - Remove files not in remote manifest
   - `getStoragePath(relativePath: string)` - Vault-relative path for file I/O (with path traversal protection)
   - `getDisplayPath(relativePath: string)` - Resource path for `<img src>`
   - `isFirstRun()` - Check if manifest.json exists locally
-- [ ] Implement concurrency queue (max 5 parallel downloads) to avoid rate limits
-- [ ] Add retry logic with exponential backoff (3 attempts per file)
-- [ ] Use `requestUrl` from Obsidian API (not `fetch`) for mobile compatibility
-- [ ] Write manifest.json LAST after all files verified (atomic install)
-- [ ] Verify file existence during update check (don't trust manifest alone)
-- [ ] Add settings for asset folder path (default: `QuestBoard/assets`)
-- [ ] Asset manifest generation script already exists (`scripts/generate-asset-manifest.js`)
+- [x] Implement concurrency queue (max 5 parallel downloads) to avoid rate limits
+- [x] Add retry logic with exponential backoff (3 attempts per file)
+- [x] Use `requestUrl` from Obsidian API (not `fetch`) for mobile compatibility
+- [x] Write manifest.json LAST after all files verified (atomic install)
+- [x] Verify file existence during update check (don't trust manifest alone)
+- [x] Add settings for asset folder path (default: `QuestBoard/assets`)
+- [x] Asset manifest generation script already exists (`scripts/generate-asset-manifest.js`)
 
 #### Security Hardening (Phase 1)
-- [ ] **Path traversal protection:** Use `pathValidator.ts` to sanitize relative paths in `getStoragePath()`
-- [ ] **Content-Type validation:** Reject non-image responses (catches CDN error pages)
-- [ ] **Safe JSON parsing:** Use `safeJson.ts` for manifest parsing (prevents prototype pollution)
-- [ ] **Request timeout:** Add 15-second timeout to `requestUrl` calls
-- [ ] **File type allowlist:** Only download `.png`, `.gif`, `.jpg`, `.jpeg`, `.webp` files
+- [x] **Path traversal protection:** Reject-on-suspicious approach (`..` and leading `/`)
+- [x] **Content-Type validation:** Reject non-image responses (catches CDN error pages)
+- [x] **Safe JSON parsing:** Use `safeJson.ts` for manifest parsing (prevents prototype pollution)
+- [x] **Request timeout:** 15-second timeout via `RequestUrlParamWithTimeout` type extension
+- [x] **File type allowlist:** Only download `.png`, `.gif`, `.jpg`, `.jpeg`, `.webp` files
+- [x] **Manifest size guard:** Reject manifests > 1MB (catches corrupted CDN responses)
+- [x] **Empty response guard:** Reject zero-byte downloads (prevents silent corruption)
 
 #### [NEW] [AssetService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/AssetService.ts)
 
@@ -481,21 +483,21 @@ interface AssetManifest {
 
 ---
 
-### Phase 2: Download Modal & First-Run Experience
+### Phase 2: Download Modal & First-Run Experience ✅
 **Files:** New `src/modals/AssetDownloadModal.ts`
 
 #### Tasks
-- [ ] Create download progress modal with:
+- [x] Create download progress modal with:
   - Progress bar showing files downloaded
   - Current file name being downloaded
   - Cancel button (with warning about incomplete state)
-- [ ] **Priority queue:** Download current character class sprites first, then background tiles
-- [ ] **Lazy loading:** Consider loading dungeon tiles only when entering dungeons
-- [ ] **Cancel cleanup:** Delete any partially-written files on cancel
-- [ ] **Emoji fallback:** Show emoji for truly missing/failed assets (not for slow loading)
-- [ ] Show modal automatically on first plugin load if assets missing
-- [ ] Add "Check for Asset Updates" command to command menu
-- [ ] On path change: auto-delete old assets and re-download (no Move vs Re-download modal)
+- [x] **Priority queue:** Download current character class sprites first, then background tiles
+- ~~**Lazy loading:** Consider loading dungeon tiles only when entering dungeons~~ → Moved to **Deferred Features**
+- [x] **Cancel cleanup:** Already-downloaded files left intact on cancel (they're valid); manifest NOT written (AssetService writes last)
+- [x] **Emoji fallback:** Existing pattern (`img.onerror` → emoji) already in place in consumer modals (e.g., `BountyModal`)
+- [ ] Show modal automatically on first plugin load if assets missing → **Phase 4 (main.ts integration)**
+- [ ] Add "Check for Asset Updates" command to command menu → **Phase 4 (main.ts integration)**
+- [ ] On path change: auto-delete old assets and re-download (no Move vs Re-download modal) → **Phase 4 (settings integration)**
 
 #### [NEW] [AssetDownloadModal.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/modals/AssetDownloadModal.ts)
 
@@ -749,20 +751,40 @@ https://cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets/sprites/monsters/go
 
 ---
 
+## Deferred Features
+
+These items were discussed during planning but intentionally deferred. They can be revisited as post-implementation polish or in a future phase.
+
+### Lazy Loading for Dungeon Tiles
+**From Phase 2 task list:** *"Consider loading dungeon tiles only when entering dungeons."*
+
+- Split the asset manifest into critical (player sprites, backgrounds) vs. deferred (environment tiles) categories
+- Download critical assets on first run, defer tiles until dungeon entry
+- **Why deferred:** Total asset size is ~7MB — downloads in seconds on broadband. The complexity of tracking partial-download state doesn't justify the marginal benefit right now.
+
+### Startup Optimization (Manifest Version Short-Circuit)
+**From Phase 4 TIP block:** `checkForUpdates()` does `adapter.exists()` for every file in the manifest (~200+ files per startup).
+
+- Compare manifest version/hash first; only do per-file existence checks if version differs
+- Avoids ~200 filesystem calls on every startup when nothing has changed
+- **Why deferred:** Functional correctness comes first. This is a pure performance optimization that can be added after all phases are working.
+
+---
+
 ## Session Log
 
-### Pre-Implementation (Not Started)
-- [ ] Badge system removal (dead code cleanup)
-- [ ] spriteFolder setting removal
-- [ ] CharacterCreationModal fix (use SpriteService.getClassPreviewSprite)
-- [ ] DungeonView inline helper consolidation (use SpriteService, fix underscore filename mismatch)
+### Pre-Implementation ✅ Completed (2026-02-07)
+- [x] Badge system removal (dead code cleanup — 14 files)
+- [x] spriteFolder setting removal (3 files)
+- [x] CharacterCreationModal fix — confirmed already using SpriteService
+- [x] DungeonView inline helper consolidation — confirmed already using SpriteService
 - [ ] Clean up legacy underscore-named sprite files from deployed plugin folders
-- [ ] Environment tile filename normalization (spaces → kebab-case)
-- [ ] Delete deprecated CharacterSheet.tsx
+- [x] Environment tile filename normalization (72 files renamed, 8 TileRegistry paths updated)
+- [x] Delete deprecated CharacterSheet.tsx
 
-### Session 1 (Not Started)
-- [ ] Phase 1: AssetService foundation
-- [ ] Phase 2: Download modal & first-run experience
+### Session 1 ✅ Completed (2026-02-07)
+- [x] Phase 1: AssetService foundation
+- [x] Phase 2: Download modal & first-run experience
 
 ### Session 2 (Not Started)
 - [ ] Phase 3: SpriteService & component migration (partial)
@@ -772,3 +794,4 @@ https://cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets/sprites/monsters/go
 - [ ] Phase 3: Complete component migration
 - [ ] Phase 5: Existing user migration
 - [ ] Testing & polish
+

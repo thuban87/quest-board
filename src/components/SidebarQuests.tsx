@@ -103,7 +103,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
     // Character sprite resource path (uses consolidated hook)
     const spriteResourcePath = useCharacterSprite({
         character,
-        manifestDir: plugin.manifest.dir,
+        assetFolder: plugin.settings.assetFolder,
         adapter: app.vault.adapter,
         animated: true,  // Animated GIF for character sheet
     });
@@ -128,14 +128,14 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
         app,  // Pass app for loot modal display
         bountyChance: plugin.settings.bountyChance,  // Pass bounty chance for bounty triggers
         onBattleStart: () => plugin.activateBattleView(),  // Open battle view when bounty fight starts
-        manifestDir: plugin.manifest.dir,  // For monster sprite resolution in BountyModal
+        assetFolder: plugin.settings.assetFolder,  // For monster sprite resolution in BountyModal
     });
 
     // XP Award hook  
     useXPAward({
         app,
         vault: app.vault,
-        badgeFolder: plugin.settings.badgeFolder,
+
         customStatMappings: plugin.settings.categoryStatMappings,
         onCategoryUsed: async (category) => {
             // Auto-populate knownCategories for settings autocomplete
@@ -170,7 +170,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
             }
         }
         // Initialize achievements with defaults (merges saved state with default achievements)
-        const achievementService = new AchievementService(app.vault, plugin.settings.badgeFolder);
+        const achievementService = new AchievementService(app.vault);
         const savedAchievements = plugin.settings.achievements || [];
         const initializedAchievements = achievementService.initializeAchievements(savedAchievements);
         setInventoryAndAchievements(
@@ -270,7 +270,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
             app,
             bountyChance: plugin.settings.bountyChance,
             onBattleStart: () => plugin.activateBattleView(),
-            manifestDir: plugin.manifest.dir,
+            assetFolder: plugin.settings.assetFolder,
             onSaveCharacter: handleSaveCharacter,
         });
     }, [app, plugin.settings, handleSaveCharacter]);
@@ -433,14 +433,13 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                         onOpenSkillLoadout={() => showSkillLoadoutModal(app, {
                             onSave: handleSaveCharacter
                         })}
-                        spriteFolder={plugin.settings.spriteFolder}
                         spriteResourcePath={spriteResourcePath}
                     />
                 ) : (
                     /* Achievements View */
                     <AchievementsSidebar
                         app={app}
-                        badgeFolder={plugin.settings.badgeFolder}
+
                         onBack={() => setCurrentView('character')}
                     />
                 )}

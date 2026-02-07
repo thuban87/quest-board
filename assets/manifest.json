@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-02-07T08:38:07.980Z",
-  "fileCount": 568,
+  "lastUpdated": "2026-02-07T20:15:40.838Z",
+  "fileCount": 559,
   "files": {
     "backgrounds/battle-bg.jpg": {
       "hash": "9416e8e6",
@@ -351,71 +351,71 @@
       "hash": "70c39405",
       "size": 5743
     },
-    "environment/cave/floor/cave coral black weakened.png": {
+    "environment/cave/floor/cave-coral-black-weakened.png": {
       "hash": "7736809d",
       "size": 8164
     },
-    "environment/cave/floor/cave coral black.png": {
+    "environment/cave/floor/cave-coral-black.png": {
       "hash": "e8802a91",
       "size": 7985
     },
-    "environment/cave/floor/cave gravel 2.png": {
+    "environment/cave/floor/cave-gravel-2.png": {
       "hash": "ee534d60",
       "size": 14944
     },
-    "environment/cave/floor/cave gravel 3.png": {
+    "environment/cave/floor/cave-gravel-3.png": {
       "hash": "49e80f6a",
       "size": 14654
     },
-    "environment/cave/floor/cave gravel 4.png": {
+    "environment/cave/floor/cave-gravel-4.png": {
       "hash": "06119562",
       "size": 14809
     },
-    "environment/cave/floor/cave gravel 5.png": {
+    "environment/cave/floor/cave-gravel-5.png": {
       "hash": "b5db89f0",
       "size": 14388
     },
-    "environment/cave/floor/cave gravel pit 1.png": {
+    "environment/cave/floor/cave-gravel-pit-1.png": {
       "hash": "415bc7ab",
       "size": 14489
     },
-    "environment/cave/floor/cave gravel pit 2.png": {
+    "environment/cave/floor/cave-gravel-pit-2.png": {
       "hash": "8cc84a7d",
       "size": 14720
     },
-    "environment/cave/floor/cave gravel pit 3.png": {
+    "environment/cave/floor/cave-gravel-pit-3.png": {
       "hash": "82c29a2c",
       "size": 12690
     },
-    "environment/cave/floor/cave gravel.png": {
+    "environment/cave/floor/cave-gravel.png": {
       "hash": "6d7faebe",
       "size": 14870
     },
-    "environment/cave/floor/coldCaveGravel.png": {
+    "environment/cave/floor/cold-cave-gravel.png": {
       "hash": "0eb988bb",
       "size": 15309
     },
-    "environment/cave/floor/darkCaveGravel.png": {
+    "environment/cave/floor/dark-cave-gravel.png": {
       "hash": "eaf4d01b",
       "size": 13956
     },
-    "environment/cave/floor/granite floor.png": {
+    "environment/cave/floor/granite-floor.png": {
       "hash": "749ab6be",
       "size": 5050
     },
-    "environment/cave/wall/caveCliff2.png": {
+    "environment/cave/wall/cave-cliff-2.png": {
       "hash": "ff99c0d1",
       "size": 891
     },
-    "environment/cave/wall/caveCliff3.png": {
+    "environment/cave/wall/cave-cliff-3.png": {
       "hash": "10edfab0",
       "size": 891
     },
-    "environment/cave/wall/caveCliff4.png": {
+    "environment/cave/wall/cave-cliff-4.png": {
       "hash": "b0b2ff18",
       "size": 885
     },
-    "environment/cave/wall/caveCliff5.png": {
+    "environment/cave/wall/cave-cliff-5.png": {
       "hash": "78e503b5",
       "size": 868
     },
@@ -431,35 +431,35 @@
       "hash": "42818232",
       "size": 891
     },
-    "environment/cave/wall/granite cliff.png": {
+    "environment/cave/wall/granite-cliff.png": {
       "hash": "f5e042fc",
       "size": 8488
     },
-    "environment/construction path snowy.png": {
+    "environment/construction-path-snowy.png": {
       "hash": "d6e845d7",
       "size": 3959
     },
-    "environment/construction path.png": {
+    "environment/construction-path.png": {
       "hash": "4c3e8d77",
       "size": 433
     },
-    "environment/coral black weakened.png": {
+    "environment/coral-black-weakened.png": {
       "hash": "1f365b3d",
       "size": 8254
     },
-    "environment/coral black.png": {
+    "environment/coral-black.png": {
       "hash": "f1568ad2",
       "size": 7924
     },
-    "environment/coral blue chars.png": {
+    "environment/coral-blue-chars.png": {
       "hash": "b053665d",
       "size": 9153
     },
-    "environment/coral blue.png": {
+    "environment/coral-blue.png": {
       "hash": "310d3029",
       "size": 8709
     },
-    "environment/coral orange.png": {
+    "environment/coral-orange.png": {
       "hash": "9d8ab1ce",
       "size": 9394
     },
@@ -539,7 +539,7 @@
       "hash": "b9de8c5b",
       "size": 477
     },
-    "environment/forest/floor/highland snowy.png": {
+    "environment/forest/floor/highland-snowy.png": {
       "hash": "156082f2",
       "size": 10939
     },
@@ -595,11 +595,11 @@
       "hash": "7fd8b8ca",
       "size": 413
     },
-    "environment/granite tile.png": {
+    "environment/granite-tile.png": {
       "hash": "0a8a6443",
       "size": 5052
     },
-    "environment/grass nov.png": {
+    "environment/grass-nov.png": {
       "hash": "8a4bb223",
       "size": 584
     },
@@ -611,11 +611,11 @@
       "hash": "9ecb96a5",
       "size": 565
     },
-    "environment/highland arid.png": {
+    "environment/highland-arid.png": {
       "hash": "9e1ef65e",
       "size": 732
     },
-    "environment/infested gravel.png": {
+    "environment/infested-gravel.png": {
       "hash": "b689024f",
       "size": 14654
     },
@@ -623,27 +623,27 @@
       "hash": "2a2e9d54",
       "size": 1216
     },
-    "environment/map tile city.png": {
+    "environment/map-tile-city.png": {
       "hash": "321cdbe0",
       "size": 6429
     },
-    "environment/map tile forest.png": {
+    "environment/map-tile-forest.png": {
       "hash": "9001fbb8",
       "size": 6777
     },
-    "environment/map tile grass.png": {
+    "environment/map-tile-grass.png": {
       "hash": "10980007",
       "size": 6282
     },
-    "environment/map tile mountain.png": {
+    "environment/map-tile-mountain.png": {
       "hash": "78bacd7c",
       "size": 6983
     },
-    "environment/map tile ocean.png": {
+    "environment/map-tile-ocean.png": {
       "hash": "ef4d00b2",
       "size": 7274
     },
-    "environment/map tile sand.png": {
+    "environment/map-tile-sand.png": {
       "hash": "c36169e4",
       "size": 5810
     },
@@ -659,7 +659,11 @@
       "hash": "d6ced406",
       "size": 5099
     },
-    "environment/path snowy.png": {
+    "environment/path-2-snowy.png": {
+      "hash": "18cbaa7f",
+      "size": 7252
+    },
+    "environment/path-snowy.png": {
       "hash": "5fe42f55",
       "size": 3866
     },
@@ -667,19 +671,15 @@
       "hash": "a38f33d6",
       "size": 410
     },
-    "environment/path2 snowy.png": {
-      "hash": "18cbaa7f",
-      "size": 7252
-    },
     "environment/path2.png": {
       "hash": "dbdc0b52",
       "size": 832
     },
-    "environment/pebbles cave.png": {
+    "environment/pebbles-cave.png": {
       "hash": "b2b55cf7",
       "size": 6241
     },
-    "environment/pebbles snow.png": {
+    "environment/pebbles-snow.png": {
       "hash": "f1fe92c7",
       "size": 7562
     },
@@ -687,27 +687,27 @@
       "hash": "ce192ecc",
       "size": 6922
     },
-    "environment/quartzite cliff.png": {
+    "environment/quartzite-cliff.png": {
       "hash": "8a0e5066",
       "size": 8793
     },
-    "environment/quartzite floor.png": {
+    "environment/quartzite-floor.png": {
       "hash": "6d40ec0e",
       "size": 5587
     },
-    "environment/quartzite tile.png": {
+    "environment/quartzite-tile.png": {
       "hash": "3bd2372f",
       "size": 5638
     },
-    "environment/sand ash.png": {
+    "environment/sand-ash.png": {
       "hash": "7e30e828",
       "size": 4056
     },
-    "environment/sand orange.png": {
+    "environment/sand-orange.png": {
       "hash": "c5523b56",
       "size": 4610
     },
-    "environment/sand white.png": {
+    "environment/sand-white.png": {
       "hash": "edbac256",
       "size": 4172
     },
@@ -723,27 +723,27 @@
       "hash": "dab619a9",
       "size": 2643
     },
-    "environment/stone tile.png": {
+    "environment/stone-tile.png": {
       "hash": "8b0945d1",
       "size": 5213
     },
-    "environment/swamp grass nov.png": {
+    "environment/swamp-grass-nov.png": {
       "hash": "0a596b08",
       "size": 11070
     },
-    "environment/swamp grass snowy.png": {
+    "environment/swamp-grass-snowy.png": {
       "hash": "77933d6f",
       "size": 10922
     },
-    "environment/wood tile.png": {
+    "environment/wood-tile.png": {
       "hash": "1f43e20c",
       "size": 724
     },
-    "environment/wood wall.png": {
+    "environment/wood-wall.png": {
       "hash": "29c24c15",
       "size": 525
     },
-    "environment/woodpath snowy.png": {
+    "environment/woodpath-snowy.png": {
       "hash": "a741381a",
       "size": 5974
     },
@@ -755,7 +755,7 @@
       "hash": "c592bc3f",
       "size": 757
     },
-    "environment/yellow grass.png": {
+    "environment/yellow-grass.png": {
       "hash": "63225386",
       "size": 390
     },
@@ -1007,7 +1007,7 @@
       "hash": "a6ccef70",
       "size": 3392
     },
-    "environment/_shared/floor/cyan grass.png": {
+    "environment/_shared/floor/cyan-grass.png": {
       "hash": "5ed7be50",
       "size": 396
     },
@@ -1018,26 +1018,6 @@
     "environment/_shared/floor/dustgrass.png": {
       "hash": "25c3d778",
       "size": 5384
-    },
-    "environment/_shared/floor/grass cold.png": {
-      "hash": "f58a9874",
-      "size": 8506
-    },
-    "environment/_shared/floor/grass dry.png": {
-      "hash": "9a54fb2d",
-      "size": 8609
-    },
-    "environment/_shared/floor/grass oct.png": {
-      "hash": "7099bf13",
-      "size": 394
-    },
-    "environment/_shared/floor/grass sep.png": {
-      "hash": "612b4a40",
-      "size": 395
-    },
-    "environment/_shared/floor/grass snowy.png": {
-      "hash": "b5532988",
-      "size": 8001
     },
     "environment/_shared/floor/grass-autotile-04.png": {
       "hash": "928c1544",
@@ -1051,6 +1031,26 @@
       "hash": "eda86a99",
       "size": 698
     },
+    "environment/_shared/floor/grass-cold.png": {
+      "hash": "f58a9874",
+      "size": 8506
+    },
+    "environment/_shared/floor/grass-dry.png": {
+      "hash": "9a54fb2d",
+      "size": 8609
+    },
+    "environment/_shared/floor/grass-oct.png": {
+      "hash": "7099bf13",
+      "size": 394
+    },
+    "environment/_shared/floor/grass-sep.png": {
+      "hash": "612b4a40",
+      "size": 395
+    },
+    "environment/_shared/floor/grass-snowy.png": {
+      "hash": "b5532988",
+      "size": 8001
+    },
     "environment/_shared/floor/grass.png": {
       "hash": "0d848130",
       "size": 4469
@@ -1063,15 +1063,15 @@
       "hash": "502e9f2d",
       "size": 4467
     },
-    "environment/_shared/floor/swamp grass mar.png": {
+    "environment/_shared/floor/swamp-grass-mar.png": {
       "hash": "967f6823",
       "size": 10836
     },
-    "environment/_shared/floor/swamp grass oct.png": {
+    "environment/_shared/floor/swamp-grass-oct.png": {
       "hash": "3dfc6a57",
       "size": 10918
     },
-    "environment/_shared/floor/swamp grass sep.png": {
+    "environment/_shared/floor/swamp-grass-sep.png": {
       "hash": "e98e9c5f",
       "size": 10780
     },
@@ -1083,15 +1083,15 @@
       "hash": "9a32ec22",
       "size": 6724
     },
-    "environment/_shared/floor/thornfloor damp.png": {
+    "environment/_shared/floor/thornfloor-damp.png": {
       "hash": "cbb723e7",
       "size": 11325
     },
-    "environment/_shared/floor/thornfloor dry.png": {
+    "environment/_shared/floor/thornfloor-dry.png": {
       "hash": "15eef848",
       "size": 11777
     },
-    "environment/_shared/floor/thornfloor snowy.png": {
+    "environment/_shared/floor/thornfloor-snowy.png": {
       "hash": "b7bb9d18",
       "size": 13743
     },
@@ -1099,7 +1099,7 @@
       "hash": "b72cc232",
       "size": 11492
     },
-    "environment/_shared/floor/tundra snowy.png": {
+    "environment/_shared/floor/tundra-snowy.png": {
       "hash": "c2310419",
       "size": 7287
     },
@@ -1107,23 +1107,23 @@
       "hash": "c8e558fd",
       "size": 6774
     },
-    "environment/_shared/hazard/algae green.png": {
+    "environment/_shared/hazard/algae-green.png": {
       "hash": "c994716a",
       "size": 10579
     },
-    "environment/_shared/hazard/cave ice.png": {
+    "environment/_shared/hazard/cave-ice.png": {
       "hash": "07373e8d",
       "size": 3806
     },
-    "environment/_shared/hazard/cave magma cold.png": {
+    "environment/_shared/hazard/cave-magma-cold.png": {
       "hash": "605ca4ce",
       "size": 1596
     },
-    "environment/_shared/hazard/cave magma.png": {
+    "environment/_shared/hazard/cave-magma.png": {
       "hash": "4f5fbfa0",
       "size": 1321
     },
-    "environment/_shared/hazard/cave water stalagmite.png": {
+    "environment/_shared/hazard/cave-water-stalagmite.png": {
       "hash": "974787f4",
       "size": 5233
     },
@@ -1131,7 +1131,7 @@
       "hash": "5cb02567",
       "size": 4170
     },
-    "environment/_shared/hazard/cliff ice.png": {
+    "environment/_shared/hazard/cliff-ice.png": {
       "hash": "51df1f4a",
       "size": 7832
     },
@@ -1566,42 +1566,6 @@
     "sprites/monsters/eye-beast/eye-beast_west.png": {
       "hash": "67a2d2cf",
       "size": 775
-    },
-    "sprites/monsters/giant-rat/giant-rat.gif": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_east.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_north-east.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_north-west.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_north.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_south-east.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_south-west.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_south.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_west.png": {
-      "hash": "d41d8cd9",
-      "size": 0
     },
     "sprites/monsters/goblin/goblin.gif": {
       "hash": "ac21ff17",

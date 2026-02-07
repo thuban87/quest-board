@@ -27,7 +27,7 @@ const STAT_NAMES: Record<string, string> = {
 
 /**
  * Format a gear item as a detailed tooltip string.
- * Used by LootModal, InventoryModal, CharacterSheet, and anywhere else gear is displayed.
+ * Used by LootModal, InventoryModal, and anywhere else gear is displayed.
  */
 export function formatGearTooltip(item: GearItem, comparison?: GearItem | null): string {
     const tierInfo = TIER_INFO[item.tier];

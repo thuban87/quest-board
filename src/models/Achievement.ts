@@ -1,7 +1,7 @@
 /**
  * Achievement Model
  * 
- * Represents an unlockable achievement with trigger conditions and badge.
+ * Represents an unlockable achievement with trigger conditions.
  */
 
 /**
@@ -38,9 +38,6 @@ export interface Achievement {
     // State (set when unlocked)
     unlockedAt?: string;      // ISO date string
     progress?: number;        // Current progress toward target
-
-    // Optional custom badge path (overrides naming convention)
-    badgePath?: string;
 }
 
 /**
