@@ -84,11 +84,15 @@ export class Vault {
     async create(_path: string, _data: string): Promise<TFile> {
         return new TFile();
     }
+    async createFolder(_path: string): Promise<void> { }
 
     adapter = {
         exists: async (_path: string): Promise<boolean> => true,
         read: async (_path: string): Promise<string> => '',
         write: async (_path: string, _data: string): Promise<void> => { },
+        writeBinary: async (_path: string, _data: ArrayBuffer): Promise<void> => { },
+        remove: async (_path: string): Promise<void> => { },
+        getResourcePath: (path: string): string => `app://local/${path}`,
     };
 }
 
@@ -171,6 +175,23 @@ export class MenuItem {
     setTitle(_title: string): this { return this; }
     setIcon(_icon: string): this { return this; }
     onClick(_cb: () => void): this { return this; }
+}
+
+// ============== Network ==============
+
+export async function requestUrl(options: { url: string; timeout?: number }): Promise<any> {
+    return { status: 200, headers: {}, text: '{}', arrayBuffer: new ArrayBuffer(0) };
+}
+
+// ============== DataAdapter ==============
+
+export class DataAdapter {
+    async exists(_path: string): Promise<boolean> { return true; }
+    async read(_path: string): Promise<string> { return ''; }
+    async write(_path: string, _data: string): Promise<void> { }
+    async writeBinary(_path: string, _data: ArrayBuffer): Promise<void> { }
+    async remove(_path: string): Promise<void> { }
+    getResourcePath(path: string): string { return `app://local/${path}`; }
 }
 
 // ============== Misc ==============

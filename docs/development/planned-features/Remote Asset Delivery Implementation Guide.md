@@ -170,31 +170,33 @@ Several dungeon tile sprite paths in `TileRegistry.ts` use filenames with spaces
 
 ## Implementation Phases
 
-### Phase 1: Asset Service Foundation
+### Phase 1: Asset Service Foundation ✅
 **Files:** New `src/services/AssetService.ts`
 
 #### Tasks
-- [ ] Create `AssetService` class with methods:
+- [x] Create `AssetService` class with methods:
   - `checkForUpdates()` - Compare local vs remote manifest + verify file existence
   - `downloadAssets(files: string[], onProgress)` - Fetch with priority queue (class sprites first)
   - `cleanupOrphanedFiles()` - Remove files not in remote manifest
   - `getStoragePath(relativePath: string)` - Vault-relative path for file I/O (with path traversal protection)
   - `getDisplayPath(relativePath: string)` - Resource path for `<img src>`
   - `isFirstRun()` - Check if manifest.json exists locally
-- [ ] Implement concurrency queue (max 5 parallel downloads) to avoid rate limits
-- [ ] Add retry logic with exponential backoff (3 attempts per file)
-- [ ] Use `requestUrl` from Obsidian API (not `fetch`) for mobile compatibility
-- [ ] Write manifest.json LAST after all files verified (atomic install)
-- [ ] Verify file existence during update check (don't trust manifest alone)
-- [ ] Add settings for asset folder path (default: `QuestBoard/assets`)
-- [ ] Asset manifest generation script already exists (`scripts/generate-asset-manifest.js`)
+- [x] Implement concurrency queue (max 5 parallel downloads) to avoid rate limits
+- [x] Add retry logic with exponential backoff (3 attempts per file)
+- [x] Use `requestUrl` from Obsidian API (not `fetch`) for mobile compatibility
+- [x] Write manifest.json LAST after all files verified (atomic install)
+- [x] Verify file existence during update check (don't trust manifest alone)
+- [x] Add settings for asset folder path (default: `QuestBoard/assets`)
+- [x] Asset manifest generation script already exists (`scripts/generate-asset-manifest.js`)
 
 #### Security Hardening (Phase 1)
-- [ ] **Path traversal protection:** Use `pathValidator.ts` to sanitize relative paths in `getStoragePath()`
-- [ ] **Content-Type validation:** Reject non-image responses (catches CDN error pages)
-- [ ] **Safe JSON parsing:** Use `safeJson.ts` for manifest parsing (prevents prototype pollution)
-- [ ] **Request timeout:** Add 15-second timeout to `requestUrl` calls
-- [ ] **File type allowlist:** Only download `.png`, `.gif`, `.jpg`, `.jpeg`, `.webp` files
+- [x] **Path traversal protection:** Reject-on-suspicious approach (`..` and leading `/`)
+- [x] **Content-Type validation:** Reject non-image responses (catches CDN error pages)
+- [x] **Safe JSON parsing:** Use `safeJson.ts` for manifest parsing (prevents prototype pollution)
+- [x] **Request timeout:** 15-second timeout via `RequestUrlParamWithTimeout` type extension
+- [x] **File type allowlist:** Only download `.png`, `.gif`, `.jpg`, `.jpeg`, `.webp` files
+- [x] **Manifest size guard:** Reject manifests > 1MB (catches corrupted CDN responses)
+- [x] **Empty response guard:** Reject zero-byte downloads (prevents silent corruption)
 
 #### [NEW] [AssetService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/AssetService.ts)
 

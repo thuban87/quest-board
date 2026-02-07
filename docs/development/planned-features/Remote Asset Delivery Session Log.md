@@ -50,3 +50,44 @@ Each session entry should include:
 
 ### Next Steps
 - Session 1: Phase 1 (AssetService foundation) + Phase 2 (Download modal)
+
+---
+
+## Session 1: Phase 1 — AssetService Foundation — 2026-02-07
+
+**Focus:** Create the core `AssetService` class that handles remote asset fetching, caching, and versioning
+
+### Completed
+- [x] Created `AssetService.ts` — full service implementing `isFirstRun()`, `checkForUpdates()`, `downloadAssets()`, `cleanupOrphanedFiles()`, `getStoragePath()`, `getDisplayPath()`
+- [x] Concurrency-limited download queue (max 5 parallel)
+- [x] Retry with exponential backoff (3 attempts per file)
+- [x] Path traversal protection (reject `..` and leading `/`)
+- [x] Content-Type validation (image/* or octet-stream only)
+- [x] File extension allowlist (`.png`, `.gif`, `.jpg`, `.jpeg`, `.webp`)
+- [x] Manifest size guard (reject > 1MB)
+- [x] Empty response body guard
+- [x] Safe JSON parsing via `safeJsonParse` for manifests
+- [x] Manifest written last for atomic installation (TOCTOU prevention)
+- [x] Exported `AssetManifest` interface for Phase 2 consumers
+- [x] Extended Obsidian mock (`requestUrl`, `DataAdapter`, Vault adapter methods)
+- [x] Created 19 unit tests covering all public methods + security validations
+
+### Files Changed
+| Action | Files |
+|--------|-------|
+| **Created** | `src/services/AssetService.ts`, `test/asset-service.test.ts` |
+| **Modified** | `test/mocks/obsidian.ts` |
+
+### Testing Notes
+- Build: ✅ Clean compile (0 errors, 4.17 MB)
+- New tests: ✅ All 19 pass
+- Full suite: 33 pre-existing failures (gear-migration, combat balance) — no new regressions
+- No manual testing needed — service is standalone with no UI integration yet
+
+### Blockers/Issues
+- Obsidian's `RequestUrlParam` type doesn't include `timeout` despite supporting it at runtime — used `RequestUrlParamWithTimeout` interface extension with type assertion
+
+### Next Steps
+- Phase 2: `AssetDownloadModal` (first-run experience + update progress UI)
+- Phase 3: Consumer migration (update `SpriteService`, `DungeonView`, etc. to use `AssetService`)
+- Phase 4: Wire `AssetService` into `main.ts` startup + add settings UI
