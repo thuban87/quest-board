@@ -117,6 +117,13 @@
     word-break: break-word;
 }
 
+.qb-scroll-card-tagline {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    margin-bottom: 0.5em;
+    line-height: 1.3;
+}
+
 .qb-scroll-card-type {
     font-size: 0.75em;
     padding: 0.2em 0.6em;
@@ -188,12 +195,9 @@
 }
 
 .qb-scrivenersquill-content {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 1.5em;
-    width: 800px;
     max-width: 100%;
-    height: calc(90vh - 150px);
+    max-height: calc(90vh - 150px);
+    overflow-y: auto;
 }
 
 /* Form side */
@@ -279,6 +283,11 @@
     padding-top: 1em;
     border-top: 1px solid var(--background-modifier-border);
     margin-top: 1em;
+    flex-wrap: wrap;
+}
+
+.qb-scrivenersquill-footer .qb-btn:first-child {
+    margin-right: auto;
 }
 
 /* ===========================

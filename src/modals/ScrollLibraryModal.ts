@@ -9,7 +9,6 @@ import { App, Modal, Notice, Setting, TFile } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { TemplateService, ParsedTemplate } from '../services/TemplateService';
 import { getTemplateStatsService, TemplateStats } from '../services/TemplateStatsService';
-import { DynamicTemplateModal } from './SmartTemplateModal';
 
 /**
  * The Scroll Library - Template gallery modal
@@ -211,6 +210,14 @@ export class ScrollLibraryModal extends Modal {
             .trim() || 'Untitled Template';
         card.createEl('div', { text: name, cls: 'qb-scroll-card-name' });
 
+        // Tagline (if available)
+        if (parsed.tagline) {
+            card.createEl('div', {
+                text: parsed.tagline,
+                cls: 'qb-scroll-card-tagline'
+            });
+        }
+
         // Quest type badge
         if (parsed.questType) {
             const typeBadge = card.createDiv({ cls: `qb-scroll-card-type qb-type-${parsed.questType}` });
@@ -265,7 +272,8 @@ export class ScrollLibraryModal extends Modal {
      */
     private selectTemplate(parsed: ParsedTemplate): void {
         this.close();
-        new DynamicTemplateModal(this.app, this.plugin, parsed).open();
+        // Open the full editor — same as right-click → Edit
+        this.openScrivenersQuill(parsed);
     }
 
     /**

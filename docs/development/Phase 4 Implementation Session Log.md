@@ -1541,3 +1541,127 @@ Files: QuestCard.tsx, FolderWatchService.ts, ScrivenersQuillModal.ts, TemplateSe
 ```
 
 
+## 2026-02-07 - Template Editor Refinement (Session 2)
+
+**Focus:** Refining the redesigned ScrivenersQuillModal with taglines, dual type fields, dynamic status, and dynamic quest types
+
+### Completed:
+
+#### Part A: Template Taglines
+- ✅ Added `tagline` frontmatter field to `ParsedTemplate` interface and `extractFrontmatter()` parsing
+- ✅ Display taglines as subtitles on template cards in `ScrollLibraryModal`
+- ✅ Added taglines to all 14 production vault template files
+- ✅ Added taglines to all 12 test vault template files
+
+#### Part B: ScrivenersQuillModal Redesign
+- ✅ Removed side-by-side preview pane for full-width form layout
+- ✅ Added all frontmatter fields: tagline, priority, status, xpPerTask, completionBonus, visibleTasks, tags, linkedTaskFile
+- ✅ Added 4-button footer: Cancel, Preview (stub), Create File (stub), Update Scroll
+- ✅ Created `FileSuggest.ts` utility for file path autocompletion
+
+#### Part C: Template Type / Quest Type Split
+- ✅ Split single "Type" dropdown into two distinct fields:
+  - **Template Type** — Controls template behavior: Standard, Recurring, Daily Note Quest, Watched Folder
+  - **Quest Type** — Type of quest created: dynamically populated from quest subfolders
+- ✅ Added `getEffectiveQuestType()` helper to compute frontmatter value from both fields
+- ✅ Backward compatible: existing templates with `questType: recurring` load correctly as `templateType=recurring, questType=side`
+
+#### Part D: Dynamic Status Dropdown
+- ✅ Status field now uses `ColumnConfigService.getColumns()` for dynamic options
+- ✅ Shows user-defined custom kanban columns with emojis
+
+#### Part E: Dynamic Quest Type Dropdown
+- ✅ Quest Type now scans quest subfolders via `loadAvailableTypes()` (same pattern as `CreateQuestModal`)
+- ✅ Excludes `archive` and `ai-generated` folders
+- ✅ Falls back to `main, side, training` if no folders found
+- ✅ Emoji mapping for known folder names
+
+#### Part F: Wired Use Template → Editor
+- ✅ Clicking a template card in Scroll Library now opens ScrivenersQuillModal instead of DynamicTemplateModal
+
+### Files Changed:
+
+**Modified:**
+- `src/modals/ScrivenersQuillModal.ts` — Complete rewrite: full-width form, dual type fields, dynamic status/quest type, 4-button footer
+- `src/modals/ScrollLibraryModal.ts` — Tagline display, wired Use Template to editor
+- `src/services/TemplateService.ts` — `tagline` field in ParsedTemplate, extractFrontmatter, parseTemplate
+- `src/styles/scrivener.css` — Tagline styles, single-column layout, 4-button footer
+
+**New:**
+- `src/utils/FileSuggest.ts` — File path autocomplete utility
+
+**Template Files (taglines added):**
+- 14 production vault templates (G:\My Drive\...)
+- 12 test vault templates (C:\Quest-Board-Test-Vault\...)
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Taglines showing on template cards
+- ✅ Template Type and Quest Type are separate dropdowns
+- ✅ Quest Type dynamically populated from quest folders
+- ✅ Status dropdown shows custom kanban columns
+- ✅ Use Template opens editor correctly
+
+### Blockers/Issues:
+- Preview and Create File buttons are stubs (deferred to future session)
+
+---
+
+## Next Session Prompt
+
+```
+Template Editor Refinement complete (Session 2).
+
+What was done:
+- ✅ Taglines on all template cards (14 prod + 12 test vault templates)
+- ✅ ScrivenersQuillModal redesigned: full-width form, all frontmatter fields
+- ✅ Split Type into Template Type + Quest Type (dynamic from quest folders)
+- ✅ Status uses dynamic custom kanban columns via ColumnConfigService
+- ✅ Use Template click → opens editor instead of DynamicTemplateModal
+
+Next priorities for Session 3:
+- Implement Preview button (render quest card preview from template)
+- Implement Create File button (create quest file from template)
+- Consider removing/deprecating DynamicTemplateModal (SmartTemplateModal)
+- Polish: form validation, field constraints
+
+Key files:
+- src/modals/ScrivenersQuillModal.ts — Template editor (main file)
+- src/modals/ScrollLibraryModal.ts — Template gallery
+- src/services/TemplateService.ts — Template parsing
+- docs/development/planned-features/Template System Overhaul.md — Overall plan
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(templates): refine template editor with dual type fields and dynamic dropdowns
+
+Template Taglines:
+- Added tagline field to ParsedTemplate and template parsing
+- Display taglines on Scroll Library cards
+- Added taglines to 26 template files (14 prod + 12 test)
+
+Template Editor Redesign:
+- Full-width form layout (removed preview pane)
+- All frontmatter fields: tagline, priority, status, xpPerTask,
+  completionBonus, visibleTasks, tags, linkedTaskFile
+- 4-button footer: Cancel, Preview (stub), Create File (stub), Update Scroll
+
+Dual Type Fields:
+- Split "Type" into Template Type + Quest Type
+- Template Type: standard, recurring, daily-quest, watched-folder
+- Quest Type: dynamically populated from quest subfolders
+- getEffectiveQuestType() computes correct frontmatter value
+
+Dynamic Dropdowns:
+- Status pulls from ColumnConfigService custom kanban columns
+- Quest Type scans quest folders (same pattern as CreateQuestModal)
+
+Files: ScrivenersQuillModal.ts, ScrollLibraryModal.ts, TemplateService.ts,
+FileSuggest.ts (new), scrivener.css, 26 template files
+```
+
