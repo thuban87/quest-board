@@ -1245,3 +1245,101 @@ Bug Fixes:
 Files: FolderWatchService.ts, dailyNotesDetector.ts, ScrivenersQuillModal.ts,
 RecurringQuestService.ts, settings.ts, main.ts
 ```
+
+---
+
+## 2026-02-06 - Mobile Modal Responsiveness & Ribbon Icon
+
+**Focus:** Mobile responsiveness fixes for modals and ribbon icon behavior
+
+### Completed:
+
+#### Mobile Modal Width Fixes
+- ✅ Added mobile-only overrides in `mobile.css` inside `@media (max-width: 600px)`
+- ✅ Fixed modals breaking on desktop by properly scoping changes to mobile only
+
+**Modals Updated for Mobile:**
+| Modal | Desktop | Mobile |
+|-------|---------|--------|
+| Command Menu | 520px | 96vw |
+| Skills Modal | 500px | 96vw |
+| AI Dungeon Generator | 450px | 96vw |
+| Recurring Dashboard | 500px | 96vw |
+| Inventory Modal | Fixed height | Full viewport scroll |
+
+#### Quest Creation Modal (XP Row)
+- ✅ Fixed "XP per Task" and "Completion Bonus" fields - now stack vertically on mobile
+- ✅ Added `flex-direction: column` to `.qb-xp-row` in mobile media query
+
+#### Inventory Modal Mobile Layout
+- ✅ Title, tabs, gold, and content all use viewport-based widths on mobile
+- ✅ Modal scrolls as whole rather than internal scrolling on mobile
+- ✅ Desktop layout unchanged
+
+#### Ribbon Icon Change
+- ✅ Changed ribbon icon from opening Sidebar to opening Command Menu
+- ✅ Tooltip updated to "Open Quest Board Menu"
+- ✅ Sidebar command still available via command palette
+
+### Files Changed:
+
+**Modified:**
+- `src/styles/mobile.css` - Added mobile modal width overrides section (58 lines)
+- `main.ts` - Changed `addRibbonIcon` callback to open `QuestBoardCommandMenu`
+
+**Reverted (desktop values restored):**
+- `src/styles/inventory.css` - Modal sizing restored to desktop defaults
+- `src/styles/modals.css` - Modal min-widths restored to desktop defaults
+- `src/styles/power-ups.css` - Dashboard min-width restored
+- `src/styles/fullpage.css` - XP row flex direction restored
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test and production vaults
+- ✅ Desktop modals display correctly (fixed widths)
+- ✅ Mobile modals scale to viewport width
+- ✅ Ribbon icon opens command menu on both platforms
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Mobile modal responsiveness and ribbon icon complete.
+
+What was done:
+- Mobile-only CSS overrides for all major modals (96vw width)
+- Inventory modal full-viewport scrolling on mobile
+- XP row in quest creation stacks vertically on mobile
+- Ribbon icon now opens Command Menu instead of Sidebar
+
+Key files:
+- src/styles/mobile.css - Mobile overrides section
+- main.ts - Ribbon icon callback
+```
+
+---
+
+## Git Commit Message
+
+```
+fix(mobile): responsive modal widths and ribbon icon
+
+Mobile Modal Fixes:
+- Add mobile-only overrides in mobile.css (@media max-width: 600px)
+- Command Menu, Skills, AI Dungeon, Recurring Dashboard: 96vw on mobile
+- Inventory modal: full viewport scroll, viewport-based widths
+- XP row in quest creation: stacks vertically on mobile
+- Desktop values unchanged (fixed pixel widths preserved)
+
+Ribbon Icon:
+- Changed from opening Sidebar to opening Command Menu
+- Command Menu is more useful hub for all actions
+- Sidebar still available via command palette
+
+Files: mobile.css, main.ts
+```
+
