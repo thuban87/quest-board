@@ -295,11 +295,11 @@ export class FolderWatchService {
         try {
             // Generate quest name based on naming mode
             const questName = this.generateQuestName(config, sourceFile);
-            const questId = this.toSlug(questName) + '-' + Date.now();
+            const questId = this.toSlug(questName);
 
-            // Build output path
+            // Build output path - use questId as filename to ensure consistency
             const questFolder = `${this.plugin.settings.storageFolder}/quests/main`;
-            const fileName = `${this.sanitizeFileName(questName)}.md`;
+            const fileName = `${questId}.md`;
             const outputPath = normalizePath(`${questFolder}/${fileName}`);
 
             // Ensure folder exists

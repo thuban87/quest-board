@@ -1447,6 +1447,342 @@ Data Fix:
 - Added missing 20th room to Thornwood Labyrinth (dead_end_south_2)
 
 Tests: All 20 dungeon-registry tests pass
-Files: 7 new, 6 modified, 1 archived
 ```
 
+---
+
+## 2026-02-06 (Night) - Quest File Button Fix & Template Type Persistence Bug
+
+**Focus:** Fix quest card file buttons creating new files, and fix template type persistence for daily note / watched folder templates
+
+### Completed:
+
+#### Bug Fix 1: Quest Card File Buttons
+- ✅ `QuestCard.tsx` — Changed `handleOpenQuestFile` and `getLinkedFileIsDifferent` to use `quest.filePath`/`quest.path` instead of reconstructing path from `questId`
+- ✅ Changed `openLinkText` third arg from `true` to `false` to prevent accidental file creation
+- ✅ `FolderWatchService.ts` — Removed `Date.now()` timestamp suffix from `questId`, use slug as filename
+
+#### Bug Fix 2: Template Type Persistence (3 sub-bugs)
+- ✅ `ScrivenersQuillModal.ts` constructor — Was not loading folder watcher fields (`watchFolder`, `namingMode`, `archiveMode`, etc.) from `ParsedTemplate` when editing
+- ✅ `ScrivenersQuillModal.ts` `saveTemplate()` — Was skipping frontmatter injection when body already had `---` block, so edited templates kept original frontmatter unchanged. Now always strips old frontmatter and rebuilds from form state
+- ✅ `TemplateService.ts` `extractFrontmatter()` — Regex `/questType:\s*(\w+)/` used `\w+` which doesn't match hyphens, so `daily-quest` parsed as just `daily`. Changed to `\S+`
+
+#### Planning
+- ✅ Created 3-session Template System Overhaul plan at `docs/development/planned-features/Template System Overhaul.md`
+
+### Files Changed:
+
+**Modified:**
+- `src/components/QuestCard.tsx` — Path construction and file opening
+- `src/services/FolderWatchService.ts` — questId/filename alignment
+- `src/modals/ScrivenersQuillModal.ts` — Constructor field loading + frontmatter rebuild on save
+- `src/services/TemplateService.ts` — Regex fix for hyphenated quest types
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Quest file buttons open correct files (all 4 test cases passed)
+- ✅ Daily note template edit → shows correct type and fields
+- ✅ Watched folder template edit → shows correct type and fields
+- ✅ Save → close → reopen preserves type and all fields
+- ✅ Side quest templates unaffected
+- ✅ New template creation works correctly
+- ✅ Deployed to production
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Template type persistence bug fixed. Template System Overhaul Session 1 complete.
+
+What was done:
+- Fixed quest card file buttons creating ghost files (QuestCard.tsx, FolderWatchService.ts)
+- Fixed 3 bugs preventing daily note/watched folder template types from persisting:
+  - Constructor didn't load folder watcher fields from ParsedTemplate
+  - saveTemplate() didn't update frontmatter when editing existing templates
+  - extractFrontmatter() regex truncated hyphenated quest types (daily-quest → daily)
+
+Next session (Session 2) per Template System Overhaul plan:
+- Part A: Add taglines to all 14+ templates (description/tagline frontmatter field)
+- Part B: Overhaul DynamicTemplateModal (Use Template) with richer info display
+
+Key files for Session 2:
+- src/services/TemplateService.ts — ParsedTemplate model, extractFrontmatter
+- src/modals/SmartTemplateModal.ts — DynamicTemplateModal (231 lines)
+- src/modals/ScrollLibraryModal.ts — Template gallery display
+- G:\My Drive\IT\Obsidian Vault\My Notebooks\System\Templates\Quest Board — Template files
+
+See: docs/development/planned-features/Template System Overhaul.md
+```
+
+---
+
+## Git Commit Message
+
+```
+fix: quest file buttons and template type persistence
+
+Quest Card File Buttons:
+- Use quest.filePath/path instead of reconstructing from questId
+- Changed openLinkText createIfNotExists from true to false
+- FolderWatchService: removed timestamp suffix from questId, use slug as filename
+
+Template Type Persistence (3 bugs):
+- ScrivenersQuillModal constructor: load folder watcher fields from ParsedTemplate
+- ScrivenersQuillModal saveTemplate: always rebuild frontmatter from form state
+  (was skipping when body already had --- block)
+- TemplateService extractFrontmatter: regex \w+ → \S+ to match hyphenated
+  quest types (daily-quest, watched-folder)
+
+Files: QuestCard.tsx, FolderWatchService.ts, ScrivenersQuillModal.ts, TemplateService.ts
+```
+
+
+## 2026-02-07 - Template Editor Refinement (Session 2)
+
+**Focus:** Refining the redesigned ScrivenersQuillModal with taglines, dual type fields, dynamic status, and dynamic quest types
+
+### Completed:
+
+#### Part A: Template Taglines
+- ✅ Added `tagline` frontmatter field to `ParsedTemplate` interface and `extractFrontmatter()` parsing
+- ✅ Display taglines as subtitles on template cards in `ScrollLibraryModal`
+- ✅ Added taglines to all 14 production vault template files
+- ✅ Added taglines to all 12 test vault template files
+
+#### Part B: ScrivenersQuillModal Redesign
+- ✅ Removed side-by-side preview pane for full-width form layout
+- ✅ Added all frontmatter fields: tagline, priority, status, xpPerTask, completionBonus, visibleTasks, tags, linkedTaskFile
+- ✅ Added 4-button footer: Cancel, Preview (stub), Create File (stub), Update Scroll
+- ✅ Created `FileSuggest.ts` utility for file path autocompletion
+
+#### Part C: Template Type / Quest Type Split
+- ✅ Split single "Type" dropdown into two distinct fields:
+  - **Template Type** — Controls template behavior: Standard, Recurring, Daily Note Quest, Watched Folder
+  - **Quest Type** — Type of quest created: dynamically populated from quest subfolders
+- ✅ Added `getEffectiveQuestType()` helper to compute frontmatter value from both fields
+- ✅ Backward compatible: existing templates with `questType: recurring` load correctly as `templateType=recurring, questType=side`
+
+#### Part D: Dynamic Status Dropdown
+- ✅ Status field now uses `ColumnConfigService.getColumns()` for dynamic options
+- ✅ Shows user-defined custom kanban columns with emojis
+
+#### Part E: Dynamic Quest Type Dropdown
+- ✅ Quest Type now scans quest subfolders via `loadAvailableTypes()` (same pattern as `CreateQuestModal`)
+- ✅ Excludes `archive` and `ai-generated` folders
+- ✅ Falls back to `main, side, training` if no folders found
+- ✅ Emoji mapping for known folder names
+
+#### Part F: Wired Use Template → Editor
+- ✅ Clicking a template card in Scroll Library now opens ScrivenersQuillModal instead of DynamicTemplateModal
+
+### Files Changed:
+
+**Modified:**
+- `src/modals/ScrivenersQuillModal.ts` — Complete rewrite: full-width form, dual type fields, dynamic status/quest type, 4-button footer
+- `src/modals/ScrollLibraryModal.ts` — Tagline display, wired Use Template to editor
+- `src/services/TemplateService.ts` — `tagline` field in ParsedTemplate, extractFrontmatter, parseTemplate
+- `src/styles/scrivener.css` — Tagline styles, single-column layout, 4-button footer
+
+**New:**
+- `src/utils/FileSuggest.ts` — File path autocomplete utility
+
+**Template Files (taglines added):**
+- 14 production vault templates (G:\My Drive\...)
+- 12 test vault templates (C:\Quest-Board-Test-Vault\...)
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Taglines showing on template cards
+- ✅ Template Type and Quest Type are separate dropdowns
+- ✅ Quest Type dynamically populated from quest folders
+- ✅ Status dropdown shows custom kanban columns
+- ✅ Use Template opens editor correctly
+
+### Blockers/Issues:
+- Preview and Create File buttons are stubs (deferred to future session)
+
+---
+
+## Next Session Prompt
+
+```
+Template Editor Refinement complete (Session 2).
+
+What was done:
+- ✅ Taglines on all template cards (14 prod + 12 test vault templates)
+- ✅ ScrivenersQuillModal redesigned: full-width form, all frontmatter fields
+- ✅ Split Type into Template Type + Quest Type (dynamic from quest folders)
+- ✅ Status uses dynamic custom kanban columns via ColumnConfigService
+- ✅ Use Template click → opens editor instead of DynamicTemplateModal
+
+Next priorities for Session 3:
+- Implement Preview button (render quest card preview from template)
+- Implement Create File button (create quest file from template)
+- Consider removing/deprecating DynamicTemplateModal (SmartTemplateModal)
+- Polish: form validation, field constraints
+
+Key files:
+- src/modals/ScrivenersQuillModal.ts — Template editor (main file)
+- src/modals/ScrollLibraryModal.ts — Template gallery
+- src/services/TemplateService.ts — Template parsing
+- docs/development/planned-features/Template System Overhaul.md — Overall plan
+```
+
+---
+
+## Git Commit Message
+
+```
+feat(templates): refine template editor with dual type fields and dynamic dropdowns
+
+Template Taglines:
+- Added tagline field to ParsedTemplate and template parsing
+- Display taglines on Scroll Library cards
+- Added taglines to 26 template files (14 prod + 12 test)
+
+Template Editor Redesign:
+- Full-width form layout (removed preview pane)
+- All frontmatter fields: tagline, priority, status, xpPerTask,
+  completionBonus, visibleTasks, tags, linkedTaskFile
+- 4-button footer: Cancel, Preview (stub), Create File (stub), Update Scroll
+
+Dual Type Fields:
+- Split "Type" into Template Type + Quest Type
+- Template Type: standard, recurring, daily-quest, watched-folder
+- Quest Type: dynamically populated from quest subfolders
+- getEffectiveQuestType() computes correct frontmatter value
+
+Dynamic Dropdowns:
+- Status pulls from ColumnConfigService custom kanban columns
+- Quest Type scans quest folders (same pattern as CreateQuestModal)
+
+Files: ScrivenersQuillModal.ts, ScrollLibraryModal.ts, TemplateService.ts,
+FileSuggest.ts (new), scrivener.css, 26 template files
+```
+
+---
+
+## 2026-02-07 (Night) - Template Editor Completion (Session 3)
+
+**Focus:** Implementing Preview and Create File buttons, deprecating DynamicTemplateModal
+
+### Completed:
+
+#### Preview Button (👁️)
+- ✅ Created `TemplatePreviewModal.ts` — HTML replica quest card using same CSS classes as `QuestCard.tsx`
+- ✅ Renders: quest name + priority icon, category, section headers with task counts, tasks with checkboxes, progress bar (0%), XP total
+- ✅ Sections parsed from `## Header` lines in body content — only sections with tasks shown (matching real card behavior)
+- ✅ Auto-resolves `{{date}}` and `{{Quest Name}}` placeholders for display
+- ✅ Footer shows quest type, status, and tagline metadata
+
+#### Create File Button (📄)
+- ✅ Added `createQuestFile()` method to `ScrivenersQuillModal.ts`
+- ✅ Validates template name and body content are non-empty
+- ✅ Generates output path from quest type: `storageFolder/quests/{questType}/{slug}.md`
+- ✅ Builds complete frontmatter from form state (all fields)
+- ✅ Self-links `linkedTaskFile` to the output path when user hasn't specified one
+- ✅ Handles file overwrite confirmation for duplicates
+- ✅ Records template usage stats, triggers board refresh, opens file, closes modal
+
+#### DynamicTemplateModal Deprecation
+- ✅ Removed `DynamicTemplateModal` and `TemplatePickerModal` classes from `SmartTemplateModal.ts`
+- ✅ Removed unused constants and imports
+- ✅ Kept `openSmartTemplateModal()` entry point (used in `main.ts`)
+- ✅ File reduced from 231 → 22 lines
+
+### Files Changed:
+
+**New:**
+- `src/modals/TemplatePreviewModal.ts` — Preview modal with HTML replica quest card (~190 lines)
+
+**Modified:**
+- `src/modals/ScrivenersQuillModal.ts` — Added `showPreview()`, `createQuestFile()`, `extractSectionsFromBody()`
+- `src/modals/SmartTemplateModal.ts` — Stripped dead code (231 → 22 lines)
+- `src/styles/scrivener.css` — Added preview modal styles (~40 lines)
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Preview shows kanban-style card with section headers, tasks, progress, XP
+- ✅ Create File produces valid quest file in correct subfolder with self-linking linkedTaskFile
+- ✅ Scroll Library → Use Template → Editor flow working
+- ✅ Command palette "Scrivener's Desk" still works
+- ✅ Mobile tested — looks great end to end
+
+### Blockers/Issues:
+- None
+
+---
+
+## Git Commit Message
+
+```
+feat(templates): Preview button, Create File button, deprecate DynamicTemplateModal
+
+Preview Button:
+- HTML replica quest card using kanban CSS classes
+- Section headers with task counts (## headers parsed from body)
+- Tasks, progress bar, XP total, priority icons
+- Auto-resolves date and name placeholders
+
+Create File Button:
+- Creates quest file directly from template editor state
+- Routes to correct subfolder based on questType field
+- Self-links linkedTaskFile when no custom path specified
+- Records usage stats, triggers refresh, opens file, closes modal
+
+DynamicTemplateModal Deprecation:
+- Removed DynamicTemplateModal and TemplatePickerModal classes
+- SmartTemplateModal.ts reduced from 231 → 22 lines
+- Kept openSmartTemplateModal() entry point for main.ts
+
+Files: TemplatePreviewModal.ts (new), ScrivenersQuillModal.ts,
+SmartTemplateModal.ts, scrivener.css
+```
+
+---
+
+## 2026-02-07 (Night) - Scroll Library Polish
+
+**Focus:** Combine suggestion sections and add filter/sort to the Scroll Library
+
+### Completed:
+
+#### Quick Picks Row
+- ✅ Merged "Your Favorites" and "Similar to Last Quest" into single "🌟 Quick Picks" row
+- ✅ Side-by-side flexbox layout with CSS vertical divider between groups
+- ✅ Muted italic sub-labels for each group
+- ✅ Hidden when filters/search active (shows only when browsing)
+
+#### Filter & Sort Bar
+- ✅ Added filter bar below action bar with 4 dropdowns:
+  - Quest Type (dynamic from templates)
+  - Template Type (Standard/Recurring/Daily Note/Watched Folder)
+  - Category (dynamic from templates)
+  - Sort (Name A→Z, Name Z→A, Newest first, Oldest first)
+- ✅ Filters apply to All Scrolls only (Quick Picks unaffected)
+- ✅ Search + dropdown filters combine with AND logic
+- ✅ "No scrolls match your filters" empty state
+- ✅ `deriveTemplateType()` helper maps questType → template type
+
+### Files Changed:
+
+**Modified:**
+- `src/modals/ScrollLibraryModal.ts` — Combined Quick Picks row, filter/sort state, `renderFilterBar()`, `renderQuickPicks()`, refactored `renderAllTemplates()` with filter/sort
+- `src/styles/scrivener.css` — Quick Picks row flexbox, vertical divider, filter bar dropdown styles, no-results state
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault
+- ✅ Quick Picks shows favorites + similar side-by-side
+- ✅ Filters populate from actual template data
+- ✅ Sort works correctly (both name and date)
+- ✅ Combined search + filter works
+
+### Blockers/Issues:
+- None

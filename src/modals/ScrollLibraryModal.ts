@@ -2,14 +2,19 @@
  * Scroll Library Modal (Template Gallery)
  * 
  * "The Scroll Library" - A gallery view for managing quest templates
- * with smart suggestions, usage stats, and RPG theming.
+ * with smart suggestions, usage stats, filters, and RPG theming.
  */
 
 import { App, Modal, Notice, Setting, TFile } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { TemplateService, ParsedTemplate } from '../services/TemplateService';
 import { getTemplateStatsService, TemplateStats } from '../services/TemplateStatsService';
-import { DynamicTemplateModal } from './SmartTemplateModal';
+
+/** Sort options for the template grid */
+type SortOption = 'name-asc' | 'name-desc' | 'date-asc' | 'date-desc';
+
+/** Template type derived from questType */
+type TemplateType = 'standard' | 'recurring' | 'daily-note' | 'watched-folder';
 
 /**
  * The Scroll Library - Template gallery modal
@@ -19,6 +24,16 @@ export class ScrollLibraryModal extends Modal {
     private templateService: TemplateService;
     private templates: TFile[] = [];
     private parsedTemplates: Map<string, ParsedTemplate> = new Map();
+
+    // Filter/sort state
+    private searchTerm = '';
+    private filterQuestType = '';     // '' = all
+    private filterTemplateType = '';  // '' = all
+    private filterCategory = '';      // '' = all
+    private sortOption: SortOption = 'name-asc';
+
+    // Container references for re-rendering
+    private contentContainer: HTMLElement | null = null;
 
     constructor(app: App, plugin: QuestBoardPlugin) {
         super(app);
@@ -39,10 +54,9 @@ export class ScrollLibraryModal extends Modal {
             cls: 'qb-scroll-library-subtitle'
         });
 
-        // Action bar
+        // Action bar (button + search)
         const actionBar = contentEl.createDiv({ cls: 'qb-scroll-library-actions' });
 
-        // Create new template button
         const createBtn = actionBar.createEl('button', {
             text: '🪶 Draft New Scroll',
             cls: 'qb-btn qb-btn-primary'
@@ -52,7 +66,6 @@ export class ScrollLibraryModal extends Modal {
             this.openScrivenersQuill();
         });
 
-        // Search input
         const searchContainer = actionBar.createDiv({ cls: 'qb-scroll-search' });
         const searchInput = searchContainer.createEl('input', {
             type: 'text',
@@ -60,21 +73,23 @@ export class ScrollLibraryModal extends Modal {
             cls: 'qb-scroll-search-input'
         });
         searchInput.addEventListener('input', (e) => {
-            this.filterTemplates((e.target as HTMLInputElement).value);
+            this.searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
+            this.refreshContent();
         });
 
         // Content container
-        const contentContainer = contentEl.createDiv({ cls: 'qb-scroll-library-content' });
-
-        // Show loading state
-        contentContainer.createEl('p', { text: 'Loading scrolls...', cls: 'qb-loading' });
+        this.contentContainer = contentEl.createDiv({ cls: 'qb-scroll-library-content' });
+        this.contentContainer.createEl('p', { text: 'Loading scrolls...', cls: 'qb-loading' });
 
         // Load templates
         await this.loadTemplates();
 
+        // Render filter bar (after templates loaded so dropdowns are populated)
+        this.renderFilterBar(contentEl, this.contentContainer);
+
         // Clear loading and render
-        contentContainer.empty();
-        this.renderContent(contentContainer);
+        this.contentContainer.empty();
+        this.renderContent(this.contentContainer);
     }
 
     /**
@@ -95,6 +110,122 @@ export class ScrollLibraryModal extends Modal {
                 console.error(`[ScrollLibraryModal] Failed to parse ${file.path}:`, error);
             }
         }
+    }
+
+    /**
+     * Render the filter bar with dropdowns and sort
+     */
+    private renderFilterBar(parentEl: HTMLElement, beforeEl: HTMLElement): void {
+        const filterBar = parentEl.createDiv({ cls: 'qb-scroll-filter-bar' });
+        // Insert before the content container
+        parentEl.insertBefore(filterBar, beforeEl);
+
+        // Collect unique values from parsed templates
+        const questTypes = new Set<string>();
+        const categories = new Set<string>();
+        const templateTypes = new Set<string>();
+
+        for (const parsed of this.parsedTemplates.values()) {
+            if (parsed.questType) questTypes.add(parsed.questType);
+            if (parsed.category) categories.add(parsed.category);
+            templateTypes.add(this.deriveTemplateType(parsed.questType));
+        }
+
+        // Quest Type filter
+        const qtSelect = this.createFilterDropdown(filterBar, '⚔️ Quest Type', questTypes, (val) => {
+            this.filterQuestType = val;
+            this.refreshContent();
+        });
+
+        // Template Type filter
+        const ttLabels: Record<string, string> = {
+            'standard': '📋 Standard',
+            'recurring': '🔄 Recurring',
+            'daily-note': '📅 Daily Note',
+            'watched-folder': '📂 Watched Folder',
+        };
+        const ttSelect = this.createFilterDropdown(
+            filterBar,
+            '📜 Template Type',
+            templateTypes,
+            (val) => {
+                this.filterTemplateType = val;
+                this.refreshContent();
+            },
+            ttLabels
+        );
+
+        // Category filter
+        const catSelect = this.createFilterDropdown(filterBar, '🏷️ Category', categories, (val) => {
+            this.filterCategory = val;
+            this.refreshContent();
+        });
+
+        // Sort dropdown
+        const sortContainer = filterBar.createDiv({ cls: 'qb-scroll-filter-item' });
+        const sortSelect = sortContainer.createEl('select', { cls: 'qb-scroll-filter-select' });
+        const sortOptions: { value: SortOption; label: string }[] = [
+            { value: 'name-asc', label: '📝 Name A→Z' },
+            { value: 'name-desc', label: '📝 Name Z→A' },
+            { value: 'date-desc', label: '📅 Newest first' },
+            { value: 'date-asc', label: '📅 Oldest first' },
+        ];
+        for (const opt of sortOptions) {
+            sortSelect.createEl('option', { value: opt.value, text: opt.label });
+        }
+        sortSelect.value = this.sortOption;
+        sortSelect.addEventListener('change', () => {
+            this.sortOption = sortSelect.value as SortOption;
+            this.refreshContent();
+        });
+    }
+
+    /**
+     * Create a dropdown filter with "All" option
+     */
+    private createFilterDropdown(
+        container: HTMLElement,
+        label: string,
+        values: Set<string>,
+        onChange: (val: string) => void,
+        labelOverrides?: Record<string, string>
+    ): HTMLSelectElement {
+        const wrapper = container.createDiv({ cls: 'qb-scroll-filter-item' });
+        const select = wrapper.createEl('select', { cls: 'qb-scroll-filter-select' });
+
+        // "All" option
+        select.createEl('option', { value: '', text: label });
+
+        // Sort values alphabetically
+        const sorted = Array.from(values).sort();
+        for (const val of sorted) {
+            const displayText = labelOverrides?.[val] || this.titleCase(val);
+            select.createEl('option', { value: val, text: displayText });
+        }
+
+        select.addEventListener('change', () => onChange(select.value));
+        return select;
+    }
+
+    /**
+     * Derive template type from questType field
+     */
+    private deriveTemplateType(questType: string): TemplateType {
+        switch (questType) {
+            case 'recurring': return 'recurring';
+            case 'daily-quest': return 'daily-note';
+            case 'watched-folder': return 'watched-folder';
+            default: return 'standard';
+        }
+    }
+
+    /**
+     * Refresh just the content area (preserves filter bar)
+     */
+    private refreshContent(): void {
+        if (!this.contentContainer) return;
+        this.contentContainer.empty();
+        this.renderContent(this.contentContainer);
     }
 
     /**
@@ -121,50 +252,74 @@ export class ScrollLibraryModal extends Modal {
             return;
         }
 
-        // Smart suggestions section (if we have usage data)
-        if (statsService) {
-            const favorites = statsService.getTopTemplates(3);
-            const similar = statsService.getSimilarTemplates(3);
-
-            // Your Favorites section
-            if (favorites.length > 0) {
-                this.renderSection(container, '🌟 Your Favorites', favorites);
-            }
-
-            // Similar to Last Quest section
-            if (similar.length > 0 && similar[0].templatePath !== favorites[0]?.templatePath) {
-                const lastCategory = statsService.getLastQuestCategory();
-                this.renderSection(
-                    container,
-                    `💫 Similar to Last Quest (${lastCategory})`,
-                    similar
-                );
-            }
+        // Quick Picks row (combined Favorites + Similar)
+        if (statsService && this.searchTerm === '' && !this.filterQuestType && !this.filterTemplateType && !this.filterCategory) {
+            this.renderQuickPicks(container, statsService);
         }
 
-        // All Scrolls section
+        // All Scrolls section (filtered + sorted)
         this.renderAllTemplates(container);
     }
 
     /**
-     * Render a suggestion section
+     * Render the combined Quick Picks row (Favorites + Similar)
      */
-    private renderSection(container: HTMLElement, title: string, stats: TemplateStats[]): void {
+    private renderQuickPicks(container: HTMLElement, statsService: ReturnType<typeof getTemplateStatsService>): void {
+        if (!statsService) return;
+
+        const favorites = statsService.getTopTemplates(3);
+        const similar = statsService.getSimilarTemplates(3);
+
+        // Only show similar if top result differs from top favorite
+        const showSimilar = similar.length > 0 && similar[0].templatePath !== favorites[0]?.templatePath;
+
+        // Nothing to show?
+        if (favorites.length === 0 && !showSimilar) return;
+
         const section = container.createDiv({ cls: 'qb-scroll-section' });
-        section.createEl('h3', { text: title, cls: 'qb-scroll-section-title' });
+        section.createEl('h3', { text: '🌟 Quick Picks', cls: 'qb-scroll-section-title' });
 
-        const grid = section.createDiv({ cls: 'qb-scroll-grid qb-scroll-grid-small' });
+        const row = section.createDiv({ cls: 'qb-quick-picks-row' });
 
-        for (const stat of stats) {
-            const parsed = this.parsedTemplates.get(stat.templatePath);
-            if (parsed) {
-                this.renderTemplateCard(grid, parsed, stat);
+        // Favorites group
+        if (favorites.length > 0) {
+            const favGroup = row.createDiv({ cls: 'qb-quick-picks-group' });
+            favGroup.createEl('span', { text: 'Your Favorites', cls: 'qb-quick-picks-label' });
+            const favGrid = favGroup.createDiv({ cls: 'qb-scroll-grid qb-scroll-grid-small' });
+
+            for (const stat of favorites) {
+                const parsed = this.parsedTemplates.get(stat.templatePath);
+                if (parsed) {
+                    this.renderTemplateCard(favGrid, parsed, stat);
+                }
+            }
+        }
+
+        // Divider + Similar group
+        if (showSimilar && favorites.length > 0) {
+            row.createDiv({ cls: 'qb-quick-picks-divider' });
+        }
+
+        if (showSimilar) {
+            const lastCategory = statsService.getLastQuestCategory();
+            const simGroup = row.createDiv({ cls: 'qb-quick-picks-group' });
+            simGroup.createEl('span', {
+                text: `Similar to Last (${lastCategory})`,
+                cls: 'qb-quick-picks-label'
+            });
+            const simGrid = simGroup.createDiv({ cls: 'qb-scroll-grid qb-scroll-grid-small' });
+
+            for (const stat of similar) {
+                const parsed = this.parsedTemplates.get(stat.templatePath);
+                if (parsed) {
+                    this.renderTemplateCard(simGrid, parsed, stat);
+                }
             }
         }
     }
 
     /**
-     * Render all templates in a grid
+     * Render all templates in a grid (with filter + sort applied)
      */
     private renderAllTemplates(container: HTMLElement): void {
         const section = container.createDiv({ cls: 'qb-scroll-section qb-scroll-section-all' });
@@ -175,11 +330,65 @@ export class ScrollLibraryModal extends Modal {
         const statsService = getTemplateStatsService();
         const allStats = statsService?.getStats() ?? {};
 
-        for (const template of this.templates) {
-            const parsed = this.parsedTemplates.get(template.path);
-            if (parsed) {
-                const stats = allStats[template.path];
-                this.renderTemplateCard(grid, parsed, stats);
+        // Build filtered + sorted list
+        let entries = this.templates
+            .map(t => ({
+                file: t,
+                parsed: this.parsedTemplates.get(t.path),
+            }))
+            .filter(e => e.parsed != null) as { file: TFile; parsed: ParsedTemplate }[];
+
+        // Apply search filter
+        if (this.searchTerm) {
+            entries = entries.filter(e => {
+                const name = e.parsed.name.toLowerCase();
+                const category = (e.parsed.category || '').toLowerCase();
+                const type = (e.parsed.questType || '').toLowerCase();
+                const tagline = (e.parsed.tagline || '').toLowerCase();
+                return name.includes(this.searchTerm)
+                    || category.includes(this.searchTerm)
+                    || type.includes(this.searchTerm)
+                    || tagline.includes(this.searchTerm);
+            });
+        }
+
+        // Apply dropdown filters
+        if (this.filterQuestType) {
+            entries = entries.filter(e => e.parsed.questType === this.filterQuestType);
+        }
+        if (this.filterTemplateType) {
+            entries = entries.filter(e => this.deriveTemplateType(e.parsed.questType) === this.filterTemplateType);
+        }
+        if (this.filterCategory) {
+            entries = entries.filter(e => e.parsed.category === this.filterCategory);
+        }
+
+        // Apply sort
+        entries.sort((a, b) => {
+            switch (this.sortOption) {
+                case 'name-asc':
+                    return a.parsed.name.localeCompare(b.parsed.name);
+                case 'name-desc':
+                    return b.parsed.name.localeCompare(a.parsed.name);
+                case 'date-desc':
+                    return (b.file.stat?.ctime ?? 0) - (a.file.stat?.ctime ?? 0);
+                case 'date-asc':
+                    return (a.file.stat?.ctime ?? 0) - (b.file.stat?.ctime ?? 0);
+                default:
+                    return 0;
+            }
+        });
+
+        // Render results or empty state
+        if (entries.length === 0) {
+            grid.createEl('p', {
+                text: 'No scrolls match your filters.',
+                cls: 'qb-scroll-no-results'
+            });
+        } else {
+            for (const entry of entries) {
+                const stats = allStats[entry.file.path];
+                this.renderTemplateCard(grid, entry.parsed, stats);
             }
         }
     }
@@ -210,6 +419,14 @@ export class ScrollLibraryModal extends Modal {
             .replace(/-template$/i, '')
             .trim() || 'Untitled Template';
         card.createEl('div', { text: name, cls: 'qb-scroll-card-name' });
+
+        // Tagline (if available)
+        if (parsed.tagline) {
+            card.createEl('div', {
+                text: parsed.tagline,
+                cls: 'qb-scroll-card-tagline'
+            });
+        }
 
         // Quest type badge
         if (parsed.questType) {
@@ -249,6 +466,8 @@ export class ScrollLibraryModal extends Modal {
             guild: '🏛️',
             recurring: '🔄',
             daily: '📅',
+            'daily-quest': '📅',
+            'watched-folder': '📂',
         };
         return icons[questType?.toLowerCase()] || '📜';
     }
@@ -265,7 +484,8 @@ export class ScrollLibraryModal extends Modal {
      */
     private selectTemplate(parsed: ParsedTemplate): void {
         this.close();
-        new DynamicTemplateModal(this.app, this.plugin, parsed).open();
+        // Open the full editor — same as right-click → Edit
+        this.openScrivenersQuill(parsed);
     }
 
     /**
@@ -303,23 +523,6 @@ export class ScrollLibraryModal extends Modal {
         });
 
         menu.showAtMouseEvent(e);
-    }
-
-    /**
-     * Filter templates by search term
-     */
-    private filterTemplates(searchTerm: string): void {
-        const term = searchTerm.toLowerCase();
-        const allCards = this.contentEl.querySelectorAll('.qb-scroll-card');
-
-        allCards.forEach((card) => {
-            const name = card.querySelector('.qb-scroll-card-name')?.textContent?.toLowerCase() ?? '';
-            const category = card.querySelector('.qb-scroll-card-category')?.textContent?.toLowerCase() ?? '';
-            const type = card.querySelector('.qb-scroll-card-type')?.textContent?.toLowerCase() ?? '';
-
-            const matches = name.includes(term) || category.includes(term) || type.includes(term);
-            (card as HTMLElement).style.display = matches ? '' : 'none';
-        });
     }
 
     /**

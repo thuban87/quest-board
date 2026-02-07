@@ -99,9 +99,10 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
 
     // Handler to open the quest file itself
     const handleOpenQuestFile = () => {
-        if (!app || !isManualQuest(quest) || !storageFolder) return;
-        const questFilePath = `${storageFolder}/quests/${quest.questType}/${quest.questId}.md`;
-        app.workspace.openLinkText(questFilePath, '', true);
+        if (!app || !isManualQuest(quest)) return;
+        const questFilePath = quest.filePath || quest.path;
+        if (!questFilePath) return;
+        app.workspace.openLinkText(questFilePath, '', false);
     };
 
     // Handler to open the linked task file (only if different from quest file)
@@ -112,8 +113,8 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
 
     // Determine if the linked task file is different from the quest file
     const getLinkedFileIsDifferent = (): boolean => {
-        if (!isManualQuest(quest) || !storageFolder) return false;
-        const questFilePath = `${storageFolder}/quests/${quest.questType}/${quest.questId}.md`;
+        if (!isManualQuest(quest)) return false;
+        const questFilePath = quest.filePath || quest.path || '';
         // Normalize paths for comparison
         const normalizedQuestPath = questFilePath.toLowerCase().replace(/\\/g, '/');
         const normalizedLinkedPath = quest.linkedTaskFile?.toLowerCase().replace(/\\/g, '/');
@@ -177,7 +178,7 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
         }
 
         // Open Quest File
-        if (app && isManualQuest(quest) && storageFolder) {
+        if (app && isManualQuest(quest) && (quest.filePath || quest.path)) {
             menu.addItem((item) => {
                 item
                     .setTitle('📄 Open Quest File')
@@ -375,7 +376,7 @@ const QuestCardComponent: React.FC<QuestCardProps> = ({
                         </span>
                         <div className="qb-card-file-links">
                             {/* Quest file link (always shown) */}
-                            {app && isManualQuest(quest) && storageFolder && (
+                            {app && isManualQuest(quest) && (quest.filePath || quest.path) && (
                                 <button
                                     className="qb-card-file-link"
                                     onClick={(e) => { e.stopPropagation(); handleOpenQuestFile(); }}

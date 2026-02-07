@@ -29,6 +29,15 @@ export interface ParsedTemplate {
     placeholders: PlaceholderInfo[];
     questType: 'main' | 'side' | string;
     category?: string;
+    tagline?: string;
+    // Additional frontmatter fields
+    priority?: string;
+    xpPerTask?: number;
+    completionBonus?: number;
+    visibleTasks?: number;
+    tags?: string[];
+    linkedTaskFile?: string;
+    status?: string;
     // Folder watcher fields (for daily-quest and watched-folder types)
     watchFolder?: string;
     namingMode?: QuestNamingMode;
@@ -133,6 +142,15 @@ export class TemplateService {
         questType: string;
         questName?: string;
         category?: string;
+        tagline?: string;
+        // Additional frontmatter fields
+        priority?: string;
+        xpPerTask?: number;
+        completionBonus?: number;
+        visibleTasks?: number;
+        tags?: string[];
+        linkedTaskFile?: string;
+        status?: string;
         // Folder watcher fields
         watchFolder?: string;
         namingMode?: QuestNamingMode;
@@ -146,6 +164,14 @@ export class TemplateService {
             questType: 'side',
             questName: undefined,
             category: undefined,
+            tagline: undefined,
+            priority: undefined,
+            xpPerTask: undefined,
+            completionBonus: undefined,
+            visibleTasks: undefined,
+            tags: undefined,
+            linkedTaskFile: undefined,
+            status: undefined,
             watchFolder: undefined,
             namingMode: undefined,
             namingPattern: undefined,
@@ -168,7 +194,7 @@ export class TemplateService {
         const frontmatter = content.substring(3, endIndex);
 
         // Extract questType
-        const typeMatch = frontmatter.match(/questType:\s*(\w+)/);
+        const typeMatch = frontmatter.match(/questType:\s*(\S+)/);
         if (typeMatch) {
             result.questType = typeMatch[1];
         }
@@ -183,6 +209,52 @@ export class TemplateService {
         const catMatch = frontmatter.match(/category:\s*(\w+)/);
         if (catMatch) {
             result.category = catMatch[1];
+        }
+
+        // Extract tagline
+        const taglineMatch = frontmatter.match(/tagline:\s*["']?([^"'\n]+)["']?/);
+        if (taglineMatch) {
+            result.tagline = taglineMatch[1].trim();
+        }
+
+        // Extract additional frontmatter fields
+        const priorityMatch = frontmatter.match(/priority:\s*(\w+)/);
+        if (priorityMatch) {
+            result.priority = priorityMatch[1];
+        }
+
+        const xpMatch = frontmatter.match(/xpPerTask:\s*(\d+)/);
+        if (xpMatch) {
+            result.xpPerTask = parseInt(xpMatch[1], 10);
+        }
+
+        const bonusMatch = frontmatter.match(/completionBonus:\s*(\d+)/);
+        if (bonusMatch) {
+            result.completionBonus = parseInt(bonusMatch[1], 10);
+        }
+
+        const visibleMatch = frontmatter.match(/visibleTasks:\s*(\d+)/);
+        if (visibleMatch) {
+            result.visibleTasks = parseInt(visibleMatch[1], 10);
+        }
+
+        // Extract tags (YAML array format)
+        const tagsSection = frontmatter.match(/tags:\s*\n((?:\s+-\s+.+\n?)+)/);
+        if (tagsSection) {
+            result.tags = tagsSection[1]
+                .split('\n')
+                .map(line => line.replace(/^\s*-\s*/, '').trim())
+                .filter(tag => tag.length > 0);
+        }
+
+        const linkedMatch = frontmatter.match(/linkedTaskFile:\s*["']?([^"'\n]+)["']?/);
+        if (linkedMatch) {
+            result.linkedTaskFile = linkedMatch[1].trim();
+        }
+
+        const statusMatch = frontmatter.match(/status:\s*(\S+)/);
+        if (statusMatch) {
+            result.status = statusMatch[1];
         }
 
         // Extract folder watcher fields
@@ -247,6 +319,15 @@ export class TemplateService {
             placeholders,
             questType: frontmatter.questType,
             category: frontmatter.category,
+            tagline: frontmatter.tagline,
+            // Additional frontmatter fields
+            priority: frontmatter.priority,
+            xpPerTask: frontmatter.xpPerTask,
+            completionBonus: frontmatter.completionBonus,
+            visibleTasks: frontmatter.visibleTasks,
+            tags: frontmatter.tags,
+            linkedTaskFile: frontmatter.linkedTaskFile,
+            status: frontmatter.status,
             // Folder watcher fields
             watchFolder: frontmatter.watchFolder,
             namingMode: frontmatter.namingMode,
