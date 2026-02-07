@@ -12,11 +12,24 @@ import type QuestBoardPlugin from '../../main';
 export class AssetConfigModal extends Modal {
     private plugin: QuestBoardPlugin;
     private folderPath: string;
+    private textInput: HTMLInputElement | null = null;
 
     constructor(app: App, plugin: QuestBoardPlugin) {
         super(app);
         this.plugin = plugin;
         this.folderPath = plugin.settings.assetFolder || 'QuestBoard/assets';
+    }
+
+    /**
+     * Read the current folder path from the text input.
+     * We read the DOM value directly because FolderSuggest autocomplete
+     * sets the input value via DOM (bypassing Obsidian's onChange callback).
+     */
+    private getCurrentPath(): string {
+        if (this.textInput) {
+            return this.textInput.value.trim() || 'QuestBoard/assets';
+        }
+        return this.folderPath;
     }
 
     onOpen(): void {
@@ -46,6 +59,9 @@ export class AssetConfigModal extends Modal {
             text.setPlaceholder('QuestBoard/assets')
                 .setValue(this.folderPath);
 
+            // Store reference to read value at save time
+            this.textInput = text.inputEl;
+
             text.onChange((value) => {
                 this.folderPath = value.trim() || 'QuestBoard/assets';
             });
@@ -73,7 +89,7 @@ export class AssetConfigModal extends Modal {
         });
         skipBtn.addEventListener('click', () => {
             // Mark configured but don't download — user can do it later via settings
-            this.plugin.settings.assetFolder = this.folderPath;
+            this.plugin.settings.assetFolder = this.getCurrentPath();
             this.plugin.settings.assetConfigured = true;
             this.plugin.saveSettings();
             this.close();
@@ -86,14 +102,17 @@ export class AssetConfigModal extends Modal {
         button.setAttribute('disabled', 'true');
 
         try {
+            // Read the current input value directly (handles FolderSuggest autocomplete)
+            const chosenPath = this.getCurrentPath();
+
             // Save the chosen path
-            this.plugin.settings.assetFolder = this.folderPath;
+            this.plugin.settings.assetFolder = chosenPath;
             this.plugin.settings.assetConfigured = true;
             await this.plugin.saveSettings();
 
             // Reinitialize AssetService with chosen path
             const { AssetService } = await import('../services/AssetService');
-            this.plugin.assetService = new AssetService(this.app, this.folderPath);
+            this.plugin.assetService = new AssetService(this.app, chosenPath);
 
             // Check for assets
             const { needsUpdate, files, orphaned, remoteManifest } = await this.plugin.assetService.checkForUpdates();

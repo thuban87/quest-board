@@ -256,6 +256,40 @@ Each session entry should include:
 - Electron HTTP cache required cache-busting params; CDN purge alone is not sufficient
 
 ### Next Steps
-- Wire `AssetService.getDisplayPath()` into `SpriteService`/`TileRegistry` to replace `adapter.getResourcePath()`
-- Existing user migration: detect old `assets/` inside plugin dir, prompt to re-download to vault folder
+- ~~Wire `AssetService.getDisplayPath()` into `SpriteService`/`TileRegistry` to replace `adapter.getResourcePath()`~~ Deferred (current path resolution works correctly)
+- ~~Existing user migration: detect old `assets/` inside plugin dir, prompt to re-download to vault folder~~ Deemed unnecessary
+
+---
+
+## Session 5: Phase 5 — Deploy Script & Bug Fixes — 2026-02-07
+
+**Focus:** Fix AssetConfigModal autocomplete bug, update deploy script for asset delivery, final production + mobile verification
+
+### Completed
+- [x] **`AssetConfigModal` autocomplete bug fix:** `FolderSuggest` sets `inputEl.value` directly and triggers a raw DOM `input` event, but the modal's `onChange` handler (via Obsidian `TextComponent`) was not fired by this event. Added `getCurrentPath()` method that reads the DOM input element's value at save time, bypassing the unreliable callback. Both `handleDownload()` and "Skip" button now use this.
+- [x] **Settings.ts verified safe:** The settings panel's asset folder handler uses `text.getValue()` on `blur`, which correctly reads the current DOM value — no fix needed there.
+- [x] **Deploy script update (`deploy.mjs`):** Added `ASSET_FOLDERS` mapping for test/staging vault paths. Assets now copy to the vault's asset folder (e.g., `Life/Quest Board/assets`) instead of the plugin directory. Production skips asset copying entirely (CDN delivery). Console output updated with clear sections for plugin files and assets.
+- [x] **Production deploy:** All plugin files deployed, first-run modal worked, assets downloaded from CDN, all sprites/tiles/backgrounds rendering correctly.
+- [x] **Mobile sync verification:** Obsidian Sync transferred assets to mobile device. Second device detected assets already in place (no re-download). Character sidebar, character page, dungeons, and battles all working on mobile.
+
+### Files Changed
+| Action | Files |
+|--------|-------|
+| **Modified** | `src/modals/AssetConfigModal.ts` (getCurrentPath method, DOM input reference), `deploy.mjs` (ASSET_FOLDERS mapping, conditional asset copying) |
+
+### Testing Notes
+- Build: ✅ Clean compile (0 errors, 4.17 MB)
+- Deploy to test: ✅ (560 asset files to vault folder)
+- Deploy to staging: ✅ (560 asset files to vault folder)
+- Deploy to production: ✅ (plugin files only, assets via CDN)
+- First-run modal: ✅ Autocomplete path saved correctly
+- Asset rendering (desktop): ✅ Character sidebar, character page, dungeons, battles
+- Asset rendering (mobile): ✅ Character sidebar, character page, dungeons, battles
+- Multi-device sync: ✅ Assets synced, no re-download on second device
+
+### Blockers/Issues
+- None
+
+### 🎉 Feature Complete
+All 5 phases of Remote Asset Delivery implemented and verified across desktop (test, staging, production) and mobile. CDN delivery working end-to-end.
 

@@ -1786,3 +1786,137 @@ SmartTemplateModal.ts, scrivener.css
 
 ### Blockers/Issues:
 - None
+
+---
+
+## 2026-02-07 (Night) - Remote Asset Delivery (Complete Feature)
+
+**Focus:** Migrate bundled assets to GitHub-hosted remote delivery via jsDelivr CDN. 5 sessions implemented across a single day.
+
+### Completed:
+
+#### Pre-Implementation Cleanup
+- ✅ Removed defunct badge system (`badgeFolder`/`badgePath`) from 14 files
+- ✅ Removed `spriteFolder` setting from 3 files
+- ✅ Normalized 72 environment tile filenames (spaces/camelCase → kebab-case)
+- ✅ Updated 8 `TileRegistry.ts` sprite path references
+- ✅ Deleted deprecated `CharacterSheet.tsx`
+
+#### Phase 1: AssetService Foundation
+- ✅ Created `AssetService.ts` — remote fetching, caching, versioning, security
+- ✅ Concurrency-limited download queue (max 5 parallel), retry with exponential backoff
+- ✅ Path traversal protection, Content-Type validation, file extension allowlist
+- ✅ 19 unit tests
+
+#### Phase 2: Download Modal & First-Run Experience
+- ✅ Created `AssetDownloadModal.ts` — progress bar, cancel support, priority queue
+- ✅ 9 unit tests for `prioritizeFiles()`
+
+#### Phase 3: SpriteService & Component Migration
+- ✅ Renamed `manifestDir` → `assetFolder` across all 15 consuming files
+- ✅ Consolidated inline sprite path helpers in `DungeonView.tsx` to use `SpriteService`
+- ✅ Replaced hardcoded vault path in `CharacterCreationModal.ts`
+
+#### Phase 4: Main Plugin Integration
+- ✅ `AssetService` initialization in `main.ts`, first-run check, periodic updates
+- ✅ Settings UI (Asset Folder, Update Frequency, Check Now button)
+- ✅ "Check for Asset Updates" command
+- ✅ Bug fixes: double `/assets/` path, keystroke triggers, manifest persistence, HTTP cache-busting
+
+#### Phase 5: Deploy Script & Bug Fixes
+- ✅ Created `AssetConfigModal.ts` — first-install folder picker with autocomplete
+- ✅ Fixed `FolderSuggest` autocomplete bug (bypassed onChange, added `getCurrentPath()`)
+- ✅ Updated `deploy.mjs` — assets to vault folder for test/staging, skip for production (CDN)
+
+### Files Changed:
+
+**New:**
+- `src/services/AssetService.ts` — Remote fetching, caching, versioning (~200 lines)
+- `src/modals/AssetDownloadModal.ts` — Download progress modal (~100 lines)
+- `src/modals/AssetConfigModal.ts` — First-install folder picker (~140 lines)
+- `test/asset-service.test.ts` — 19 unit tests
+- `test/asset-download-modal.test.ts` — 9 unit tests
+
+**Modified (major):**
+- `SpriteService.ts`, `TileRegistry.ts`, `DungeonView.tsx`, `DungeonItemView.tsx`, `BattleItemView.tsx`, `CharacterCreationModal.ts`, `BountyModal.ts`, `EliteEncounterModal.ts`, `LevelUpModal.ts`, `useQuestActions.ts`, `useCharacterSprite.ts`, `CharacterPage.tsx`, `CharacterSidebar.tsx`, `SidebarQuests.tsx`, `FullKanban.tsx`, `settings.ts`, `main.ts`, `deploy.mjs`
+
+**Deleted:**
+- `CharacterSheet.tsx` (deprecated)
+
+**Pre-impl cleanup:**
+- 14 files (badge system), 3 files (spriteFolder), 72 tile renames, `TileRegistry.ts`
+
+### Testing Notes:
+- ✅ Build passes, all 28 new unit tests pass
+- ✅ Deployed to test, staging, and production
+- ✅ First-run modal works on all 3 environments
+- ✅ Character sprites, dungeon tiles, battle backgrounds, class previews all rendering
+- ✅ Mobile (iOS) — assets sync via Obsidian Sync, no re-download on second device
+- ✅ CDN download working end-to-end
+
+### Blockers/Issues:
+- None — feature complete
+
+---
+
+## Next Session Prompt
+
+```
+Remote Asset Delivery feature complete (all 5 phases).
+
+What was done:
+- AssetService: CDN-hosted asset fetching with caching, security, retry
+- AssetDownloadModal: Progress bar, cancel support, priority queue
+- AssetConfigModal: First-install folder picker with autocomplete
+- Full codebase migration from manifestDir → assetFolder (15+ files)
+- Deploy script updated: assets to vault folder (test/staging), CDN for production
+- Verified on desktop (3 vaults) and mobile
+
+Deferred items (documented in implementation guide):
+- getDisplayPath() wiring into SpriteService/TileRegistry
+- Lazy loading for dungeon tiles
+- Startup optimization (manifest version short-circuit)
+
+Key files:
+- src/services/AssetService.ts — Core service
+- src/modals/AssetDownloadModal.ts — Download UI
+- src/modals/AssetConfigModal.ts — First-install config
+- deploy.mjs — Updated deploy script
+- docs/development/planned-features/Remote Asset Delivery Implementation Guide.md
+```
+
+---
+
+## Git Commit Message
+
+```
+feat: Remote Asset Delivery — CDN-hosted assets with download UI
+
+Remote Asset Delivery (5 phases):
+- AssetService: jsDelivr CDN fetching, local caching, delta updates, retry
+  with exponential backoff, path traversal protection, content-type validation
+- AssetDownloadModal: Progress bar, cancel support, priority download queue
+- AssetConfigModal: First-install folder picker with FolderSuggest autocomplete
+- Full codebase migration: manifestDir → assetFolder across 15+ files
+- Settings UI: Asset folder, update frequency, manual check button
+- "Check for Asset Updates" command in palette
+
+Pre-implementation cleanup:
+- Removed defunct badge system (badgeFolder/badgePath) from 14 files
+- Removed spriteFolder setting from 3 files
+- Normalized 72 environment tile filenames to kebab-case
+- Deleted deprecated CharacterSheet.tsx
+
+Deploy script:
+- Test/staging: copy assets to vault asset folder
+- Production: skip assets (CDN delivery via jsDelivr)
+
+Bug fixes:
+- FolderSuggest autocomplete: bypass unreliable onChange with getCurrentPath()
+- Double /assets/ path in SpriteService, TileRegistry, DungeonView
+- Manifest persistence: write before error throw for partial downloads
+- HTTP cache-busting: ?t=timestamp on CDN requests
+
+Tests: 28 new unit tests (19 AssetService + 9 AssetDownloadModal)
+Verified: desktop (test/staging/production) + mobile (iOS via Obsidian Sync)
+```
