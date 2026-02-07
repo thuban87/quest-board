@@ -222,6 +222,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | ~~**Weekly Sprint View**~~ | ✅ **Progress Dashboard** - Activity history, stats, XP/gold tracking | ✅ Complete |
 | **Quest Templates UI** | "The Scrivener's Desk" - Template gallery, builder, preview, create file, usage stats | ✅ Complete |
 | **Daily Quest & Watched Folder** | Auto-create quests when files added to watched folders (Daily Notes, custom folders) | ✅ Complete |
+| **Remote Asset Delivery** | CDN-hosted sprites/tiles via jsDelivr, download modal, first-install config, mobile sync | ✅ Complete |
 
 #### Tier 2: Power-Ups & Testing (Early Phase 4)
 
@@ -389,5 +390,5 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-02-07 (Template Editor Session 3 — Preview, Create File, DynamicTemplateModal deprecated)
+**Last Updated:** 2026-02-07 (Remote Asset Delivery — CDN-hosted assets, download UI, deploy script update)
 

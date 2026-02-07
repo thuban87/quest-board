@@ -197,11 +197,11 @@ Each session entry should include:
 - Deployed to test vault: ✅
 
 ### Manual Testing Checklist (for Brad)
-- [ ] Open Settings → File Paths → verify "Asset Delivery" section appears with Asset Folder, Update Frequency dropdown, and "Check Now" button
-- [ ] Open command palette → search "Check for Asset Updates" → verify command exists
-- [ ] Open Character page → verify character sprite renders
-- [ ] Enter a dungeon → verify tiles render correctly
-- [ ] Start a battle → verify player sprite, monster sprite, and background render
+- [x] Open Settings → File Paths → verify "Asset Delivery" section appears with Asset Folder, Update Frequency dropdown, and "Check Now" button
+- [x] Open command palette → search "Check for Asset Updates" → verify command exists
+- [x] Open Character page → verify character sprite renders
+- [x] Enter a dungeon → verify tiles render correctly
+- [x] Start a battle → verify player sprite, monster sprite, and background render
 
 ### Blockers/Issues
 - First-run download and CDN update checks cannot be fully tested until assets are published to the GitHub CDN (`cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets`)
@@ -211,3 +211,85 @@ Each session entry should include:
 - Phase 5: CDN publishing (upload assets + manifest.json to GitHub repo)
 - Wire `AssetService.getDisplayPath()` into `SpriteService`/`TileRegistry` to replace `adapter.getResourcePath()` with vault-relative paths
 - Existing user migration: detect old `assets/` folder inside plugin dir, prompt to re-download
+
+---
+
+## Session 4: Phase 4 Bug Fixes & First-Install UX — 2026-02-07
+
+**Focus:** Fix critical bugs from Phase 4 integration (broken sprites, settings UX, manifest persistence, CDN caching), improve first-install experience
+
+### Completed—Bug Fixes
+- [x] **Double `/assets/` path bug:** `SpriteService.getBasePath()`, `TileRegistry.ts` (2 paths), and `DungeonView.tsx` (2 paths) were prepending `/assets/` to `assetFolder`, but `assetFolder` already IS the assets directory — created double paths like `QuestBoard/assets/assets/sprites/...`. Removed the `/assets/` prefix from all 5 locations
+- [x] **Settings keystroke-triggered download:** `onChange` handler fired on every character typed in the Asset Folder field, deleting and re-downloading assets per keystroke. Replaced with `blur`-based handler (only fires when user clicks away)
+- [x] **Manifest persistence:** `downloadAssets()` threw on ANY file failure and skipped writing `manifest.json`, causing "assets not found" notice on every reload. Moved manifest write BEFORE the error throw — partial downloads now produce a valid manifest, failed files retry on next update check
+- [x] **HTTP cache-busting:** Added `?t=${Date.now()}` to `fetchRemoteManifest()` and `downloadFileWithRetry()` URLs. Electron's local HTTP cache was serving stale responses even after jsDelivr CDN cache was purged
+
+### Completed—First-Install UX
+- [x] **`AssetConfigModal`:** New modal shown on true first install — folder path input with autocomplete, recommendation text, Download/Skip buttons
+- [x] **`assetConfigured` flag:** Added boolean to settings (default: `false`). Distinguishes "never installed" from "assets missing after config"
+- [x] **Existing user migration:** If `lastAssetCheck > 0`, auto-sets `assetConfigured = true` on load (prevents first-install modal for existing users)
+- [x] **Rewritten `checkAssetsOnStartup()`:** Three-case logic:
+  1. `!assetConfigured` → show `AssetConfigModal` (first install)
+  2. `assetConfigured` + no manifest → silent Notice ("assets not found")
+  3. `assetConfigured` + manifest → normal periodic update check
+
+### Files Changed
+| Action | Files |
+|--------|-------|
+| **Created** | `src/modals/AssetConfigModal.ts` |
+| **Modified** | `AssetService.ts` (manifest write order, cache-busting), `settings.ts` (`assetConfigured` flag, blur handler), `main.ts` (import, migration, rewritten startup), `SpriteService.ts`, `TileRegistry.ts`, `DungeonView.tsx` (removed double `/assets/`) |
+
+### Testing Notes
+- Build: ✅ Clean compile (0 errors, 4.17 MB)
+- Deployed to test vault: ✅
+- Manual testing results:
+  - Character page sprites: ✅
+  - Dungeon tiles (including renamed kebab-case files): ✅
+  - Battle sprites + background: ✅
+  - Settings Asset Folder field (no keystroke triggers): ✅
+  - First-install AssetConfigModal: ✅
+  - Manifest persists across reloads: ✅
+  - CDN download with correct filenames after cache-bust: ✅
+
+### Blockers/Issues
+- jsDelivr directory purge (`/assets/`) does NOT recursively purge individual files — must purge `manifest.json` specifically
+- Electron HTTP cache required cache-busting params; CDN purge alone is not sufficient
+
+### Next Steps
+- ~~Wire `AssetService.getDisplayPath()` into `SpriteService`/`TileRegistry` to replace `adapter.getResourcePath()`~~ Deferred (current path resolution works correctly)
+- ~~Existing user migration: detect old `assets/` inside plugin dir, prompt to re-download to vault folder~~ Deemed unnecessary
+
+---
+
+## Session 5: Phase 5 — Deploy Script & Bug Fixes — 2026-02-07
+
+**Focus:** Fix AssetConfigModal autocomplete bug, update deploy script for asset delivery, final production + mobile verification
+
+### Completed
+- [x] **`AssetConfigModal` autocomplete bug fix:** `FolderSuggest` sets `inputEl.value` directly and triggers a raw DOM `input` event, but the modal's `onChange` handler (via Obsidian `TextComponent`) was not fired by this event. Added `getCurrentPath()` method that reads the DOM input element's value at save time, bypassing the unreliable callback. Both `handleDownload()` and "Skip" button now use this.
+- [x] **Settings.ts verified safe:** The settings panel's asset folder handler uses `text.getValue()` on `blur`, which correctly reads the current DOM value — no fix needed there.
+- [x] **Deploy script update (`deploy.mjs`):** Added `ASSET_FOLDERS` mapping for test/staging vault paths. Assets now copy to the vault's asset folder (e.g., `Life/Quest Board/assets`) instead of the plugin directory. Production skips asset copying entirely (CDN delivery). Console output updated with clear sections for plugin files and assets.
+- [x] **Production deploy:** All plugin files deployed, first-run modal worked, assets downloaded from CDN, all sprites/tiles/backgrounds rendering correctly.
+- [x] **Mobile sync verification:** Obsidian Sync transferred assets to mobile device. Second device detected assets already in place (no re-download). Character sidebar, character page, dungeons, and battles all working on mobile.
+
+### Files Changed
+| Action | Files |
+|--------|-------|
+| **Modified** | `src/modals/AssetConfigModal.ts` (getCurrentPath method, DOM input reference), `deploy.mjs` (ASSET_FOLDERS mapping, conditional asset copying) |
+
+### Testing Notes
+- Build: ✅ Clean compile (0 errors, 4.17 MB)
+- Deploy to test: ✅ (560 asset files to vault folder)
+- Deploy to staging: ✅ (560 asset files to vault folder)
+- Deploy to production: ✅ (plugin files only, assets via CDN)
+- First-run modal: ✅ Autocomplete path saved correctly
+- Asset rendering (desktop): ✅ Character sidebar, character page, dungeons, battles
+- Asset rendering (mobile): ✅ Character sidebar, character page, dungeons, battles
+- Multi-device sync: ✅ Assets synced, no re-download on second device
+
+### Blockers/Issues
+- None
+
+### 🎉 Feature Complete
+All 5 phases of Remote Asset Delivery implemented and verified across desktop (test, staging, production) and mobile. CDN delivery working end-to-end.
+

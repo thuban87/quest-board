@@ -227,7 +227,7 @@ export class AssetService {
             throw new Error(`Unsupported file type: ${ext}`);
         }
 
-        const url = `${CDN_BASE}/${relativePath}`;
+        const url = `${CDN_BASE}/${relativePath}?t=${Date.now()}`;
         let lastError: Error | null = null;
 
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -282,7 +282,7 @@ export class AssetService {
     }
 
     private async fetchRemoteManifest(): Promise<AssetManifest> {
-        const response = await requestUrl({ url: `${CDN_BASE}/manifest.json`, timeout: 15000 } as RequestUrlParamWithTimeout);
+        const response = await requestUrl({ url: `${CDN_BASE}/manifest.json?t=${Date.now()}`, timeout: 15000 } as RequestUrlParamWithTimeout);
         // Sanity guard: reject unexpectedly large responses (corrupted CDN, error pages)
         if (response.text.length > 1_000_000) {
             throw new Error('Manifest too large — possible CDN error');

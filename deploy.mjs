@@ -3,30 +3,39 @@
  * 
  * Usage:
  *   node deploy.mjs test        - Deploy to TEST vault (safe, for development)
+ *   node deploy.mjs staging     - Deploy to STAGING vault (real files)
  *   node deploy.mjs production  - Deploy to PRODUCTION vault (requires confirmation)
+ * 
+ * Asset handling:
+ *   test/staging: Assets copied to vault asset folder (for local testing)
+ *   production:   Assets NOT copied (delivered via CDN)
  */
 
 import { copyFileSync, mkdirSync, existsSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { createInterface } from 'readline';
 
-// Vault paths
+// Plugin directory paths (where main.js, manifest.json, styles.css go)
 const VAULTS = {
     test: 'C:\\Quest-Board-Test-Vault\\.obsidian\\plugins\\quest-board',
     staging: 'C:\\Quest-Board-Staging-Vault\\Staging Vault\\.obsidian\\plugins\\quest-board',
     production: 'G:\\My Drive\\IT\\Obsidian Vault\\My Notebooks\\.obsidian\\plugins\\quest-board'
 };
 
-// Files to copy
+// Vault asset folder paths (where sprites, tiles, backgrounds go)
+// These match the assetFolder setting in each vault's plugin config.
+// Production uses CDN delivery — no local asset copying needed.
+const ASSET_FOLDERS = {
+    test: 'C:\\Quest-Board-Test-Vault\\Life\\Quest Board\\assets',
+    staging: 'C:\\Quest-Board-Staging-Vault\\Staging Vault\\Life\\Quest Board\\assets',
+    // production: not needed — assets delivered via jsDelivr CDN
+};
+
+// Core plugin files to copy (all targets)
 const FILES_TO_COPY = [
     'main.js',
     'manifest.json',
     'styles.css'
-];
-
-// Folders to copy recursively
-const FOLDERS_TO_COPY = [
-    'assets'
 ];
 
 // Get target from command line
@@ -44,6 +53,7 @@ if (!target || !VAULTS[target]) {
 }
 
 const targetPath = VAULTS[target];
+const assetTargetPath = ASSET_FOLDERS[target]; // undefined for production
 
 /**
  * Recursively copy a directory
@@ -88,6 +98,7 @@ async function confirmProduction() {
     console.log(`Target: ${targetPath}`);
     console.log('');
     console.log('This will overwrite your REAL Obsidian vault!');
+    console.log('Assets: Delivered via CDN (not copied)');
     console.log('');
 
     const rl = createInterface({
@@ -125,7 +136,7 @@ async function deploy() {
         mkdirSync(targetPath, { recursive: true });
     }
 
-    // Copy files
+    // Copy core plugin files
     const labels = {
         test: '🧪 TEST',
         staging: '📦 STAGING',
@@ -134,39 +145,48 @@ async function deploy() {
     const label = labels[target] || '🧪 TEST';
     console.log(`\nDeploying to ${label} vault...`);
 
+    console.log('\n  Plugin files:');
     for (const file of FILES_TO_COPY) {
         const src = join(process.cwd(), file);
         const dest = join(targetPath, file);
 
         try {
             copyFileSync(src, dest);
-            console.log(`  ✓ ${file}`);
+            console.log(`    ✓ ${file}`);
         } catch (error) {
-            console.error(`  ✗ Failed to copy ${file}:`, error.message);
+            console.error(`    ✗ Failed to copy ${file}:`, error.message);
             process.exit(1);
         }
     }
 
-    // Copy folders
-    for (const folder of FOLDERS_TO_COPY) {
-        const src = join(process.cwd(), folder);
-        const dest = join(targetPath, folder);
+    // Copy assets to vault asset folder (test/staging only)
+    if (assetTargetPath) {
+        const assetSrc = join(process.cwd(), 'assets');
 
         try {
-            const count = copyDirRecursive(src, dest);
+            const count = copyDirRecursive(assetSrc, assetTargetPath);
             if (count > 0) {
-                console.log(`  ✓ ${folder}/ (${count} files)`);
+                console.log(`\n  Assets (→ vault folder):`);
+                console.log(`    ✓ ${count} files → ${assetTargetPath}`);
             }
         } catch (error) {
-            console.error(`  ✗ Failed to copy ${folder}/:`, error.message);
+            console.error(`\n  ✗ Failed to copy assets:`, error.message);
         }
+    } else {
+        console.log(`\n  Assets: Skipped (CDN delivery)`);
     }
 
     console.log('');
     console.log('✅ Deployment complete!');
     console.log(`   Target: ${label}`);
-    console.log(`   Path: ${targetPath}`);
+    console.log(`   Plugin: ${targetPath}`);
+    if (assetTargetPath) {
+        console.log(`   Assets: ${assetTargetPath}`);
+    } else {
+        console.log(`   Assets: CDN (cdn.jsdelivr.net)`);
+    }
     console.log('   Reload Obsidian to see changes.');
 }
 
 deploy();
+
