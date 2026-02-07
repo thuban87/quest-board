@@ -37,14 +37,14 @@ export class DungeonItemView extends ItemView {
         container.empty();
         container.addClass('qb-dungeon-container');
 
-        const manifestDir = this.plugin.manifest.dir ?? '';
+        const assetFolder = this.plugin.manifest.dir ?? '';
         const adapter = this.app.vault.adapter;
 
         // Create React root and render
         this.root = createRoot(container as HTMLElement);
         this.root.render(
             <DungeonView
-                manifestDir={manifestDir}
+                assetFolder={assetFolder}
                 adapter={adapter}
                 app={this.app}
                 onClose={() => {

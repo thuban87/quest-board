@@ -16,7 +16,7 @@ import { findPath, getFacingDirection, getStepPosition, canWalkTo } from '../uti
 import { lootGenerationService } from '../services/LootGenerationService';
 import { monsterService } from '../services/MonsterService';
 import { startBattleWithMonster } from '../services/BattleService';
-import { getMonsterGifPath } from '../services/SpriteService';
+import { getMonsterGifPath, getPlayerSpritePath as getSpritePlayerPath, getPlayerBattleSprite } from '../services/SpriteService';
 import { BattleView } from './BattleView';
 import { DungeonDeathModal, calculateRescueCost } from '../modals/DungeonDeathModal';
 import { InventoryModal } from '../modals/InventoryModal';
@@ -30,7 +30,7 @@ import type { LootDrop } from '../models/Gear';
 // =====================
 
 interface DungeonViewProps {
-    manifestDir: string;
+    assetFolder: string;
     adapter: DataAdapter;
     app: App;
     onClose: () => void;
@@ -59,15 +59,13 @@ function getTierFromLevel(level: number): number {
  */
 function getPlayerSpritePath(
     adapter: DataAdapter,
-    manifestDir: string,
+    assetFolder: string,
     characterClass: string,
     level: number,
     facing: Direction
 ): string {
-    const className = characterClass.toLowerCase();
     const tier = getTierFromLevel(level);
-    const relativePath = `${manifestDir}/assets/sprites/player/${className}/tier${tier}/${className}_tier_${tier}_${facing}.png`;
-    return adapter.getResourcePath(relativePath);
+    return getSpritePlayerPath(assetFolder, adapter, characterClass, tier, facing as any);
 }
 
 /**
@@ -75,12 +73,12 @@ function getPlayerSpritePath(
  */
 function getTileSpritePath(
     adapter: DataAdapter,
-    manifestDir: string,
+    assetFolder: string,
     tileSet: TileSet,
     spriteName: string | null
 ): string | null {
     if (!spriteName) return null;
-    const relativePath = `${manifestDir}/assets/environment/${spriteName}`;
+    const relativePath = `${assetFolder}/assets/environment/${spriteName}`;
     return adapter.getResourcePath(relativePath);
 }
 
@@ -97,19 +95,19 @@ interface TileProps {
     x: number;
     y: number;
     tileSet: TileSet;
-    manifestDir: string;
+    assetFolder: string;
     adapter: DataAdapter;
     roomState?: { chestsOpened: string[]; monstersKilled: string[] };
     monsterSpritePath?: string | null;  // Sprite path for monster tiles
 }
 
-function Tile({ char, x, y, tileSet, manifestDir, adapter, roomState, monsterSpritePath }: TileProps) {
+function Tile({ char, x, y, tileSet, assetFolder, adapter, roomState, monsterSpritePath }: TileProps) {
     const tileDef = getTileDefinition(char, tileSet);
-    const spritePath = getTileSpritePath(adapter, manifestDir, tileSet, tileDef.sprite);
+    const spritePath = getTileSpritePath(adapter, assetFolder, tileSet, tileDef.sprite);
 
     // Get floor tile for overlay rendering
     const floorDef = getTileDefinition('.', tileSet);
-    const floorPath = getTileSpritePath(adapter, manifestDir, tileSet, floorDef.sprite);
+    const floorPath = getTileSpritePath(adapter, assetFolder, tileSet, floorDef.sprite);
 
     // Check if interactive tile has been used
     const isChestOpened = char === LAYOUT_CHARS.CHEST &&
@@ -123,7 +121,7 @@ function Tile({ char, x, y, tileSet, manifestDir, adapter, roomState, monsterSpr
         const tileDef = getTileDefinition('C', tileSet);
         const openSpriteName = tileDef.openSprite || tileDef.sprite;
         const chestSpritePath = openSpriteName
-            ? adapter.getResourcePath(`${manifestDir}/assets/environment/${openSpriteName}`)
+            ? adapter.getResourcePath(`${assetFolder}/assets/environment/${openSpriteName}`)
             : null;
         return (
             <div
@@ -239,7 +237,7 @@ function Tile({ char, x, y, tileSet, manifestDir, adapter, roomState, monsterSpr
 interface PlayerSpriteProps {
     position: [number, number];
     facing: Direction;
-    manifestDir: string;
+    assetFolder: string;
     adapter: DataAdapter;
     characterClass: string;
     level: number;
@@ -247,9 +245,9 @@ interface PlayerSpriteProps {
     spriteOffset: number;
 }
 
-function PlayerSprite({ position, facing, manifestDir, adapter, characterClass, level, tileSize, spriteOffset }: PlayerSpriteProps) {
+function PlayerSprite({ position, facing, assetFolder, adapter, characterClass, level, tileSize, spriteOffset }: PlayerSpriteProps) {
     const [x, y] = position;
-    const spritePath = getPlayerSpritePath(adapter, manifestDir, characterClass, level, facing);
+    const spritePath = getPlayerSpritePath(adapter, assetFolder, characterClass, level, facing);
 
     // Use left/top positioning (sprite centered on tile)
     const leftPx = x * tileSize + spriteOffset;
@@ -301,7 +299,7 @@ interface DungeonHeaderProps {
     maxMana: number;
     characterClass: string;
     level: number;
-    manifestDir: string;
+    assetFolder: string;
     adapter: DataAdapter;
 }
 
@@ -323,11 +321,11 @@ function DungeonHeader({
     maxMana,
     characterClass,
     level,
-    manifestDir,
+    assetFolder,
     adapter,
 }: DungeonHeaderProps) {
     // Avatar sprite path
-    const avatarPath = getPlayerSpritePath(adapter, manifestDir, characterClass, level, 'south');
+    const avatarPath = getPlayerSpritePath(adapter, assetFolder, characterClass, level, 'south');
     const hpPercent = maxHP > 0 ? Math.min(100, (currentHP / maxHP) * 100) : 0;
     const manaPercent = maxMana > 0 ? Math.min(100, (currentMana / maxMana) * 100) : 0;
 
@@ -415,7 +413,7 @@ interface RoomGridProps {
     room: RoomTemplate;
     roomId: string;  // Added to fix tile key uniqueness across rooms
     tileSet: TileSet;
-    manifestDir: string;
+    assetFolder: string;
     adapter: DataAdapter;
     playerPosition: [number, number];
     playerFacing: Direction;
@@ -431,7 +429,7 @@ function RoomGrid({
     room,
     roomId,
     tileSet,
-    manifestDir,
+    assetFolder,
     adapter,
     playerPosition,
     playerFacing,
@@ -472,7 +470,7 @@ function RoomGrid({
                     if (monsterDef && monsterDef.pool.length > 0) {
                         // Use the first template ID and use SpriteService for proper path
                         const templateId = monsterDef.pool[0];
-                        monsterSpritePath = getMonsterGifPath(manifestDir, adapter, templateId);
+                        monsterSpritePath = getMonsterGifPath(assetFolder, adapter, templateId);
                     }
                 }
 
@@ -483,7 +481,7 @@ function RoomGrid({
                         x={x}
                         y={y}
                         tileSet={tileSet}
-                        manifestDir={manifestDir}
+                        assetFolder={assetFolder}
                         adapter={adapter}
                         roomState={roomState}
                         monsterSpritePath={monsterSpritePath}
@@ -493,7 +491,7 @@ function RoomGrid({
         }
 
         return result;
-    }, [roomId, room.layout, room.monsters, tileSet, manifestDir, adapter, roomState]);
+    }, [roomId, room.layout, room.monsters, tileSet, assetFolder, adapter, roomState]);
 
     const gridStyle: React.CSSProperties = {
         '--room-width': room.width,
@@ -510,7 +508,7 @@ function RoomGrid({
             <PlayerSprite
                 position={playerPosition}
                 facing={playerFacing}
-                manifestDir={manifestDir}
+                assetFolder={assetFolder}
                 adapter={adapter}
                 characterClass={characterClass}
                 level={characterLevel}
@@ -612,7 +610,7 @@ interface TransitionState {
     phase: 'exiting' | 'entering' | 'none';
 }
 
-export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, app, onClose, onSave }) => {
+export const DungeonView: React.FC<DungeonViewProps> = ({ assetFolder, adapter, app, onClose, onSave }) => {
     // Container ref for keyboard focus
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -1296,7 +1294,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                 maxMana={character.maxMana ?? 50}
                 characterClass={character.class}
                 level={character.level}
-                manifestDir={manifestDir}
+                assetFolder={assetFolder}
                 adapter={adapter}
             />
 
@@ -1305,7 +1303,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                     room={room}
                     roomId={currentRoomId}
                     tileSet={template.tileSet}
-                    manifestDir={manifestDir}
+                    assetFolder={assetFolder}
                     adapter={adapter}
                     playerPosition={playerPosition}
                     playerFacing={playerFacing}
@@ -1322,12 +1320,12 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ manifestDir, adapter, 
                     // Get current monster from battle store for sprite path
                     const currentMonster = useBattleStore.getState().monster;
                     const monsterSpritePath = currentMonster?.templateId
-                        ? adapter.getResourcePath(`${manifestDir}/assets/sprites/monsters/${currentMonster.templateId}/${currentMonster.templateId}.gif`)
+                        ? getMonsterGifPath(assetFolder, adapter, currentMonster.templateId)
                         : undefined;
 
                     // Get player sprite path for battle (use south-facing for battle stance)
-                    const playerSpritePath = adapter.getResourcePath(
-                        `${manifestDir}/assets/sprites/player/${character.class.toLowerCase()}/tier${getTierFromLevel(character.level)}/${character.class.toLowerCase()}_tier_${getTierFromLevel(character.level)}_south.png`
+                    const playerSpritePath = getPlayerBattleSprite(
+                        assetFolder, adapter, character.class, getTierFromLevel(character.level)
                     );
 
                     return (

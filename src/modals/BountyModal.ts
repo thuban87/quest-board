@@ -25,8 +25,8 @@ export interface BountyModalOptions {
     onSave?: () => Promise<void>;
     /** Callback to open battle view after battle starts */
     onBattleStart?: () => void;
-    /** Plugin manifest directory for sprite resolution */
-    manifestDir?: string;
+    /** Asset folder path for sprite resolution */
+    assetFolder?: string;
 }
 
 // =====================
@@ -88,9 +88,9 @@ export class BountyModal extends Modal {
         const monsterIcon = monsterPreview.createDiv('qb-bounty-monster-icon');
 
         // Try to show monster sprite, fallback to emoji
-        if (this.options.manifestDir && monster.templateId) {
+        if (this.options.assetFolder && monster.templateId) {
             const spritePath = getMonsterGifPath(
-                this.options.manifestDir,
+                this.options.assetFolder,
                 this.app.vault.adapter,
                 monster.templateId
             );

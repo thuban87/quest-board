@@ -5,11 +5,12 @@
  * Shows class info, bonuses, perks, and GIF previews.
  */
 
-import { Modal, App, TFile } from 'obsidian';
+import { Modal, App } from 'obsidian';
 import { CharacterClass, CLASS_INFO, ClassInfo } from '../models/Character';
 import { useCharacterStore } from '../store/characterStore';
 import { TrainingIntroModal } from './TrainingIntroModal';
 import type QuestBoardPlugin from '../../main';
+import { getClassPreviewSprite } from '../services/SpriteService';
 
 export class CharacterCreationModal extends Modal {
     private plugin: QuestBoardPlugin;
@@ -25,16 +26,17 @@ export class CharacterCreationModal extends Modal {
     }
 
     /**
-     * Get the resource path to a class preview GIF
-     * GIFs are stored in vault at Life/Quest Board/assets/class-previews/{classId}.gif
+     * Get the resource path to a class preview GIF.
+     * Uses SpriteService for consistent path resolution (tier 4 showcase).
      */
     private getClassGifPath(classId: CharacterClass): string | undefined {
-        const gifPath = `Life/Quest Board/assets/class-previews/${classId}.gif`;
-        const file = this.app.vault.getAbstractFileByPath(gifPath);
-        if (file && file instanceof TFile) {
-            return this.app.vault.getResourcePath(file);
+        const assetFolder = this.plugin.manifest.dir;
+        if (!assetFolder) return undefined;
+        try {
+            return getClassPreviewSprite(assetFolder, this.app.vault.adapter, classId);
+        } catch {
+            return undefined;
         }
-        return undefined;
     }
 
     onOpen(): void {

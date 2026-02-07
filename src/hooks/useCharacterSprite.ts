@@ -12,7 +12,7 @@ import { getPlayerGifPath, getPlayerSpritePath, SpriteDirection } from '../servi
 
 export interface UseCharacterSpriteOptions {
     character: Character | null;
-    manifestDir: string | undefined;
+    assetFolder: string | undefined;
     adapter: DataAdapter;
     /** Whether to return animated GIF (true) or static PNG (false). Default: true */
     animated?: boolean;
@@ -28,14 +28,14 @@ export interface UseCharacterSpriteOptions {
  */
 export function useCharacterSprite({
     character,
-    manifestDir,
+    assetFolder,
     adapter,
     animated = true,
     direction = 'south',
 }: UseCharacterSpriteOptions): string | undefined {
     return useMemo(() => {
         if (!character) return undefined;
-        if (!manifestDir) return undefined;
+        if (!assetFolder) return undefined;
 
         // Get tier based on training mode or level
         const tier = character.isTrainingMode ? 1 : getLevelTier(character.level);
@@ -43,13 +43,13 @@ export function useCharacterSprite({
 
         try {
             if (animated) {
-                return getPlayerGifPath(manifestDir, adapter, className, tier);
+                return getPlayerGifPath(assetFolder, adapter, className, tier);
             } else {
-                return getPlayerSpritePath(manifestDir, adapter, className, tier, direction);
+                return getPlayerSpritePath(assetFolder, adapter, className, tier, direction);
             }
         } catch {
             // Return undefined if path resolution fails
             return undefined;
         }
-    }, [character, manifestDir, adapter, animated, direction, character?.level, character?.isTrainingMode, character?.class]);
+    }, [character, assetFolder, adapter, animated, direction, character?.level, character?.isTrainingMode, character?.class]);
 }

@@ -72,8 +72,8 @@ export interface MoveQuestOptions {
     bountyChance?: number;
     /** Callback to open battle view when bounty fight starts */
     onBattleStart?: () => void;
-    /** Plugin manifest directory for sprite resolution */
-    manifestDir?: string;
+    /** Asset folder path for sprite resolution */
+    assetFolder?: string;
     /** XP awarded for the quest (for daily note logging) */
     xpAwarded?: number;
 }
@@ -307,7 +307,7 @@ export async function moveQuest(
                     // Battle service handles saving
                 },
                 onBattleStart: options.onBattleStart,
-                manifestDir: options.manifestDir,
+                assetFolder: options.assetFolder,
             });
         }
     };

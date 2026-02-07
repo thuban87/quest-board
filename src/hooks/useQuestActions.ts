@@ -26,8 +26,8 @@ interface UseQuestActionsOptions {
     bountyChance?: number;
     /** Callback to open battle view when bounty fight starts */
     onBattleStart?: () => void;
-    /** Plugin manifest directory for sprite resolution in BountyModal */
-    manifestDir?: string;
+    /** Asset folder path for sprite resolution in BountyModal */
+    assetFolder?: string;
 }
 
 interface UseQuestActionsResult {
@@ -50,7 +50,7 @@ export function useQuestActions({
     app,
     bountyChance,
     onBattleStart,
-    manifestDir,
+    assetFolder,
 }: UseQuestActionsOptions): UseQuestActionsResult {
 
     const handleMoveQuest = useCallback(
@@ -68,7 +68,7 @@ export function useQuestActions({
                     app,
                     bountyChance,
                     onBattleStart,
-                    manifestDir,
+                    assetFolder,
                 });
 
                 // Save character after quest completion (stamina, streak, etc.)
@@ -88,7 +88,7 @@ export function useQuestActions({
                 }
             }
         },
-        [vault, storageFolder, settings, streakMode, pendingSavesRef, onSaveCharacter, app, bountyChance, onBattleStart, manifestDir]
+        [vault, storageFolder, settings, streakMode, pendingSavesRef, onSaveCharacter, app, bountyChance, onBattleStart, assetFolder]
     );
 
     const handleToggleTask = useCallback(

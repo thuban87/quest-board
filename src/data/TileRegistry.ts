@@ -381,11 +381,11 @@ export function isWalkable(char: string, tileSet: TileSet): boolean {
 export function getTileSpritePath(
     char: string,
     tileSet: TileSet,
-    manifestDir: string
+    assetFolder: string
 ): string | null {
     const def = getTileDefinition(char, tileSet);
     if (!def.sprite) return null;
-    return `${manifestDir}/assets/environment/${def.sprite}`;
+    return `${assetFolder}/assets/environment/${def.sprite}`;
 }
 
 /**
@@ -423,12 +423,12 @@ export function findAllPositions(layout: string[], char: string): Array<[number,
  */
 export function getChestSpritePath(
     tileSet: TileSet,
-    manifestDir: string,
+    assetFolder: string,
     isOpen: boolean
 ): string | null {
     const def = getTileDefinition('C', tileSet);
     const spritePath = isOpen && def.openSprite ? def.openSprite : def.sprite;
     if (!spritePath) return null;
-    return `${manifestDir}/assets/environment/${spritePath}`;
+    return `${assetFolder}/assets/environment/${spritePath}`;
 }
 

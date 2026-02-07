@@ -471,7 +471,7 @@ export default class QuestBoardPlugin extends Plugin {
                 // If elite, show modal first; otherwise start battle directly
                 if (tier === 'elite') {
                     showEliteEncounterModal(this.app, monster, {
-                        manifestDir: this.manifest.dir,
+                        assetFolder: this.manifest.dir,
                         onFight: () => {
                             // Consume stamina when fight is accepted
                             useCharacterStore.getState().consumeStamina();

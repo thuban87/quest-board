@@ -81,7 +81,7 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
 
     const spriteUrl = useCharacterSprite({
         character,
-        manifestDir: plugin.manifest.dir,
+        assetFolder: plugin.manifest.dir,
         adapter: app.vault.adapter,
         animated: true,
     });
