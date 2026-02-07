@@ -6,7 +6,7 @@ Copy this prompt and fill in the **[USER INPUT]** sections with your requirement
 
 ## PROMPT START
 
-You are generating a dungeon for the Quest Board Obsidian plugin. Output TypeScript code that can be pasted directly into `dungeonTemplates.ts`.
+You are generating a dungeon for the Quest Board Obsidian plugin. Output TypeScript code that can be saved as a new file in `src/data/dungeons/`.
 
 ---
 
@@ -252,10 +252,8 @@ Now generate the dungeon based on the user inputs provided above.
 2. Review output carefully - AI often makes row width errors
 3. Run the cleanup prompt on the output to catch common issues
 4. Save AI output to `docs/development/dungeons/quarantine/` for review before adding to codebase
-5. **IMPORTANT:** After adding dungeon to `dungeonTemplates.ts`, you must also add it to the `BUILTIN_TEMPLATES` registry at the bottom of the file:
-   ```typescript
-   const BUILTIN_TEMPLATES: Record<string, DungeonTemplate> = {
-       // ... existing dungeons ...
-       your_new_dungeon: YOUR_NEW_DUNGEON,  // <-- ADD THIS LINE
-   };
-   ```
+5. **IMPORTANT:** To add a new built-in dungeon:
+   1. Save the file as `src/data/dungeons/yourDungeonName.ts`
+   2. Add `import { YOUR_DUNGEON } from './yourDungeonName';` in `src/data/dungeons/index.ts`
+   3. Add `your_dungeon: YOUR_DUNGEON,` to the `BUILTIN_TEMPLATES` record in `index.ts`
+   4. Add the re-export to the `export { ... }` line in `index.ts`

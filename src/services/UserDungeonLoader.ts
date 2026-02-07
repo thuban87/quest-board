@@ -36,6 +36,7 @@
 import type { App, TFile, TFolder, Vault } from 'obsidian';
 import type { DungeonTemplate, RoomTemplate, DungeonDifficulty, TileSet, RoomType, Direction } from '../models/Dungeon';
 import type { GearSlot, GearTier } from '../models/Gear';
+import { VALID_MONSTER_IDS } from './AIDungeonService';
 
 // ============================================
 // YAML Parsing (Simple implementation)
@@ -365,6 +366,15 @@ function parseRoomSection(section: string, filename: string, index: number): {
                     pool: pool as string[],
                     isBoss: monster.isBoss === true || monster.isBoss === 'true',
                 });
+            }
+        }
+    }
+
+    // Validate monster IDs against known list
+    for (const monster of monsters) {
+        for (const monsterId of monster.pool) {
+            if (!VALID_MONSTER_IDS.has(monsterId)) {
+                warnings.push(`${filename} room ${roomId}: Unknown monster ID '${monsterId}'`);
             }
         }
     }

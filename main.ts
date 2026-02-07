@@ -20,7 +20,7 @@ import {
     CharacterView
 } from './src/views';
 import { useDungeonStore } from './src/store/dungeonStore';
-import { getAllDungeonTemplates, registerUserDungeons, clearUserDungeons, getRandomDungeon } from './src/data/dungeonTemplates';
+import { getAllDungeonTemplates, registerUserDungeons, clearUserDungeons, getRandomDungeon } from './src/data/dungeons';
 import { loadUserDungeons, createDungeonTemplateDoc } from './src/services/UserDungeonLoader';
 import type { DungeonTemplate } from './src/models/Dungeon';
 import { CreateQuestModal } from './src/modals/CreateQuestModal';

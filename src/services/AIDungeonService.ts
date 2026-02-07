@@ -47,7 +47,7 @@ export type ProgressCallback = (phase: 'generating' | 'validating' | 'saving', d
 // VALID MONSTER IDS
 // =====================
 
-const VALID_MONSTER_IDS = new Set([
+export const VALID_MONSTER_IDS = new Set([
     'wolf', 'bear', 'giant-rat',           // beasts
     'skeleton', 'zombie', 'ghost',          // undead
     'goblin', 'hobgoblin', 'bugbear',      // goblins

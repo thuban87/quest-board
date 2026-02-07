@@ -10,7 +10,7 @@ import { Platform, DataAdapter, Notice, App } from 'obsidian';
 import { useDungeonStore } from '../store/dungeonStore';
 import { useCharacterStore } from '../store/characterStore';
 import { useBattleStore } from '../store/battleStore';
-import { getDungeonTemplate } from '../data/dungeonTemplates';
+import { getDungeonTemplate } from '../data/dungeons';
 import { getTileDefinition, LAYOUT_CHARS, getChestSpritePath } from '../data/TileRegistry';
 import { findPath, getFacingDirection, getStepPosition, canWalkTo } from '../utils/pathfinding';
 import { lootGenerationService } from '../services/LootGenerationService';
