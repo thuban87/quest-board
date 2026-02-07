@@ -163,3 +163,51 @@ Each session entry should include:
 
 ### Next Steps
 - Phase 4: Wire `AssetService` into `main.ts` startup (first-run check, "Check for Updates" command, connect `assetFolder` to `AssetService.getStoragePath()`)
+
+---
+
+## Session 3: Phase 4 — Main Plugin Integration — 2026-02-07
+
+**Focus:** Wire `AssetService` into plugin lifecycle, add settings UI, register command, replace all remaining `manifest.dir` references
+
+### Completed
+- [x] **Settings fields:** Added `assetFolder` (default: `QuestBoard/assets`), `assetUpdateFrequency` (`daily`/`weekly`/`manual`, default: `weekly`), `lastAssetCheck` (timestamp) to `QuestBoardSettings` interface and `DEFAULT_SETTINGS`
+- [x] **Settings UI:** Added "Asset Delivery" subsection inside File Paths (Section 2) with folder autocomplete text input, update frequency dropdown, "Check Now" button, last-check timestamp display, and path-change handler with auto-redownload
+- [x] **AssetService initialization:** `this.assetService` created in `onload()` after `loadSettings()`
+- [x] **First-run check:** `checkAssetsOnStartup()` detects first run (no manifest), shows `AssetDownloadModal` with `isFirstRun: true`
+- [x] **Periodic update check:** Background check respects `assetUpdateFrequency` setting, skips if not due, notifies user if updates available
+- [x] **Command:** "Check for Asset Updates" (`check-asset-updates`) registered in command palette
+- [x] **`deleteAllAssets()` method:** Added to `AssetService` for path-change cleanup (reads manifest, removes all files + manifest)
+- [x] **2MB file size guard:** Added to `downloadFileWithRetry()` — rejects files exceeding 2MB
+- [x] **`manifest.dir` → `settings.assetFolder`:** Replaced ALL remaining references (9 files total):
+  - `main.ts` (elite encounter), `DungeonItemView.tsx`, `BattleItemView.tsx`, `CharacterCreationModal.ts`
+  - `SidebarQuests.tsx` (3 locations), `FullKanban.tsx` (2 locations), `CharacterPage.tsx`
+- [x] **Battle-bg path fix:** Removed duplicate `/assets/` from `BattleItemView.tsx` background path
+
+### Files Changed
+| Action | Files |
+|--------|-------|
+| **Modified** | `settings.ts`, `main.ts`, `AssetService.ts`, `DungeonItemView.tsx`, `BattleItemView.tsx`, `CharacterCreationModal.ts`, `SidebarQuests.tsx`, `FullKanban.tsx`, `CharacterPage.tsx` |
+
+### Testing Notes
+- Build: ✅ Clean compile (0 errors, 4.17 MB)
+- Asset tests: ✅ All 28 pass (19 AssetService + 9 AssetDownloadModal)
+- Full suite: Pre-existing failures only (power-up-triggers) — no new regressions
+- Final grep: ✅ Zero `manifest.dir` references in `src/` or `main.ts`
+- Deployed to test vault: ✅
+
+### Manual Testing Checklist (for Brad)
+- [ ] Open Settings → File Paths → verify "Asset Delivery" section appears with Asset Folder, Update Frequency dropdown, and "Check Now" button
+- [ ] Open command palette → search "Check for Asset Updates" → verify command exists
+- [ ] Open Character page → verify character sprite renders
+- [ ] Enter a dungeon → verify tiles render correctly
+- [ ] Start a battle → verify player sprite, monster sprite, and background render
+
+### Blockers/Issues
+- First-run download and CDN update checks cannot be fully tested until assets are published to the GitHub CDN (`cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets`)
+- Pre-existing test failure in `power-up-triggers.test.ts` — unrelated to asset delivery
+
+### Next Steps
+- Phase 5: CDN publishing (upload assets + manifest.json to GitHub repo)
+- Wire `AssetService.getDisplayPath()` into `SpriteService`/`TileRegistry` to replace `adapter.getResourcePath()` with vault-relative paths
+- Existing user migration: detect old `assets/` folder inside plugin dir, prompt to re-download

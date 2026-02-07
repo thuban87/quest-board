@@ -385,7 +385,7 @@ export function getTileSpritePath(
 ): string | null {
     const def = getTileDefinition(char, tileSet);
     if (!def.sprite) return null;
-    return `${assetFolder}/assets/environment/${def.sprite}`;
+    return `${assetFolder}/environment/${def.sprite}`;
 }
 
 /**
@@ -429,6 +429,6 @@ export function getChestSpritePath(
     const def = getTileDefinition('C', tileSet);
     const spritePath = isOpen && def.openSprite ? def.openSprite : def.sprite;
     if (!spritePath) return null;
-    return `${assetFolder}/assets/environment/${spritePath}`;
+    return `${assetFolder}/environment/${spritePath}`;
 }
 

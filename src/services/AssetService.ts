@@ -21,6 +21,7 @@ import { safeJsonParse } from '../utils/safeJson';
 const CDN_BASE = 'https://cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets';
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY_MS = 500;
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB safety limit
 
 /** requestUrl supports timeout at runtime but the type definition omits it */
 interface RequestUrlParamWithTimeout extends RequestUrlParam {
@@ -91,6 +92,36 @@ export class AssetService {
     }
 
     /**
+     * Delete ALL locally cached assets. Used when asset folder path changes.
+     * Reads the local manifest to find files, then removes them all + the manifest itself.
+     */
+    async deleteAllAssets(): Promise<void> {
+        const local = await this.getLocalManifest();
+        if (!local) return;
+
+        for (const path of Object.keys(local.files)) {
+            const storagePath = this.getStoragePath(path);
+            try {
+                if (await this.adapter.exists(storagePath)) {
+                    await this.adapter.remove(storagePath);
+                }
+            } catch (e) {
+                console.warn(`[AssetService] Failed to delete ${storagePath}:`, e);
+            }
+        }
+
+        // Remove the manifest itself
+        const manifestPath = this.getStoragePath('manifest.json');
+        try {
+            if (await this.adapter.exists(manifestPath)) {
+                await this.adapter.remove(manifestPath);
+            }
+        } catch (e) {
+            console.warn('[AssetService] Failed to delete manifest:', e);
+        }
+    }
+
+    /**
      * Remove files that are no longer in the remote manifest.
      * Prevents asset folder bloat when files are renamed/removed.
      */
@@ -105,8 +136,11 @@ export class AssetService {
 
     /**
      * Download files with concurrency limit to avoid rate limits.
-     * Writes the provided manifest LAST to ensure atomic installation.
+     * Writes the provided manifest after downloads complete to ensure detection works on reload.
      * IMPORTANT: Pass the same manifest from checkForUpdates() to avoid TOCTOU bugs.
+     * 
+     * Note: Manifest is written even if some files fail, so subsequent loads don't
+     * re-trigger the first-run flow. Failed files will be retried on next update check.
      */
     async downloadAssets(
         files: string[],
@@ -142,16 +176,17 @@ export class AssetService {
             }
         }
 
-        // If any files failed after retries, throw
-        if (errors.length > 0) {
-            throw new Error(`Failed to download ${errors.length} files:\n${errors.join('\n')}`);
-        }
-
-        // CRITICAL: Write the SAME manifest we checked against (avoids TOCTOU)
+        // ALWAYS write the manifest so subsequent loads detect assets exist.
+        // Failed files will be retried on the next update check.
         await this.adapter.write(
             this.getStoragePath('manifest.json'),
             JSON.stringify(manifest, null, 2)
         );
+
+        // Report failures AFTER writing manifest
+        if (errors.length > 0) {
+            throw new Error(`Failed to download ${errors.length} file(s):\n${errors.join('\n')}`);
+        }
     }
 
     /**
@@ -214,6 +249,11 @@ export class AssetService {
                 // VALIDATION: Ensure we actually got bytes (prevents silent corruption)
                 if (!response.arrayBuffer || response.arrayBuffer.byteLength === 0) {
                     throw new Error('Received empty or invalid binary data');
+                }
+
+                // VALIDATION: Reject oversized files (prevents corrupted CDN responses)
+                if (response.arrayBuffer.byteLength > MAX_FILE_SIZE) {
+                    throw new Error(`File too large: ${(response.arrayBuffer.byteLength / 1024 / 1024).toFixed(1)}MB (max 2MB)`);
                 }
 
                 const storagePath = this.getStoragePath(relativePath);

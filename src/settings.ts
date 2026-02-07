@@ -116,6 +116,12 @@ export interface QuestBoardSettings {
     // Custom Kanban Columns
     enableCustomColumns: boolean;       // Feature flag for custom columns
     customColumns: CustomColumn[];      // User-defined column configuration
+
+    // Asset Delivery
+    assetFolder: string;                                      // Vault-relative path for downloaded assets
+    assetUpdateFrequency: 'daily' | 'weekly' | 'manual';      // How often to check for asset updates
+    lastAssetCheck: number;                                    // Timestamp of last update check
+    assetConfigured: boolean;                                  // True after user has completed initial asset setup
 }
 
 /**
@@ -183,6 +189,12 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     // Custom Kanban Columns (feature enabled by default)
     enableCustomColumns: true,
     customColumns: [...DEFAULT_COLUMNS],
+
+    // Asset Delivery
+    assetFolder: 'QuestBoard/assets',
+    assetUpdateFrequency: 'weekly',
+    lastAssetCheck: 0,
+    assetConfigured: false,
 };
 
 /**
@@ -317,6 +329,128 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     this.plugin.settings.userDungeonFolder = value;
                     await this.plugin.saveSettings();
                 }));
+
+        // --- Asset Delivery ---
+        filePathsContent.createEl('h4', { text: '🎨 Asset Delivery' });
+
+        const assetFolderSetting = new Setting(filePathsContent)
+            .setName('Asset Folder')
+            .setDesc('Vault folder where downloaded sprites, tiles, and backgrounds are stored');
+
+        assetFolderSetting.addText(text => {
+            text.setPlaceholder('QuestBoard/assets')
+                .setValue(this.plugin.settings.assetFolder || 'QuestBoard/assets');
+
+            // Save handler — only fires on blur or explicit save, NOT per-keystroke
+            const handleSave = async () => {
+                const oldPath = this.plugin.settings.assetFolder;
+                const newPath = text.getValue().trim() || 'QuestBoard/assets';
+                if (oldPath === newPath) return;
+
+                this.plugin.settings.assetFolder = newPath;
+                await this.plugin.saveSettings();
+
+                // Reinitialize AssetService with new path and trigger re-download
+                if (this.plugin.assetService) {
+                    try {
+                        // Delete old assets from previous location
+                        await this.plugin.assetService.deleteAllAssets();
+                        // Re-create service with new path
+                        const { AssetService } = await import('./services/AssetService');
+                        this.plugin.assetService = new AssetService(this.app, newPath);
+                        // Trigger fresh download
+                        const { files, remoteManifest } = await this.plugin.assetService.checkForUpdates();
+                        if (files.length > 0) {
+                            const { AssetDownloadModal } = await import('./modals/AssetDownloadModal');
+                            const character = this.plugin.settings.character;
+                            new AssetDownloadModal(this.app, {
+                                assetService: this.plugin.assetService,
+                                filesToDownload: files,
+                                manifest: remoteManifest,
+                                characterClass: character?.class,
+                                onComplete: () => {
+                                    new Notice('✅ Assets re-downloaded to new location');
+                                },
+                            }).open();
+                        }
+                    } catch (e) {
+                        console.error('[QuestBoard] Asset path change failed:', e);
+                        new Notice(`❌ Failed to move assets: ${(e as Error).message}`);
+                    }
+                }
+            };
+
+            // Commit on blur (when user clicks away from the field)
+            text.inputEl.addEventListener('blur', handleSave);
+
+            // Add folder autocomplete
+            import('./utils/FolderSuggest').then(({ FolderSuggest }) => {
+                new FolderSuggest(this.app, text.inputEl);
+            });
+        });
+
+        new Setting(filePathsContent)
+            .setName('Asset Update Frequency')
+            .setDesc('How often to check for new or updated sprites and tiles')
+            .addDropdown(dropdown => dropdown
+                .addOption('daily', 'Daily')
+                .addOption('weekly', 'Weekly')
+                .addOption('manual', 'Manual only')
+                .setValue(this.plugin.settings.assetUpdateFrequency || 'weekly')
+                .onChange(async (value) => {
+                    this.plugin.settings.assetUpdateFrequency = value as 'daily' | 'weekly' | 'manual';
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(filePathsContent)
+            .setName('Check for Asset Updates')
+            .setDesc('Manually check for new or updated sprites and tiles')
+            .addButton(button => button
+                .setButtonText('Check Now')
+                .onClick(async () => {
+                    if (!this.plugin.assetService) {
+                        new Notice('❌ Asset service not initialized');
+                        return;
+                    }
+                    button.setButtonText('Checking...');
+                    button.setDisabled(true);
+                    try {
+                        const { needsUpdate, files, orphaned, remoteManifest } = await this.plugin.assetService.checkForUpdates();
+                        this.plugin.settings.lastAssetCheck = Date.now();
+                        await this.plugin.saveSettings();
+                        if (needsUpdate) {
+                            const { AssetDownloadModal } = await import('./modals/AssetDownloadModal');
+                            const character = this.plugin.settings.character;
+                            new AssetDownloadModal(this.app, {
+                                assetService: this.plugin.assetService,
+                                filesToDownload: files,
+                                manifest: remoteManifest,
+                                orphanedFiles: orphaned,
+                                characterClass: character?.class,
+                                onComplete: () => {
+                                    new Notice(`✅ ${files.length} asset(s) updated`);
+                                    this.display(); // Refresh to update version display
+                                },
+                            }).open();
+                        } else {
+                            new Notice('✅ All assets are up to date');
+                        }
+                    } catch (e) {
+                        new Notice(`❌ Update check failed: ${(e as Error).message}`);
+                    } finally {
+                        button.setButtonText('Check Now');
+                        button.setDisabled(false);
+                    }
+                }));
+
+        // Show last check time
+        if (this.plugin.settings.lastAssetCheck > 0) {
+            const lastCheck = new Date(this.plugin.settings.lastAssetCheck);
+            filePathsContent.createEl('p', {
+                text: `Last checked: ${lastCheck.toLocaleDateString()} ${lastCheck.toLocaleTimeString()}`,
+                cls: 'setting-item-description'
+            });
+        }
 
         // ═══════════════════════════════════════════════════════════════════
         // SECTION 3: GAMEPLAY SETTINGS

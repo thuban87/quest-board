@@ -78,7 +78,7 @@ function getTileSpritePath(
     spriteName: string | null
 ): string | null {
     if (!spriteName) return null;
-    const relativePath = `${assetFolder}/assets/environment/${spriteName}`;
+    const relativePath = `${assetFolder}/environment/${spriteName}`;
     return adapter.getResourcePath(relativePath);
 }
 
@@ -121,7 +121,7 @@ function Tile({ char, x, y, tileSet, assetFolder, adapter, roomState, monsterSpr
         const tileDef = getTileDefinition('C', tileSet);
         const openSpriteName = tileDef.openSprite || tileDef.sprite;
         const chestSpritePath = openSpriteName
-            ? adapter.getResourcePath(`${assetFolder}/assets/environment/${openSpriteName}`)
+            ? adapter.getResourcePath(`${assetFolder}/environment/${openSpriteName}`)
             : null;
         return (
             <div

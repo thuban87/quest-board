@@ -43,7 +43,7 @@ export class BattleItemView extends ItemView {
         container.empty();
         container.addClass('qb-battle-container');
 
-        const assetFolder = this.plugin.manifest.dir;
+        const assetFolder = this.plugin.settings.assetFolder;
         const adapter = this.app.vault.adapter;
 
         // Get character for class/tier-based sprite
@@ -65,7 +65,7 @@ export class BattleItemView extends ItemView {
 
         // Compute background image path
         const backgroundPath = assetFolder
-            ? adapter.getResourcePath(`${assetFolder}/assets/backgrounds/battle-bg.jpg`)
+            ? adapter.getResourcePath(`${assetFolder}/backgrounds/battle-bg.jpg`)
             : undefined;
 
         // Create React root and render

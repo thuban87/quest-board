@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-02-07T19:18:11.821Z",
-  "fileCount": 568,
+  "lastUpdated": "2026-02-07T20:15:40.838Z",
+  "fileCount": 559,
   "files": {
     "backgrounds/battle-bg.jpg": {
       "hash": "9416e8e6",
@@ -1566,42 +1566,6 @@
     "sprites/monsters/eye-beast/eye-beast_west.png": {
       "hash": "67a2d2cf",
       "size": 775
-    },
-    "sprites/monsters/giant-rat/giant-rat.gif": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_east.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_north-east.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_north-west.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_north.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_south-east.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_south-west.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_south.png": {
-      "hash": "d41d8cd9",
-      "size": 0
-    },
-    "sprites/monsters/giant-rat/giant-rat_west.png": {
-      "hash": "d41d8cd9",
-      "size": 0
     },
     "sprites/monsters/goblin/goblin.gif": {
       "hash": "ac21ff17",

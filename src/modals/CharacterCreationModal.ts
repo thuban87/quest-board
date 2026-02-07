@@ -30,7 +30,7 @@ export class CharacterCreationModal extends Modal {
      * Uses SpriteService for consistent path resolution (tier 4 showcase).
      */
     private getClassGifPath(classId: CharacterClass): string | undefined {
-        const assetFolder = this.plugin.manifest.dir;
+        const assetFolder = this.plugin.settings.assetFolder;
         if (!assetFolder) return undefined;
         try {
             return getClassPreviewSprite(assetFolder, this.app.vault.adapter, classId);

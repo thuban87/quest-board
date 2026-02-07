@@ -30,7 +30,7 @@ const EXTENSIONS = ['gif', 'png', 'jpg', 'jpeg'] as const;
  * Get the base sprite directory path
  */
 function getBasePath(assetFolder: string): string {
-    return `${assetFolder}/assets/sprites`;
+    return `${assetFolder}/sprites`;
 }
 
 // =====================

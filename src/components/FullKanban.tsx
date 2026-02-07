@@ -93,7 +93,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
         app,  // Pass app for loot modal display
         bountyChance: plugin.settings.bountyChance,  // Pass bounty chance for bounty triggers
         onBattleStart: () => plugin.activateBattleView(),  // Open battle view when bounty fight starts
-        assetFolder: plugin.manifest.dir,  // For monster sprite resolution in BountyModal
+        assetFolder: plugin.settings.assetFolder,  // For monster sprite resolution in BountyModal
     });
 
     // XP Award hook - watches task file changes and awards XP
@@ -300,7 +300,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
             app,
             bountyChance: plugin.settings.bountyChance,
             onBattleStart: () => plugin.activateBattleView(),
-            assetFolder: plugin.manifest.dir,
+            assetFolder: plugin.settings.assetFolder,
             onSaveCharacter: handleSaveCharacter,
         });
     }, [app, plugin.settings, handleSaveCharacter]);
