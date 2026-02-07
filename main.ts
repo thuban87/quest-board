@@ -223,9 +223,9 @@ export default class QuestBoardPlugin extends Plugin {
             (leaf: WorkspaceLeaf) => new CharacterView(leaf, this)
         );
 
-        // Add ribbon icon to open focused sidebar
-        this.addRibbonIcon('swords', 'Open Quest Board', () => {
-            this.activateSidebarView();
+        // Add ribbon icon to open command menu
+        this.addRibbonIcon('swords', 'Open Quest Board Menu', () => {
+            new QuestBoardCommandMenu(this).open();
         });
 
         // Add command for consolidated command menu
