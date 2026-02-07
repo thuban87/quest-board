@@ -1447,6 +1447,97 @@ Data Fix:
 - Added missing 20th room to Thornwood Labyrinth (dead_end_south_2)
 
 Tests: All 20 dungeon-registry tests pass
-Files: 7 new, 6 modified, 1 archived
 ```
+
+---
+
+## 2026-02-06 (Night) - Quest File Button Fix & Template Type Persistence Bug
+
+**Focus:** Fix quest card file buttons creating new files, and fix template type persistence for daily note / watched folder templates
+
+### Completed:
+
+#### Bug Fix 1: Quest Card File Buttons
+- ✅ `QuestCard.tsx` — Changed `handleOpenQuestFile` and `getLinkedFileIsDifferent` to use `quest.filePath`/`quest.path` instead of reconstructing path from `questId`
+- ✅ Changed `openLinkText` third arg from `true` to `false` to prevent accidental file creation
+- ✅ `FolderWatchService.ts` — Removed `Date.now()` timestamp suffix from `questId`, use slug as filename
+
+#### Bug Fix 2: Template Type Persistence (3 sub-bugs)
+- ✅ `ScrivenersQuillModal.ts` constructor — Was not loading folder watcher fields (`watchFolder`, `namingMode`, `archiveMode`, etc.) from `ParsedTemplate` when editing
+- ✅ `ScrivenersQuillModal.ts` `saveTemplate()` — Was skipping frontmatter injection when body already had `---` block, so edited templates kept original frontmatter unchanged. Now always strips old frontmatter and rebuilds from form state
+- ✅ `TemplateService.ts` `extractFrontmatter()` — Regex `/questType:\s*(\w+)/` used `\w+` which doesn't match hyphens, so `daily-quest` parsed as just `daily`. Changed to `\S+`
+
+#### Planning
+- ✅ Created 3-session Template System Overhaul plan at `docs/development/planned-features/Template System Overhaul.md`
+
+### Files Changed:
+
+**Modified:**
+- `src/components/QuestCard.tsx` — Path construction and file opening
+- `src/services/FolderWatchService.ts` — questId/filename alignment
+- `src/modals/ScrivenersQuillModal.ts` — Constructor field loading + frontmatter rebuild on save
+- `src/services/TemplateService.ts` — Regex fix for hyphenated quest types
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Quest file buttons open correct files (all 4 test cases passed)
+- ✅ Daily note template edit → shows correct type and fields
+- ✅ Watched folder template edit → shows correct type and fields
+- ✅ Save → close → reopen preserves type and all fields
+- ✅ Side quest templates unaffected
+- ✅ New template creation works correctly
+- ✅ Deployed to production
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Template type persistence bug fixed. Template System Overhaul Session 1 complete.
+
+What was done:
+- Fixed quest card file buttons creating ghost files (QuestCard.tsx, FolderWatchService.ts)
+- Fixed 3 bugs preventing daily note/watched folder template types from persisting:
+  - Constructor didn't load folder watcher fields from ParsedTemplate
+  - saveTemplate() didn't update frontmatter when editing existing templates
+  - extractFrontmatter() regex truncated hyphenated quest types (daily-quest → daily)
+
+Next session (Session 2) per Template System Overhaul plan:
+- Part A: Add taglines to all 14+ templates (description/tagline frontmatter field)
+- Part B: Overhaul DynamicTemplateModal (Use Template) with richer info display
+
+Key files for Session 2:
+- src/services/TemplateService.ts — ParsedTemplate model, extractFrontmatter
+- src/modals/SmartTemplateModal.ts — DynamicTemplateModal (231 lines)
+- src/modals/ScrollLibraryModal.ts — Template gallery display
+- G:\My Drive\IT\Obsidian Vault\My Notebooks\System\Templates\Quest Board — Template files
+
+See: docs/development/planned-features/Template System Overhaul.md
+```
+
+---
+
+## Git Commit Message
+
+```
+fix: quest file buttons and template type persistence
+
+Quest Card File Buttons:
+- Use quest.filePath/path instead of reconstructing from questId
+- Changed openLinkText createIfNotExists from true to false
+- FolderWatchService: removed timestamp suffix from questId, use slug as filename
+
+Template Type Persistence (3 bugs):
+- ScrivenersQuillModal constructor: load folder watcher fields from ParsedTemplate
+- ScrivenersQuillModal saveTemplate: always rebuild frontmatter from form state
+  (was skipping when body already had --- block)
+- TemplateService extractFrontmatter: regex \w+ → \S+ to match hyphenated
+  quest types (daily-quest, watched-folder)
+
+Files: QuestCard.tsx, FolderWatchService.ts, ScrivenersQuillModal.ts, TemplateService.ts
+```
+
 

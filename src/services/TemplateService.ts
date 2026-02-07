@@ -168,7 +168,7 @@ export class TemplateService {
         const frontmatter = content.substring(3, endIndex);
 
         // Extract questType
-        const typeMatch = frontmatter.match(/questType:\s*(\w+)/);
+        const typeMatch = frontmatter.match(/questType:\s*(\S+)/);
         if (typeMatch) {
             result.questType = typeMatch[1];
         }

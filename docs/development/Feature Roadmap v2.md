@@ -389,5 +389,5 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-02-06 (Dungeon Templates Modularization)
+**Last Updated:** 2026-02-06 (Template Type Persistence Fix)
 

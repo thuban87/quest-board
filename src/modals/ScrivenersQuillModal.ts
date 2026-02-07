@@ -65,6 +65,28 @@ export class ScrivenersQuillModal extends Modal {
                 name: p.name,
                 isAuto: p.isAutoDate || p.isOutputPath || p.isSlug
             }));
+            // Load folder watcher fields for daily-quest and watched-folder types
+            if (existingTemplate.watchFolder !== undefined) {
+                this.watchFolder = existingTemplate.watchFolder;
+            }
+            if (existingTemplate.namingMode !== undefined) {
+                this.namingMode = existingTemplate.namingMode;
+            }
+            if (existingTemplate.namingPattern !== undefined) {
+                this.customNamingPattern = existingTemplate.namingPattern;
+            }
+            if (existingTemplate.archiveMode !== undefined) {
+                this.archiveMode = existingTemplate.archiveMode;
+            }
+            if (existingTemplate.archiveDurationHours !== undefined) {
+                this.archiveDurationHours = existingTemplate.archiveDurationHours;
+            }
+            if (existingTemplate.archiveTime !== undefined) {
+                this.archiveTime = existingTemplate.archiveTime;
+            }
+            if (existingTemplate.archivePath !== undefined) {
+                this.archivePath = existingTemplate.archivePath;
+            }
         }
     }
 
@@ -664,36 +686,35 @@ Write your quest description here.
                 }
             }
 
-            // Build content with frontmatter if not already present
-            let content = this.bodyContent;
-            if (!content.startsWith('---')) {
-                const recurrenceLine = this.questType === 'recurring'
-                    ? `recurrence: ${this.getRecurrenceString()}\n`
-                    : '';
+            // Build frontmatter from current form state
+            const recurrenceLine = this.questType === 'recurring'
+                ? `recurrence: ${this.getRecurrenceString()}\n`
+                : '';
 
-                // Folder watcher lines for daily-quest and watched-folder types
-                const isFolderWatcher = ['daily-quest', 'watched-folder'].includes(this.questType);
-                const folderWatchLines = isFolderWatcher
-                    ? `watchFolder: "${this.watchFolder}"\n` +
-                    `namingMode: ${this.namingMode}\n` +
-                    (this.namingMode === 'custom' ? `namingPattern: "${this.customNamingPattern}"\n` : '') +
-                    `archiveMode: ${this.archiveMode}\n` +
-                    (this.archiveMode === 'after-duration' ? `archiveDurationHours: ${this.archiveDurationHours}\n` : '') +
-                    (this.archiveMode === 'at-time' ? `archiveTime: "${this.archiveTime}"\n` : '') +
-                    (this.archivePath ? `archivePath: "${this.archivePath}"\n` : '')
-                    : '';
+            // Folder watcher lines for daily-quest and watched-folder types
+            const isFolderWatcher = ['daily-quest', 'watched-folder'].includes(this.questType);
+            const folderWatchLines = isFolderWatcher
+                ? `watchFolder: "${this.watchFolder}"\n` +
+                `namingMode: ${this.namingMode}\n` +
+                (this.namingMode === 'custom' ? `namingPattern: "${this.customNamingPattern}"\n` : '') +
+                `archiveMode: ${this.archiveMode}\n` +
+                (this.archiveMode === 'after-duration' ? `archiveDurationHours: ${this.archiveDurationHours}\n` : '') +
+                (this.archiveMode === 'at-time' ? `archiveTime: "${this.archiveTime}"\n` : '') +
+                (this.archivePath ? `archivePath: "${this.archivePath}"\n` : '')
+                : '';
 
-                content = `---
-questType: ${this.questType}
-status: available
-priority: medium
-category: ${this.category || ''}
-xpValue: 50
-created: {{date}}
-${recurrenceLine}${folderWatchLines}---
+            const newFrontmatter = `---\nquestType: ${this.questType}\nstatus: available\npriority: medium\ncategory: ${this.category || ''}\nxpValue: 50\ncreated: {{date}}\n${recurrenceLine}${folderWatchLines}---`;
 
-${content}`;
+            // Strip existing frontmatter from body content, then prepend fresh one
+            let bodyWithoutFrontmatter = this.bodyContent;
+            if (bodyWithoutFrontmatter.startsWith('---')) {
+                const endIndex = bodyWithoutFrontmatter.indexOf('---', 3);
+                if (endIndex !== -1) {
+                    bodyWithoutFrontmatter = bodyWithoutFrontmatter.substring(endIndex + 3).replace(/^\r?\n/, '');
+                }
             }
+
+            const content = `${newFrontmatter}\n\n${bodyWithoutFrontmatter}`;
 
             // Create or update file
             const existingFile = this.isEditing && this.existingTemplate
