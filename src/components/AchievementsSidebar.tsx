@@ -13,31 +13,16 @@ import { AchievementService, calculateAchievementProgress } from '../services/Ac
 
 interface AchievementsSidebarProps {
     app: App;
-    badgeFolder: string;
     onBack: () => void;
 }
 
 export const AchievementsSidebar: React.FC<AchievementsSidebarProps> = ({
     app,
-    badgeFolder,
     onBack,
 }) => {
     const achievements = useCharacterStore((state) => state.achievements);
     const character = useCharacterStore((state) => state.character);
-    const [badgePaths, setBadgePaths] = useState<Record<string, string | null>>({});
-    const achievementService = new AchievementService(app.vault, badgeFolder);
-
-    // Load badge paths
-    useEffect(() => {
-        const loadBadges = async () => {
-            const paths: Record<string, string | null> = {};
-            for (const achievement of achievements) {
-                paths[achievement.id] = await achievementService.getBadgeResourcePath(app, achievement);
-            }
-            setBadgePaths(paths);
-        };
-        loadBadges();
-    }, [achievements, app, badgeFolder]);
+    const achievementService = new AchievementService(app.vault);
 
     // Calculate progress using shared utility (single source of truth)
     const achievementsWithProgress = useMemo(
@@ -68,7 +53,6 @@ export const AchievementsSidebar: React.FC<AchievementsSidebarProps> = ({
                     <AchievementCard
                         key={achievement.id}
                         achievement={achievement}
-                        badgePath={badgePaths[achievement.id]}
                     />
                 ))}
             </div>
@@ -81,26 +65,17 @@ export const AchievementsSidebar: React.FC<AchievementsSidebarProps> = ({
  */
 interface AchievementCardProps {
     achievement: Achievement;
-    badgePath: string | null;
 }
 
-const AchievementCard: React.FC<AchievementCardProps> = ({ achievement, badgePath }) => {
+const AchievementCard: React.FC<AchievementCardProps> = ({ achievement }) => {
     const unlocked = isUnlocked(achievement);
     const progress = getProgressPercent(achievement);
 
     return (
         <div className={`qb-achievement-card ${unlocked ? 'unlocked' : 'locked'}`}>
-            {/* Badge/Emoji */}
+            {/* Emoji */}
             <div className="qb-achievement-badge">
-                {badgePath ? (
-                    <img
-                        src={badgePath}
-                        alt={achievement.name}
-                        className={unlocked ? '' : 'qb-badge-locked'}
-                    />
-                ) : (
-                    <span className="qb-achievement-emoji">{achievement.emoji}</span>
-                )}
+                <span className="qb-achievement-emoji">{achievement.emoji}</span>
             </div>
 
             {/* Name */}

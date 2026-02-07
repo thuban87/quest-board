@@ -115,56 +115,56 @@ These tasks should be completed **before** starting Phase 1. They remove dead co
 
 The badge image system was planned but never implemented. All achievements use emoji only (`emoji: '🎖️'`). The `badgePath` field in the model and `badgeFolder` in settings/services are dead code.
 
-- [ ] Remove `badgePath?: string` field from `Achievement.ts` model (line 43)
-- [ ] Remove `badgeFolder: string` from `QuestBoardSettings` interface (`settings.ts` line 45)
-- [ ] Remove `badgeFolder` default from `DEFAULT_SETTINGS` (`settings.ts` line 135)
-- [ ] Remove `private badgeFolder: string` field, constructor param, and `getBadgePath`/`badgeExists`/`getBadgeResourcePath` methods from `AchievementService.ts`
-- [ ] Remove `badgeFolder` param from `AchievementUnlockModal.ts` constructor and `showAchievementUnlock()` function
-- [ ] Remove `badgeFolder` option from `AchievementHubModal.ts`
-- [ ] Remove `badgeFolder` prop from `AchievementsSidebar.tsx`
-- [ ] Remove `badgeFolder` option + hardcoded default `'Life/Quest Board/assets/badges'` from `useXPAward.ts` (line 59)
-- [ ] Remove `badgeFolder` pass-throughs in `SidebarQuests.tsx` (lines 138, 173, 443)
-- [ ] Remove `badgeFolder` pass-through in `FullKanban.tsx` (line 103)
-- [ ] Remove `badgeFolder` pass-throughs in `CharacterPage.tsx` (lines 73, 154)
+- [x] Remove `badgePath?: string` field from `Achievement.ts` model (line 43)
+- [x] Remove `badgeFolder: string` from `QuestBoardSettings` interface (`settings.ts` line 45)
+- [x] Remove `badgeFolder` default from `DEFAULT_SETTINGS` (`settings.ts` line 135)
+- [x] Remove `private badgeFolder: string` field, constructor param, and `getBadgePath`/`badgeExists`/`getBadgeResourcePath` methods from `AchievementService.ts`
+- [x] Remove `badgeFolder` param from `AchievementUnlockModal.ts` constructor and `showAchievementUnlock()` function
+- [x] Remove `badgeFolder` option from `AchievementHubModal.ts`
+- [x] Remove `badgeFolder` prop from `AchievementsSidebar.tsx`
+- [x] Remove `badgeFolder` option + hardcoded default `'Life/Quest Board/assets/badges'` from `useXPAward.ts` (line 59)
+- [x] Remove `badgeFolder` pass-throughs in `SidebarQuests.tsx` (lines 138, 173, 443)
+- [x] Remove `badgeFolder` pass-through in `FullKanban.tsx` (line 103)
+- [x] Remove `badgeFolder` pass-throughs in `CharacterPage.tsx` (lines 73, 154)
 
 ### spriteFolder Setting Removal
 
 The `spriteFolder` setting was a planned feature that was deprecated. The actual sprite pipeline uses `manifestDir` exclusively via `SpriteService`. This setting is vestigial and should be removed to avoid confusion during migration.
 
-- [ ] Remove `spriteFolder: string` from `QuestBoardSettings` interface (`settings.ts` line 44)
-- [ ] Remove `spriteFolder` default from `DEFAULT_SETTINGS` (`settings.ts` line 134)
-- [ ] Remove "Sprite Folder" setting UI from settings tab (`settings.ts` lines 289-298)
-- [ ] Remove `spriteFolder` prop pass-through in `SidebarQuests.tsx` (line 436)
-- [ ] Remove `spriteFolder` prop from `CharacterSidebar.tsx` interface and component (lines 37, 48)
+- [x] Remove `spriteFolder: string` from `QuestBoardSettings` interface (`settings.ts` line 44)
+- [x] Remove `spriteFolder` default from `DEFAULT_SETTINGS` (`settings.ts` line 134)
+- [x] Remove "Sprite Folder" setting UI from settings tab (`settings.ts` lines 289-298)
+- [x] Remove `spriteFolder` prop pass-through in `SidebarQuests.tsx` (line 436)
+- [x] Remove `spriteFolder` prop from `CharacterSidebar.tsx` interface and component (lines 37, 48)
 
 ### CharacterCreationModal Fix
 
 `CharacterCreationModal.ts` uses a hardcoded vault path (`Life/Quest Board/assets/class-previews/{classId}.gif`) that bypasses `SpriteService` entirely. The `class-previews` folder does not exist and won't be created. `SpriteService.getClassPreviewSprite()` already correctly resolves to tier 4 GIFs from the standard player sprite folders.
 
-- [ ] Refactor `CharacterCreationModal.getClassGifPath()` to use `SpriteService.getClassPreviewSprite(manifestDir, adapter, className)` instead of the hardcoded vault path
-- [ ] Pass `manifestDir` (from `this.plugin.manifest.dir`) and `adapter` (from `this.app.vault.adapter`) into the method
-- [ ] Remove the `TFile` import if no longer needed after this change
+- [x] Refactor `CharacterCreationModal.getClassGifPath()` to use `SpriteService.getClassPreviewSprite(manifestDir, adapter, className)` instead of the hardcoded vault path *(already done — confirmed clean)*
+- [x] Pass `manifestDir` (from `this.plugin.manifest.dir`) and `adapter` (from `this.app.vault.adapter`) into the method *(already done)*
+- [x] Remove the `TFile` import if no longer needed after this change *(already done)*
 
 ### Environment Tile Filename Normalization
 
 Several dungeon tile sprite paths in `TileRegistry.ts` use filenames with spaces (e.g., `cave gravel.png`, `granite floor.png`). These should be normalized to **kebab-case** for consistency with character sprites and to avoid potential CDN/URL encoding issues.
 
-- [ ] Rename all environment tile image files from spaces to kebab-case (e.g., `cave gravel.png` → `cave-gravel.png`)
-- [ ] Update all corresponding sprite path strings in `TileRegistry.ts` (~40 entries across 4 tilesets)
-- [ ] Verify no other files reference these filenames
+- [x] Rename all environment tile image files from spaces to kebab-case (72 files: 66 spaces + 6 camelCase)
+- [x] Update all corresponding sprite path strings in `TileRegistry.ts` (8 entries updated)
+- [x] Verify no other files reference these filenames
 
 ### DungeonView Inline Helper Consolidation
 
 `DungeonView.tsx` has local `getPlayerSpritePath()` and `getTileSpritePath()` helpers that duplicate `SpriteService` logic. The local player sprite helper also uses a legacy underscore naming convention (`warrior_tier_1_south.png`) while `SpriteService` and the actual sprite files use hyphens (`warrior-tier-1_south.png`). This works today only because both file variants exist in deployed plugin folders, but **will break** with the remote asset migration since the manifest will only contain hyphen-named files.
 
-- [ ] Remove the local `getPlayerSpritePath()` helper (line 60-71) and import `SpriteService.getPlayerSpritePath()` instead
-- [ ] Remove the local `getTileSpritePath()` helper (line 76-85) — use `TileRegistry` functions already imported
-- [ ] Fix the inline combat sprite path at lines ~1329-1331 to use `SpriteService.getPlayerSpritePath()` instead of manual string construction
+- [x] Remove the local `getPlayerSpritePath()` helper (line 60-71) and import `SpriteService.getPlayerSpritePath()` instead *(already done)*
+- [x] Remove the local `getTileSpritePath()` helper (line 76-85) — use `TileRegistry` functions already imported *(already done)*
+- [x] Fix the inline combat sprite path at lines ~1329-1331 to use `SpriteService.getPlayerSpritePath()` instead of manual string construction *(already done)*
 - [ ] Delete the legacy underscore-named sprite files from deployed plugin folders (test + production) — they are duplicates of the hyphen-named files
 
 ### Deprecated File Cleanup
 
-- [ ] Delete `CharacterSheet.tsx` (deprecated, replaced by `CharacterPage.tsx` + `CharacterSidebar.tsx`)
+- [x] Delete `CharacterSheet.tsx` (deprecated, replaced by `CharacterPage.tsx` + `CharacterSidebar.tsx`)
 
 ---
 
@@ -751,14 +751,14 @@ https://cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets/sprites/monsters/go
 
 ## Session Log
 
-### Pre-Implementation (Not Started)
-- [ ] Badge system removal (dead code cleanup)
-- [ ] spriteFolder setting removal
-- [ ] CharacterCreationModal fix (use SpriteService.getClassPreviewSprite)
-- [ ] DungeonView inline helper consolidation (use SpriteService, fix underscore filename mismatch)
+### Pre-Implementation ✅ Completed (2026-02-07)
+- [x] Badge system removal (dead code cleanup — 14 files)
+- [x] spriteFolder setting removal (3 files)
+- [x] CharacterCreationModal fix — confirmed already using SpriteService
+- [x] DungeonView inline helper consolidation — confirmed already using SpriteService
 - [ ] Clean up legacy underscore-named sprite files from deployed plugin folders
-- [ ] Environment tile filename normalization (spaces → kebab-case)
-- [ ] Delete deprecated CharacterSheet.tsx
+- [x] Environment tile filename normalization (72 files renamed, 8 TileRegistry paths updated)
+- [x] Delete deprecated CharacterSheet.tsx
 
 ### Session 1 (Not Started)
 - [ ] Phase 1: AssetService foundation

@@ -13,17 +13,14 @@ import { CreateAchievementModal } from './CreateAchievementModal';
 
 interface AchievementHubModalOptions {
     app: App;
-    badgeFolder: string;
     onSave: () => Promise<void>;
 }
 
 export class AchievementHubModal extends Modal {
-    private badgeFolder: string;
     private onSave: () => Promise<void>;
 
     constructor(options: AchievementHubModalOptions) {
         super(options.app);
-        this.badgeFolder = options.badgeFolder;
         this.onSave = options.onSave;
     }
 
@@ -38,7 +35,7 @@ export class AchievementHubModal extends Modal {
 
         const achievements = useCharacterStore.getState().achievements;
         const character = useCharacterStore.getState().character;
-        const achievementService = new AchievementService(this.app.vault, this.badgeFolder);
+        const achievementService = new AchievementService(this.app.vault);
 
         // Calculate progress using shared utility (single source of truth)
         const achievementsWithProgress = calculateAchievementProgress(achievements, character);

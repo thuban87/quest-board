@@ -41,8 +41,7 @@ export interface QuestBoardSettings {
 
     // Storage configuration
     storageFolder: string;
-    spriteFolder: string;  // Path to sprite folder (e.g., 'Quest Board/assets/sprites/paladin')
-    badgeFolder: string;   // Path to badge images for achievements
+
 
     // Game settings
     weeklyGoal: number;
@@ -131,8 +130,7 @@ export function getQuestFolderPath(settings: QuestBoardSettings): string {
 export const DEFAULT_SETTINGS: QuestBoardSettings = {
     geminiApiKey: '',
     storageFolder: 'Quest Board',
-    spriteFolder: 'Quest Board/assets',
-    badgeFolder: 'Quest Board/assets/badges',
+
     weeklyGoal: 8,
     enableTrainingMode: true,
     character: null,
@@ -286,16 +284,6 @@ export class QuestBoardSettingTab extends PluginSettingTab {
             cls: 'qb-section-description'
         });
 
-        new Setting(filePathsContent)
-            .setName('Sprite Folder')
-            .setDesc('Path to character sprite folder (must contain south.png)')
-            .addText(text => text
-                .setPlaceholder('Quest Board/assets/sprites/paladin')
-                .setValue(this.plugin.settings.spriteFolder)
-                .onChange(async (value) => {
-                    this.plugin.settings.spriteFolder = value;
-                    await this.plugin.saveSettings();
-                }));
 
         new Setting(filePathsContent)
             .setName('Template Folder')

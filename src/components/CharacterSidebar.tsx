@@ -34,7 +34,7 @@ interface CharacterSidebarProps {
     onOpenBlacksmith?: () => void;
     /** Open skill loadout modal */
     onOpenSkillLoadout?: () => void;
-    spriteFolder?: string;
+
     spriteResourcePath?: string;
 }
 
@@ -45,7 +45,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
     onOpenInventoryForSlot,
     onOpenBlacksmith,
     onOpenSkillLoadout,
-    spriteFolder,
+
     spriteResourcePath,
 }) => {
     const character = useCharacterStore((state) => state.character);

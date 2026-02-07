@@ -82,21 +82,21 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'floor',
             walkable: true,
             autoInteract: false,
-            sprite: 'cave/floor/cave gravel.png',
+            sprite: 'cave/floor/cave-gravel.png',
             emoji: '⬜',
         },
         'P': {
             type: 'spawn',
             walkable: true,
             autoInteract: false,
-            sprite: 'cave/floor/cave gravel.png',
+            sprite: 'cave/floor/cave-gravel.png',
             emoji: '⬜',
         },
         'D': {
             type: 'door',
             walkable: true,
             autoInteract: true,
-            sprite: 'cave/floor/cave gravel.png', // Cave "doors" are just openings
+            sprite: 'cave/floor/cave-gravel.png', // Cave "doors" are just openings
             emoji: '🚪',
         },
         'C': {
@@ -112,7 +112,7 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'monster',
             walkable: true, // Walkable until monster spawns
             autoInteract: false,
-            sprite: 'cave/floor/cave gravel.png',
+            sprite: 'cave/floor/cave-gravel.png',
             emoji: '⬜',
         },
         'O': {
@@ -224,21 +224,21 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'floor',
             walkable: true,
             autoInteract: false,
-            sprite: 'cave/floor/granite floor.png',
+            sprite: 'cave/floor/granite-floor.png',
             emoji: '⬜',
         },
         'P': {
             type: 'spawn',
             walkable: true,
             autoInteract: false,
-            sprite: 'cave/floor/granite floor.png',
+            sprite: 'cave/floor/granite-floor.png',
             emoji: '⬜',
         },
         'D': {
             type: 'door',
             walkable: true,
             autoInteract: true,
-            sprite: 'cave/floor/granite floor.png',
+            sprite: 'cave/floor/granite-floor.png',
             emoji: '🚪',
         },
         'C': {
@@ -254,7 +254,7 @@ export const TILE_REGISTRY: Record<TileSet, Record<string, TileDefinition>> = {
             type: 'monster',
             walkable: true,
             autoInteract: false,
-            sprite: 'cave/floor/granite floor.png',
+            sprite: 'cave/floor/granite-floor.png',
             emoji: '⬜',
         },
         'O': {

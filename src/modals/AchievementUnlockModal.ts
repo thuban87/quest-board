@@ -2,31 +2,24 @@
  * Achievement Unlock Modal
  * 
  * Celebratory popup that appears when an achievement is unlocked.
- * Displays badge, name, description, XP bonus with confetti animation.
+ * Displays emoji, name, description, XP bonus with confetti animation.
  */
 
 import { App, Modal } from 'obsidian';
 import { Achievement } from '../models/Achievement';
-import { AchievementService } from '../services/AchievementService';
 
 export class AchievementUnlockModal extends Modal {
     private achievement: Achievement;
-    private badgeFolder: string;
 
-    constructor(app: App, achievement: Achievement, badgeFolder: string) {
+    constructor(app: App, achievement: Achievement) {
         super(app);
         this.achievement = achievement;
-        this.badgeFolder = badgeFolder;
     }
 
     async onOpen() {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('qb-achievement-unlock-modal');
-
-        // Get badge path
-        const service = new AchievementService(this.app.vault, this.badgeFolder);
-        const badgePath = await service.getBadgeResourcePath(this.app, this.achievement);
 
         // Container
         const container = contentEl.createDiv({ cls: 'qb-unlock-container' });
@@ -37,20 +30,12 @@ export class AchievementUnlockModal extends Modal {
             cls: 'qb-unlock-header'
         });
 
-        // Badge display
+        // Emoji display
         const badgeContainer = container.createDiv({ cls: 'qb-unlock-badge-container' });
-        if (badgePath) {
-            const img = badgeContainer.createEl('img', {
-                cls: 'qb-unlock-badge-img',
-            });
-            img.src = badgePath;
-            img.alt = this.achievement.name;
-        } else {
-            badgeContainer.createSpan({
-                text: this.achievement.emoji,
-                cls: 'qb-unlock-badge-emoji',
-            });
-        }
+        badgeContainer.createSpan({
+            text: this.achievement.emoji,
+            cls: 'qb-unlock-badge-emoji',
+        });
 
         // Achievement name
         container.createEl('h3', {
@@ -113,6 +98,6 @@ export class AchievementUnlockModal extends Modal {
 /**
  * Show achievement unlock popup
  */
-export function showAchievementUnlock(app: App, achievement: Achievement, badgeFolder: string): void {
-    new AchievementUnlockModal(app, achievement, badgeFolder).open();
+export function showAchievementUnlock(app: App, achievement: Achievement): void {
+    new AchievementUnlockModal(app, achievement).open();
 }

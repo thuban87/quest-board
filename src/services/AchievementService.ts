@@ -1,10 +1,10 @@
 /**
  * Achievement Service
  * 
- * Handles checking achievement conditions, unlocking, and badge loading.
+ * Handles checking achievement conditions and unlocking.
  */
 
-import { App, TFile, Vault } from 'obsidian';
+import { Vault } from 'obsidian';
 import { Achievement, isUnlocked } from '../models/Achievement';
 import { getDefaultAchievements } from '../data/achievements';
 import { Character } from '../models/Character';
@@ -60,11 +60,9 @@ export function calculateAchievementProgress(
  */
 export class AchievementService {
     private vault: Vault;
-    private badgeFolder: string;
 
-    constructor(vault: Vault, badgeFolder: string = 'Life/Quest Board/assets/badges') {
+    constructor(vault: Vault) {
         this.vault = vault;
-        this.badgeFolder = badgeFolder;
     }
 
     /**
@@ -223,36 +221,6 @@ export class AchievementService {
         return achievement;
     }
 
-    /**
-     * Get badge image path for an achievement
-     */
-    getBadgePath(achievement: Achievement): string {
-        if (achievement.badgePath) {
-            return achievement.badgePath;
-        }
-        return `${this.badgeFolder}/${achievement.id}.png`;
-    }
-
-    /**
-     * Check if badge file exists
-     */
-    async badgeExists(achievement: Achievement): Promise<boolean> {
-        const path = this.getBadgePath(achievement);
-        const file = this.vault.getAbstractFileByPath(path);
-        return file instanceof TFile;
-    }
-
-    /**
-     * Get resource path for badge (for display)
-     */
-    async getBadgeResourcePath(app: App, achievement: Achievement): Promise<string | null> {
-        const path = this.getBadgePath(achievement);
-        const file = this.vault.getAbstractFileByPath(path);
-        if (file instanceof TFile) {
-            return app.vault.getResourcePath(file);
-        }
-        return null;
-    }
 
     /**
      * Add a custom achievement

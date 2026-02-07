@@ -100,7 +100,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     useXPAward({
         app,
         vault: app.vault,
-        badgeFolder: plugin.settings.badgeFolder,
+
         customStatMappings: plugin.settings.categoryStatMappings,
         onCategoryUsed: async (category) => {
             if (!plugin.settings.knownCategories) {

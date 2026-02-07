@@ -70,7 +70,7 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
                 saveCharacter();
             }
         }
-        const achievementService = new AchievementService(app.vault, plugin.settings.badgeFolder);
+        const achievementService = new AchievementService(app.vault);
         const savedAchievements = plugin.settings.achievements || [];
         const initializedAchievements = achievementService.initializeAchievements(savedAchievements);
         setInventoryAndAchievements(
@@ -151,7 +151,6 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
     const handleOpenAchievements = () => {
         new AchievementHubModal({
             app,
-            badgeFolder: plugin.settings.badgeFolder,
             onSave,
         }).open();
     };

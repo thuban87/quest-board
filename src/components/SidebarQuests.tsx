@@ -135,7 +135,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
     useXPAward({
         app,
         vault: app.vault,
-        badgeFolder: plugin.settings.badgeFolder,
+
         customStatMappings: plugin.settings.categoryStatMappings,
         onCategoryUsed: async (category) => {
             // Auto-populate knownCategories for settings autocomplete
@@ -170,7 +170,7 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
             }
         }
         // Initialize achievements with defaults (merges saved state with default achievements)
-        const achievementService = new AchievementService(app.vault, plugin.settings.badgeFolder);
+        const achievementService = new AchievementService(app.vault);
         const savedAchievements = plugin.settings.achievements || [];
         const initializedAchievements = achievementService.initializeAchievements(savedAchievements);
         setInventoryAndAchievements(
@@ -433,14 +433,13 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                         onOpenSkillLoadout={() => showSkillLoadoutModal(app, {
                             onSave: handleSaveCharacter
                         })}
-                        spriteFolder={plugin.settings.spriteFolder}
                         spriteResourcePath={spriteResourcePath}
                     />
                 ) : (
                     /* Achievements View */
                     <AchievementsSidebar
                         app={app}
-                        badgeFolder={plugin.settings.badgeFolder}
+
                         onBack={() => setCurrentView('character')}
                     />
                 )}

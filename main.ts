@@ -336,7 +336,6 @@ export default class QuestBoardPlugin extends Plugin {
             callback: () => {
                 new AchievementHubModal({
                     app: this.app,
-                    badgeFolder: this.settings.badgeFolder,
                     onSave: async () => {
                         this.settings.achievements = useCharacterStore.getState().achievements;
                         await this.saveSettings();
