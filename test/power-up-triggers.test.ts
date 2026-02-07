@@ -635,13 +635,230 @@ describe('TRIGGER_DEFINITIONS structure', () => {
 });
 
 // =====================
+// POWER-UP REBALANCE TESTS
+// Tests for v1.1 rebalance changes. Will FAIL until implementation complete.
+// =====================
+
+describe('Power-Up Rebalance - Quest-Based Triggers', () => {
+    // These tests use new context fields that will be added during implementation:
+    // - questsInLastHour: number
+    // - questsCompletedToday: number
+    // - questCategoriesCompletedToday: string[]
+    // - questCategoryCountToday: Record<string, number>
+
+    describe('hat_trick (rebalanced)', () => {
+        it('should fire when 3 QUESTS completed in 1 hour', () => {
+            const context = createDefaultContext({
+                questsInLastHour: 3,
+            } as any);
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'hat_trick')).toBe(true);
+        });
+
+        it('should NOT fire with only 2 quests in last hour', () => {
+            const context = createDefaultContext({
+                questsInLastHour: 2,
+            } as any);
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'hat_trick')).toBe(false);
+        });
+
+        it('should grant T2 pool reward (not T1)', () => {
+            const trigger = getTriggerById('hat_trick');
+            expect(trigger?.grantsTier).toBe('T2');
+        });
+    });
+
+    describe('blitz (rebalanced)', () => {
+        it('should fire when 10 QUESTS completed in a day', () => {
+            const context = createDefaultContext({
+                questsCompletedToday: 10,
+            } as any);
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'blitz')).toBe(true);
+        });
+
+        it('should NOT fire with 9 quests', () => {
+            const context = createDefaultContext({
+                questsCompletedToday: 9,
+            } as any);
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'blitz')).toBe(false);
+        });
+
+        it('should grant T3 pool reward (not T2)', () => {
+            const trigger = getTriggerById('blitz');
+            expect(trigger?.grantsTier).toBe('T3');
+        });
+    });
+
+    describe('combo_breaker (rebalanced)', () => {
+        it('should fire when 10+ tasks in same category (not 5)', () => {
+            const context = createDefaultContext({
+                taskCategory: 'work',
+                categoryCountToday: { work: 10 },
+            });
+            const triggers = evaluateTriggers('task_completion', context);
+
+            expect(triggers.some(t => t.id === 'combo_breaker')).toBe(true);
+        });
+
+        it('should NOT fire with 9 tasks in category', () => {
+            const context = createDefaultContext({
+                taskCategory: 'work',
+                categoryCountToday: { work: 9 },
+            });
+            const triggers = evaluateTriggers('task_completion', context);
+
+            expect(triggers.some(t => t.id === 'combo_breaker')).toBe(false);
+        });
+    });
+
+    describe('early_riser (rebalanced)', () => {
+        it('should fire on QUEST completion (not task) before 8 AM', () => {
+            const context = createDefaultContext({
+                currentHour: 7,
+            });
+            // Should now be quest_completion detection point
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'early_riser')).toBe(true);
+        });
+    });
+
+    describe('night_owl (rebalanced)', () => {
+        it('should fire on QUEST completion (not task) after 10 PM', () => {
+            const context = createDefaultContext({
+                currentHour: 22,
+            });
+            // Should now be quest_completion detection point
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'night_owl')).toBe(true);
+        });
+    });
+
+    describe('multitasker (rebalanced)', () => {
+        it('should fire when 3+ different QUEST categories done today', () => {
+            const context = createDefaultContext({
+                questCategoriesCompletedToday: ['work', 'fitness', 'social'],
+            } as any);
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'multitasker')).toBe(true);
+        });
+
+        it('should NOT fire with only 2 quest categories', () => {
+            const context = createDefaultContext({
+                questCategoriesCompletedToday: ['work', 'fitness'],
+            } as any);
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'multitasker')).toBe(false);
+        });
+    });
+});
+
+describe('Power-Up Rebalance - Category Triggers (Quest-Based)', () => {
+    describe('gym_rat (rebalanced)', () => {
+        it('should fire when 2 Health/Fitness QUESTS today (not 3 tasks)', () => {
+            const context = createDefaultContext({
+                taskCategory: 'fitness',
+                questCategoryCountToday: { fitness: 2 },
+            } as any);
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'gym_rat')).toBe(true);
+        });
+
+        it('should NOT fire with 1 quest', () => {
+            const context = createDefaultContext({
+                taskCategory: 'fitness',
+                questCategoryCountToday: { fitness: 1 },
+            } as any);
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'gym_rat')).toBe(false);
+        });
+    });
+
+    describe('deep_work (rebalanced)', () => {
+        it('should fire when 2 Dev/Study QUESTS today', () => {
+            const context = createDefaultContext({
+                taskCategory: 'dev',
+                questCategoryCountToday: { dev: 2 },
+            } as any);
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'deep_work')).toBe(true);
+        });
+    });
+
+    describe('social_butterfly (rebalanced)', () => {
+        it('should fire when 2 Social QUESTS today (not 3 tasks)', () => {
+            const context = createDefaultContext({
+                taskCategory: 'social',
+                questCategoryCountToday: { social: 2 },
+            } as any);
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'social_butterfly')).toBe(true);
+        });
+    });
+
+    describe('admin_slayer (rebalanced)', () => {
+        it('should fire when 2 Chore/Admin QUESTS today (not 5 tasks)', () => {
+            const context = createDefaultContext({
+                taskCategory: 'admin',
+                questCategoryCountToday: { admin: 2 },
+            } as any);
+            const triggers = evaluateTriggers('quest_completion', context);
+
+            expect(triggers.some(t => t.id === 'admin_slayer')).toBe(true);
+        });
+    });
+});
+
+describe('Power-Up Rebalance - Removed Triggers', () => {
+    it('one_shot trigger should NOT exist', () => {
+        const trigger = getTriggerById('one_shot');
+        expect(trigger).toBeUndefined();
+    });
+
+    it('inbox_zero trigger should NOT exist', () => {
+        const trigger = getTriggerById('inbox_zero');
+        expect(trigger).toBeUndefined();
+    });
+
+    it('critical_success trigger should NOT exist', () => {
+        const trigger = getTriggerById('critical_success');
+        expect(trigger).toBeUndefined();
+    });
+
+    it('big_fish trigger should NOT exist', () => {
+        const trigger = getTriggerById('big_fish');
+        expect(trigger).toBeUndefined();
+    });
+});
+
+// =====================
 // EXTEND TriggerContext for new fields
 // =====================
 
-// These fields need to be added to TriggerContext for new triggers:
-// - tasksInLastHour: number
-// - inProgressCount: number
+// Fields for new/rebalanced triggers:
+// EXISTING (keep):
+// - tasksInLastHour: number (DEPRECATED after rebalance - remove from useXPAward)
+// - inProgressCount: number (DEPRECATED after rebalance - removed trigger)
 // - questCompletedOnDueDate: boolean
+// NEW (add for rebalance):
+// - questsInLastHour: number
+// - questsCompletedToday: number
+// - questCategoriesCompletedToday: string[]
+// - questCategoryCountToday: Record<string, number>
 
 // For now, we extend the type inline in tests
 declare module '../src/services/PowerUpService' {
@@ -649,5 +866,11 @@ declare module '../src/services/PowerUpService' {
         tasksInLastHour?: number;
         inProgressCount?: number;
         questCompletedOnDueDate?: boolean;
+        // NEW for rebalance:
+        questsInLastHour?: number;
+        questsCompletedToday?: number;
+        questCategoriesCompletedToday?: string[];
+        questCategoryCountToday?: Record<string, number>;
     }
 }
+

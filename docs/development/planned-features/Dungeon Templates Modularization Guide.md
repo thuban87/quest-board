@@ -54,7 +54,7 @@ These are ALL the files that import from `dungeonTemplates.ts`. No other files r
 
 | File | Current Import | Functions Used |
 |---|---|---|
-| `main.ts:21` | `'./src/data/dungeonTemplates'` | `getAllDungeonTemplates`, `registerUserDungeons`, `clearUserDungeons`, `getRandomDungeon` |
+| `main.ts:23` | `'./src/data/dungeonTemplates'` | `getAllDungeonTemplates`, `registerUserDungeons`, `clearUserDungeons`, `getRandomDungeon` |
 | `src/components/DungeonView.tsx:13` | `'../data/dungeonTemplates'` | `getDungeonTemplate` |
 | `src/store/dungeonStore.ts:17` | `'../data/dungeonTemplates'` | `getDungeonTemplate` |
 | `src/modals/DungeonSelectionModal.ts:10` | `'../data/dungeonTemplates'` | `getAllDungeonTemplates`, `getRandomDungeon` |
@@ -225,6 +225,46 @@ Brad tests in the test vault:
 - Enter a dungeon and verify rooms/monsters/chests load correctly
 - Verify user-defined dungeons still load if any exist
 
+### Step 8: Add Monster ID Validation to UserDungeonLoader
+
+Export `VALID_MONSTER_IDS` from `AIDungeonService.ts` and add validation in `UserDungeonLoader.ts`:
+
+**In `src/services/AIDungeonService.ts`** - Add export to the existing Set:
+```typescript
+export const VALID_MONSTER_IDS = new Set([...]);
+```
+
+**In `src/services/UserDungeonLoader.ts`** - Add import and validation in `parseRoomSection()`:
+```typescript
+import { VALID_MONSTER_IDS } from './AIDungeonService';
+
+// Inside parseRoomSection, after parsing monsters array (around line 370):
+for (const monster of monsters) {
+    for (const monsterId of monster.pool) {
+        if (!VALID_MONSTER_IDS.has(monsterId)) {
+            warnings.push(`${filename} room ${roomId}: Unknown monster ID '${monsterId}'`);
+        }
+    }
+}
+```
+
+This produces warnings (not errors) for unknown monster IDs, so user dungeons still load but users get feedback about typos.
+
+### Step 9: Run Unit Tests
+
+Unit tests were written TDD-style in `test/dungeon-registry.test.ts` before the refactor. They import from `../src/data/dungeons` (the new path) and will now pass:
+
+```bash
+npm run test -- test/dungeon-registry.test.ts
+```
+
+All 19 tests should pass, covering:
+- Built-in template count and exports
+- `getDungeonTemplate()` lookup
+- `registerUserDungeons()` / `clearUserDungeons()` management
+- `getRandomDungeon()` excluding test_cave
+- Data integrity for each dungeon
+
 ---
 
 ## Docs That Reference the Old File
@@ -301,3 +341,27 @@ After this refactor, adding a new built-in dungeon is:
 - [ ] CLAUDE.md file tree updated
 - [ ] GENERATION_PROMPT.md instructions updated
 - [ ] Feature Roadmap reference updated
+- [ ] Monster ID validation added to UserDungeonLoader
+- [ ] All 19 unit tests in `dungeon-registry.test.ts` pass
+
+---
+
+## Future Improvements
+
+These are not blocking the modularization but could be added as follow-up enhancements:
+
+### User Dungeon Input Validation
+
+**1. File Size Limit** - Add a max size check in `loadUserDungeons()` to prevent maliciously large files:
+
+```typescript
+// In loadUserDungeons, before parsing
+if (content.length > 500_000) {
+    errors.push(`${file.path}: File too large (max 500KB)`);
+    continue;
+}
+```
+
+### Unit Tests
+
+✅ **Already written** - See `test/dungeon-registry.test.ts` (19 tests, written TDD-style before the refactor).

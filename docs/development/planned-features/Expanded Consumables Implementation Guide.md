@@ -331,115 +331,248 @@ The new `hp-potion-major` and `hp-potion-supreme` (and MP equivalents) are new I
 
 ## Session 2: Simple Combat Consumables
 
-**Goal:** Wire up the 5 straightforward combat consumables that don't need new battle state: cleansing items, Firebomb, Smoke Bomb, and Ironbark Ward.
+**Goal:** Create a service to handle consumable business logic (keeping BattleView focused on UI), then wire up the 5 straightforward combat consumables: cleansing items, Firebomb, Smoke Bomb, and Ironbark Ward.
 
-### Phase 2A: Refactor Item Handler in BattleView
+### Phase 2A: Create ConsumableUsageService
 
-**File: `src/components/BattleView.tsx`**
+**File: `src/services/ConsumableUsageService.ts`** [NEW]
 
-The current item handler (around line 760-795) only handles `HP_RESTORE` and `MANA_RESTORE`. Refactor into a switch statement:
+Create a new service to handle all consumable usage logic. This keeps business logic out of BattleView and makes it unit-testable.
 
 ```typescript
-const handleUseItem = (itemId: string) => {
+/**
+ * Consumable Usage Service
+ * 
+ * Handles the effects of using consumable items in combat.
+ * BattleView calls this service and reacts to results.
+ */
+
+import { ConsumableDefinition, ConsumableEffect, CONSUMABLES } from '../models/Consumable';
+import { isDoTEffect, isHardCC, StatusEffectType } from '../models/StatusEffect';
+import { useBattleStore, BattlePlayer, BattleMonster } from '../store/battleStore';
+import { useCharacterStore } from '../store/characterStore';
+import { copyVolatileStatusToPersistent } from './BattleService';
+
+export interface ConsumableResult {
+    success: boolean;
+    logMessage: string;
+    endsTurn: boolean;
+    endsBattle?: 'retreat' | 'victory';
+    error?: string;
+}
+
+/**
+ * Use a consumable item in combat.
+ * Returns a result object describing what happened.
+ */
+export function useConsumableInCombat(
+    itemId: string,
+    characterLevel: number
+): ConsumableResult {
     const def = CONSUMABLES[itemId];
-    if (!def) return;
+    if (!def) {
+        return { success: false, logMessage: '', endsTurn: false, error: 'Unknown item' };
+    }
 
     switch (def.effect) {
         case ConsumableEffect.HP_RESTORE:
-            // existing logic
-            break;
+            return handleHpRestore(def);
         case ConsumableEffect.MANA_RESTORE:
-            // existing logic
-            break;
+            return handleManaRestore(def);
         case ConsumableEffect.CLEANSE_DOT:
-            handleCleanseDot();
-            break;
+            return handleCleanseDot();
         case ConsumableEffect.CLEANSE_CURSE_CC:
-            handleCleanseCurseCC();
-            break;
+            return handleCleanseCurseCC();
         case ConsumableEffect.DIRECT_DAMAGE:
-            handleDirectDamage(def);
-            break;
+            return handleDirectDamage(def, characterLevel);
         case ConsumableEffect.GUARANTEED_RETREAT:
-            handleGuaranteedRetreat();
-            break;
+            return handleGuaranteedRetreat();
         case ConsumableEffect.DEF_STAGE_BOOST:
-            handleDefStageBoost(def);
-            break;
-        // Phase 3 effects handled later
+            return handleDefStageBoost(def);
         default:
-            return;
+            return { success: false, logMessage: '', endsTurn: false, error: 'Effect not implemented' };
+    }
+}
+
+function handleHpRestore(def: ConsumableDefinition): ConsumableResult {
+    const store = useBattleStore.getState();
+    const maxHP = store.playerStats?.maxHP ?? 0;
+    const currentHP = store.playerCurrentHP;
+    const newHP = Math.min(maxHP, currentHP + def.effectValue);
+    store.updatePlayerHP(newHP);
+    return {
+        success: true,
+        logMessage: `Used ${def.name}: +${def.effectValue} HP!`,
+        endsTurn: true,
+    };
+}
+
+function handleManaRestore(def: ConsumableDefinition): ConsumableResult {
+    const store = useBattleStore.getState();
+    const maxMana = store.playerStats?.maxMana ?? 0;
+    const currentMana = store.playerCurrentMana;
+    const newMana = Math.min(maxMana, currentMana + def.effectValue);
+    store.updatePlayerMana(newMana);
+    return {
+        success: true,
+        logMessage: `Used ${def.name}: +${def.effectValue} MP!`,
+        endsTurn: true,
+    };
+}
+
+function handleCleanseDot(): ConsumableResult {
+    const store = useBattleStore.getState();
+    const player = store.player;
+    if (!player) return { success: false, logMessage: '', endsTurn: false, error: 'No player' };
+
+    const filtered = player.volatileStatusEffects.filter(e => !isDoTEffect(e.type));
+    store.updatePlayer({ volatileStatusEffects: filtered });
+    return {
+        success: true,
+        logMessage: 'Used Purifying Salve: Removed all afflictions!',
+        endsTurn: true,
+    };
+}
+
+function handleCleanseCurseCC(): ConsumableResult {
+    const store = useBattleStore.getState();
+    const player = store.player;
+    if (!player) return { success: false, logMessage: '', endsTurn: false, error: 'No player' };
+
+    // Remove curse + all hard CC
+    const filtered = player.volatileStatusEffects.filter(
+        e => e.type !== 'curse' && !isHardCC(e.type)
+    );
+    store.updatePlayer({ volatileStatusEffects: filtered });
+    return {
+        success: true,
+        logMessage: 'Used Sacred Water: Cleansed curse and bindings!',
+        endsTurn: true,
+    };
+}
+
+function handleDirectDamage(def: ConsumableDefinition, level: number): ConsumableResult {
+    // Defensive validation
+    if (!def.damageFormula?.base || def.damageFormula?.perLevel === undefined) {
+        console.error('[ConsumableUsageService] Invalid damage formula for:', def.id);
+        return { success: false, logMessage: '', endsTurn: false, error: 'Invalid damage formula' };
     }
 
-    // Common: remove from inventory, close picker
+    const store = useBattleStore.getState();
+    const monster = store.monster;
+    if (!monster) return { success: false, logMessage: '', endsTurn: false, error: 'No monster' };
+
+    const damage = def.damageFormula.base + def.damageFormula.perLevel * level;
+    const newHP = Math.max(0, monster.currentHP - damage);
+    store.updateMonster({ currentHP: newHP });
+
+    if (newHP <= 0) {
+        return {
+            success: true,
+            logMessage: `Hurled a Firebomb: ${damage} fire damage! ${monster.name} falls!`,
+            endsTurn: false,
+            endsBattle: 'victory',
+        };
+    }
+
+    return {
+        success: true,
+        logMessage: `Hurled a Firebomb: ${damage} fire damage!`,
+        endsTurn: true,
+    };
+}
+
+function handleGuaranteedRetreat(): ConsumableResult {
+    copyVolatileStatusToPersistent();
+    return {
+        success: true,
+        logMessage: 'Used Smoke Bomb: Vanished in a puff of smoke!',
+        endsTurn: false,
+        endsBattle: 'retreat',
+    };
+}
+
+function handleDefStageBoost(def: ConsumableDefinition): ConsumableResult {
+    const store = useBattleStore.getState();
+    const player = store.player;
+    if (!player || !def.stageChange) {
+        return { success: false, logMessage: '', endsTurn: false, error: 'Invalid stage change' };
+    }
+
+    // Apply +2 DEF stages (clamped to ±6)
+    const newDef = Math.min(6, Math.max(-6, player.statStages.def + def.stageChange.stages));
+    store.updatePlayer({
+        statStages: { ...player.statStages, def: newDef },
+    });
+
+    // Add as ConsumableBuff for turn-based expiry (Phase 3A will add the interface)
+    store.addConsumableBuff({
+        type: ConsumableEffect.DEF_STAGE_BOOST,
+        turnsRemaining: def.turnDuration ?? 4,
+        chance: 0, // Not a proc effect
+        statusType: null as any, // Not applicable
+        stageChange: def.stageChange.stages, // Track how much to reverse on expiry
+    });
+
+    return {
+        success: true,
+        logMessage: 'Used Ironbark Ward: Defense rose!',
+        endsTurn: true,
+    };
+}
+```
+
+### Phase 2B: Update BattleView to Use Service
+
+**File: `src/components/BattleView.tsx`**
+
+Replace the inline item handler with a call to the service:
+
+```typescript
+import { useConsumableInCombat } from '../services/ConsumableUsageService';
+
+const handleUseItem = (itemId: string) => {
+    const result = useConsumableInCombat(itemId, character?.level ?? 1);
+
+    if (!result.success) {
+        console.error('[BattleView] Consumable failed:', result.error);
+        return;
+    }
+
+    // Log the action
+    addLogEntry({
+        turn: turnNumber,
+        actor: 'player',
+        action: result.logMessage,
+        result: 'heal',
+    });
+
+    // Remove from inventory
     removeInventoryItem(itemId, 1);
     setShowItemPicker(false);
+
+    // Handle battle-ending effects
+    if (result.endsBattle === 'retreat') {
+        finalizeBattle(); // Balance testing if enabled
+        endBattle('retreat');
+        return;
+    }
+    if (result.endsBattle === 'victory') {
+        handleVictory(); // Trigger victory handling
+        return;
+    }
+
+    // Advance to enemy turn if this consumes the turn
+    if (result.endsTurn) {
+        advanceState('ENEMY_TURN');
+        executeMonsterTurn();
+    }
 };
 ```
 
-### Phase 2B: Implement Cleansing Items
+This keeps BattleView as a thin UI layer that reacts to service results.
 
-**In `handleUseItem` (BattleView.tsx):**
-
-For **Purifying Salve** (`CLEANSE_DOT`):
-- Get `player.volatileStatusEffects` from battle store
-- Filter out all DoT effects: `burn`, `poison`, `bleed`
-- Update player via `updatePlayer({ volatileStatusEffects: filtered })`
-- Log: "Used Purifying Salve: Removed all afflictions!"
-- Advance to enemy turn (costs your turn)
-
-For **Sacred Water** (`CLEANSE_CURSE_CC`):
-- Filter out `curse`, `paralyze`, `sleep`, `freeze`, `stun`
-- Same pattern as above
-- Log: "Used Sacred Water: Cleansed curse and bindings!"
-- Advance to enemy turn (costs your turn)
-
-**Helper references:**
-- `isDoTEffect()` from `src/models/StatusEffect.ts` to identify DoT types
-- `isHardCC()` from `src/models/StatusEffect.ts` to identify CC types
-- Player status effects live on `player.volatileStatusEffects` in the battle store
-
-### Phase 2C: Implement Firebomb
-
-**In `handleUseItem` (BattleView.tsx):**
-
-For **Firebomb** (`DIRECT_DAMAGE`):
-- Calculate damage: `def.damageFormula.base + def.damageFormula.perLevel * characterLevel`
-- Apply to monster: `updateMonsterHP(Math.max(0, monsterHP - damage))`
-- Log: "Hurled a Firebomb: X fire damage!"
-- Check if monster died (HP <= 0) -- if so, trigger victory
-- Otherwise advance to enemy turn (costs your turn)
-
-Note: Firebomb bypasses defense/dodge -- it's guaranteed flat damage. This is intentional to make it feel impactful as a consumable resource.
-
-### Phase 2D: Implement Smoke Bomb
-
-**In `handleUseItem` (BattleView.tsx):**
-
-For **Smoke Bomb** (`GUARANTEED_RETREAT`):
-- This does NOT consume your turn -- it's an instant escape
-- Log: "Used Smoke Bomb: Vanished in a puff of smoke!"
-- Call `copyVolatileStatusToPersistent()` (import from BattleService or inline the logic)
-- Finalize balance testing if enabled
-- Call `endBattle('retreat')` on the battle store
-- Do NOT advance to enemy turn
-
-**Important:** This needs to bypass the normal retreat flow entirely. The existing retreat logic in `executePlayerRetreat()` rolls RNG and takes damage on failure. Smoke Bomb skips all of that.
-
-The simplest approach: handle it directly in `handleUseItem` before the "advance to enemy turn" logic. After consuming the item and logging, call `endBattle('retreat')` and return early.
-
-### Phase 2E: Implement Ironbark Ward
-
-**In `handleUseItem` (BattleView.tsx):**
-
-For **Ironbark Ward** (`DEF_STAGE_BOOST`):
-- Get player from battle store
-- Apply stage change: `player.statStages.def += def.stageChange.stages` (clamped to ±6)
-- Update player via `updatePlayer({ statStages: newStages })`
-- Log: "Used Ironbark Ward: Defense sharply rose!"
-- Advance to enemy turn (costs your turn)
-
-Note: The `turnDuration` field on Ironbark Ward (4 turns) describes how long stat stages last in a "natural" sense, but the existing stat stage system doesn't auto-decay. For V1, Ironbark Ward simply adds +2 DEF stages permanently for the battle (same as any skill that modifies stages). If we want auto-decay later, that's a separate system. Keep it simple for now.
+### Phase 2C: Update ConsumablePicker
 
 ### Phase 2F: Update ConsumablePicker
 
@@ -507,48 +640,83 @@ const getEffectText = (def: ConsumableDefinition): string => {
 
 ```typescript
 export interface ConsumableBuff {
-    /** Which enchantment type ('enchant_burn' | 'enchant_poison' | 'enchant_freeze') */
+    /** Buff type (enchantment or stage boost) */
     type: ConsumableEffect;
     /** Turns remaining in this battle */
     turnsRemaining: number;
-    /** Proc chance per attack (0-100) */
+    /** Proc chance per attack (0-100), 0 for non-proc effects */
     chance: number;
-    /** What status effect to apply on proc */
-    statusType: StatusEffectType;
+    /** What status effect to apply on proc (null for stage boosts) */
+    statusType: StatusEffectType | null;
+    /** For DEF_STAGE_BOOST: how many stages to reverse on expiry */
+    stageChange?: number;
 }
 ```
 
 2. Add `consumableBuffs: ConsumableBuff[]` to the `BattlePlayer` interface. Initialize as empty array `[]` in `hydrateBattlePlayer`.
 
 3. Add store actions:
-   - `addConsumableBuff(buff: ConsumableBuff)` -- adds buff, replacing any existing enchantment (only one at a time)
-   - `tickConsumableBuffs()` -- decrements `turnsRemaining` on all buffs, removes expired ones
+   - `addConsumableBuff(buff: ConsumableBuff)` -- adds buff, replacing any existing buff of the same type (only one enchantment at a time)
+   - `tickConsumableBuffs()` -- decrements `turnsRemaining` on all buffs, handles expiry:
+     - For enchantment oils: simply remove when expired
+     - For `DEF_STAGE_BOOST`: reverse the stage change (apply negative `stageChange`) before removal
+
+**Expiry handling for Ironbark Ward:**
+```typescript
+tickConsumableBuffs: () => {
+    const { player } = get();
+    if (!player) return;
+
+    const updated = player.consumableBuffs
+        .map(buff => ({ ...buff, turnsRemaining: buff.turnsRemaining - 1 }))
+        .filter(buff => {
+            if (buff.turnsRemaining > 0) return true;
+            
+            // Handle expiry side effects
+            if (buff.type === ConsumableEffect.DEF_STAGE_BOOST && buff.stageChange) {
+                // Reverse the DEF boost (clamped to -6)
+                const newDef = Math.max(-6, player.statStages.def - buff.stageChange);
+                set(state => ({
+                    player: state.player ? {
+                        ...state.player,
+                        statStages: { ...state.player.statStages, def: newDef },
+                    } : null,
+                }));
+            }
+            return false;
+        });
+
+    set(state => ({
+        player: state.player ? { ...state.player, consumableBuffs: updated } : null,
+    }));
+},
+```
 
 ### Phase 3B: Implement Enchantment Oil Usage
 
-**File: `src/components/BattleView.tsx`**
+**File: `src/services/ConsumableUsageService.ts`**
 
-Add to the `handleUseItem` switch:
+Add enchantment oil handling to the service (not BattleView):
 
 ```typescript
 case ConsumableEffect.ENCHANT_BURN:
 case ConsumableEffect.ENCHANT_POISON:
 case ConsumableEffect.ENCHANT_FREEZE:
-    handleEnchantmentOil(def);
-    break;
+    return handleEnchantmentOil(def);
 ```
 
 Handler:
 ```typescript
-const handleEnchantmentOil = (def: ConsumableDefinition) => {
-    // Remove any existing enchantment (one at a time)
+function handleEnchantmentOil(def: ConsumableDefinition): ConsumableResult {
+    const store = useBattleStore.getState();
+    
     const buff: ConsumableBuff = {
         type: def.effect,
         turnsRemaining: def.turnDuration ?? 5,
         chance: def.statusChance ?? 20,
         statusType: def.statusType!,
     };
-    addConsumableBuff(buff);
+    store.addConsumableBuff(buff);
     addLogEntry({
         turn: turnNumber,
         actor: 'player',
@@ -563,20 +731,43 @@ const handleEnchantmentOil = (def: ConsumableDefinition) => {
 
 ### Phase 3C: Enchantment Proc System
 
-**File: `src/services/BattleService.ts`**
+**File: `src/services/StatusEffectService.ts`**
 
-After damage is dealt in `executePlayerAttack()` and after the damage section in `executePlayerSkill()`, add a proc check:
+Add a new function to handle consumable buff procs. This keeps `BattleService` focused on turn execution while `StatusEffectService` owns all status-related logic:
 
 ```typescript
-// Check consumable buff procs
-const player = useBattleStore.getState().player;
-if (player?.consumableBuffs?.length > 0 && damage > 0) {
-    for (const buff of player.consumableBuffs) {
+import { useBattleStore, BattleMonster } from '../store/battleStore';
+import { getStatusDisplayName } from '../models/StatusEffect';
+
+/**
+ * Process consumable buff procs after player deals damage.
+ * Called from BattleService after damage is dealt in attacks/skills.
+ * 
+ * @param monster The target monster
+ * @param damage Damage dealt (no procs if 0)
+ * @returns true if a proc occurred
+ */
+export function processConsumableBuffProcs(
+    monster: BattleMonster,
+    damage: number
+): boolean {
+    if (damage <= 0) return false;
+
+    const store = useBattleStore.getState();
+    const player = store.player;
+    if (!player?.consumableBuffs?.length) return false;
+
+    // Only check enchantment-type buffs (not stage boosts)
+    const enchantmentBuffs = player.consumableBuffs.filter(
+        b => b.statusType !== null && b.chance > 0
+    );
+
+    for (const buff of enchantmentBuffs) {
         if (Math.random() * 100 < buff.chance) {
             // Apply status to monster
             applyStatus(
                 monster as any,
-                buff.statusType,
+                buff.statusType!,
                 3, // 3 turns duration for consumable-applied effects
                 'player',
                 'minor',
@@ -586,16 +777,28 @@ if (player?.consumableBuffs?.length > 0 && damage > 0) {
             store.addLogEntry({
                 turn: store.turnNumber,
                 actor: 'player',
-                action: `${getStatusDisplayName(buff.statusType)} proc'd from enchantment!`,
+                action: `${getStatusDisplayName(buff.statusType!)} proc'd from enchantment!`,
                 result: 'hit',
             });
-            break; // Only one proc per attack
+            return true; // Only one proc per attack
         }
     }
+    return false;
 }
 ```
 
-**Tick consumable buffs at end of player turn.** Add to `checkBattleOutcome()` and `checkBattleOutcomeWithStatusTick()`:
+**File: `src/services/BattleService.ts`**
+
+After damage is dealt in `executePlayerAttack()` and `executePlayerSkill()`, call the proc handler:
+
+```typescript
+import { processConsumableBuffProcs } from './StatusEffectService';
+
+// After damage calculation...
+processConsumableBuffProcs(monster, damage);
+```
+
+**Tick consumable buffs at end of player turn.** Add to `checkBattleOutcome()` or `checkBattleOutcomeWithStatusTick()` (choose one location to avoid double-ticking):
 
 ```typescript
 // Tick consumable buffs
@@ -604,9 +807,22 @@ useBattleStore.getState().tickConsumableBuffs();
 
 ### Phase 3D: Implement Phoenix Tear
 
+**Pre-requisite: Update `characterStore.removeInventoryItem`** to return a boolean indicating success. This is a one-line change:
+
+```typescript
+// In characterStore.ts, modify removeInventoryItem:
+removeInventoryItem: (itemId: string, quantity: number = 1): boolean => {
+    // ... existing logic ...
+    // At the end, after successful removal:
+    return true;
+    // If item not found or insufficient quantity:
+    return false;
+},
+```
+
 **File: `src/services/BattleService.ts`**
 
-Modify `handleDefeat()` to check for Phoenix Tear *before* setting unconscious:
+Modify `handleDefeat()` to check for Phoenix Tear *before* setting unconscious. Use the boolean return to guard against edge cases like double-defeat:
 
 ```typescript
 function handleDefeat(): void {
@@ -623,43 +839,47 @@ function handleDefeat(): void {
     );
 
     if (hasPhoenixTear) {
-        // Consume the tear
-        characterStore.removeInventoryItem('phoenix-tear', 1);
+        // Try to consume the tear - use boolean return to guard against double-defeat
+        const consumed = characterStore.removeInventoryItem('phoenix-tear', 1);
+        if (!consumed) {
+            // Inventory changed between check and removal (edge case)
+            // Proceed with normal defeat
+        } else {
+            // Calculate revival HP: 30% of max
+            const maxHP = store.playerStats?.maxHP ?? character.maxHP;
+            const reviveHP = Math.floor(maxHP * 0.30);
 
-        // Calculate revival HP: 30% of max
-        const maxHP = store.playerStats?.maxHP ?? character.maxHP;
-        const reviveHP = Math.floor(maxHP * 0.30);
+            // Calculate revival mana: restore to pre-death value, 30% floor
+            const maxMana = store.playerStats?.maxMana ?? character.maxMana;
+            const preDeathMana = store.playerCurrentMana;
+            const manaFloor = Math.floor(maxMana * 0.30);
+            const reviveMana = Math.max(manaFloor, preDeathMana);
 
-        // Calculate revival mana: restore to pre-death value, 30% floor
-        const maxMana = store.playerStats?.maxMana ?? character.maxMana;
-        const preDealthMana = store.playerCurrentMana;
-        const manaFloor = Math.floor(maxMana * 0.30);
-        const reviveMana = Math.max(manaFloor, preDealthMana);
+            // Revive the player
+            store.updatePlayerHP(reviveHP);
+            store.updatePlayerMana(reviveMana);
 
-        // Revive the player
-        store.updatePlayerHP(reviveHP);
-        store.updatePlayerMana(reviveMana);
+            // Log the revival
+            store.addLogEntry({
+                turn: store.turnNumber,
+                actor: 'player',
+                action: '🔥 Phoenix Tear activates! You rise from the ashes!',
+                result: 'heal',
+            });
 
-        // Log the revival
-        store.addLogEntry({
-            turn: store.turnNumber,
-            actor: 'player',
-            action: '🔥 Phoenix Tear activates! You rise from the ashes!',
-            result: 'heal',
-        });
+            // Continue battle - back to player input
+            store.incrementTurn();
+            store.advanceState('PLAYER_INPUT');
 
-        // Continue battle - back to player input
-        store.incrementTurn();
-        store.advanceState('PLAYER_INPUT');
+            // Save the inventory change
+            if (saveCallback) {
+                saveCallback().catch(err =>
+                    console.error('[BattleService] Save failed:', err)
+                );
+            }
 
-        // Save the inventory change
-        if (saveCallback) {
-            saveCallback().catch(err =>
-                console.error('[BattleService] Save failed:', err)
-            );
+            return; // Don't proceed with normal defeat
         }
-
-        return; // Don't proceed with normal defeat
     }
 
     // ... existing defeat logic continues unchanged ...
@@ -676,43 +896,55 @@ All death paths go through `handleDefeat()`, so a single check there covers ever
 
 ### Phase 3E: Implement Stat Elixirs
 
-**File: `src/components/BattleView.tsx`** (for the switch case)
 **File: `src/store/characterStore.ts`** (for activePowerUps integration)
 
-Stat elixirs are NOT combat-only -- they're used from inventory (character page or store) and last 1 real-time hour. They integrate with the existing `activePowerUps` system.
+Stat elixirs are NOT combat-only -- they're used from inventory (character page) and last 1 real-time hour. They integrate with the existing `activePowerUps` system.
 
-1. **Add to ConsumablePicker filter:** Stat elixirs should NOT appear in the battle consumable picker. Set `combatUsable: false` on their definitions.
+1. **Add to ConsumablePicker filter:** Stat elixirs should NOT appear in the battle consumable picker. Set `combatUsable: false` on their definitions in `Consumable.ts`.
 
 2. **Add a `useStatElixir` action to characterStore:**
 
+The `ActivePowerUp` interface already exists in the codebase. Use it exactly:
+
 ```typescript
-useStatElixir: (itemId: string) => {
+import { ActivePowerUp } from '../services/PowerUpService';
+import { CONSUMABLES, ConsumableEffect } from '../models/Consumable';
+
+useStatElixir: (itemId: string): boolean => {
     const { character, inventory } = get();
     if (!character) return false;
 
     const def = CONSUMABLES[itemId];
     if (!def || def.effect !== ConsumableEffect.STAT_BOOST) return false;
+    if (!def.statTarget) return false;
 
     // Check inventory
     const has = inventory.find(i => i.itemId === itemId && i.quantity > 0);
     if (!has) return false;
 
-    // Consume
-    get().removeInventoryItem(itemId, 1);
+    // Consume - use boolean return for safety
+    const consumed = get().removeInventoryItem(itemId, 1);
+    if (!consumed) return false;
 
-    // Add to activePowerUps with expiration
-    const expiresAt = new Date(
-        Date.now() + (def.realTimeDurationMinutes ?? 60) * 60 * 1000
-    ).toISOString();
+    // Calculate the stat boost (10% of base stat)
+    const boostAmount = Math.floor(character.baseStats[def.statTarget] * 0.10);
 
-    const newPowerUp = {
+    // Create ActivePowerUp using the CORRECT interface shape
+    const newPowerUp: ActivePowerUp = {
         id: `elixir_${def.statTarget}_${Date.now()}`,
         name: def.name,
-        type: 'stat_boost' as const,
-        stat: def.statTarget!,
-        value: Math.floor(character.baseStats[def.statTarget!] * 0.10),
-        expiresAt,
-        source: 'consumable',
+        icon: def.emoji,
+        description: def.description,
+        triggeredBy: 'consumable',  // Metadata field, not validated
+        startedAt: new Date().toISOString(),
+        expiresAt: new Date(
+            Date.now() + (def.realTimeDurationMinutes ?? 60) * 60 * 1000
+        ).toISOString(),
+        effect: {
+            type: 'stat_boost',
+            stat: def.statTarget,
+            value: boostAmount,
+        },
     };
 
     set({
@@ -728,8 +960,6 @@ useStatElixir: (itemId: string) => {
 ```
 
 3. **Usage location:** The stat elixirs will be usable from the Character Page consumable belt (already has the infrastructure from the Character Page feature). The `ConsumablesBelt.tsx` component should show stat elixirs and call `useStatElixir()` on click.
-
-> **Note:** The exact shape of the `activePowerUps` entry may need adjusting to match the existing PowerUp interface. Check `src/services/PowerUpService.ts` for the expected shape and adapt accordingly.
 
 ### Session 3 Testing
 
@@ -948,17 +1178,18 @@ Adjust the flat values in `Consumable.ts` if the percentages are off. Target ran
 | `src/models/Consumable.ts` | 1 | Rewrite: 6 potion tiers, expanded enum, ~25 item definitions, new fields |
 | `src/modals/StoreModal.ts` | 1, 4 | S1: new prices/items. S4: category sections, level-gating, smart tier display |
 | `src/services/LootGenerationService.ts` | 1, 4 | S1: verify imports. S4: combat consumable drops, expanded weights |
-| `src/components/BattleView.tsx` | 2, 4 | S2: refactored item handler, 5 new consumable handlers. S4: categorized picker |
-| `src/store/battleStore.ts` | 3 | ConsumableBuff type, consumableBuffs on BattlePlayer, add/tick actions |
-| `src/services/BattleService.ts` | 3 | Phoenix Tear check in handleDefeat, enchantment proc in attack/skill |
-| `src/store/characterStore.ts` | 3 | useStatElixir action |
+| `src/services/ConsumableUsageService.ts` | 2, 3 | [NEW] S2: All consumable business logic. S3: Add enchantment oil handling |
+| `src/components/BattleView.tsx` | 2, 4 | S2: Thin wrapper calling ConsumableUsageService. S4: Categorized picker UI |
+| `src/store/battleStore.ts` | 3 | ConsumableBuff type (enchantments + stage boosts), add/tick actions with expiry |
+| `src/services/StatusEffectService.ts` | 3 | [MODIFY] Add processConsumableBuffProcs() for enchantment procs |
+| `src/services/BattleService.ts` | 3 | Phoenix Tear check in handleDefeat, call processConsumableBuffProcs() |
+| `src/store/characterStore.ts` | 3 | [MODIFY] removeInventoryItem returns boolean, add useStatElixir action |
 | `src/styles/combat.css` | 4 | Category picker styles, enchantment glow, rarity borders |
 
 ### Files NOT Changed
 
 - `main.ts` -- no new commands or lifecycle changes needed
 - `src/config/combatConfig.ts` -- no balance constant changes
-- `src/services/StatusEffectService.ts` -- existing applyStatus/tickStatusEffects used as-is
 - `src/models/StatusEffect.ts` -- existing types sufficient
 
 ---
