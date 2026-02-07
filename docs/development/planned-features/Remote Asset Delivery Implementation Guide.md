@@ -483,21 +483,21 @@ interface AssetManifest {
 
 ---
 
-### Phase 2: Download Modal & First-Run Experience
+### Phase 2: Download Modal & First-Run Experience ✅
 **Files:** New `src/modals/AssetDownloadModal.ts`
 
 #### Tasks
-- [ ] Create download progress modal with:
+- [x] Create download progress modal with:
   - Progress bar showing files downloaded
   - Current file name being downloaded
   - Cancel button (with warning about incomplete state)
-- [ ] **Priority queue:** Download current character class sprites first, then background tiles
-- [ ] **Lazy loading:** Consider loading dungeon tiles only when entering dungeons
-- [ ] **Cancel cleanup:** Delete any partially-written files on cancel
-- [ ] **Emoji fallback:** Show emoji for truly missing/failed assets (not for slow loading)
-- [ ] Show modal automatically on first plugin load if assets missing
-- [ ] Add "Check for Asset Updates" command to command menu
-- [ ] On path change: auto-delete old assets and re-download (no Move vs Re-download modal)
+- [x] **Priority queue:** Download current character class sprites first, then background tiles
+- ~~**Lazy loading:** Consider loading dungeon tiles only when entering dungeons~~ → Moved to **Deferred Features**
+- [x] **Cancel cleanup:** Already-downloaded files left intact on cancel (they're valid); manifest NOT written (AssetService writes last)
+- [x] **Emoji fallback:** Existing pattern (`img.onerror` → emoji) already in place in consumer modals (e.g., `BountyModal`)
+- [ ] Show modal automatically on first plugin load if assets missing → **Phase 4 (main.ts integration)**
+- [ ] Add "Check for Asset Updates" command to command menu → **Phase 4 (main.ts integration)**
+- [ ] On path change: auto-delete old assets and re-download (no Move vs Re-download modal) → **Phase 4 (settings integration)**
 
 #### [NEW] [AssetDownloadModal.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/modals/AssetDownloadModal.ts)
 
@@ -751,6 +751,26 @@ https://cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets/sprites/monsters/go
 
 ---
 
+## Deferred Features
+
+These items were discussed during planning but intentionally deferred. They can be revisited as post-implementation polish or in a future phase.
+
+### Lazy Loading for Dungeon Tiles
+**From Phase 2 task list:** *"Consider loading dungeon tiles only when entering dungeons."*
+
+- Split the asset manifest into critical (player sprites, backgrounds) vs. deferred (environment tiles) categories
+- Download critical assets on first run, defer tiles until dungeon entry
+- **Why deferred:** Total asset size is ~7MB — downloads in seconds on broadband. The complexity of tracking partial-download state doesn't justify the marginal benefit right now.
+
+### Startup Optimization (Manifest Version Short-Circuit)
+**From Phase 4 TIP block:** `checkForUpdates()` does `adapter.exists()` for every file in the manifest (~200+ files per startup).
+
+- Compare manifest version/hash first; only do per-file existence checks if version differs
+- Avoids ~200 filesystem calls on every startup when nothing has changed
+- **Why deferred:** Functional correctness comes first. This is a pure performance optimization that can be added after all phases are working.
+
+---
+
 ## Session Log
 
 ### Pre-Implementation ✅ Completed (2026-02-07)
@@ -762,9 +782,9 @@ https://cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets/sprites/monsters/go
 - [x] Environment tile filename normalization (72 files renamed, 8 TileRegistry paths updated)
 - [x] Delete deprecated CharacterSheet.tsx
 
-### Session 1 (Not Started)
-- [ ] Phase 1: AssetService foundation
-- [ ] Phase 2: Download modal & first-run experience
+### Session 1 ✅ Completed (2026-02-07)
+- [x] Phase 1: AssetService foundation
+- [x] Phase 2: Download modal & first-run experience
 
 ### Session 2 (Not Started)
 - [ ] Phase 3: SpriteService & component migration (partial)
@@ -774,3 +794,4 @@ https://cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets/sprites/monsters/go
 - [ ] Phase 3: Complete component migration
 - [ ] Phase 5: Existing user migration
 - [ ] Testing & polish
+

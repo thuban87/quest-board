@@ -88,6 +88,42 @@ Each session entry should include:
 - Obsidian's `RequestUrlParam` type doesn't include `timeout` despite supporting it at runtime — used `RequestUrlParamWithTimeout` interface extension with type assertion
 
 ### Next Steps
-- Phase 2: `AssetDownloadModal` (first-run experience + update progress UI)
 - Phase 3: Consumer migration (update `SpriteService`, `DungeonView`, etc. to use `AssetService`)
 - Phase 4: Wire `AssetService` into `main.ts` startup + add settings UI
+
+---
+
+## Session 1 (continued): Phase 2 — AssetDownloadModal — 2026-02-07
+
+**Focus:** Create the download progress modal with priority queue, cancel support, and polished UI
+
+### Completed
+- [x] Created `AssetDownloadModal.ts` — full modal with progress bar, cancel support, success/error states
+- [x] Exported `prioritizeFiles()` function — sorts files so current character class sprites download first
+- [x] Priority tiers: (1) class sprites → (2) other sprites → (3) tiles/backgrounds
+- [x] Cancel safety: already-downloaded files left intact, manifest not written, next startup resumes
+- [x] Orphan cleanup: runs `cleanupOrphanedFiles()` after successful download
+- [x] CSS styles added to `modals.css` — progress bar, stats, completion/error states
+- [x] 9 unit tests for `prioritizeFiles()` — class priority, ordering, edge cases, immutability
+- [x] Added "Deferred Features" section to implementation guide (lazy loading, startup optimization)
+
+### Files Changed
+| Action | Files |
+|--------|-------|
+| **Created** | `src/modals/AssetDownloadModal.ts`, `test/asset-download-modal.test.ts` |
+| **Modified** | `src/styles/modals.css`, implementation guide |
+
+### Testing Notes
+- Build: ✅ Clean compile (0 errors, 4.17 MB)
+- New tests: ✅ All 9 pass
+- Existing asset tests: ✅ All 19 pass (no regressions)
+- Deployed to test vault: ✅
+- No manual testing needed yet — modal is not wired into main.ts (Phase 4)
+
+### Blockers/Issues
+- None
+
+### Next Steps
+- Phase 3: SpriteService & component migration (`manifestDir` → `assetFolder`)
+- Phase 4: Wire into `main.ts` (first-run check, "Check for Updates" command, settings UI)
+
