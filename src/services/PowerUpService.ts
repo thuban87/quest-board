@@ -34,6 +34,8 @@ export interface EffectDefinition {
     duration: PowerUpDuration;
     collisionPolicy: CollisionPolicy;
     notificationType: PowerUpNotificationType;
+    /** Maximum stacks for stack_refresh collision policy */
+    maxStacks?: number;
 }
 
 /**
@@ -124,9 +126,9 @@ export const EFFECT_DEFINITIONS: Record<string, EffectDefinition> = {
         id: 'limit_break',
         name: 'Limit Break',
         icon: '💥',
-        description: 'All stats +3 above cap for 24 hours',
+        description: '+5% to all stats for 24 hours',
         tier: 'T3',
-        effect: { type: 'all_stats_boost', value: 3 },
+        effect: { type: 'all_stats_percent_boost', value: 0.05 },
         duration: { type: 'hours', value: 24 },
         collisionPolicy: 'refresh',
         notificationType: 'modal',
@@ -156,6 +158,88 @@ export const EFFECT_DEFINITIONS: Record<string, EffectDefinition> = {
         duration: { type: 'hours', value: 1 },
         collisionPolicy: 'refresh',
         notificationType: 'toast',
+    },
+
+    // === T1 STAT PERCENTAGE BOOSTS ===
+    iron_grip: {
+        id: 'iron_grip',
+        name: 'Iron Grip',
+        icon: '⚔️',
+        description: '+10% STR for 2 hours',
+        tier: 'T1',
+        effect: { type: 'stat_percent_boost', stat: 'strength', value: 0.10 },
+        duration: { type: 'hours', value: 2 },
+        collisionPolicy: 'refresh',
+        notificationType: 'toast',
+    },
+    cats_grace: {
+        id: 'cats_grace',
+        name: "Cat's Grace",
+        icon: '🐱',
+        description: '+10% DEX for 2 hours',
+        tier: 'T1',
+        effect: { type: 'stat_percent_boost', stat: 'dexterity', value: 0.10 },
+        duration: { type: 'hours', value: 2 },
+        collisionPolicy: 'refresh',
+        notificationType: 'toast',
+    },
+    arcane_insight: {
+        id: 'arcane_insight',
+        name: 'Arcane Insight',
+        icon: '📘',
+        description: '+10% INT for 2 hours',
+        tier: 'T1',
+        effect: { type: 'stat_percent_boost', stat: 'intelligence', value: 0.10 },
+        duration: { type: 'hours', value: 2 },
+        collisionPolicy: 'refresh',
+        notificationType: 'toast',
+    },
+    inner_peace: {
+        id: 'inner_peace',
+        name: 'Inner Peace',
+        icon: '🧘',
+        description: '+10% WIS for 2 hours',
+        tier: 'T1',
+        effect: { type: 'stat_percent_boost', stat: 'wisdom', value: 0.10 },
+        duration: { type: 'hours', value: 2 },
+        collisionPolicy: 'refresh',
+        notificationType: 'toast',
+    },
+    stone_skin: {
+        id: 'stone_skin',
+        name: 'Stone Skin',
+        icon: '🪨',
+        description: '+10% CON for 2 hours',
+        tier: 'T1',
+        effect: { type: 'stat_percent_boost', stat: 'constitution', value: 0.10 },
+        duration: { type: 'hours', value: 2 },
+        collisionPolicy: 'refresh',
+        notificationType: 'toast',
+    },
+
+    // === T2 NEW UTILITY ===
+    surge: {
+        id: 'surge',
+        name: 'Surge',
+        icon: '⚡',
+        description: '+20% XP for next 5 tasks',
+        tier: 'T2',
+        effect: { type: 'xp_multiplier', value: 1.20 },
+        duration: { type: 'uses', value: 5 },
+        collisionPolicy: 'extend',
+        notificationType: 'modal',
+    },
+    fortunes_favor: {
+        id: 'fortunes_favor',
+        name: "Fortune's Favor",
+        icon: '🎲',
+        description: '+5% gold per stack (max 3)',
+        tier: 'T2',
+        effect: { type: 'gold_multiplier', value: 1.05 },
+        duration: { type: 'hours', value: 3 },
+        collisionPolicy: 'stack_refresh',
+        notificationType: 'modal',
+        maxStacks: 3,
     },
 };
 
@@ -480,8 +564,8 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
 
 /** Effects available in each tier pool for random grants */
 export const TIER_POOLS: Record<string, string[]> = {
-    T1: ['first_blood_boost', 'momentum', 'catch_up', 'lucky_star', 'adrenaline_rush', 'genius_mode'],
-    T2: ['flow_state', 'streak_shield'],
+    T1: ['momentum', 'lucky_star', 'iron_grip', 'cats_grace', 'arcane_insight', 'inner_peace', 'stone_skin'],
+    T2: ['streak_shield', 'surge', 'fortunes_favor'],
     T3: ['limit_break'],
 };
 
@@ -631,6 +715,21 @@ export function grantPowerUp(
                 return { powerUps: updated, granted: stacked, isNew: false };
             }
 
+            case 'stack_refresh': {
+                // Increment stacks (up to max) AND refresh timer
+                const maxStacks = effectDef.maxStacks ?? Infinity;
+                const currentStacks = existing.stacks ?? 1;
+                const stackRefreshed: ActivePowerUp = {
+                    ...existing,
+                    stacks: Math.min(currentStacks + 1, maxStacks),
+                    startedAt: now,
+                    expiresAt,
+                };
+                const updated = [...currentPowerUps];
+                updated[existingIndex] = stackRefreshed;
+                return { powerUps: updated, granted: stackRefreshed, isNew: false };
+            }
+
             case 'extend': {
                 // Add uses if applicable
                 if (effectDef.duration.type === 'uses') {
@@ -665,7 +764,7 @@ export function grantPowerUp(
         startedAt: now,
         expiresAt,
         effect: effectDef.effect,
-        stacks: effectDef.collisionPolicy === 'stack' ? 1 : undefined,
+        stacks: (effectDef.collisionPolicy === 'stack' || effectDef.collisionPolicy === 'stack_refresh') ? 1 : undefined,
         usesRemaining: effectDef.duration.type === 'uses' ? effectDef.duration.value : undefined,
     };
 
@@ -735,6 +834,40 @@ export function getStatBoostFromPowerUps(
     }
 
     return boost;
+}
+
+/**
+ * Calculate percentage-based stat boost from active power-ups for a specific stat
+ * Returns a decimal (e.g., 0.10 = +10%)
+ */
+export function getPercentStatBoostFromPowerUps(
+    powerUps: ActivePowerUp[],
+    stat: StatType
+): number {
+    let percentBoost = 0;
+    for (const powerUp of powerUps) {
+        if (powerUp.effect.type === 'stat_percent_boost' && powerUp.effect.stat === stat) {
+            percentBoost += powerUp.effect.value;
+        } else if (powerUp.effect.type === 'all_stats_percent_boost') {
+            percentBoost += powerUp.effect.value;
+        }
+    }
+    return percentBoost;
+}
+
+/**
+ * Calculate total gold multiplier from active power-ups
+ * Returns multiplier (e.g., 1.15 = +15% gold with 3 stacks of +5%)
+ */
+export function getGoldMultiplierFromPowerUps(powerUps: ActivePowerUp[]): number {
+    let multiplier = 1.0;
+    for (const powerUp of powerUps) {
+        if (powerUp.effect.type === 'gold_multiplier') {
+            const stacks = powerUp.stacks ?? 1;
+            multiplier += (powerUp.effect.value - 1) * stacks;
+        }
+    }
+    return multiplier;
 }
 
 /**

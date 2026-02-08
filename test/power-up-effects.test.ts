@@ -11,12 +11,15 @@ import {
     expirePowerUps,
     getXPMultiplierFromPowerUps,
     getStatBoostFromPowerUps,
+    getPercentStatBoostFromPowerUps,
+    getGoldMultiplierFromPowerUps,
     decrementUseBased,
     consumeStreakShield,
     calculateExpiration,
     getTimeRemaining,
     isExpiringSoon,
     hasStreakShield,
+    TIER_POOLS,
 } from '../src/services/PowerUpService';
 import { ActivePowerUp } from '../src/models/Character';
 
@@ -62,6 +65,12 @@ describe('EFFECT_DEFINITIONS', () => {
     it('should have level_up_boost defined as all_stats_boost', () => {
         expect(EFFECT_DEFINITIONS.level_up_boost).toBeDefined();
         expect(EFFECT_DEFINITIONS.level_up_boost.effect.type).toBe('all_stats_boost');
+    });
+
+    it('should have limit_break defined as all_stats_percent_boost', () => {
+        expect(EFFECT_DEFINITIONS.limit_break).toBeDefined();
+        expect(EFFECT_DEFINITIONS.limit_break.effect.type).toBe('all_stats_percent_boost');
+        expect((EFFECT_DEFINITIONS.limit_break.effect as any).value).toBe(0.05);
     });
 
     it('should have streak_shield defined', () => {
@@ -215,7 +224,7 @@ describe('grantPowerUp', () => {
             expect(result.granted?.stacks).toBe(2);
         });
 
-        it('should stack streak shields', () => {
+        it('should ignore streak_shield with ignore policy (not stack)', () => {
             const existing = createMockPowerUp({
                 id: 'streak_shield',
                 effect: { type: 'streak_shield' },
@@ -225,7 +234,47 @@ describe('grantPowerUp', () => {
 
             const result = grantPowerUp([existing], 'streak_shield', 'streak_keeper_3');
 
+            // streak_shield uses 'ignore' policy — should not re-grant
+            expect(result.granted).toBeNull();
+            expect(result.isNew).toBe(false);
+        });
+    });
+
+    describe('collision policy: stack_refresh', () => {
+        it('should increment stacks and refresh timer', () => {
+            const existing = createMockPowerUp({
+                id: 'fortunes_favor',
+                effect: { type: 'gold_multiplier', value: 1.05 },
+                stacks: 1,
+                expiresAt: '2024-01-15T11:00:00.000Z', // expired
+            });
+
+            const result = grantPowerUp([existing], 'fortunes_favor', 'hat_trick');
+
             expect(result.granted?.stacks).toBe(2);
+            expect(result.granted?.expiresAt).toBe('2024-01-15T15:00:00.000Z'); // refreshed to +3h
+            expect(result.isNew).toBe(false);
+        });
+
+        it('should cap stacks at maxStacks', () => {
+            const existing = createMockPowerUp({
+                id: 'fortunes_favor',
+                effect: { type: 'gold_multiplier', value: 1.05 },
+                stacks: 3, // already at max
+                expiresAt: '2024-01-15T14:00:00.000Z',
+            });
+
+            const result = grantPowerUp([existing], 'fortunes_favor', 'hat_trick');
+
+            expect(result.granted?.stacks).toBe(3); // capped at 3
+            expect(result.granted?.expiresAt).toBe('2024-01-15T15:00:00.000Z'); // timer still refreshed
+        });
+
+        it('should initialize stacks to 1 for new stack_refresh power-up', () => {
+            const result = grantPowerUp([], 'fortunes_favor', 'hat_trick');
+
+            expect(result.granted?.stacks).toBe(1);
+            expect(result.isNew).toBe(true);
         });
     });
 
@@ -464,6 +513,152 @@ describe('getStatBoostFromPowerUps', () => {
         const result = getStatBoostFromPowerUps(powerUps, 'strength');
 
         expect(result).toBe(0);
+    });
+});
+
+// =====================
+// getPercentStatBoostFromPowerUps TESTS
+// =====================
+
+describe('getPercentStatBoostFromPowerUps', () => {
+    it('should return 0 for no power-ups', () => {
+        const result = getPercentStatBoostFromPowerUps([], 'strength');
+        expect(result).toBe(0);
+    });
+
+    it('should return percentage for matching stat', () => {
+        const powerUps = [
+            createMockPowerUp({ effect: { type: 'stat_percent_boost', stat: 'strength', value: 0.10 } }),
+        ];
+
+        const result = getPercentStatBoostFromPowerUps(powerUps, 'strength');
+        expect(result).toBeCloseTo(0.10);
+    });
+
+    it('should NOT return boost for non-matching stat', () => {
+        const powerUps = [
+            createMockPowerUp({ effect: { type: 'stat_percent_boost', stat: 'strength', value: 0.10 } }),
+        ];
+
+        const result = getPercentStatBoostFromPowerUps(powerUps, 'dexterity');
+        expect(result).toBe(0);
+    });
+
+    it('should sum multiple percentage boosts for same stat', () => {
+        const powerUps = [
+            createMockPowerUp({ id: 'a', effect: { type: 'stat_percent_boost', stat: 'strength', value: 0.10 } }),
+            createMockPowerUp({ id: 'b', effect: { type: 'stat_percent_boost', stat: 'strength', value: 0.05 } }),
+        ];
+
+        const result = getPercentStatBoostFromPowerUps(powerUps, 'strength');
+        expect(result).toBeCloseTo(0.15);
+    });
+
+    it('should ignore flat stat_boost effects', () => {
+        const powerUps = [
+            createMockPowerUp({ effect: { type: 'stat_boost', stat: 'strength', value: 5 } }),
+        ];
+
+        const result = getPercentStatBoostFromPowerUps(powerUps, 'strength');
+        expect(result).toBe(0);
+    });
+});
+
+// =====================
+// getGoldMultiplierFromPowerUps TESTS
+// =====================
+
+describe('getGoldMultiplierFromPowerUps', () => {
+    it('should return 1.0 for no power-ups', () => {
+        const result = getGoldMultiplierFromPowerUps([]);
+        expect(result).toBe(1.0);
+    });
+
+    it('should return multiplier for single stack', () => {
+        const powerUps = [
+            createMockPowerUp({
+                effect: { type: 'gold_multiplier', value: 1.05 },
+                stacks: 1,
+            }),
+        ];
+
+        const result = getGoldMultiplierFromPowerUps(powerUps);
+        expect(result).toBeCloseTo(1.05);
+    });
+
+    it('should scale with multiple stacks', () => {
+        const powerUps = [
+            createMockPowerUp({
+                effect: { type: 'gold_multiplier', value: 1.05 },
+                stacks: 3,
+            }),
+        ];
+
+        const result = getGoldMultiplierFromPowerUps(powerUps);
+        // 1.0 + (0.05 * 3) = 1.15
+        expect(result).toBeCloseTo(1.15);
+    });
+
+    it('should default to 1 stack when stacks undefined', () => {
+        const powerUps = [
+            createMockPowerUp({
+                effect: { type: 'gold_multiplier', value: 1.05 },
+            }),
+        ];
+        delete powerUps[0].stacks;
+
+        const result = getGoldMultiplierFromPowerUps(powerUps);
+        expect(result).toBeCloseTo(1.05);
+    });
+
+    it('should ignore non-gold effects', () => {
+        const powerUps = [
+            createMockPowerUp({ effect: { type: 'xp_multiplier', value: 2.0 } }),
+        ];
+
+        const result = getGoldMultiplierFromPowerUps(powerUps);
+        expect(result).toBe(1.0);
+    });
+});
+
+// =====================
+// TIER_POOLS Composition TESTS
+// =====================
+
+describe('TIER_POOLS composition', () => {
+    it('should NOT contain gated effects in T1 pool', () => {
+        const gatedEffects = ['first_blood_boost', 'catch_up', 'adrenaline_rush', 'genius_mode'];
+        for (const effect of gatedEffects) {
+            expect(TIER_POOLS.T1).not.toContain(effect);
+        }
+    });
+
+    it('should NOT contain flow_state in T2 pool', () => {
+        expect(TIER_POOLS.T2).not.toContain('flow_state');
+    });
+
+    it('should contain all 5 stat boost effects in T1', () => {
+        const statBoosts = ['iron_grip', 'cats_grace', 'arcane_insight', 'inner_peace', 'stone_skin'];
+        for (const effect of statBoosts) {
+            expect(TIER_POOLS.T1).toContain(effect);
+        }
+    });
+
+    it('should contain surge and fortunes_favor in T2', () => {
+        expect(TIER_POOLS.T2).toContain('surge');
+        expect(TIER_POOLS.T2).toContain('fortunes_favor');
+    });
+
+    it('should have 7 effects in T1 pool', () => {
+        expect(TIER_POOLS.T1).toHaveLength(7);
+    });
+
+    it('should have 3 effects in T2 pool', () => {
+        expect(TIER_POOLS.T2).toHaveLength(3);
+    });
+
+    it('should still have limit_break in T3 pool', () => {
+        expect(TIER_POOLS.T3).toContain('limit_break');
     });
 });
 

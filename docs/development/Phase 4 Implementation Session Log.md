@@ -1920,3 +1920,71 @@ Bug fixes:
 Tests: 28 new unit tests (19 AssetService + 9 AssetDownloadModal)
 Verified: desktop (test/staging/production) + mobile (iOS via Obsidian Sync)
 ```
+
+---
+
+## 2026-02-08 - Power-Up Rebalance (Sessions 1-4)
+
+**Focus:** Complete power-up system rebalance — trigger cleanup, quest-level context, cooldowns, pool gating, new effects
+
+### Completed:
+
+#### Session 1: Trigger Cleanup
+- ✅ Removed 4 triggers: `one_shot`, `inbox_zero`, `critical_success`, `big_fish`
+- ✅ Updated 10 trigger definitions (task → quest completions, harder thresholds)
+- ✅ Removed `level_up_boost` from T2 pool
+
+#### Session 2: Context Wiring & Tests
+- ✅ Wired 5 quest-level context fields in `QuestActionsService.moveQuest()`
+- ✅ Full test update: 68 tests pass (removed deleted, updated pre-rebalance tests)
+
+#### Session 3: Cooldown & Notification Fix
+- ✅ Daily trigger cooldowns to prevent spam
+- ✅ `isNew` flag on `grantPowerUp()` for notification suppression
+- ✅ 80 tests pass
+
+#### Session 4: Pool Gating, New Effects & Limit Break
+- ✅ Gated 5 effects from random pools (trigger-only)
+- ✅ Added 5 T1 stat percent boosts: Iron Grip, Cat's Grace, Arcane Insight, Inner Peace, Stone Skin
+- ✅ Added 2 T2 effects: Surge (+20% XP, uses-based), Fortune's Favor (+5% gold/stack)
+- ✅ New effect types: `stat_percent_boost`, `all_stats_percent_boost`, `gold_multiplier`
+- ✅ New collision policy: `stack_refresh` (increment stacks + refresh timer)
+- ✅ Wired % stat boosts into `StatsService.getTotalStat()` and gold multiplier into `LootGenerationService`
+- ✅ Converted Limit Break from flat +3 → +5% all stats
+- ✅ Fixed pre-existing `streak_shield` test bug
+
+### Files Changed:
+
+**Major:**
+- `src/services/PowerUpService.ts` — All trigger, effect, and pool changes across 4 sessions
+- `src/services/QuestActionsService.ts` — Quest-level context wiring, cooldown checks
+- `src/hooks/useXPAward.ts` — Cooldown checks, removed legacy task-level code
+- `src/models/Character.ts` — New effect types, collision policy, triggerCooldowns field
+- `src/services/StatsService.ts` — Percentage stat boost integration
+- `src/services/LootGenerationService.ts` — Gold multiplier integration
+- `src/store/characterStore.ts` — `setTriggerCooldowns` action
+- `test/power-up-effects.test.ts` — 83 tests (fixed bugs, 21 new)
+- `test/power-up-triggers.test.ts` — 80 tests (full update across sessions)
+
+### Testing Notes:
+- ✅ Build passes
+- ✅ **163 tests pass** (83 effects + 80 triggers)
+- ✅ Deployed to test vault
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Power-Up Rebalance complete (all 4 sessions). 163 tests pass.
+
+See detailed logs:
+- docs/development/planned-features/Power-Up Rebalance Session Log.md
+- docs/development/planned-features/Power-Up Rebalance Implementation Guide.md
+
+Continue with Phase 4 priorities from Feature Roadmap v2.
+```
+

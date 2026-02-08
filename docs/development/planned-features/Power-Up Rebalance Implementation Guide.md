@@ -1,6 +1,6 @@
 # Power-Up Rebalance Implementation Guide
 
-**Status:** In Progress (Sessions 1-3 Complete)  
+**Status:** ✅ Complete (Sessions 1-4)  
 **Created:** 2026-02-06  
 **Estimated Sessions:** 2-3  
 **Session Log:** [Power-Up Rebalance Session Log](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/development/planned-features/Power-Up%20Rebalance%20Session%20Log.md)  
@@ -50,14 +50,21 @@ The current power-up system triggers too frequently, making power-ups feel routi
 
 ### 2. Pool Changes
 
-**Remove `level_up_boost` from T2 pool** — it should only be granted via the Level Up trigger, not random rolls.
+**Remove `level_up_boost` from T2 pool** — only via Level Up trigger.
+
+**Gate 5 trigger-only effects from random pools** — `first_blood_boost`, `catch_up`, `adrenaline_rush`, `genius_mode`, `flow_state` now only come from their specific triggers.
+
+**Add 7 replacement effects:**
+- **T1:** `iron_grip` (+10% STR), `cats_grace` (+10% DEX), `arcane_insight` (+10% INT), `inner_peace` (+10% WIS), `stone_skin` (+10% CON)
+- **T2:** `surge` (+20% XP, 5 uses), `fortunes_favor` (+5% gold/stack, max 3)
+
+**Convert Limit Break** from flat +3 all stats → +5% all stats (scales with level).
 
 ```typescript
-// BEFORE
-T2: ['flow_state', 'streak_shield', 'level_up_boost']
-
-// AFTER
-T2: ['flow_state', 'streak_shield']
+// FINAL POOLS
+T1: ['momentum', 'lucky_star', 'iron_grip', 'cats_grace', 'arcane_insight', 'inner_peace', 'stone_skin']
+T2: ['streak_shield', 'surge', 'fortunes_favor']
+T3: ['limit_break']
 ```
 
 ### 3. Trigger Modifications
@@ -178,19 +185,21 @@ T2: ['flow_state', 'streak_shield']
 
 ---
 
-### Session 4 (Future): Pool Composition Changes
+### Session 4: Pool Gating, New Effects & Limit Break ✅ COMPLETE
 
-**Scope:** Gate specific power-ups to triggers only, add replacement pool effects
+**Scope:** Gate trigger-only effects from random pools, add 7 replacement effects, convert Limit Break to % scaling
 
-#### Pool Composition Changes (Brad to specify)
-Brad wants to:
-- Gate certain power-ups to specific triggers only (remove from random pools)
-- Add replacement T1/T2 effects to maintain pool diversity
+**Files Changed:**
+- [Character.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/models/Character.ts) — `stat_percent_boost`, `all_stats_percent_boost`, `gold_multiplier` types; `stack_refresh` policy
+- [PowerUpService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/PowerUpService.ts) — 7 new effects, pool gating, Limit Break → 5%, utility functions
+- [StatsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/StatsService.ts) — % boosts after flat bonuses in `getTotalStat()`
+- [LootGenerationService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/LootGenerationService.ts) — Gold multiplier in quest/combat/chest loot
+- [power-up-effects.test.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/test/power-up-effects.test.ts) — Fixed streak_shield bug, 21 new tests
 
-**Files:** `TIER_POOLS` and `EFFECT_DEFINITIONS` in `PowerUpService.ts`
-
-#### Documentation Polish
-- Update [Power-Ups & Buffs wiki](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/wiki/Power-Ups%20%26%20Buffs.md) with new trigger conditions
+**Verification:**
+- ✅ `npm run build` passes
+- ✅ `npm test` passes — 163 tests (83 effects + 80 triggers)
+- ✅ Deployed to test vault
 
 ---
 

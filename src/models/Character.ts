@@ -313,8 +313,11 @@ export type PowerUpEffect =
     | { type: 'xp_multiplier'; value: number }        // 1.5 = +50% XP total
     | { type: 'xp_category_multiplier'; value: number; category: string }  // Category-specific
     | { type: 'stat_boost'; stat: StatType; value: number }
+    | { type: 'stat_percent_boost'; stat: StatType; value: number }  // 0.10 = +10% of calculated stat
+    | { type: 'all_stats_percent_boost'; value: number }             // 0.05 = +5% to ALL stats
     | { type: 'all_stats_boost'; value: number }
     | { type: 'crit_chance'; value: number }          // Percentage (e.g., 10 = 10%)
+    | { type: 'gold_multiplier'; value: number }      // 1.05 = +5% gold per stack
     | { type: 'streak_shield' }                        // Prevents one streak reset
     | { type: 'class_perk'; description: string };     // Passive class bonus
 
@@ -331,7 +334,7 @@ export type PowerUpDuration =
 /**
  * Collision policy when triggering a power-up that's already active
  */
-export type CollisionPolicy = 'refresh' | 'stack' | 'extend' | 'ignore';
+export type CollisionPolicy = 'refresh' | 'stack' | 'stack_refresh' | 'extend' | 'ignore';
 
 /**
  * Notification type for when power-up triggers

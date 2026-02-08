@@ -177,22 +177,80 @@ Brad wants to gate certain power-ups to only be triggered by specific triggers (
 
 ---
 
+## 2026-02-08 - Session 4: Pool Gating, New Effects & Limit Break
+
+**Focus:** Gate trigger-only effects from random pools, add 7 replacement effects, convert Limit Break to % scaling
+
+### Completed:
+
+#### Pool Gating
+- ✅ Gated 5 effects from random pools (trigger-only): `first_blood_boost`, `catch_up`, `adrenaline_rush`, `genius_mode`, `flow_state`
+
+#### New T1 Effects (5 stat percentage boosts)
+- ✅ `iron_grip` (+10% STR), `cats_grace` (+10% DEX), `arcane_insight` (+10% INT), `inner_peace` (+10% WIS), `stone_skin` (+10% CON)
+- ✅ New `stat_percent_boost` effect type in `Character.ts`
+
+#### New T2 Effects
+- ✅ `surge` (+20% XP for 5 tasks, uses-based duration)
+- ✅ `fortunes_favor` (+5% gold per stack, max 3, duration-based)
+- ✅ New `gold_multiplier` effect type and `stack_refresh` collision policy
+
+#### Limit Break Scaling Fix
+- ✅ Converted from flat `+3 all stats` → `+5% all stats`
+- ✅ New `all_stats_percent_boost` effect type
+- ✅ Scales properly with higher levels (L35 with 300 STR → +15 STR)
+
+#### Integration
+- ✅ `getPercentStatBoostFromPowerUps()` wired into `StatsService.getTotalStat()` (applied after flat bonuses)
+- ✅ `getGoldMultiplierFromPowerUps()` wired into `LootGenerationService` (quest, combat, chest gold)
+
+#### Test Fixes
+- ✅ Fixed pre-existing `streak_shield` test bug (expected stacking but uses `ignore` policy)
+- ✅ 21 new tests: `stack_refresh` collision (3), `getPercentStatBoostFromPowerUps` (5), `getGoldMultiplierFromPowerUps` (5), TIER_POOLS composition (7), `limit_break` type assertion (1)
+
+### Files Changed:
+- `src/models/Character.ts` — Added `stat_percent_boost`, `all_stats_percent_boost`, `gold_multiplier` effect types; `stack_refresh` collision policy
+- `src/services/PowerUpService.ts` — 7 new effects, pool gating, Limit Break → 5%, `stack_refresh` handler, utility functions
+- `src/services/StatsService.ts` — `getTotalStat()` applies percentage boosts after flat bonuses
+- `src/services/LootGenerationService.ts` — Gold multiplier applied to quest, combat, and chest gold
+- `test/power-up-effects.test.ts` — Fixed `streak_shield` test bug, 21 new tests
+
+### Pool Composition After Session 4:
+
+| Tier | Pool |
+|------|------|
+| T1 | `momentum`, `lucky_star`, `iron_grip`, `cats_grace`, `arcane_insight`, `inner_peace`, `stone_skin` |
+| T2 | `streak_shield`, `surge`, `fortunes_favor` |
+| T3 | `limit_break` |
+
+### Testing Notes:
+- ✅ **163 tests pass** (83 effects + 80 triggers)
+- ✅ Build passes
+- ✅ Deployed to test vault
+
+### Blockers/Issues:
+- None
+
+---
+
 ## Next Session Prompt
 
 ```
-Power-Up Rebalance Sessions 1-3 complete. Trigger rebalance done, cooldown bug fixed,
-80 tests pass.
+Power-Up Rebalance Sessions 1-4 complete. Full rebalance done.
 
-Remaining work:
+Summary of all sessions:
+- Session 1: Removed 4 triggers, updated 10 trigger definitions (task → quest)
+- Session 2: Wired quest-level context, updated all tests (68 pass)
+- Session 3: Daily trigger cooldowns, notification suppression (80 pass)
+- Session 4: Pool gating, 7 new effects, Limit Break % scaling (163 pass)
 
-ISSUE 2 — POOL COMPOSITION CHANGES (Brad to specify):
-Brad wants to gate certain power-ups to specific triggers only (remove from random pools)
-and add replacement T1/T2 effects. He'll provide the specific changes.
+Remaining documentation:
+- Update Power-Ups & Buffs wiki with new trigger conditions and effects
 
 Key files:
-- src/services/PowerUpService.ts — TIER_POOLS, EFFECT_DEFINITIONS, TRIGGER_DEFINITIONS
-- docs/development/planned-features/Power-Up Rebalance Session Log.md
-- docs/development/planned-features/Power-Up Rebalance Implementation Guide.md
+- src/services/PowerUpService.ts — All effect/trigger/pool definitions
+- src/services/StatsService.ts — Percentage stat boost integration
+- src/services/LootGenerationService.ts — Gold multiplier integration
 ```
 
 ---
@@ -272,3 +330,34 @@ Files: Character.ts, PowerUpService.ts, characterStore.ts,
        QuestActionsService.ts, useXPAward.ts, power-up-triggers.test.ts
 ```
 
+### Session 4
+```
+feat(power-ups): Session 4 - pool gating, new effects, Limit Break scaling
+
+Pool Gating:
+- Gated 5 effects from random pools (trigger-only): first_blood_boost,
+  catch_up, adrenaline_rush, genius_mode, flow_state
+
+New T1 Effects (5 stat percent boosts):
+- Iron Grip (+10% STR), Cat's Grace (+10% DEX), Arcane Insight (+10% INT),
+  Inner Peace (+10% WIS), Stone Skin (+10% CON)
+
+New T2 Effects:
+- Surge: +20% XP for 5 tasks (uses-based)
+- Fortune's Favor: +5% gold/stack, max 3 stacks, stack_refresh collision
+
+New Systems:
+- stat_percent_boost / all_stats_percent_boost effect types
+- gold_multiplier effect type with stack-aware calculation
+- stack_refresh collision policy (increment stacks + refresh timer)
+- Percentage stat boosts applied after flat bonuses in StatsService
+- Gold multiplier wired into quest, combat, and chest loot
+
+Limit Break Fix:
+- Converted from flat +3 all stats → +5% all stats (scales with level)
+
+Tests: 163 pass (83 effects + 80 triggers), fixed pre-existing streak_shield test bug
+
+Files: Character.ts, PowerUpService.ts, StatsService.ts, LootGenerationService.ts,
+       power-up-effects.test.ts
+```
