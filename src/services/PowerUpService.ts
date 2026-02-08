@@ -520,6 +520,38 @@ export function evaluateTriggers(
 }
 
 /**
+ * Get today's date as a YYYY-MM-DD string (local time)
+ */
+function getLocalDateString(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Check if a trigger has already fired today
+ */
+export function hasFiredToday(
+    cooldowns: Record<string, string> | undefined,
+    triggerId: string
+): boolean {
+    if (!cooldowns) return false;
+    return cooldowns[triggerId] === getLocalDateString();
+}
+
+/**
+ * Record that a trigger fired today. Returns updated cooldown map.
+ */
+export function recordTriggerFired(
+    cooldowns: Record<string, string> | undefined,
+    triggerId: string
+): Record<string, string> {
+    return {
+        ...(cooldowns ?? {}),
+        [triggerId]: getLocalDateString(),
+    };
+}
+
+/**
  * Roll a random effect from a tier pool
  */
 export function rollFromPool(tier: 'T1' | 'T2' | 'T3'): string {
@@ -557,11 +589,11 @@ export function grantPowerUp(
     currentPowerUps: ActivePowerUp[],
     effectId: string,
     triggerId: string
-): { powerUps: ActivePowerUp[]; granted: ActivePowerUp | null } {
+): { powerUps: ActivePowerUp[]; granted: ActivePowerUp | null; isNew: boolean } {
     const effectDef = EFFECT_DEFINITIONS[effectId];
     if (!effectDef) {
         console.warn(`[PowerUpService] Unknown effect: ${effectId}`);
-        return { powerUps: currentPowerUps, granted: null };
+        return { powerUps: currentPowerUps, granted: null, isNew: false };
     }
 
     const existingIndex = currentPowerUps.findIndex(p => p.id === effectId);
@@ -574,7 +606,7 @@ export function grantPowerUp(
     if (existing) {
         switch (effectDef.collisionPolicy) {
             case 'ignore':
-                return { powerUps: currentPowerUps, granted: null };
+                return { powerUps: currentPowerUps, granted: null, isNew: false };
 
             case 'refresh': {
                 // Reset timer
@@ -585,7 +617,7 @@ export function grantPowerUp(
                 };
                 const updated = [...currentPowerUps];
                 updated[existingIndex] = refreshed;
-                return { powerUps: updated, granted: refreshed };
+                return { powerUps: updated, granted: refreshed, isNew: false };
             }
 
             case 'stack': {
@@ -596,7 +628,7 @@ export function grantPowerUp(
                 };
                 const updated = [...currentPowerUps];
                 updated[existingIndex] = stacked;
-                return { powerUps: updated, granted: stacked };
+                return { powerUps: updated, granted: stacked, isNew: false };
             }
 
             case 'extend': {
@@ -608,7 +640,7 @@ export function grantPowerUp(
                     };
                     const updated = [...currentPowerUps];
                     updated[existingIndex] = extended;
-                    return { powerUps: updated, granted: extended };
+                    return { powerUps: updated, granted: extended, isNew: false };
                 }
                 // For time-based, just refresh
                 const refreshed: ActivePowerUp = {
@@ -618,7 +650,7 @@ export function grantPowerUp(
                 };
                 const updated = [...currentPowerUps];
                 updated[existingIndex] = refreshed;
-                return { powerUps: updated, granted: refreshed };
+                return { powerUps: updated, granted: refreshed, isNew: false };
             }
         }
     }
@@ -640,6 +672,7 @@ export function grantPowerUp(
     return {
         powerUps: [...currentPowerUps, newPowerUp],
         granted: newPowerUp,
+        isNew: true,
     };
 }
 

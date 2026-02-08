@@ -31,6 +31,8 @@ import {
     EFFECT_DEFINITIONS,
     rollFromPool,
     TriggerContext,
+    hasFiredToday,
+    recordTriggerFired,
 } from './PowerUpService';
 import { checkBountyTrigger } from './BountyService';
 import { showBountyModal } from '../modals/BountyModal';
@@ -147,24 +149,32 @@ export async function moveQuest(
                 const streakTriggers = evaluateTriggers('streak_update', streakContext);
                 if (streakTriggers.length > 0) {
                     let streakPowerUps = expirePowerUps(useCharacterStore.getState().character?.activePowerUps ?? []);
+                    let cooldowns = useCharacterStore.getState().character?.triggerCooldowns;
 
                     for (const trigger of streakTriggers) {
+                        // Skip if this trigger already fired today
+                        if (hasFiredToday(cooldowns, trigger.id)) continue;
+
                         const effectId = trigger.grantsEffect ?? (trigger.grantsTier ? rollFromPool(trigger.grantsTier) : null);
                         if (effectId) {
                             const result = grantPowerUp(streakPowerUps, effectId, trigger.id);
                             if (result.granted) {
                                 streakPowerUps = result.powerUps;
-                                const effectDef = EFFECT_DEFINITIONS[effectId];
-                                // Show notification
-                                if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
-                                    new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 5000);
+                                cooldowns = recordTriggerFired(cooldowns, trigger.id);
+                                // Only notify for truly new grants (not collision-handled)
+                                if (result.isNew) {
+                                    const effectDef = EFFECT_DEFINITIONS[effectId];
+                                    if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
+                                        new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 5000);
+                                    }
                                 }
                             }
                         }
                     }
 
-                    // Save power-ups
+                    // Save power-ups and cooldowns
                     useCharacterStore.getState().setPowerUps(streakPowerUps);
+                    useCharacterStore.getState().setTriggerCooldowns(cooldowns ?? {});
                 }
 
                 // === STREAK ACHIEVEMENTS ===
@@ -267,22 +277,31 @@ export async function moveQuest(
             const questTriggers = evaluateTriggers('quest_completion', questContext);
             if (questTriggers.length > 0) {
                 let questPowerUps = expirePowerUps(character.activePowerUps ?? []);
+                let cooldowns = useCharacterStore.getState().character?.triggerCooldowns;
 
                 for (const trigger of questTriggers) {
+                    // Skip if this trigger already fired today
+                    if (hasFiredToday(cooldowns, trigger.id)) continue;
+
                     const effectId = trigger.grantsEffect ?? (trigger.grantsTier ? rollFromPool(trigger.grantsTier) : null);
                     if (effectId) {
                         const result = grantPowerUp(questPowerUps, effectId, trigger.id);
                         if (result.granted) {
                             questPowerUps = result.powerUps;
-                            const effectDef = EFFECT_DEFINITIONS[effectId];
-                            if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
-                                new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 5000);
+                            cooldowns = recordTriggerFired(cooldowns, trigger.id);
+                            // Only notify for truly new grants (not collision-handled)
+                            if (result.isNew) {
+                                const effectDef = EFFECT_DEFINITIONS[effectId];
+                                if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
+                                    new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 5000);
+                                }
                             }
                         }
                     }
                 }
 
                 useCharacterStore.getState().setPowerUps(questPowerUps);
+                useCharacterStore.getState().setTriggerCooldowns(cooldowns ?? {});
                 // Update status bar immediately
                 import('./StatusBarService').then(({ statusBarService }) => statusBarService.update());
             }

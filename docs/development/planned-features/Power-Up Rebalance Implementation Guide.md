@@ -1,6 +1,6 @@
 # Power-Up Rebalance Implementation Guide
 
-**Status:** In Progress (Sessions 1-2 Complete)  
+**Status:** In Progress (Sessions 1-3 Complete)  
 **Created:** 2026-02-06  
 **Estimated Sessions:** 2-3  
 **Session Log:** [Power-Up Rebalance Session Log](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/development/planned-features/Power-Up%20Rebalance%20Session%20Log.md)  
@@ -153,21 +153,34 @@ T2: ['flow_state', 'streak_shield']
 
 ---
 
-### Session 3: Bug Fix & Pool Adjustments
+### Session 3: Trigger Cooldown & Notification Fix ✅ COMPLETE
 
-**Scope:** Fix trigger cooldown bug, adjust pool composition
+**Scope:** Fix trigger notification spam bug, suppress collision-handled notifications
 
-#### Bug Fix: Trigger Notification Spam
-Triggers fire on every quest completion with no daily cooldown. `early_riser`, `weekend_warrior`, etc. evaluate true for every quest during their time window and show duplicate notifications.
+**Files Changed:**
+- [Character.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/models/Character.ts) — Added `triggerCooldowns?: Record<string, string>` (optional, no schema bump)
+- [PowerUpService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/PowerUpService.ts) — Added `isNew` flag to `grantPowerUp()` return, added `hasFiredToday()` and `recordTriggerFired()` helpers
+- [characterStore.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/store/characterStore.ts) — Added `setTriggerCooldowns` action
+- [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) — 2 trigger sites: cooldown check + notification suppression
+- [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) — 2 trigger sites: cooldown check + notification suppression
+- [power-up-triggers.test.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/test/power-up-triggers.test.ts) — 12 new tests for cooldown helpers and `isNew` flag
 
-**Root cause:** `grantPowerUp()` returns `granted` for `refresh`/`stack` collision policies → notification shows even when power-up already exists.
+**What Was Done:**
+1. ✅ Added daily trigger cooldown map (`triggerCooldowns`) to Character — persisted via `loadData()/saveData()`
+2. ✅ Added `isNew` boolean to `grantPowerUp()` return — `true` only for brand-new grants, `false` for refresh/stack/extend/ignore
+3. ✅ All 4 trigger evaluation sites skip triggers that already fired today and only notify for `isNew` grants
+4. ✅ 12 new tests covering `hasFiredToday()`, `recordTriggerFired()`, and all 4 collision policy `isNew` results
 
-**Fix options:**
-1. Add daily trigger cooldown map: `{ triggerId: lastFiredDate }` — skip if already fired today
-2. Suppress notifications for collision-handled grants (only show for truly new power-ups)
-3. Both
+**Verification:**
+- ✅ `npm run build` passes
+- ✅ `npm test` passes — 80 tests, 0 failures
+- ✅ Deployed to test vault, manual testing confirmed fix
 
-**Files:** `QuestActionsService.ts`, `useXPAward.ts`, possibly `grantPowerUp()` in `PowerUpService.ts`
+---
+
+### Session 4 (Future): Pool Composition Changes
+
+**Scope:** Gate specific power-ups to triggers only, add replacement pool effects
 
 #### Pool Composition Changes (Brad to specify)
 Brad wants to:

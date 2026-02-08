@@ -88,6 +88,9 @@ interface CharacterActions {
     /** Update active power-ups array */
     setPowerUps: (powerUps: ActivePowerUp[]) => void;
 
+    /** Update trigger cooldowns map */
+    setTriggerCooldowns: (cooldowns: Record<string, string>) => void;
+
     /** Increment tasks completed today (for First Blood trigger, persisted) */
     incrementTasksToday: (count: number, dateString: string) => void;
 
@@ -317,6 +320,7 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 equipped: [],
             },
             persistentStatusEffects: [],
+            triggerCooldowns: {},
         };
 
         set({ character });
@@ -521,6 +525,13 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         const { character } = get();
         if (character) {
             set({ character: { ...character, activePowerUps: powerUps } });
+        }
+    },
+
+    setTriggerCooldowns: (cooldowns) => {
+        const { character } = get();
+        if (character) {
+            set({ character: { ...character, triggerCooldowns: cooldowns } });
         }
     },
 

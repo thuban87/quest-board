@@ -25,6 +25,8 @@ import {
     EFFECT_DEFINITIONS,
     rollFromPool,
     TriggerContext,
+    hasFiredToday,
+    recordTriggerFired,
 } from '../services/PowerUpService';
 
 interface UseXPAwardOptions {
@@ -165,29 +167,39 @@ export function useXPAward({ app, vault, customStatMappings, onCategoryUsed, onS
 
         // Evaluate task_completion triggers
         const taskTriggers = evaluateTriggers('task_completion', taskContext);
+        let cooldowns = character.triggerCooldowns;
 
         for (const trigger of taskTriggers) {
+            // Skip if this trigger already fired today
+            if (hasFiredToday(cooldowns, trigger.id)) continue;
+
             const effectId = trigger.grantsEffect ?? (trigger.grantsTier ? rollFromPool(trigger.grantsTier) : null);
             if (effectId) {
                 const result = grantPowerUp(currentPowerUps, effectId, trigger.id);
                 if (result.granted) {
                     currentPowerUps = result.powerUps;
-                    const effectDef = EFFECT_DEFINITIONS[effectId];
-                    // Show notification
-                    if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
-                        new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 4000);
+                    cooldowns = recordTriggerFired(cooldowns, trigger.id);
+                    // Only notify for truly new grants (not collision-handled)
+                    if (result.isNew) {
+                        const effectDef = EFFECT_DEFINITIONS[effectId];
+                        if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
+                            new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 4000);
+                        }
                     }
                 }
             }
         }
 
-        // Save power-ups if any changed
+        // Save power-ups and cooldowns if any changed
         if (currentPowerUps !== (character.activePowerUps ?? [])) {
             setPowerUps(currentPowerUps);
             // Trigger immediate status bar update
             import('../services/StatusBarService').then(({ statusBarService }) => {
                 statusBarService.update();
             });
+        }
+        if (taskTriggers.length > 0) {
+            useCharacterStore.getState().setTriggerCooldowns(cooldowns ?? {});
         }
 
         // Calculate XP with class bonus
@@ -260,27 +272,35 @@ export function useXPAward({ app, vault, customStatMappings, onCategoryUsed, onS
             // Evaluate xp_award triggers
             const xpTriggers = evaluateTriggers('xp_award', xpAwardContext);
             let lvlPowerUps = expirePowerUps(useCharacterStore.getState().character?.activePowerUps ?? []);
+            let xpCooldowns = useCharacterStore.getState().character?.triggerCooldowns;
 
             for (const trigger of xpTriggers) {
+                // Skip if this trigger already fired today
+                if (hasFiredToday(xpCooldowns, trigger.id)) continue;
+
                 const effectId = trigger.grantsEffect ?? (trigger.grantsTier ? rollFromPool(trigger.grantsTier) : null);
                 if (effectId) {
                     const result = grantPowerUp(lvlPowerUps, effectId, trigger.id);
                     if (result.granted) {
                         lvlPowerUps = result.powerUps;
-                        const effectDef = EFFECT_DEFINITIONS[effectId];
-                        // Show notification (slightly delayed so it shows after level-up modal)
-                        setTimeout(() => {
-                            if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
-                                new Notice(`${result.granted!.icon} ${result.granted!.name}: ${result.granted!.description}`, 5000);
-                            }
-                        }, 500);
+                        xpCooldowns = recordTriggerFired(xpCooldowns, trigger.id);
+                        // Only notify for truly new grants (not collision-handled)
+                        if (result.isNew) {
+                            const effectDef = EFFECT_DEFINITIONS[effectId];
+                            setTimeout(() => {
+                                if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
+                                    new Notice(`${result.granted!.icon} ${result.granted!.name}: ${result.granted!.description}`, 5000);
+                                }
+                            }, 500);
+                        }
                     }
                 }
             }
 
-            // Save power-ups if any triggered
+            // Save power-ups and cooldowns if any triggered
             if (xpTriggers.length > 0) {
                 setPowerUps(lvlPowerUps);
+                useCharacterStore.getState().setTriggerCooldowns(xpCooldowns ?? {});
             }
 
             // Phase 7: Check for skill unlocks (non-training only)

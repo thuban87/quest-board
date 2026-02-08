@@ -516,6 +516,9 @@ export interface Character {
 
     /** Status effects that persist between battles (cleared by Long Rest or death recovery) */
     persistentStatusEffects: import('./StatusEffect').StatusEffect[];
+
+    /** Map of trigger ID → last fired date (YYYY-MM-DD) for daily cooldowns */
+    triggerCooldowns?: Record<string, string>;
 }
 
 /**
@@ -626,6 +629,7 @@ export function createCharacter(
             equipped: [],
         },
         persistentStatusEffects: [],
+        triggerCooldowns: {},
     };
 }
 

@@ -138,27 +138,59 @@ Brad wants to gate certain power-ups to only be triggered by specific triggers (
 
 ---
 
+## 2026-02-08 - Session 3: Trigger Cooldown & Notification Fix
+
+**Focus:** Fix daily trigger cooldown bug and suppress redundant notifications
+
+### Completed:
+
+#### Daily Trigger Cooldown System
+- ✅ Added `triggerCooldowns?: Record<string, string>` to `Character` interface (optional, no schema bump)
+- ✅ Added `hasFiredToday()` and `recordTriggerFired()` helpers in `PowerUpService.ts`
+- ✅ All 4 trigger evaluation sites now check cooldown before granting
+
+#### Notification Suppression
+- ✅ Added `isNew: boolean` to `grantPowerUp()` return type
+- ✅ `isNew: true` only for brand-new grants; `false` for refresh/stack/extend/ignore collision
+- ✅ All 4 trigger sites only show notifications when `result.isNew === true`
+
+#### Character Store
+- ✅ Added `setTriggerCooldowns` action to `characterStore.ts`
+- ✅ Cooldowns persisted to `data.json` via `loadData()/saveData()`
+
+### Files Changed:
+- `src/models/Character.ts` — Added `triggerCooldowns` field
+- `src/services/PowerUpService.ts` — `isNew` flag, `hasFiredToday()`, `recordTriggerFired()`
+- `src/store/characterStore.ts` — `setTriggerCooldowns` action
+- `src/services/QuestActionsService.ts` — 2 trigger sites updated (streak_update, quest_completion)
+- `src/hooks/useXPAward.ts` — 2 trigger sites updated (task_completion, xp_award)
+- `test/power-up-triggers.test.ts` — 12 new tests (cooldown helpers + isNew flag)
+
+### Testing Notes:
+- ✅ **80 tests pass** (68 existing + 12 new)
+- ✅ Build passes
+- ✅ Deployed to test vault
+- ✅ Manual testing confirmed: triggers only fire once per day
+
+### Blockers/Issues:
+- None
+
+---
+
 ## Next Session Prompt
 
 ```
-Power-Up Rebalance Session 2 complete. Context wiring works, all 68 tests pass.
+Power-Up Rebalance Sessions 1-3 complete. Trigger rebalance done, cooldown bug fixed,
+80 tests pass.
 
-Two issues discovered during testing need resolution:
-
-ISSUE 1 — TRIGGER NOTIFICATIONS BUG (must fix):
-Triggers fire on every quest completion with no daily cooldown. Early Riser fires on
-every quest before 8 AM, Weekend Warrior on every weekend quest, etc. grantPowerUp()
-handles duplicates via collision policy but still shows notifications for refresh/stack.
-Fix: add daily trigger cooldown and/or suppress notifications for collision-handled grants.
+Remaining work:
 
 ISSUE 2 — POOL COMPOSITION CHANGES (Brad to specify):
 Brad wants to gate certain power-ups to specific triggers only (remove from random pools)
 and add replacement T1/T2 effects. He'll provide the specific changes.
 
 Key files:
-- src/services/PowerUpService.ts — grantPowerUp(), TIER_POOLS, EFFECT_DEFINITIONS, TRIGGER_DEFINITIONS
-- src/services/QuestActionsService.ts — Quest completion trigger evaluation (~line 219-280)
-- src/hooks/useXPAward.ts — Task completion trigger evaluation
+- src/services/PowerUpService.ts — TIER_POOLS, EFFECT_DEFINITIONS, TRIGGER_DEFINITIONS
 - docs/development/planned-features/Power-Up Rebalance Session Log.md
 - docs/development/planned-features/Power-Up Rebalance Implementation Guide.md
 ```
@@ -214,5 +246,29 @@ Cleanup:
 - Remove tasksInLastHour from useXPAward.ts and TriggerContext interface
 
 Files: QuestActionsService.ts, PowerUpService.ts, useXPAward.ts, power-up-triggers.test.ts
+```
+
+### Session 3
+```
+fix(power-ups): Session 3 - daily trigger cooldown & notification fix
+
+Bug Fix:
+- Triggers like early_riser, weekend_warrior fired on every quest completion
+  during their time window, showing redundant notifications
+
+Daily Trigger Cooldowns:
+- Add triggerCooldowns field to Character (optional, no schema bump)
+- Add hasFiredToday() / recordTriggerFired() helpers
+- All 4 trigger evaluation sites check cooldown before granting
+
+Notification Suppression:
+- Add isNew flag to grantPowerUp() return type
+- isNew: true only for brand-new grants, false for collision-handled
+- Notifications only shown when isNew === true
+
+Tests: 80 pass (68 existing + 12 new for cooldown helpers and isNew flag)
+
+Files: Character.ts, PowerUpService.ts, characterStore.ts,
+       QuestActionsService.ts, useXPAward.ts, power-up-triggers.test.ts
 ```
 

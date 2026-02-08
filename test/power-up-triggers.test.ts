@@ -11,6 +11,9 @@ import {
     TRIGGER_DEFINITIONS,
     TriggerContext,
     TriggerDefinition,
+    hasFiredToday,
+    recordTriggerFired,
+    grantPowerUp,
 } from '../src/services/PowerUpService';
 
 // =====================
@@ -776,6 +779,104 @@ describe('Power-Up Rebalance - Removed Triggers', () => {
     it('big_fish trigger should NOT exist', () => {
         const trigger = getTriggerById('big_fish');
         expect(trigger).toBeUndefined();
+    });
+});
+
+// =====================
+// COOLDOWN HELPERS
+// =====================
+
+describe('hasFiredToday', () => {
+    it('should return false for empty/undefined cooldowns', () => {
+        expect(hasFiredToday(undefined, 'early_riser')).toBe(false);
+        expect(hasFiredToday({}, 'early_riser')).toBe(false);
+    });
+
+    it('should return true when trigger was recorded today', () => {
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const cooldowns = { early_riser: dateStr };
+        expect(hasFiredToday(cooldowns, 'early_riser')).toBe(true);
+    });
+
+    it('should return false when trigger was recorded on a different day', () => {
+        const cooldowns = { early_riser: '2020-01-01' };
+        expect(hasFiredToday(cooldowns, 'early_riser')).toBe(false);
+    });
+
+    it('should return false for a different trigger ID', () => {
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const cooldowns = { early_riser: dateStr };
+        expect(hasFiredToday(cooldowns, 'weekend_warrior')).toBe(false);
+    });
+});
+
+describe('recordTriggerFired', () => {
+    it('should create a new entry in empty map', () => {
+        const result = recordTriggerFired(undefined, 'early_riser');
+        expect(result).toHaveProperty('early_riser');
+        expect(hasFiredToday(result, 'early_riser')).toBe(true);
+    });
+
+    it('should preserve existing entries and add new one', () => {
+        const existing = { weekend_warrior: '2020-01-01' };
+        const result = recordTriggerFired(existing, 'early_riser');
+        expect(result.weekend_warrior).toBe('2020-01-01');
+        expect(hasFiredToday(result, 'early_riser')).toBe(true);
+    });
+
+    it('should overwrite existing entry for same trigger', () => {
+        const existing = { early_riser: '2020-01-01' };
+        const result = recordTriggerFired(existing, 'early_riser');
+        // Should be today, not 2020-01-01
+        expect(hasFiredToday(result, 'early_riser')).toBe(true);
+    });
+});
+
+// =====================
+// grantPowerUp isNew flag
+// =====================
+
+describe('grantPowerUp isNew flag', () => {
+    it('should return isNew: true for a brand-new power-up', () => {
+        const result = grantPowerUp([], 'first_blood_boost', 'first_blood');
+        expect(result.granted).not.toBeNull();
+        expect(result.isNew).toBe(true);
+    });
+
+    it('should return isNew: false for refresh collision', () => {
+        // Grant it once
+        const first = grantPowerUp([], 'first_blood_boost', 'first_blood');
+        // Grant again — should refresh, not be new
+        const second = grantPowerUp(first.powerUps, 'first_blood_boost', 'first_blood');
+        expect(second.granted).not.toBeNull();
+        expect(second.isNew).toBe(false);
+    });
+
+    it('should return isNew: false for stack collision', () => {
+        // momentum has stack collision policy
+        const first = grantPowerUp([], 'momentum', 'hat_trick');
+        const second = grantPowerUp(first.powerUps, 'momentum', 'hat_trick');
+        expect(second.granted).not.toBeNull();
+        expect(second.isNew).toBe(false);
+        expect(second.granted!.stacks).toBe(2);
+    });
+
+    it('should return isNew: false and granted: null for ignore collision', () => {
+        // streak_shield has ignore collision policy
+        const first = grantPowerUp([], 'streak_shield', 'streak_keeper_14');
+        const second = grantPowerUp(first.powerUps, 'streak_shield', 'streak_keeper_14');
+        expect(second.granted).toBeNull();
+        expect(second.isNew).toBe(false);
+    });
+
+    it('should return isNew: false for extend collision', () => {
+        // catch_up has extend collision policy
+        const first = grantPowerUp([], 'catch_up', 'phoenix');
+        const second = grantPowerUp(first.powerUps, 'catch_up', 'phoenix');
+        expect(second.granted).not.toBeNull();
+        expect(second.isNew).toBe(false);
     });
 });
 
