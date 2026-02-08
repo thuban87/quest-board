@@ -169,18 +169,20 @@ export const EFFECT_DEFINITIONS: Record<string, EffectDefinition> = {
 export interface TriggerContext {
     // Task completion context
     tasksCompletedToday?: number;
-    tasksInLastHour?: number;  // For Hat Trick
+    tasksInLastHour?: number;  // For Hat Trick (legacy, used by useXPAward)
     taskCategory?: string;
-    taskXP?: number;
     isFirstTaskOfDay?: boolean;
 
     // Quest completion context
     questCompleted?: boolean;
-    questWasOneShot?: boolean;  // Available → Done directly
     questCompletedEarly?: boolean;  // Before due date
     questCompletedOnDueDate?: boolean;  // For Clutch
     daysSinceQuestCreation?: number;
-    inProgressCount?: number;  // For Inbox Zero
+    questsCompletedToday?: number;  // For Blitz (quest-level)
+    questsInLastHour?: number;  // For Hat Trick (quest-level)
+    questCategoriesCompletedToday?: string[];  // For Multitasker (quest-level)
+    questCategoryCountToday?: Record<string, number>;  // For category triggers (quest-level)
+    questCategory?: string;  // The completing quest's category
 
     // Streak context
     currentStreak?: number;
@@ -197,7 +199,7 @@ export interface TriggerContext {
     isWeekend?: boolean;
     dayOfWeek?: number;  // 0=Sunday
 
-    // Category tracking for session
+    // Category tracking for session (task-level)
     categoriesCompletedToday?: string[];
     categoryCountToday?: Record<string, number>;
 
@@ -240,15 +242,6 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
         type: 'deterministic',
         grantsEffect: 'first_blood_boost',
         condition: (ctx) => ctx.isFirstTaskOfDay === true,
-    },
-    {
-        id: 'one_shot',
-        name: 'One-Shot',
-        description: 'Complete quest directly from Available → Done',
-        detectionPoint: 'quest_completion',
-        type: 'deterministic',
-        grantsEffect: 'momentum',
-        condition: (ctx) => ctx.questWasOneShot === true,
     },
 
     // === CONSISTENCY & TIMING ===
@@ -302,45 +295,45 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
         condition: (ctx) => (ctx.daysInactive ?? 0) >= 3 && ctx.isFirstTaskOfDay === true,
     },
 
-    // === NEW SPEED & MOMENTUM ===
+    // === SPEED & MOMENTUM ===
     {
         id: 'hat_trick',
         name: 'Hat Trick',
-        description: '3 tasks completed within 1 hour',
-        detectionPoint: 'task_completion',
+        description: '3 quests completed within 1 hour',
+        detectionPoint: 'quest_completion',
         type: 'pool',
-        grantsTier: 'T1',
-        condition: (ctx) => (ctx.tasksInLastHour ?? 0) >= 3,
+        grantsTier: 'T2',
+        condition: (ctx) => (ctx.questsInLastHour ?? 0) >= 3,
     },
     {
         id: 'blitz',
         name: 'Blitz',
-        description: '10 tasks completed in a day',
-        detectionPoint: 'task_completion',
+        description: '10 quests completed in a day',
+        detectionPoint: 'quest_completion',
         type: 'pool',
-        grantsTier: 'T2',
-        condition: (ctx) => (ctx.tasksCompletedToday ?? 0) >= 10,
+        grantsTier: 'T3',
+        condition: (ctx) => (ctx.questsCompletedToday ?? 0) >= 10,
     },
     {
         id: 'combo_breaker',
         name: 'Combo Breaker',
-        description: '5+ tasks in the same category today',
+        description: '10+ tasks in the same category today',
         detectionPoint: 'task_completion',
         type: 'pool',
         grantsTier: 'T1',
         condition: (ctx) => {
             const cat = ctx.taskCategory?.toLowerCase();
             if (!cat || !ctx.categoryCountToday) return false;
-            return (ctx.categoryCountToday[cat] ?? 0) >= 5;
+            return (ctx.categoryCountToday[cat] ?? 0) >= 10;
         },
     },
 
-    // === NEW TIMING ===
+    // === TIMING ===
     {
         id: 'early_riser',
         name: 'Early Riser',
-        description: 'Complete a task before 8 AM',
-        detectionPoint: 'task_completion',
+        description: 'Complete a quest before 8 AM',
+        detectionPoint: 'quest_completion',
         type: 'pool',
         grantsTier: 'T1',
         condition: (ctx) => (ctx.currentHour ?? 12) < 8,
@@ -348,8 +341,8 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
     {
         id: 'night_owl',
         name: 'Night Owl',
-        description: 'Complete a task after 10 PM',
-        detectionPoint: 'task_completion',
+        description: 'Complete a quest after 10 PM',
+        detectionPoint: 'quest_completion',
         type: 'pool',
         grantsTier: 'T1',
         condition: (ctx) => (ctx.currentHour ?? 12) >= 22,
@@ -391,85 +384,76 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
         condition: (ctx) => ctx.currentStreak === 30 && (ctx.previousStreak ?? 0) < 30,
     },
 
-    // === NEW CATEGORY MASTERY ===
+    // === CATEGORY MASTERY ===
     {
         id: 'gym_rat',
         name: 'Gym Rat',
-        description: '3 Health/Fitness tasks in a day',
-        detectionPoint: 'task_completion',
+        description: '2 Health/Fitness quests in a day',
+        detectionPoint: 'quest_completion',
         type: 'deterministic',
         grantsEffect: 'adrenaline_rush',
         condition: (ctx) => {
-            const cat = ctx.taskCategory?.toLowerCase();
-            if (!ctx.categoryCountToday) return false;
-            const healthCount = ctx.categoryCountToday['health'] ?? 0;
-            const fitnessCount = ctx.categoryCountToday['fitness'] ?? 0;
-            return (cat === 'health' || cat === 'fitness') && (healthCount + fitnessCount) >= 3;
+            const cat = ctx.questCategory?.toLowerCase();
+            if (!ctx.questCategoryCountToday) return false;
+            const healthCount = ctx.questCategoryCountToday['health'] ?? 0;
+            const fitnessCount = ctx.questCategoryCountToday['fitness'] ?? 0;
+            return (cat === 'health' || cat === 'fitness') && (healthCount + fitnessCount) >= 2;
         },
     },
     {
         id: 'deep_work',
         name: 'Deep Work',
-        description: '3 Dev/Study tasks in a day',
-        detectionPoint: 'task_completion',
+        description: '2 Dev/Study quests in a day',
+        detectionPoint: 'quest_completion',
         type: 'deterministic',
         grantsEffect: 'genius_mode',
         condition: (ctx) => {
-            const cat = ctx.taskCategory?.toLowerCase();
-            if (!ctx.categoryCountToday) return false;
-            const devCount = ctx.categoryCountToday['dev'] ?? 0;
-            const studyCount = ctx.categoryCountToday['study'] ?? 0;
-            return (cat === 'dev' || cat === 'study') && (devCount + studyCount) >= 3;
+            const cat = ctx.questCategory?.toLowerCase();
+            if (!ctx.questCategoryCountToday) return false;
+            const devCount = ctx.questCategoryCountToday['dev'] ?? 0;
+            const studyCount = ctx.questCategoryCountToday['study'] ?? 0;
+            return (cat === 'dev' || cat === 'study') && (devCount + studyCount) >= 2;
         },
     },
     {
         id: 'social_butterfly',
         name: 'Social Butterfly',
-        description: '3 Social tasks in a day',
-        detectionPoint: 'task_completion',
+        description: '2 Social quests in a day',
+        detectionPoint: 'quest_completion',
         type: 'pool',
         grantsTier: 'T1',
         condition: (ctx) => {
-            const cat = ctx.taskCategory?.toLowerCase();
-            if (!ctx.categoryCountToday) return false;
-            return cat === 'social' && (ctx.categoryCountToday['social'] ?? 0) >= 3;
+            const cat = ctx.questCategory?.toLowerCase();
+            if (!ctx.questCategoryCountToday) return false;
+            return cat === 'social' && (ctx.questCategoryCountToday['social'] ?? 0) >= 2;
         },
     },
     {
         id: 'admin_slayer',
         name: 'Admin Slayer',
-        description: '5 Chore/Admin tasks in a day',
-        detectionPoint: 'task_completion',
+        description: '2 Chore/Admin quests in a day',
+        detectionPoint: 'quest_completion',
         type: 'deterministic',
         grantsEffect: 'flow_state',
         condition: (ctx) => {
-            const cat = ctx.taskCategory?.toLowerCase();
-            if (!ctx.categoryCountToday) return false;
-            const adminCount = ctx.categoryCountToday['admin'] ?? 0;
-            const choresCount = ctx.categoryCountToday['chores'] ?? 0;
-            return (cat === 'admin' || cat === 'chores') && (adminCount + choresCount) >= 5;
+            const cat = ctx.questCategory?.toLowerCase();
+            if (!ctx.questCategoryCountToday) return false;
+            const adminCount = ctx.questCategoryCountToday['admin'] ?? 0;
+            const choresCount = ctx.questCategoryCountToday['chores'] ?? 0;
+            return (cat === 'admin' || cat === 'chores') && (adminCount + choresCount) >= 2;
         },
     },
     {
         id: 'multitasker',
         name: 'Multitasker',
-        description: '3+ different categories in a day',
-        detectionPoint: 'task_completion',
+        description: '3+ different quest categories in a day',
+        detectionPoint: 'quest_completion',
         type: 'pool',
         grantsTier: 'T1',
-        condition: (ctx) => (ctx.categoriesCompletedToday?.length ?? 0) >= 3,
+        condition: (ctx) => (ctx.questCategoriesCompletedToday?.length ?? 0) >= 3,
     },
 
-    // === NEW DIFFICULTY ===
-    {
-        id: 'big_fish',
-        name: 'Big Fish',
-        description: 'Complete a task worth >50 XP',
-        detectionPoint: 'task_completion',
-        type: 'pool',
-        grantsTier: 'T1',
-        condition: (ctx) => (ctx.taskXP ?? 0) > 50,
-    },
+
     {
         id: 'clutch',
         name: 'Clutch',
@@ -488,26 +472,7 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
         grantsEffect: 'flow_state',
         condition: (ctx) => ctx.questCompletedEarly === true,
     },
-    {
-        id: 'inbox_zero',
-        name: 'Inbox Zero',
-        description: 'Clear the In Progress column',
-        detectionPoint: 'quest_completion',
-        type: 'deterministic',
-        grantsEffect: 'flow_state',
-        condition: (ctx) => ctx.inProgressCount === 0 && ctx.questCompleted === true,
-    },
 
-    // === RNG ===
-    {
-        id: 'critical_success',
-        name: 'Critical Success',
-        description: '5% chance on any task completion',
-        detectionPoint: 'task_completion',
-        type: 'pool',
-        grantsTier: 'T2',
-        condition: () => Math.random() < 0.05,
-    },
 ];
 
 // ============================================================================
@@ -517,7 +482,7 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
 /** Effects available in each tier pool for random grants */
 export const TIER_POOLS: Record<string, string[]> = {
     T1: ['first_blood_boost', 'momentum', 'catch_up', 'lucky_star', 'adrenaline_rush', 'genius_mode'],
-    T2: ['flow_state', 'streak_shield', 'level_up_boost'],
+    T2: ['flow_state', 'streak_shield'],
     T3: ['limit_break'],
 };
 

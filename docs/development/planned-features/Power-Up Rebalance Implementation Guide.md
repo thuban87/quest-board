@@ -1,8 +1,9 @@
 # Power-Up Rebalance Implementation Guide
 
-**Status:** Planned  
+**Status:** In Progress (Session 1 Complete)  
 **Created:** 2026-02-06  
 **Estimated Sessions:** 2-3  
+**Session Log:** [Power-Up Rebalance Session Log](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/development/planned-features/Power-Up%20Rebalance%20Session%20Log.md)  
 **Goal:** Reduce daily power-up frequency from ~20+ to 1-6 based on player activity level
 
 ---
@@ -101,28 +102,29 @@ T2: ['flow_state', 'streak_shield']
 
 ## Session Breakdown
 
-### Session 1: Core Changes (Phases 1-2)
+### Session 1: Core Changes (Phases 1-2) ✅ COMPLETE
 
 **Scope:** Remove triggers, fix pools, update trigger definitions
 
-**Files:**
-- [PowerUpService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/PowerUpService.ts)
+**Files Changed:**
+- [PowerUpService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/PowerUpService.ts) — Removed 4 triggers, fixed T2 pool, updated 10 trigger definitions, added quest-level fields to `TriggerContext`, cleaned up removed fields
+- [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) — Removed `questWasOneShot` and `inProgressCount` from quest completion context
+- [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) — Removed `taskXP` from trigger context
+- [power-up-triggers.test.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/test/power-up-triggers.test.ts) — Minimal fixes: removed deleted fields from `createDefaultContext`, updated `declare module` augmentation
 
-**Changes:**
-1. Remove 4 triggers from `TRIGGER_DEFINITIONS`: `one_shot`, `inbox_zero`, `critical_success`, `big_fish`
-2. Remove `level_up_boost` from `TIER_POOLS.T2`
-3. Update `TriggerContext` interface with new quest-level fields:
-   - `questsCompletedToday?: number`
-   - `questsInLastHour?: number`
-   - `questCategoriesCompletedToday?: string[]`
-   - `questCategoryCountToday?: Record<string, number>`
-4. Update trigger conditions and descriptions for: Hat Trick, Blitz, Early Riser, Night Owl, Multitasker, Combo Breaker
-5. Update category triggers (Gym Rat, Deep Work, Social Butterfly, Admin Slayer) to quest-based with threshold 2
-6. **Cleanup:** Remove `tasksInLastHour` calculation from [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) (lines 137-156) — no longer needed since Hat Trick/Blitz moved to quest_completion
+**What Was Done:**
+1. ✅ Removed 4 triggers from `TRIGGER_DEFINITIONS`: `one_shot`, `inbox_zero`, `critical_success`, `big_fish`
+2. ✅ Removed `level_up_boost` from `TIER_POOLS.T2`
+3. ✅ Updated `TriggerContext` interface — added new quest-level fields, removed `questWasOneShot`, `inProgressCount`, `taskXP`
+4. ✅ Updated trigger conditions and descriptions for: Hat Trick, Blitz, Early Riser, Night Owl, Multitasker, Combo Breaker
+5. ✅ Updated category triggers (Gym Rat, Deep Work, Social Butterfly, Admin Slayer) to quest-based with threshold 2
+
+**Deferred to Session 2:**
+- Cleanup of `tasksInLastHour` calculation from `useXPAward.ts` — still used by legacy task-level tests; remove after tests are updated
 
 **Verification:**
-- `npm run build` passes
-- Run existing tests: `npm test -- --grep "power-up"`
+- ✅ `npm run build` passes
+- 23 test failures — all expected (removed triggers fail, old TDD tests use pre-rebalance thresholds/detection points)
 
 ---
 

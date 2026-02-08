@@ -168,11 +168,10 @@ export function useXPAward({ app, vault, customStatMappings, onCategoryUsed, onS
             isFirstTaskOfDay,
             tasksCompletedToday: currentTaskCount + newlyCompleted,
             taskCategory: quest.category,
-            taskXP: quest.xpPerTask * newlyCompleted,
             currentHour: now.getHours(),  // For Early Riser (<8) and Night Owl (>=22)
-            categoryCountToday,           // For Gym Rat, Deep Work, etc.
-            categoriesCompletedToday: Array.from(categoriesSet), // For Multitasker
-            tasksInLastHour,              // For Hat Trick
+            categoryCountToday,           // For Combo Breaker
+            categoriesCompletedToday: Array.from(categoriesSet), // For task-level tracking
+            tasksInLastHour,              // Legacy: kept until Session 2 wires quest-level context
             daysInactive,                 // For Phoenix
         };
 

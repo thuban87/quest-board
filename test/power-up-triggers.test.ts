@@ -21,10 +21,8 @@ function createDefaultContext(overrides: Partial<TriggerContext> = {}): TriggerC
     return {
         tasksCompletedToday: 0,
         taskCategory: undefined,
-        taskXP: 0,
         isFirstTaskOfDay: false,
         questCompleted: false,
-        questWasOneShot: false,
         questCompletedEarly: false,
         daysSinceQuestCreation: 0,
         currentStreak: 0,
@@ -849,28 +847,21 @@ describe('Power-Up Rebalance - Removed Triggers', () => {
 // EXTEND TriggerContext for new fields
 // =====================
 
-// Fields for new/rebalanced triggers:
-// EXISTING (keep):
-// - tasksInLastHour: number (DEPRECATED after rebalance - remove from useXPAward)
-// - inProgressCount: number (DEPRECATED after rebalance - removed trigger)
-// - questCompletedOnDueDate: boolean
-// NEW (add for rebalance):
-// - questsInLastHour: number
-// - questsCompletedToday: number
-// - questCategoriesCompletedToday: string[]
-// - questCategoryCountToday: Record<string, number>
+// Fields that exist on TriggerContext but still need test augmentation:
+// - tasksInLastHour: used by legacy task-level tests
+// - inProgressCount: used by inbox_zero tests (trigger removed but tests kept)
+// - taskXP: used by big_fish tests (trigger removed but tests kept)
+// - questCompletedOnDueDate: used by clutch tests
 
-// For now, we extend the type inline in tests
+// Augment TriggerContext with fields used in tests but not yet in the interface,
+// or fields that were removed from the interface but still referenced in TDD tests.
 declare module '../src/services/PowerUpService' {
     interface TriggerContext {
         tasksInLastHour?: number;
         inProgressCount?: number;
+        taskXP?: number;
+        questWasOneShot?: boolean;
         questCompletedOnDueDate?: boolean;
-        // NEW for rebalance:
-        questsInLastHour?: number;
-        questsCompletedToday?: number;
-        questCategoriesCompletedToday?: string[];
-        questCategoryCountToday?: Record<string, number>;
     }
 }
 

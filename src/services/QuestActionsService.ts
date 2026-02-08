@@ -193,9 +193,7 @@ export async function moveQuest(
     if (isCompletion) {
         const character = useCharacterStore.getState().character;
         if (character) {
-            // Detect "One-Shot" = Default column → Completed directly (not via intermediate columns)
-            const defaultColumn = columnConfigService.getDefaultColumn();
-            const wasOneShot = quest.status === defaultColumn;
+            // Detect quest timing and context
             const now = new Date();
             const dayOfWeek = now.getDay();  // 0=Sun, 1=Mon, ... 6=Sat
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -203,18 +201,6 @@ export async function moveQuest(
             // Check if this is first quest of day
             const today = now.toLocaleDateString('en-CA');
             const isFirstTaskOfDay = character.lastTaskDate !== today;
-
-            // Count quests in work columns (not default, not completion)
-            const allQuests = useQuestStore.getState().quests;
-            let inProgressCount = 0;
-            for (const [, q] of allQuests) {
-                // Count quests that are in intermediate "work" columns
-                const isInDefaultColumn = q.status === defaultColumn;
-                const isInCompletionColumn = columnConfigService.isCompletionColumn(q.status as string);
-                if (q.questId !== questId && !isInDefaultColumn && !isInCompletionColumn) {
-                    inProgressCount++;
-                }
-            }
 
             // Check if quest was completed early (24h+ before expected)
             // For recurring quests with instanceDate, compare to that
@@ -232,13 +218,12 @@ export async function moveQuest(
 
             const questContext: TriggerContext = {
                 questCompleted: true,
-                questWasOneShot: wasOneShot,
                 isWeekend,      // For Weekend Warrior
                 dayOfWeek,      // For Fresh Start (Monday = 1)
                 isFirstTaskOfDay,  // For Fresh Start
-                inProgressCount,   // For Inbox Zero
                 questCompletedEarly,  // For Speedrunner
                 questCompletedOnDueDate, // For Clutch
+                currentHour: now.getHours(),  // For Early Riser / Night Owl
             };
 
             const questTriggers = evaluateTriggers('quest_completion', questContext);
