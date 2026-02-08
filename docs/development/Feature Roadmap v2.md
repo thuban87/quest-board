@@ -136,12 +136,15 @@ This document reflects the **actual state of implementation** based on a deep co
 ### Power-Up System
 | Feature | Location | Notes |
 |---------|----------|-------|
-| Trigger system | `PowerUpService.ts` | Detection points |
-| Effect types | `EFFECT_DEFINITIONS` | XP multipliers, stat boosts, crit |
+| Trigger system | `PowerUpService.ts` | 19 triggers with daily cooldowns |
+| Effect types | `EFFECT_DEFINITIONS` | XP/stat multipliers, stat % boosts, gold multiplier, crit |
 | Duration types | `PowerUpService.ts` | Hours, uses, permanent |
+| Collision policies | `PowerUpService.ts` | Refresh, stack, ignore, extend, stack_refresh |
 | Active power-ups | `Character.activePowerUps` | Array with expiry |
 | Status bar | `StatusBarService.ts` | Shows active buffs |
-| Class perks | `CharacterSheet.tsx` | Always-visible |
+| Tier pools | `TIER_POOLS` | T1 (7), T2 (3), T3 (1) — gated effects excluded |
+| Stat % boosts | `StatsService.ts` | Applied after flat bonuses |
+| Gold multiplier | `LootGenerationService.ts` | Applied to quest, combat, chest gold |
 
 ### Achievement System
 | Feature | Location | Notes |
@@ -235,6 +238,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | **Gear Comparison Tooltips** | WoW-style dual-panel tooltips showing item vs equipped stats | ✅ Complete |
 | **Recent Acquisition Sort** | Sort inventory by "Recent" to find newly acquired items | ✅ Complete |
 | **Balance Testing Infrastructure** | Battle logger + test character generator for systematic tuning | ✅ Complete |
+| **Power-Up Rebalance** | Trigger cleanup, pool gating, new effects, % stat boosts, gold multiplier, daily cooldowns | ✅ Complete |
 
 #### Tier 3: Game Systems (Enhance Motivation)
 
@@ -390,5 +394,5 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-02-07 (Remote Asset Delivery — CDN-hosted assets, download UI, deploy script update)
+**Last Updated:** 2026-02-08 (Power-Up Rebalance — pool gating, 7 new effects, Limit Break scaling, 163 tests)
 

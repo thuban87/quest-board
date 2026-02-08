@@ -29,6 +29,7 @@ import {
 import { createUniqueItem, UniqueItemTemplate } from '../data/uniqueItems';
 import { setBonusService } from './SetBonusService';
 import { getHpPotionForLevel, getMpPotionForLevel } from '../models/Consumable';
+import { getGoldMultiplierFromPowerUps, expirePowerUps } from './PowerUpService';
 
 // ============================================
 // Configuration
@@ -172,8 +173,11 @@ export class LootGenerationService {
     generateQuestLoot(quest: Quest, character: Character): LootDrop {
         const rewards: LootReward[] = [];
 
-        // 1. Always give gold (based on priority/urgency)
-        const goldAmount = this.calculateQuestGold(quest.priority);
+        // 1. Always give gold (based on priority/urgency), boosted by active power-ups
+        const baseGoldAmount = this.calculateQuestGold(quest.priority);
+        const activePowerUps = expirePowerUps(character.activePowerUps || []);
+        const goldMultiplier = getGoldMultiplierFromPowerUps(activePowerUps);
+        const goldAmount = Math.floor(baseGoldAmount * goldMultiplier);
         rewards.push({ type: 'gold', amount: goldAmount });
 
         // 2. Check if this quest type rewards gear
@@ -280,7 +284,9 @@ export class LootGenerationService {
             raid_boss: 8.0,
         };
         const baseGold = 10 + monsterLevel * 2;
-        const goldAmount = Math.floor(baseGold * goldMultiplier[monsterTier]);
+        const combatActivePowerUps = expirePowerUps(character.activePowerUps || []);
+        const combatGoldMultiplier = getGoldMultiplierFromPowerUps(combatActivePowerUps);
+        const goldAmount = Math.floor(baseGold * goldMultiplier[monsterTier] * combatGoldMultiplier);
         rewards.push({ type: 'gold', amount: goldAmount });
 
         // Gear drop chance based on tier
@@ -336,7 +342,9 @@ export class LootGenerationService {
             golden: { min: 50, max: 150 },
         };
         const range = goldRanges[chestTier];
-        const goldAmount = this.randomRange(range.min, range.max);
+        const chestActivePowerUps = expirePowerUps(character.activePowerUps || []);
+        const chestGoldMultiplier = getGoldMultiplierFromPowerUps(chestActivePowerUps);
+        const goldAmount = Math.floor(this.randomRange(range.min, range.max) * chestGoldMultiplier);
         rewards.push({ type: 'gold', amount: goldAmount });
 
         // Gear chance by tier

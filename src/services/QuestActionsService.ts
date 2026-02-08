@@ -31,6 +31,8 @@ import {
     EFFECT_DEFINITIONS,
     rollFromPool,
     TriggerContext,
+    hasFiredToday,
+    recordTriggerFired,
 } from './PowerUpService';
 import { checkBountyTrigger } from './BountyService';
 import { showBountyModal } from '../modals/BountyModal';
@@ -147,24 +149,32 @@ export async function moveQuest(
                 const streakTriggers = evaluateTriggers('streak_update', streakContext);
                 if (streakTriggers.length > 0) {
                     let streakPowerUps = expirePowerUps(useCharacterStore.getState().character?.activePowerUps ?? []);
+                    let cooldowns = useCharacterStore.getState().character?.triggerCooldowns;
 
                     for (const trigger of streakTriggers) {
+                        // Skip if this trigger already fired today
+                        if (hasFiredToday(cooldowns, trigger.id)) continue;
+
                         const effectId = trigger.grantsEffect ?? (trigger.grantsTier ? rollFromPool(trigger.grantsTier) : null);
                         if (effectId) {
                             const result = grantPowerUp(streakPowerUps, effectId, trigger.id);
                             if (result.granted) {
                                 streakPowerUps = result.powerUps;
-                                const effectDef = EFFECT_DEFINITIONS[effectId];
-                                // Show notification
-                                if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
-                                    new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 5000);
+                                cooldowns = recordTriggerFired(cooldowns, trigger.id);
+                                // Only notify for truly new grants (not collision-handled)
+                                if (result.isNew) {
+                                    const effectDef = EFFECT_DEFINITIONS[effectId];
+                                    if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
+                                        new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 5000);
+                                    }
                                 }
                             }
                         }
                     }
 
-                    // Save power-ups
+                    // Save power-ups and cooldowns
                     useCharacterStore.getState().setPowerUps(streakPowerUps);
+                    useCharacterStore.getState().setTriggerCooldowns(cooldowns ?? {});
                 }
 
                 // === STREAK ACHIEVEMENTS ===
@@ -193,9 +203,7 @@ export async function moveQuest(
     if (isCompletion) {
         const character = useCharacterStore.getState().character;
         if (character) {
-            // Detect "One-Shot" = Default column → Completed directly (not via intermediate columns)
-            const defaultColumn = columnConfigService.getDefaultColumn();
-            const wasOneShot = quest.status === defaultColumn;
+            // Detect quest timing and context
             const now = new Date();
             const dayOfWeek = now.getDay();  // 0=Sun, 1=Mon, ... 6=Sat
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -203,18 +211,6 @@ export async function moveQuest(
             // Check if this is first quest of day
             const today = now.toLocaleDateString('en-CA');
             const isFirstTaskOfDay = character.lastTaskDate !== today;
-
-            // Count quests in work columns (not default, not completion)
-            const allQuests = useQuestStore.getState().quests;
-            let inProgressCount = 0;
-            for (const [, q] of allQuests) {
-                // Count quests that are in intermediate "work" columns
-                const isInDefaultColumn = q.status === defaultColumn;
-                const isInCompletionColumn = columnConfigService.isCompletionColumn(q.status as string);
-                if (q.questId !== questId && !isInDefaultColumn && !isInCompletionColumn) {
-                    inProgressCount++;
-                }
-            }
 
             // Check if quest was completed early (24h+ before expected)
             // For recurring quests with instanceDate, compare to that
@@ -230,36 +226,82 @@ export async function moveQuest(
                 questCompletedOnDueDate = hoursUntilDue >= 0 && hoursUntilDue < 24;  // On due date
             }
 
+            // Build quest-level context from activity history
+            const questCategoryCountToday: Record<string, number> = {};
+            const questCategoriesSet = new Set<string>();
+            let questsCompletedToday = 0;
+            let questsInLastHour = 0;
+            const oneHourAgo = now.getTime() - (60 * 60 * 1000);
+
+            for (const event of character.activityHistory || []) {
+                if (event.date === today && event.type === 'quest_complete') {
+                    questsCompletedToday++;
+                    if (event.category) {
+                        const cat = event.category.toLowerCase();
+                        questCategoryCountToday[cat] = (questCategoryCountToday[cat] || 0) + 1;
+                        questCategoriesSet.add(cat);
+                    }
+                    if (event.timestamp) {
+                        const eventTime = new Date(event.timestamp).getTime();
+                        if (eventTime >= oneHourAgo) {
+                            questsInLastHour++;
+                        }
+                    }
+                }
+            }
+
+            // Include current quest in counts (it's about to be logged)
+            const currentQuestCategory = quest.category?.toLowerCase();
+            if (currentQuestCategory) {
+                questCategoryCountToday[currentQuestCategory] = (questCategoryCountToday[currentQuestCategory] || 0) + 1;
+                questCategoriesSet.add(currentQuestCategory);
+            }
+            questsCompletedToday++;
+            questsInLastHour++;
+
             const questContext: TriggerContext = {
                 questCompleted: true,
-                questWasOneShot: wasOneShot,
                 isWeekend,      // For Weekend Warrior
                 dayOfWeek,      // For Fresh Start (Monday = 1)
                 isFirstTaskOfDay,  // For Fresh Start
-                inProgressCount,   // For Inbox Zero
                 questCompletedEarly,  // For Speedrunner
                 questCompletedOnDueDate, // For Clutch
+                currentHour: now.getHours(),  // For Early Riser / Night Owl
+                questsCompletedToday,
+                questsInLastHour,
+                questCategoriesCompletedToday: Array.from(questCategoriesSet),
+                questCategoryCountToday,
+                questCategory: quest.category,
             };
 
             const questTriggers = evaluateTriggers('quest_completion', questContext);
             if (questTriggers.length > 0) {
                 let questPowerUps = expirePowerUps(character.activePowerUps ?? []);
+                let cooldowns = useCharacterStore.getState().character?.triggerCooldowns;
 
                 for (const trigger of questTriggers) {
+                    // Skip if this trigger already fired today
+                    if (hasFiredToday(cooldowns, trigger.id)) continue;
+
                     const effectId = trigger.grantsEffect ?? (trigger.grantsTier ? rollFromPool(trigger.grantsTier) : null);
                     if (effectId) {
                         const result = grantPowerUp(questPowerUps, effectId, trigger.id);
                         if (result.granted) {
                             questPowerUps = result.powerUps;
-                            const effectDef = EFFECT_DEFINITIONS[effectId];
-                            if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
-                                new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 5000);
+                            cooldowns = recordTriggerFired(cooldowns, trigger.id);
+                            // Only notify for truly new grants (not collision-handled)
+                            if (result.isNew) {
+                                const effectDef = EFFECT_DEFINITIONS[effectId];
+                                if (effectDef?.notificationType === 'toast' || effectDef?.notificationType === 'modal') {
+                                    new Notice(`${result.granted.icon} ${result.granted.name}: ${result.granted.description}`, 5000);
+                                }
                             }
                         }
                     }
                 }
 
                 useCharacterStore.getState().setPowerUps(questPowerUps);
+                useCharacterStore.getState().setTriggerCooldowns(cooldowns ?? {});
                 // Update status bar immediately
                 import('./StatusBarService').then(({ statusBarService }) => statusBarService.update());
             }

@@ -12,7 +12,7 @@ import {
     CLASS_INFO,
     DEFAULT_STATS
 } from '../models/Character';
-import { getStatBoostFromPowerUps, expirePowerUps } from './PowerUpService';
+import { getStatBoostFromPowerUps, getPercentStatBoostFromPowerUps, expirePowerUps } from './PowerUpService';
 import { aggregateGearStats } from './CombatService';
 
 /**
@@ -43,6 +43,7 @@ export function getStatCap(level: number): number {
 
 /**
  * Get total stat value (base + quest bonuses + power-up boosts + gear bonuses)
+ * Percentage boosts (e.g., Iron Grip +10% STR) are applied after all flat bonuses
  */
 export function getTotalStat(character: Character, stat: StatType): number {
     const base = character.baseStats?.[stat] || 10;
@@ -56,7 +57,12 @@ export function getTotalStat(character: Character, stat: StatType): number {
     const gearStats = aggregateGearStats(character.equippedGear);
     const gearBonus = gearStats.statBonuses[stat] || 0;
 
-    return base + questBonus + powerUpBoost + gearBonus;
+    // Flat total before percentage boosts
+    const flatTotal = base + questBonus + powerUpBoost + gearBonus;
+
+    // Apply percentage-based boosts (e.g., Iron Grip +10% STR)
+    const percentBoost = getPercentStatBoostFromPowerUps(activePowerUps, stat);
+    return Math.floor(flatTotal * (1 + percentBoost));
 }
 
 /**

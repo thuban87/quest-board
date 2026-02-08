@@ -1,8 +1,9 @@
 # Power-Up Rebalance Implementation Guide
 
-**Status:** Planned  
+**Status:** ✅ Complete (Sessions 1-4)  
 **Created:** 2026-02-06  
 **Estimated Sessions:** 2-3  
+**Session Log:** [Power-Up Rebalance Session Log](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/development/planned-features/Power-Up%20Rebalance%20Session%20Log.md)  
 **Goal:** Reduce daily power-up frequency from ~20+ to 1-6 based on player activity level
 
 ---
@@ -49,14 +50,21 @@ The current power-up system triggers too frequently, making power-ups feel routi
 
 ### 2. Pool Changes
 
-**Remove `level_up_boost` from T2 pool** — it should only be granted via the Level Up trigger, not random rolls.
+**Remove `level_up_boost` from T2 pool** — only via Level Up trigger.
+
+**Gate 5 trigger-only effects from random pools** — `first_blood_boost`, `catch_up`, `adrenaline_rush`, `genius_mode`, `flow_state` now only come from their specific triggers.
+
+**Add 7 replacement effects:**
+- **T1:** `iron_grip` (+10% STR), `cats_grace` (+10% DEX), `arcane_insight` (+10% INT), `inner_peace` (+10% WIS), `stone_skin` (+10% CON)
+- **T2:** `surge` (+20% XP, 5 uses), `fortunes_favor` (+5% gold/stack, max 3)
+
+**Convert Limit Break** from flat +3 all stats → +5% all stats (scales with level).
 
 ```typescript
-// BEFORE
-T2: ['flow_state', 'streak_shield', 'level_up_boost']
-
-// AFTER
-T2: ['flow_state', 'streak_shield']
+// FINAL POOLS
+T1: ['momentum', 'lucky_star', 'iron_grip', 'cats_grace', 'arcane_insight', 'inner_peace', 'stone_skin']
+T2: ['streak_shield', 'surge', 'fortunes_favor']
+T3: ['limit_break']
 ```
 
 ### 3. Trigger Modifications
@@ -92,80 +100,106 @@ T2: ['flow_state', 'streak_shield']
 
 | File | Line Range | Detection Point | Notes |
 |------|------------|-----------------|-------|
-| [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) | 168-178 | `task_completion` | Builds `categoryCountToday`, `tasksInLastHour` |
+| [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) | 161-170 | `task_completion` | Builds `categoryCountToday`, `categoriesCompletedToday` |
 | [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) | 268-272 | `xp_award` | Level up / tier up detection |
-| [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) | 233-242 | `quest_completion` | Builds weekend, due date, category context |
+| [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) | 219-260 | `quest_completion` | Builds quest-level counts, weekend, due date, category context |
 | [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) | 140-144 | `streak_update` | Streak milestone detection |
 
 ---
 
 ## Session Breakdown
 
-### Session 1: Core Changes (Phases 1-2)
+### Session 1: Core Changes (Phases 1-2) ✅ COMPLETE
 
 **Scope:** Remove triggers, fix pools, update trigger definitions
 
-**Files:**
-- [PowerUpService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/PowerUpService.ts)
+**Files Changed:**
+- [PowerUpService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/PowerUpService.ts) — Removed 4 triggers, fixed T2 pool, updated 10 trigger definitions, added quest-level fields to `TriggerContext`, cleaned up removed fields
+- [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) — Removed `questWasOneShot` and `inProgressCount` from quest completion context
+- [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) — Removed `taskXP` from trigger context
+- [power-up-triggers.test.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/test/power-up-triggers.test.ts) — Minimal fixes: removed deleted fields from `createDefaultContext`, updated `declare module` augmentation
 
-**Changes:**
-1. Remove 4 triggers from `TRIGGER_DEFINITIONS`: `one_shot`, `inbox_zero`, `critical_success`, `big_fish`
-2. Remove `level_up_boost` from `TIER_POOLS.T2`
-3. Update `TriggerContext` interface with new quest-level fields:
-   - `questsCompletedToday?: number`
-   - `questsInLastHour?: number`
-   - `questCategoriesCompletedToday?: string[]`
-   - `questCategoryCountToday?: Record<string, number>`
-4. Update trigger conditions and descriptions for: Hat Trick, Blitz, Early Riser, Night Owl, Multitasker, Combo Breaker
-5. Update category triggers (Gym Rat, Deep Work, Social Butterfly, Admin Slayer) to quest-based with threshold 2
-6. **Cleanup:** Remove `tasksInLastHour` calculation from [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) (lines 137-156) — no longer needed since Hat Trick/Blitz moved to quest_completion
+**What Was Done:**
+1. ✅ Removed 4 triggers from `TRIGGER_DEFINITIONS`: `one_shot`, `inbox_zero`, `critical_success`, `big_fish`
+2. ✅ Removed `level_up_boost` from `TIER_POOLS.T2`
+3. ✅ Updated `TriggerContext` interface — added new quest-level fields, removed `questWasOneShot`, `inProgressCount`, `taskXP`
+4. ✅ Updated trigger conditions and descriptions for: Hat Trick, Blitz, Early Riser, Night Owl, Multitasker, Combo Breaker
+5. ✅ Updated category triggers (Gym Rat, Deep Work, Social Butterfly, Admin Slayer) to quest-based with threshold 2
+
+**Deferred to Session 2:**
+- Cleanup of `tasksInLastHour` calculation from `useXPAward.ts` — still used by legacy task-level tests; remove after tests are updated
 
 **Verification:**
-- `npm run build` passes
-- Run existing tests: `npm test -- --grep "power-up"`
+- ✅ `npm run build` passes
+- 23 test failures — all expected (removed triggers fail, old TDD tests use pre-rebalance thresholds/detection points)
 
 ---
 
-### Session 2: Context Building & Testing (Phases 3-4)
+### Session 2: Context Building & Testing (Phases 3-5) ✅ COMPLETE
 
-**Scope:** Update context builders to populate new fields, update tests
+**Scope:** Wire quest-level context, update tests, clean up legacy code
 
-**Files:**
-- [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) (lines 191-266)
-- [power-up-triggers.test.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/test/power-up-triggers.test.ts)
+**Files Changed:**
+- [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) — Activity history scanning + 5 quest-level context fields
+- [PowerUpService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/PowerUpService.ts) — Removed `tasksInLastHour` from `TriggerContext`
+- [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) — Removed `tasksInLastHour` calculation and context field
+- [power-up-triggers.test.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/test/power-up-triggers.test.ts) — Full test update
 
-**Changes:**
-1. In `QuestActionsService.moveQuest()` quest completion context (line 233):
-   - Add `questsCompletedToday` counter from activity history
-   - Add `questsInLastHour` counter from activity history timestamps
-   - Add `questCategoriesCompletedToday` from activity history
-   - Add `questCategoryCountToday` from activity history
-   - Wire `quest.category` for category triggers
-
-2. Update tests:
-   - Remove tests for deleted triggers
-   - Update tests for modified conditions/thresholds
-   - Add tests for new quest-based context fields
+**What Was Done:**
+1. ✅ Wired `questsCompletedToday`, `questsInLastHour`, `questCategoriesCompletedToday`, `questCategoryCountToday`, `questCategory` in `QuestActionsService.moveQuest()`
+2. ✅ Removed tests for deleted triggers (`one_shot`, `big_fish`, `inbox_zero`, `critical_success`)
+3. ✅ Updated all pre-rebalance tests to match new definitions
+4. ✅ Fixed `taskCategory` → `questCategory` in rebalanced category tests
+5. ✅ Removed `as any` casts, cleaned up `declare module` augmentation
+6. ✅ Removed `tasksInLastHour` from `useXPAward.ts` and `TriggerContext` interface
 
 **Verification:**
-- `npm run build` passes
-- `npm test` passes
-- Deploy to test vault: `npm run deploy:test`
-- Manual testing with test quests
+- ✅ `npm run build` passes
+- ✅ `npm test` passes — 68 tests, 0 failures (was 52/23 after Session 1)
+- ✅ Deployed to test vault
 
 ---
 
-### Session 3 (Optional): Documentation & Polish
+### Session 3: Trigger Cooldown & Notification Fix ✅ COMPLETE
 
-**Scope:** Update wiki docs, final verification
+**Scope:** Fix trigger notification spam bug, suppress collision-handled notifications
 
-**Files:**
-- [Power-Ups & Buffs.md](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/wiki/Power-Ups%20%26%20Buffs.md)
+**Files Changed:**
+- [Character.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/models/Character.ts) — Added `triggerCooldowns?: Record<string, string>` (optional, no schema bump)
+- [PowerUpService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/PowerUpService.ts) — Added `isNew` flag to `grantPowerUp()` return, added `hasFiredToday()` and `recordTriggerFired()` helpers
+- [characterStore.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/store/characterStore.ts) — Added `setTriggerCooldowns` action
+- [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) — 2 trigger sites: cooldown check + notification suppression
+- [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) — 2 trigger sites: cooldown check + notification suppression
+- [power-up-triggers.test.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/test/power-up-triggers.test.ts) — 12 new tests for cooldown helpers and `isNew` flag
 
-**Changes:**
-- Update trigger tables with new conditions
-- Update tips section with quest-based strategies
-- Note batch-complete "stash" strategy as valid
+**What Was Done:**
+1. ✅ Added daily trigger cooldown map (`triggerCooldowns`) to Character — persisted via `loadData()/saveData()`
+2. ✅ Added `isNew` boolean to `grantPowerUp()` return — `true` only for brand-new grants, `false` for refresh/stack/extend/ignore
+3. ✅ All 4 trigger evaluation sites skip triggers that already fired today and only notify for `isNew` grants
+4. ✅ 12 new tests covering `hasFiredToday()`, `recordTriggerFired()`, and all 4 collision policy `isNew` results
+
+**Verification:**
+- ✅ `npm run build` passes
+- ✅ `npm test` passes — 80 tests, 0 failures
+- ✅ Deployed to test vault, manual testing confirmed fix
+
+---
+
+### Session 4: Pool Gating, New Effects & Limit Break ✅ COMPLETE
+
+**Scope:** Gate trigger-only effects from random pools, add 7 replacement effects, convert Limit Break to % scaling
+
+**Files Changed:**
+- [Character.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/models/Character.ts) — `stat_percent_boost`, `all_stats_percent_boost`, `gold_multiplier` types; `stack_refresh` policy
+- [PowerUpService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/PowerUpService.ts) — 7 new effects, pool gating, Limit Break → 5%, utility functions
+- [StatsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/StatsService.ts) — % boosts after flat bonuses in `getTotalStat()`
+- [LootGenerationService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/LootGenerationService.ts) — Gold multiplier in quest/combat/chest loot
+- [power-up-effects.test.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/test/power-up-effects.test.ts) — Fixed streak_shield bug, 21 new tests
+
+**Verification:**
+- ✅ `npm run build` passes
+- ✅ `npm test` passes — 163 tests (83 effects + 80 triggers)
+- ✅ Deployed to test vault
 
 ---
 

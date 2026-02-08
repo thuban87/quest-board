@@ -11,6 +11,9 @@ import {
     TRIGGER_DEFINITIONS,
     TriggerContext,
     TriggerDefinition,
+    hasFiredToday,
+    recordTriggerFired,
+    grantPowerUp,
 } from '../src/services/PowerUpService';
 
 // =====================
@@ -21,10 +24,8 @@ function createDefaultContext(overrides: Partial<TriggerContext> = {}): TriggerC
     return {
         tasksCompletedToday: 0,
         taskCategory: undefined,
-        taskXP: 0,
         isFirstTaskOfDay: false,
         questCompleted: false,
-        questWasOneShot: false,
         questCompletedEarly: false,
         daysSinceQuestCreation: 0,
         currentStreak: 0,
@@ -71,21 +72,7 @@ describe('Existing Triggers', () => {
         });
     });
 
-    describe('one_shot', () => {
-        it('should fire when quest completed directly from Available', () => {
-            const context = createDefaultContext({ questWasOneShot: true });
-            const triggers = evaluateTriggers('quest_completion', context);
 
-            expect(triggers.some(t => t.id === 'one_shot')).toBe(true);
-        });
-
-        it('should NOT fire for normal quest completion', () => {
-            const context = createDefaultContext({ questWasOneShot: false });
-            const triggers = evaluateTriggers('quest_completion', context);
-
-            expect(triggers.some(t => t.id === 'one_shot')).toBe(false);
-        });
-    });
 
     describe('streak_keeper_3', () => {
         it('should fire when reaching 3-day streak', () => {
@@ -218,60 +205,60 @@ describe('Existing Triggers', () => {
 
 describe('New Triggers - Speed & Momentum', () => {
     describe('hat_trick', () => {
-        it('should fire when 3 tasks completed in 1 hour', () => {
+        it('should fire when 3 quests completed in 1 hour', () => {
             const context = createDefaultContext({
-                tasksInLastHour: 3,
+                questsInLastHour: 3,
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'hat_trick')).toBe(true);
         });
 
-        it('should NOT fire with only 2 tasks in last hour', () => {
+        it('should NOT fire with only 2 quests in last hour', () => {
             const context = createDefaultContext({
-                tasksInLastHour: 2,
+                questsInLastHour: 2,
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'hat_trick')).toBe(false);
         });
     });
 
     describe('blitz', () => {
-        it('should fire when 10 tasks completed in a day', () => {
+        it('should fire when 10 quests completed in a day', () => {
             const context = createDefaultContext({
-                tasksCompletedToday: 10,
+                questsCompletedToday: 10,
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'blitz')).toBe(true);
         });
 
-        it('should NOT fire with 9 tasks', () => {
+        it('should NOT fire with 9 quests', () => {
             const context = createDefaultContext({
-                tasksCompletedToday: 9,
+                questsCompletedToday: 9,
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'blitz')).toBe(false);
         });
     });
 
     describe('combo_breaker', () => {
-        it('should fire when 5+ tasks in same category today', () => {
+        it('should fire when 10+ tasks in same category today', () => {
             const context = createDefaultContext({
                 taskCategory: 'work',
-                categoryCountToday: { work: 5 },
+                categoryCountToday: { work: 10 },
             });
             const triggers = evaluateTriggers('task_completion', context);
 
             expect(triggers.some(t => t.id === 'combo_breaker')).toBe(true);
         });
 
-        it('should NOT fire with 4 tasks in category', () => {
+        it('should NOT fire with 9 tasks in category', () => {
             const context = createDefaultContext({
                 taskCategory: 'work',
-                categoryCountToday: { work: 4 },
+                categoryCountToday: { work: 9 },
             });
             const triggers = evaluateTriggers('task_completion', context);
 
@@ -282,11 +269,11 @@ describe('New Triggers - Speed & Momentum', () => {
 
 describe('New Triggers - Timing', () => {
     describe('early_riser', () => {
-        it('should fire for task before 8 AM', () => {
+        it('should fire for quest before 8 AM', () => {
             const context = createDefaultContext({
                 currentHour: 7,
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'early_riser')).toBe(true);
         });
@@ -295,7 +282,7 @@ describe('New Triggers - Timing', () => {
             const context = createDefaultContext({
                 currentHour: 6,
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'early_riser')).toBe(true);
         });
@@ -304,18 +291,18 @@ describe('New Triggers - Timing', () => {
             const context = createDefaultContext({
                 currentHour: 8,
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'early_riser')).toBe(false);
         });
     });
 
     describe('night_owl', () => {
-        it('should fire for task after 10 PM', () => {
+        it('should fire for quest after 10 PM', () => {
             const context = createDefaultContext({
                 currentHour: 22,
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'night_owl')).toBe(true);
         });
@@ -324,7 +311,7 @@ describe('New Triggers - Timing', () => {
             const context = createDefaultContext({
                 currentHour: 23,
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'night_owl')).toBe(true);
         });
@@ -333,7 +320,7 @@ describe('New Triggers - Timing', () => {
             const context = createDefaultContext({
                 currentHour: 21,
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'night_owl')).toBe(false);
         });
@@ -420,98 +407,98 @@ describe('New Triggers - Timing', () => {
 
 describe('New Triggers - Category Mastery', () => {
     describe('gym_rat', () => {
-        it('should fire when 3 Health/Fitness tasks today', () => {
+        it('should fire when 2 Health/Fitness quests today', () => {
             const context = createDefaultContext({
-                taskCategory: 'fitness',
-                categoryCountToday: { fitness: 3 },
+                questCategory: 'fitness',
+                questCategoryCountToday: { fitness: 2 },
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'gym_rat')).toBe(true);
         });
 
         it('should also fire for "health" category', () => {
             const context = createDefaultContext({
-                taskCategory: 'health',
-                categoryCountToday: { health: 3 },
+                questCategory: 'health',
+                questCategoryCountToday: { health: 2 },
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'gym_rat')).toBe(true);
         });
     });
 
     describe('deep_work', () => {
-        it('should fire when 3 Dev/Study tasks today', () => {
+        it('should fire when 2 Dev/Study quests today', () => {
             const context = createDefaultContext({
-                taskCategory: 'dev',
-                categoryCountToday: { dev: 3 },
+                questCategory: 'dev',
+                questCategoryCountToday: { dev: 2 },
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'deep_work')).toBe(true);
         });
 
         it('should also fire for "study" category', () => {
             const context = createDefaultContext({
-                taskCategory: 'study',
-                categoryCountToday: { study: 3 },
+                questCategory: 'study',
+                questCategoryCountToday: { study: 2 },
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'deep_work')).toBe(true);
         });
     });
 
     describe('social_butterfly', () => {
-        it('should fire when 3 Social tasks today', () => {
+        it('should fire when 2 Social quests today', () => {
             const context = createDefaultContext({
-                taskCategory: 'social',
-                categoryCountToday: { social: 3 },
+                questCategory: 'social',
+                questCategoryCountToday: { social: 2 },
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'social_butterfly')).toBe(true);
         });
     });
 
     describe('admin_slayer', () => {
-        it('should fire when 5 Chore/Admin tasks today', () => {
+        it('should fire when 2 Chore/Admin quests today', () => {
             const context = createDefaultContext({
-                taskCategory: 'admin',
-                categoryCountToday: { admin: 5 },
+                questCategory: 'admin',
+                questCategoryCountToday: { admin: 2 },
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'admin_slayer')).toBe(true);
         });
 
         it('should also fire for "chores" category', () => {
             const context = createDefaultContext({
-                taskCategory: 'chores',
-                categoryCountToday: { chores: 5 },
+                questCategory: 'chores',
+                questCategoryCountToday: { chores: 2 },
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'admin_slayer')).toBe(true);
         });
     });
 
     describe('multitasker', () => {
-        it('should fire when 3+ different categories done today', () => {
+        it('should fire when 3+ different quest categories done today', () => {
             const context = createDefaultContext({
-                categoriesCompletedToday: ['work', 'fitness', 'social'],
+                questCategoriesCompletedToday: ['work', 'fitness', 'social'],
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'multitasker')).toBe(true);
         });
 
-        it('should NOT fire with only 2 categories', () => {
+        it('should NOT fire with only 2 quest categories', () => {
             const context = createDefaultContext({
-                categoriesCompletedToday: ['work', 'fitness'],
+                questCategoriesCompletedToday: ['work', 'fitness'],
             });
-            const triggers = evaluateTriggers('task_completion', context);
+            const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'multitasker')).toBe(false);
         });
@@ -519,25 +506,7 @@ describe('New Triggers - Category Mastery', () => {
 });
 
 describe('New Triggers - Difficulty', () => {
-    describe('big_fish', () => {
-        it('should fire for task worth >50 XP', () => {
-            const context = createDefaultContext({
-                taskXP: 51,
-            });
-            const triggers = evaluateTriggers('task_completion', context);
 
-            expect(triggers.some(t => t.id === 'big_fish')).toBe(true);
-        });
-
-        it('should NOT fire for 50 XP task', () => {
-            const context = createDefaultContext({
-                taskXP: 50,
-            });
-            const triggers = evaluateTriggers('task_completion', context);
-
-            expect(triggers.some(t => t.id === 'big_fish')).toBe(false);
-        });
-    });
 
     describe('clutch', () => {
         it('should fire when quest completed on due date', () => {
@@ -571,38 +540,6 @@ describe('New Triggers - Difficulty', () => {
         });
     });
 
-    describe('inbox_zero', () => {
-        it('should fire when In Progress column is cleared', () => {
-            const context = createDefaultContext({
-                inProgressCount: 0,
-                questCompleted: true,
-            });
-            const triggers = evaluateTriggers('quest_completion', context);
-
-            expect(triggers.some(t => t.id === 'inbox_zero')).toBe(true);
-        });
-
-        it('should NOT fire when In Progress still has quests', () => {
-            const context = createDefaultContext({
-                inProgressCount: 2,
-            });
-            const triggers = evaluateTriggers('quest_completion', context);
-
-            expect(triggers.some(t => t.id === 'inbox_zero')).toBe(false);
-        });
-    });
-});
-
-describe('New Triggers - RNG', () => {
-    describe('critical_success', () => {
-        it('should exist as a trigger', () => {
-            const trigger = getTriggerById('critical_success');
-            // This may not be implemented yet
-            expect(trigger?.id).toBe('critical_success');
-        });
-
-        // Can't easily test 5% chance - would need to mock Math.random
-    });
 });
 
 // =====================
@@ -650,7 +587,7 @@ describe('Power-Up Rebalance - Quest-Based Triggers', () => {
         it('should fire when 3 QUESTS completed in 1 hour', () => {
             const context = createDefaultContext({
                 questsInLastHour: 3,
-            } as any);
+            });
             const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'hat_trick')).toBe(true);
@@ -659,7 +596,7 @@ describe('Power-Up Rebalance - Quest-Based Triggers', () => {
         it('should NOT fire with only 2 quests in last hour', () => {
             const context = createDefaultContext({
                 questsInLastHour: 2,
-            } as any);
+            });
             const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'hat_trick')).toBe(false);
@@ -675,7 +612,7 @@ describe('Power-Up Rebalance - Quest-Based Triggers', () => {
         it('should fire when 10 QUESTS completed in a day', () => {
             const context = createDefaultContext({
                 questsCompletedToday: 10,
-            } as any);
+            });
             const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'blitz')).toBe(true);
@@ -684,7 +621,7 @@ describe('Power-Up Rebalance - Quest-Based Triggers', () => {
         it('should NOT fire with 9 quests', () => {
             const context = createDefaultContext({
                 questsCompletedToday: 9,
-            } as any);
+            });
             const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'blitz')).toBe(false);
@@ -746,7 +683,7 @@ describe('Power-Up Rebalance - Quest-Based Triggers', () => {
         it('should fire when 3+ different QUEST categories done today', () => {
             const context = createDefaultContext({
                 questCategoriesCompletedToday: ['work', 'fitness', 'social'],
-            } as any);
+            });
             const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'multitasker')).toBe(true);
@@ -755,7 +692,7 @@ describe('Power-Up Rebalance - Quest-Based Triggers', () => {
         it('should NOT fire with only 2 quest categories', () => {
             const context = createDefaultContext({
                 questCategoriesCompletedToday: ['work', 'fitness'],
-            } as any);
+            });
             const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'multitasker')).toBe(false);
@@ -767,9 +704,9 @@ describe('Power-Up Rebalance - Category Triggers (Quest-Based)', () => {
     describe('gym_rat (rebalanced)', () => {
         it('should fire when 2 Health/Fitness QUESTS today (not 3 tasks)', () => {
             const context = createDefaultContext({
-                taskCategory: 'fitness',
+                questCategory: 'fitness',
                 questCategoryCountToday: { fitness: 2 },
-            } as any);
+            });
             const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'gym_rat')).toBe(true);
@@ -777,9 +714,9 @@ describe('Power-Up Rebalance - Category Triggers (Quest-Based)', () => {
 
         it('should NOT fire with 1 quest', () => {
             const context = createDefaultContext({
-                taskCategory: 'fitness',
+                questCategory: 'fitness',
                 questCategoryCountToday: { fitness: 1 },
-            } as any);
+            });
             const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'gym_rat')).toBe(false);
@@ -789,9 +726,9 @@ describe('Power-Up Rebalance - Category Triggers (Quest-Based)', () => {
     describe('deep_work (rebalanced)', () => {
         it('should fire when 2 Dev/Study QUESTS today', () => {
             const context = createDefaultContext({
-                taskCategory: 'dev',
+                questCategory: 'dev',
                 questCategoryCountToday: { dev: 2 },
-            } as any);
+            });
             const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'deep_work')).toBe(true);
@@ -801,9 +738,9 @@ describe('Power-Up Rebalance - Category Triggers (Quest-Based)', () => {
     describe('social_butterfly (rebalanced)', () => {
         it('should fire when 2 Social QUESTS today (not 3 tasks)', () => {
             const context = createDefaultContext({
-                taskCategory: 'social',
+                questCategory: 'social',
                 questCategoryCountToday: { social: 2 },
-            } as any);
+            });
             const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'social_butterfly')).toBe(true);
@@ -813,9 +750,9 @@ describe('Power-Up Rebalance - Category Triggers (Quest-Based)', () => {
     describe('admin_slayer (rebalanced)', () => {
         it('should fire when 2 Chore/Admin QUESTS today (not 5 tasks)', () => {
             const context = createDefaultContext({
-                taskCategory: 'admin',
+                questCategory: 'admin',
                 questCategoryCountToday: { admin: 2 },
-            } as any);
+            });
             const triggers = evaluateTriggers('quest_completion', context);
 
             expect(triggers.some(t => t.id === 'admin_slayer')).toBe(true);
@@ -846,31 +783,112 @@ describe('Power-Up Rebalance - Removed Triggers', () => {
 });
 
 // =====================
+// COOLDOWN HELPERS
+// =====================
+
+describe('hasFiredToday', () => {
+    it('should return false for empty/undefined cooldowns', () => {
+        expect(hasFiredToday(undefined, 'early_riser')).toBe(false);
+        expect(hasFiredToday({}, 'early_riser')).toBe(false);
+    });
+
+    it('should return true when trigger was recorded today', () => {
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const cooldowns = { early_riser: dateStr };
+        expect(hasFiredToday(cooldowns, 'early_riser')).toBe(true);
+    });
+
+    it('should return false when trigger was recorded on a different day', () => {
+        const cooldowns = { early_riser: '2020-01-01' };
+        expect(hasFiredToday(cooldowns, 'early_riser')).toBe(false);
+    });
+
+    it('should return false for a different trigger ID', () => {
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const cooldowns = { early_riser: dateStr };
+        expect(hasFiredToday(cooldowns, 'weekend_warrior')).toBe(false);
+    });
+});
+
+describe('recordTriggerFired', () => {
+    it('should create a new entry in empty map', () => {
+        const result = recordTriggerFired(undefined, 'early_riser');
+        expect(result).toHaveProperty('early_riser');
+        expect(hasFiredToday(result, 'early_riser')).toBe(true);
+    });
+
+    it('should preserve existing entries and add new one', () => {
+        const existing = { weekend_warrior: '2020-01-01' };
+        const result = recordTriggerFired(existing, 'early_riser');
+        expect(result.weekend_warrior).toBe('2020-01-01');
+        expect(hasFiredToday(result, 'early_riser')).toBe(true);
+    });
+
+    it('should overwrite existing entry for same trigger', () => {
+        const existing = { early_riser: '2020-01-01' };
+        const result = recordTriggerFired(existing, 'early_riser');
+        // Should be today, not 2020-01-01
+        expect(hasFiredToday(result, 'early_riser')).toBe(true);
+    });
+});
+
+// =====================
+// grantPowerUp isNew flag
+// =====================
+
+describe('grantPowerUp isNew flag', () => {
+    it('should return isNew: true for a brand-new power-up', () => {
+        const result = grantPowerUp([], 'first_blood_boost', 'first_blood');
+        expect(result.granted).not.toBeNull();
+        expect(result.isNew).toBe(true);
+    });
+
+    it('should return isNew: false for refresh collision', () => {
+        // Grant it once
+        const first = grantPowerUp([], 'first_blood_boost', 'first_blood');
+        // Grant again — should refresh, not be new
+        const second = grantPowerUp(first.powerUps, 'first_blood_boost', 'first_blood');
+        expect(second.granted).not.toBeNull();
+        expect(second.isNew).toBe(false);
+    });
+
+    it('should return isNew: false for stack collision', () => {
+        // momentum has stack collision policy
+        const first = grantPowerUp([], 'momentum', 'hat_trick');
+        const second = grantPowerUp(first.powerUps, 'momentum', 'hat_trick');
+        expect(second.granted).not.toBeNull();
+        expect(second.isNew).toBe(false);
+        expect(second.granted!.stacks).toBe(2);
+    });
+
+    it('should return isNew: false and granted: null for ignore collision', () => {
+        // streak_shield has ignore collision policy
+        const first = grantPowerUp([], 'streak_shield', 'streak_keeper_14');
+        const second = grantPowerUp(first.powerUps, 'streak_shield', 'streak_keeper_14');
+        expect(second.granted).toBeNull();
+        expect(second.isNew).toBe(false);
+    });
+
+    it('should return isNew: false for extend collision', () => {
+        // catch_up has extend collision policy
+        const first = grantPowerUp([], 'catch_up', 'phoenix');
+        const second = grantPowerUp(first.powerUps, 'catch_up', 'phoenix');
+        expect(second.granted).not.toBeNull();
+        expect(second.isNew).toBe(false);
+    });
+});
+
+// =====================
 // EXTEND TriggerContext for new fields
 // =====================
 
-// Fields for new/rebalanced triggers:
-// EXISTING (keep):
-// - tasksInLastHour: number (DEPRECATED after rebalance - remove from useXPAward)
-// - inProgressCount: number (DEPRECATED after rebalance - removed trigger)
-// - questCompletedOnDueDate: boolean
-// NEW (add for rebalance):
-// - questsInLastHour: number
-// - questsCompletedToday: number
-// - questCategoriesCompletedToday: string[]
-// - questCategoryCountToday: Record<string, number>
-
-// For now, we extend the type inline in tests
+// questCompletedOnDueDate is on the real interface (PowerUpService.ts line 179)
+// but we keep this augmentation for test clarity.
 declare module '../src/services/PowerUpService' {
     interface TriggerContext {
-        tasksInLastHour?: number;
-        inProgressCount?: number;
         questCompletedOnDueDate?: boolean;
-        // NEW for rebalance:
-        questsInLastHour?: number;
-        questsCompletedToday?: number;
-        questCategoriesCompletedToday?: string[];
-        questCategoryCountToday?: Record<string, number>;
     }
 }
 

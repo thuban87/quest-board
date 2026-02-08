@@ -34,6 +34,8 @@ export interface EffectDefinition {
     duration: PowerUpDuration;
     collisionPolicy: CollisionPolicy;
     notificationType: PowerUpNotificationType;
+    /** Maximum stacks for stack_refresh collision policy */
+    maxStacks?: number;
 }
 
 /**
@@ -124,9 +126,9 @@ export const EFFECT_DEFINITIONS: Record<string, EffectDefinition> = {
         id: 'limit_break',
         name: 'Limit Break',
         icon: '💥',
-        description: 'All stats +3 above cap for 24 hours',
+        description: '+5% to all stats for 24 hours',
         tier: 'T3',
-        effect: { type: 'all_stats_boost', value: 3 },
+        effect: { type: 'all_stats_percent_boost', value: 0.05 },
         duration: { type: 'hours', value: 24 },
         collisionPolicy: 'refresh',
         notificationType: 'modal',
@@ -157,6 +159,88 @@ export const EFFECT_DEFINITIONS: Record<string, EffectDefinition> = {
         collisionPolicy: 'refresh',
         notificationType: 'toast',
     },
+
+    // === T1 STAT PERCENTAGE BOOSTS ===
+    iron_grip: {
+        id: 'iron_grip',
+        name: 'Iron Grip',
+        icon: '⚔️',
+        description: '+10% STR for 2 hours',
+        tier: 'T1',
+        effect: { type: 'stat_percent_boost', stat: 'strength', value: 0.10 },
+        duration: { type: 'hours', value: 2 },
+        collisionPolicy: 'refresh',
+        notificationType: 'toast',
+    },
+    cats_grace: {
+        id: 'cats_grace',
+        name: "Cat's Grace",
+        icon: '🐱',
+        description: '+10% DEX for 2 hours',
+        tier: 'T1',
+        effect: { type: 'stat_percent_boost', stat: 'dexterity', value: 0.10 },
+        duration: { type: 'hours', value: 2 },
+        collisionPolicy: 'refresh',
+        notificationType: 'toast',
+    },
+    arcane_insight: {
+        id: 'arcane_insight',
+        name: 'Arcane Insight',
+        icon: '📘',
+        description: '+10% INT for 2 hours',
+        tier: 'T1',
+        effect: { type: 'stat_percent_boost', stat: 'intelligence', value: 0.10 },
+        duration: { type: 'hours', value: 2 },
+        collisionPolicy: 'refresh',
+        notificationType: 'toast',
+    },
+    inner_peace: {
+        id: 'inner_peace',
+        name: 'Inner Peace',
+        icon: '🧘',
+        description: '+10% WIS for 2 hours',
+        tier: 'T1',
+        effect: { type: 'stat_percent_boost', stat: 'wisdom', value: 0.10 },
+        duration: { type: 'hours', value: 2 },
+        collisionPolicy: 'refresh',
+        notificationType: 'toast',
+    },
+    stone_skin: {
+        id: 'stone_skin',
+        name: 'Stone Skin',
+        icon: '🪨',
+        description: '+10% CON for 2 hours',
+        tier: 'T1',
+        effect: { type: 'stat_percent_boost', stat: 'constitution', value: 0.10 },
+        duration: { type: 'hours', value: 2 },
+        collisionPolicy: 'refresh',
+        notificationType: 'toast',
+    },
+
+    // === T2 NEW UTILITY ===
+    surge: {
+        id: 'surge',
+        name: 'Surge',
+        icon: '⚡',
+        description: '+20% XP for next 5 tasks',
+        tier: 'T2',
+        effect: { type: 'xp_multiplier', value: 1.20 },
+        duration: { type: 'uses', value: 5 },
+        collisionPolicy: 'extend',
+        notificationType: 'modal',
+    },
+    fortunes_favor: {
+        id: 'fortunes_favor',
+        name: "Fortune's Favor",
+        icon: '🎲',
+        description: '+5% gold per stack (max 3)',
+        tier: 'T2',
+        effect: { type: 'gold_multiplier', value: 1.05 },
+        duration: { type: 'hours', value: 3 },
+        collisionPolicy: 'stack_refresh',
+        notificationType: 'modal',
+        maxStacks: 3,
+    },
 };
 
 // ============================================================================
@@ -169,18 +253,19 @@ export const EFFECT_DEFINITIONS: Record<string, EffectDefinition> = {
 export interface TriggerContext {
     // Task completion context
     tasksCompletedToday?: number;
-    tasksInLastHour?: number;  // For Hat Trick
     taskCategory?: string;
-    taskXP?: number;
     isFirstTaskOfDay?: boolean;
 
     // Quest completion context
     questCompleted?: boolean;
-    questWasOneShot?: boolean;  // Available → Done directly
     questCompletedEarly?: boolean;  // Before due date
     questCompletedOnDueDate?: boolean;  // For Clutch
     daysSinceQuestCreation?: number;
-    inProgressCount?: number;  // For Inbox Zero
+    questsCompletedToday?: number;  // For Blitz (quest-level)
+    questsInLastHour?: number;  // For Hat Trick (quest-level)
+    questCategoriesCompletedToday?: string[];  // For Multitasker (quest-level)
+    questCategoryCountToday?: Record<string, number>;  // For category triggers (quest-level)
+    questCategory?: string;  // The completing quest's category
 
     // Streak context
     currentStreak?: number;
@@ -197,7 +282,7 @@ export interface TriggerContext {
     isWeekend?: boolean;
     dayOfWeek?: number;  // 0=Sunday
 
-    // Category tracking for session
+    // Category tracking for session (task-level)
     categoriesCompletedToday?: string[];
     categoryCountToday?: Record<string, number>;
 
@@ -240,15 +325,6 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
         type: 'deterministic',
         grantsEffect: 'first_blood_boost',
         condition: (ctx) => ctx.isFirstTaskOfDay === true,
-    },
-    {
-        id: 'one_shot',
-        name: 'One-Shot',
-        description: 'Complete quest directly from Available → Done',
-        detectionPoint: 'quest_completion',
-        type: 'deterministic',
-        grantsEffect: 'momentum',
-        condition: (ctx) => ctx.questWasOneShot === true,
     },
 
     // === CONSISTENCY & TIMING ===
@@ -302,45 +378,45 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
         condition: (ctx) => (ctx.daysInactive ?? 0) >= 3 && ctx.isFirstTaskOfDay === true,
     },
 
-    // === NEW SPEED & MOMENTUM ===
+    // === SPEED & MOMENTUM ===
     {
         id: 'hat_trick',
         name: 'Hat Trick',
-        description: '3 tasks completed within 1 hour',
-        detectionPoint: 'task_completion',
+        description: '3 quests completed within 1 hour',
+        detectionPoint: 'quest_completion',
         type: 'pool',
-        grantsTier: 'T1',
-        condition: (ctx) => (ctx.tasksInLastHour ?? 0) >= 3,
+        grantsTier: 'T2',
+        condition: (ctx) => (ctx.questsInLastHour ?? 0) >= 3,
     },
     {
         id: 'blitz',
         name: 'Blitz',
-        description: '10 tasks completed in a day',
-        detectionPoint: 'task_completion',
+        description: '10 quests completed in a day',
+        detectionPoint: 'quest_completion',
         type: 'pool',
-        grantsTier: 'T2',
-        condition: (ctx) => (ctx.tasksCompletedToday ?? 0) >= 10,
+        grantsTier: 'T3',
+        condition: (ctx) => (ctx.questsCompletedToday ?? 0) >= 10,
     },
     {
         id: 'combo_breaker',
         name: 'Combo Breaker',
-        description: '5+ tasks in the same category today',
+        description: '10+ tasks in the same category today',
         detectionPoint: 'task_completion',
         type: 'pool',
         grantsTier: 'T1',
         condition: (ctx) => {
             const cat = ctx.taskCategory?.toLowerCase();
             if (!cat || !ctx.categoryCountToday) return false;
-            return (ctx.categoryCountToday[cat] ?? 0) >= 5;
+            return (ctx.categoryCountToday[cat] ?? 0) >= 10;
         },
     },
 
-    // === NEW TIMING ===
+    // === TIMING ===
     {
         id: 'early_riser',
         name: 'Early Riser',
-        description: 'Complete a task before 8 AM',
-        detectionPoint: 'task_completion',
+        description: 'Complete a quest before 8 AM',
+        detectionPoint: 'quest_completion',
         type: 'pool',
         grantsTier: 'T1',
         condition: (ctx) => (ctx.currentHour ?? 12) < 8,
@@ -348,8 +424,8 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
     {
         id: 'night_owl',
         name: 'Night Owl',
-        description: 'Complete a task after 10 PM',
-        detectionPoint: 'task_completion',
+        description: 'Complete a quest after 10 PM',
+        detectionPoint: 'quest_completion',
         type: 'pool',
         grantsTier: 'T1',
         condition: (ctx) => (ctx.currentHour ?? 12) >= 22,
@@ -391,85 +467,76 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
         condition: (ctx) => ctx.currentStreak === 30 && (ctx.previousStreak ?? 0) < 30,
     },
 
-    // === NEW CATEGORY MASTERY ===
+    // === CATEGORY MASTERY ===
     {
         id: 'gym_rat',
         name: 'Gym Rat',
-        description: '3 Health/Fitness tasks in a day',
-        detectionPoint: 'task_completion',
+        description: '2 Health/Fitness quests in a day',
+        detectionPoint: 'quest_completion',
         type: 'deterministic',
         grantsEffect: 'adrenaline_rush',
         condition: (ctx) => {
-            const cat = ctx.taskCategory?.toLowerCase();
-            if (!ctx.categoryCountToday) return false;
-            const healthCount = ctx.categoryCountToday['health'] ?? 0;
-            const fitnessCount = ctx.categoryCountToday['fitness'] ?? 0;
-            return (cat === 'health' || cat === 'fitness') && (healthCount + fitnessCount) >= 3;
+            const cat = ctx.questCategory?.toLowerCase();
+            if (!ctx.questCategoryCountToday) return false;
+            const healthCount = ctx.questCategoryCountToday['health'] ?? 0;
+            const fitnessCount = ctx.questCategoryCountToday['fitness'] ?? 0;
+            return (cat === 'health' || cat === 'fitness') && (healthCount + fitnessCount) >= 2;
         },
     },
     {
         id: 'deep_work',
         name: 'Deep Work',
-        description: '3 Dev/Study tasks in a day',
-        detectionPoint: 'task_completion',
+        description: '2 Dev/Study quests in a day',
+        detectionPoint: 'quest_completion',
         type: 'deterministic',
         grantsEffect: 'genius_mode',
         condition: (ctx) => {
-            const cat = ctx.taskCategory?.toLowerCase();
-            if (!ctx.categoryCountToday) return false;
-            const devCount = ctx.categoryCountToday['dev'] ?? 0;
-            const studyCount = ctx.categoryCountToday['study'] ?? 0;
-            return (cat === 'dev' || cat === 'study') && (devCount + studyCount) >= 3;
+            const cat = ctx.questCategory?.toLowerCase();
+            if (!ctx.questCategoryCountToday) return false;
+            const devCount = ctx.questCategoryCountToday['dev'] ?? 0;
+            const studyCount = ctx.questCategoryCountToday['study'] ?? 0;
+            return (cat === 'dev' || cat === 'study') && (devCount + studyCount) >= 2;
         },
     },
     {
         id: 'social_butterfly',
         name: 'Social Butterfly',
-        description: '3 Social tasks in a day',
-        detectionPoint: 'task_completion',
+        description: '2 Social quests in a day',
+        detectionPoint: 'quest_completion',
         type: 'pool',
         grantsTier: 'T1',
         condition: (ctx) => {
-            const cat = ctx.taskCategory?.toLowerCase();
-            if (!ctx.categoryCountToday) return false;
-            return cat === 'social' && (ctx.categoryCountToday['social'] ?? 0) >= 3;
+            const cat = ctx.questCategory?.toLowerCase();
+            if (!ctx.questCategoryCountToday) return false;
+            return cat === 'social' && (ctx.questCategoryCountToday['social'] ?? 0) >= 2;
         },
     },
     {
         id: 'admin_slayer',
         name: 'Admin Slayer',
-        description: '5 Chore/Admin tasks in a day',
-        detectionPoint: 'task_completion',
+        description: '2 Chore/Admin quests in a day',
+        detectionPoint: 'quest_completion',
         type: 'deterministic',
         grantsEffect: 'flow_state',
         condition: (ctx) => {
-            const cat = ctx.taskCategory?.toLowerCase();
-            if (!ctx.categoryCountToday) return false;
-            const adminCount = ctx.categoryCountToday['admin'] ?? 0;
-            const choresCount = ctx.categoryCountToday['chores'] ?? 0;
-            return (cat === 'admin' || cat === 'chores') && (adminCount + choresCount) >= 5;
+            const cat = ctx.questCategory?.toLowerCase();
+            if (!ctx.questCategoryCountToday) return false;
+            const adminCount = ctx.questCategoryCountToday['admin'] ?? 0;
+            const choresCount = ctx.questCategoryCountToday['chores'] ?? 0;
+            return (cat === 'admin' || cat === 'chores') && (adminCount + choresCount) >= 2;
         },
     },
     {
         id: 'multitasker',
         name: 'Multitasker',
-        description: '3+ different categories in a day',
-        detectionPoint: 'task_completion',
+        description: '3+ different quest categories in a day',
+        detectionPoint: 'quest_completion',
         type: 'pool',
         grantsTier: 'T1',
-        condition: (ctx) => (ctx.categoriesCompletedToday?.length ?? 0) >= 3,
+        condition: (ctx) => (ctx.questCategoriesCompletedToday?.length ?? 0) >= 3,
     },
 
-    // === NEW DIFFICULTY ===
-    {
-        id: 'big_fish',
-        name: 'Big Fish',
-        description: 'Complete a task worth >50 XP',
-        detectionPoint: 'task_completion',
-        type: 'pool',
-        grantsTier: 'T1',
-        condition: (ctx) => (ctx.taskXP ?? 0) > 50,
-    },
+
     {
         id: 'clutch',
         name: 'Clutch',
@@ -488,26 +555,7 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
         grantsEffect: 'flow_state',
         condition: (ctx) => ctx.questCompletedEarly === true,
     },
-    {
-        id: 'inbox_zero',
-        name: 'Inbox Zero',
-        description: 'Clear the In Progress column',
-        detectionPoint: 'quest_completion',
-        type: 'deterministic',
-        grantsEffect: 'flow_state',
-        condition: (ctx) => ctx.inProgressCount === 0 && ctx.questCompleted === true,
-    },
 
-    // === RNG ===
-    {
-        id: 'critical_success',
-        name: 'Critical Success',
-        description: '5% chance on any task completion',
-        detectionPoint: 'task_completion',
-        type: 'pool',
-        grantsTier: 'T2',
-        condition: () => Math.random() < 0.05,
-    },
 ];
 
 // ============================================================================
@@ -516,8 +564,8 @@ export const TRIGGER_DEFINITIONS: TriggerDefinition[] = [
 
 /** Effects available in each tier pool for random grants */
 export const TIER_POOLS: Record<string, string[]> = {
-    T1: ['first_blood_boost', 'momentum', 'catch_up', 'lucky_star', 'adrenaline_rush', 'genius_mode'],
-    T2: ['flow_state', 'streak_shield', 'level_up_boost'],
+    T1: ['momentum', 'lucky_star', 'iron_grip', 'cats_grace', 'arcane_insight', 'inner_peace', 'stone_skin'],
+    T2: ['streak_shield', 'surge', 'fortunes_favor'],
     T3: ['limit_break'],
 };
 
@@ -553,6 +601,38 @@ export function evaluateTriggers(
     return TRIGGER_DEFINITIONS.filter(trigger =>
         trigger.detectionPoint === detectionPoint && trigger.condition(context)
     );
+}
+
+/**
+ * Get today's date as a YYYY-MM-DD string (local time)
+ */
+function getLocalDateString(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Check if a trigger has already fired today
+ */
+export function hasFiredToday(
+    cooldowns: Record<string, string> | undefined,
+    triggerId: string
+): boolean {
+    if (!cooldowns) return false;
+    return cooldowns[triggerId] === getLocalDateString();
+}
+
+/**
+ * Record that a trigger fired today. Returns updated cooldown map.
+ */
+export function recordTriggerFired(
+    cooldowns: Record<string, string> | undefined,
+    triggerId: string
+): Record<string, string> {
+    return {
+        ...(cooldowns ?? {}),
+        [triggerId]: getLocalDateString(),
+    };
 }
 
 /**
@@ -593,11 +673,11 @@ export function grantPowerUp(
     currentPowerUps: ActivePowerUp[],
     effectId: string,
     triggerId: string
-): { powerUps: ActivePowerUp[]; granted: ActivePowerUp | null } {
+): { powerUps: ActivePowerUp[]; granted: ActivePowerUp | null; isNew: boolean } {
     const effectDef = EFFECT_DEFINITIONS[effectId];
     if (!effectDef) {
         console.warn(`[PowerUpService] Unknown effect: ${effectId}`);
-        return { powerUps: currentPowerUps, granted: null };
+        return { powerUps: currentPowerUps, granted: null, isNew: false };
     }
 
     const existingIndex = currentPowerUps.findIndex(p => p.id === effectId);
@@ -610,7 +690,7 @@ export function grantPowerUp(
     if (existing) {
         switch (effectDef.collisionPolicy) {
             case 'ignore':
-                return { powerUps: currentPowerUps, granted: null };
+                return { powerUps: currentPowerUps, granted: null, isNew: false };
 
             case 'refresh': {
                 // Reset timer
@@ -621,7 +701,7 @@ export function grantPowerUp(
                 };
                 const updated = [...currentPowerUps];
                 updated[existingIndex] = refreshed;
-                return { powerUps: updated, granted: refreshed };
+                return { powerUps: updated, granted: refreshed, isNew: false };
             }
 
             case 'stack': {
@@ -632,7 +712,22 @@ export function grantPowerUp(
                 };
                 const updated = [...currentPowerUps];
                 updated[existingIndex] = stacked;
-                return { powerUps: updated, granted: stacked };
+                return { powerUps: updated, granted: stacked, isNew: false };
+            }
+
+            case 'stack_refresh': {
+                // Increment stacks (up to max) AND refresh timer
+                const maxStacks = effectDef.maxStacks ?? Infinity;
+                const currentStacks = existing.stacks ?? 1;
+                const stackRefreshed: ActivePowerUp = {
+                    ...existing,
+                    stacks: Math.min(currentStacks + 1, maxStacks),
+                    startedAt: now,
+                    expiresAt,
+                };
+                const updated = [...currentPowerUps];
+                updated[existingIndex] = stackRefreshed;
+                return { powerUps: updated, granted: stackRefreshed, isNew: false };
             }
 
             case 'extend': {
@@ -644,7 +739,7 @@ export function grantPowerUp(
                     };
                     const updated = [...currentPowerUps];
                     updated[existingIndex] = extended;
-                    return { powerUps: updated, granted: extended };
+                    return { powerUps: updated, granted: extended, isNew: false };
                 }
                 // For time-based, just refresh
                 const refreshed: ActivePowerUp = {
@@ -654,7 +749,7 @@ export function grantPowerUp(
                 };
                 const updated = [...currentPowerUps];
                 updated[existingIndex] = refreshed;
-                return { powerUps: updated, granted: refreshed };
+                return { powerUps: updated, granted: refreshed, isNew: false };
             }
         }
     }
@@ -669,13 +764,14 @@ export function grantPowerUp(
         startedAt: now,
         expiresAt,
         effect: effectDef.effect,
-        stacks: effectDef.collisionPolicy === 'stack' ? 1 : undefined,
+        stacks: (effectDef.collisionPolicy === 'stack' || effectDef.collisionPolicy === 'stack_refresh') ? 1 : undefined,
         usesRemaining: effectDef.duration.type === 'uses' ? effectDef.duration.value : undefined,
     };
 
     return {
         powerUps: [...currentPowerUps, newPowerUp],
         granted: newPowerUp,
+        isNew: true,
     };
 }
 
@@ -738,6 +834,40 @@ export function getStatBoostFromPowerUps(
     }
 
     return boost;
+}
+
+/**
+ * Calculate percentage-based stat boost from active power-ups for a specific stat
+ * Returns a decimal (e.g., 0.10 = +10%)
+ */
+export function getPercentStatBoostFromPowerUps(
+    powerUps: ActivePowerUp[],
+    stat: StatType
+): number {
+    let percentBoost = 0;
+    for (const powerUp of powerUps) {
+        if (powerUp.effect.type === 'stat_percent_boost' && powerUp.effect.stat === stat) {
+            percentBoost += powerUp.effect.value;
+        } else if (powerUp.effect.type === 'all_stats_percent_boost') {
+            percentBoost += powerUp.effect.value;
+        }
+    }
+    return percentBoost;
+}
+
+/**
+ * Calculate total gold multiplier from active power-ups
+ * Returns multiplier (e.g., 1.15 = +15% gold with 3 stacks of +5%)
+ */
+export function getGoldMultiplierFromPowerUps(powerUps: ActivePowerUp[]): number {
+    let multiplier = 1.0;
+    for (const powerUp of powerUps) {
+        if (powerUp.effect.type === 'gold_multiplier') {
+            const stacks = powerUp.stacks ?? 1;
+            multiplier += (powerUp.effect.value - 1) * stacks;
+        }
+    }
+    return multiplier;
 }
 
 /**
