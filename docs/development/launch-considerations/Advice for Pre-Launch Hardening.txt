@@ -1,0 +1,10 @@
+Advice for Pre-Launch Hardening
+Since you asked about best practices for getting public-ready, here's what I'd recommend beyond testing:
+
+Test Coverage Matrix ✅ — You already have this. It's excellent.
+Large File Decomposition ✅ — You already have this analysis. Tackle the top 2-3 before launch.
+Error boundary audit — Search for every catch block and make sure they log meaningfully, not silently swallow errors. This is often overlooked and is critical for debugging user-reported issues.
+Settings migration check — Make sure DEFAULT_SETTINGS handles new settings added since v1.0 so upgrading users don't hit undefined values.
+First-run experience — Test the plugin with a completely fresh vault (no existing data). Does everything initialize cleanly?
+README / docs for users — If publishing to the Obsidian community plugins list, you'll need a solid README with screenshots, feature list, and installation instructions.
+The decomposition analysis you already have is solid. Do the testing cleanup first (Part 1 above — it's quick), then tackle the decomposition priorities in that doc. For tests, Sessions A and B are the highest-value and should happen before launch. Sessions C and D are great post-launch hardening.
