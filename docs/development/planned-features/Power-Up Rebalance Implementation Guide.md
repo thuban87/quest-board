@@ -1,6 +1,6 @@
 # Power-Up Rebalance Implementation Guide
 
-**Status:** In Progress (Session 1 Complete)  
+**Status:** In Progress (Sessions 1-2 Complete)  
 **Created:** 2026-02-06  
 **Estimated Sessions:** 2-3  
 **Session Log:** [Power-Up Rebalance Session Log](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/development/planned-features/Power-Up%20Rebalance%20Session%20Log.md)  
@@ -93,9 +93,9 @@ T2: ['flow_state', 'streak_shield']
 
 | File | Line Range | Detection Point | Notes |
 |------|------------|-----------------|-------|
-| [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) | 168-178 | `task_completion` | Builds `categoryCountToday`, `tasksInLastHour` |
+| [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) | 161-170 | `task_completion` | Builds `categoryCountToday`, `categoriesCompletedToday` |
 | [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) | 268-272 | `xp_award` | Level up / tier up detection |
-| [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) | 233-242 | `quest_completion` | Builds weekend, due date, category context |
+| [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) | 219-260 | `quest_completion` | Builds quest-level counts, weekend, due date, category context |
 | [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) | 140-144 | `streak_update` | Streak milestone detection |
 
 ---
@@ -128,46 +128,56 @@ T2: ['flow_state', 'streak_shield']
 
 ---
 
-### Session 2: Context Building & Testing (Phases 3-4)
+### Session 2: Context Building & Testing (Phases 3-5) ✅ COMPLETE
 
-**Scope:** Update context builders to populate new fields, update tests
+**Scope:** Wire quest-level context, update tests, clean up legacy code
 
-**Files:**
-- [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) (lines 191-266)
-- [power-up-triggers.test.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/test/power-up-triggers.test.ts)
+**Files Changed:**
+- [QuestActionsService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/QuestActionsService.ts) — Activity history scanning + 5 quest-level context fields
+- [PowerUpService.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/services/PowerUpService.ts) — Removed `tasksInLastHour` from `TriggerContext`
+- [useXPAward.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/src/hooks/useXPAward.ts) — Removed `tasksInLastHour` calculation and context field
+- [power-up-triggers.test.ts](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/test/power-up-triggers.test.ts) — Full test update
 
-**Changes:**
-1. In `QuestActionsService.moveQuest()` quest completion context (line 233):
-   - Add `questsCompletedToday` counter from activity history
-   - Add `questsInLastHour` counter from activity history timestamps
-   - Add `questCategoriesCompletedToday` from activity history
-   - Add `questCategoryCountToday` from activity history
-   - Wire `quest.category` for category triggers
-
-2. Update tests:
-   - Remove tests for deleted triggers
-   - Update tests for modified conditions/thresholds
-   - Add tests for new quest-based context fields
+**What Was Done:**
+1. ✅ Wired `questsCompletedToday`, `questsInLastHour`, `questCategoriesCompletedToday`, `questCategoryCountToday`, `questCategory` in `QuestActionsService.moveQuest()`
+2. ✅ Removed tests for deleted triggers (`one_shot`, `big_fish`, `inbox_zero`, `critical_success`)
+3. ✅ Updated all pre-rebalance tests to match new definitions
+4. ✅ Fixed `taskCategory` → `questCategory` in rebalanced category tests
+5. ✅ Removed `as any` casts, cleaned up `declare module` augmentation
+6. ✅ Removed `tasksInLastHour` from `useXPAward.ts` and `TriggerContext` interface
 
 **Verification:**
-- `npm run build` passes
-- `npm test` passes
-- Deploy to test vault: `npm run deploy:test`
-- Manual testing with test quests
+- ✅ `npm run build` passes
+- ✅ `npm test` passes — 68 tests, 0 failures (was 52/23 after Session 1)
+- ✅ Deployed to test vault
 
 ---
 
-### Session 3 (Optional): Documentation & Polish
+### Session 3: Bug Fix & Pool Adjustments
 
-**Scope:** Update wiki docs, final verification
+**Scope:** Fix trigger cooldown bug, adjust pool composition
 
-**Files:**
-- [Power-Ups & Buffs.md](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/wiki/Power-Ups%20%26%20Buffs.md)
+#### Bug Fix: Trigger Notification Spam
+Triggers fire on every quest completion with no daily cooldown. `early_riser`, `weekend_warrior`, etc. evaluate true for every quest during their time window and show duplicate notifications.
 
-**Changes:**
-- Update trigger tables with new conditions
-- Update tips section with quest-based strategies
-- Note batch-complete "stash" strategy as valid
+**Root cause:** `grantPowerUp()` returns `granted` for `refresh`/`stack` collision policies → notification shows even when power-up already exists.
+
+**Fix options:**
+1. Add daily trigger cooldown map: `{ triggerId: lastFiredDate }` — skip if already fired today
+2. Suppress notifications for collision-handled grants (only show for truly new power-ups)
+3. Both
+
+**Files:** `QuestActionsService.ts`, `useXPAward.ts`, possibly `grantPowerUp()` in `PowerUpService.ts`
+
+#### Pool Composition Changes (Brad to specify)
+Brad wants to:
+- Gate certain power-ups to specific triggers only (remove from random pools)
+- Add replacement T1/T2 effects to maintain pool diversity
+
+**Files:** `TIER_POOLS` and `EFFECT_DEFINITIONS` in `PowerUpService.ts`
+
+#### Documentation Polish
+- Update [Power-Ups & Buffs wiki](file:///c:/Users/bwales/projects/obsidian-plugins/quest-board/docs/wiki/Power-Ups%20%26%20Buffs.md) with new trigger conditions
 
 ---
 

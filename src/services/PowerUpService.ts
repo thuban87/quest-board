@@ -169,7 +169,6 @@ export const EFFECT_DEFINITIONS: Record<string, EffectDefinition> = {
 export interface TriggerContext {
     // Task completion context
     tasksCompletedToday?: number;
-    tasksInLastHour?: number;  // For Hat Trick (legacy, used by useXPAward)
     taskCategory?: string;
     isFirstTaskOfDay?: boolean;
 

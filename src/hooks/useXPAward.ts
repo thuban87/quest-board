@@ -133,25 +133,14 @@ export function useXPAward({ app, vault, customStatMappings, onCategoryUsed, onS
         // Build category count for today from activity history
         const categoryCountToday: Record<string, number> = {};
         const categoriesSet = new Set<string>();
-        let tasksInLastHour = 0;
-        const oneHourAgo = now.getTime() - (60 * 60 * 1000);
 
         // Scan activity history for today's stats
         for (const event of character.activityHistory || []) {
             if (event.date === today && event.type === 'quest_complete') {
-                // Count categories
                 if (event.category) {
                     const cat = event.category.toLowerCase();
                     categoryCountToday[cat] = (categoryCountToday[cat] || 0) + 1;
                     categoriesSet.add(cat);
-                }
-
-                // Count tasks in last hour
-                if (event.timestamp) {
-                    const eventTime = new Date(event.timestamp).getTime();
-                    if (eventTime >= oneHourAgo) {
-                        tasksInLastHour++;
-                    }
                 }
             }
         }
@@ -162,7 +151,7 @@ export function useXPAward({ app, vault, customStatMappings, onCategoryUsed, onS
             categoryCountToday[currentCategory] = (categoryCountToday[currentCategory] || 0) + newlyCompleted;
             categoriesSet.add(currentCategory);
         }
-        tasksInLastHour += newlyCompleted;  // Current task counts toward hat trick
+
 
         const taskContext: TriggerContext = {
             isFirstTaskOfDay,
@@ -171,7 +160,6 @@ export function useXPAward({ app, vault, customStatMappings, onCategoryUsed, onS
             currentHour: now.getHours(),  // For Early Riser (<8) and Night Owl (>=22)
             categoryCountToday,           // For Combo Breaker
             categoriesCompletedToday: Array.from(categoriesSet), // For task-level tracking
-            tasksInLastHour,              // Legacy: kept until Session 2 wires quest-level context
             daysInactive,                 // For Phoenix
         };
 

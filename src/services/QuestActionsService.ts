@@ -216,6 +216,39 @@ export async function moveQuest(
                 questCompletedOnDueDate = hoursUntilDue >= 0 && hoursUntilDue < 24;  // On due date
             }
 
+            // Build quest-level context from activity history
+            const questCategoryCountToday: Record<string, number> = {};
+            const questCategoriesSet = new Set<string>();
+            let questsCompletedToday = 0;
+            let questsInLastHour = 0;
+            const oneHourAgo = now.getTime() - (60 * 60 * 1000);
+
+            for (const event of character.activityHistory || []) {
+                if (event.date === today && event.type === 'quest_complete') {
+                    questsCompletedToday++;
+                    if (event.category) {
+                        const cat = event.category.toLowerCase();
+                        questCategoryCountToday[cat] = (questCategoryCountToday[cat] || 0) + 1;
+                        questCategoriesSet.add(cat);
+                    }
+                    if (event.timestamp) {
+                        const eventTime = new Date(event.timestamp).getTime();
+                        if (eventTime >= oneHourAgo) {
+                            questsInLastHour++;
+                        }
+                    }
+                }
+            }
+
+            // Include current quest in counts (it's about to be logged)
+            const currentQuestCategory = quest.category?.toLowerCase();
+            if (currentQuestCategory) {
+                questCategoryCountToday[currentQuestCategory] = (questCategoryCountToday[currentQuestCategory] || 0) + 1;
+                questCategoriesSet.add(currentQuestCategory);
+            }
+            questsCompletedToday++;
+            questsInLastHour++;
+
             const questContext: TriggerContext = {
                 questCompleted: true,
                 isWeekend,      // For Weekend Warrior
@@ -224,6 +257,11 @@ export async function moveQuest(
                 questCompletedEarly,  // For Speedrunner
                 questCompletedOnDueDate, // For Clutch
                 currentHour: now.getHours(),  // For Early Riser / Night Owl
+                questsCompletedToday,
+                questsInLastHour,
+                questCategoriesCompletedToday: Array.from(questCategoriesSet),
+                questCategoryCountToday,
+                questCategory: quest.category,
             };
 
             const questTriggers = evaluateTriggers('quest_completion', questContext);
