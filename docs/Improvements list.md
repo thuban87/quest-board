@@ -8,12 +8,22 @@
 
 
 ## General issues checklist:
--Ability to rename columns headers in kanban view
--Button on completed column to archive the quests currently in that column. Would need to scan and move the correct ques files, probably leave the linked files alone
--Clean up settings menu. Need ot reorganize according to topic/subject and then put in a better order: more used items up top, less used below. Make sub menu modals where needed if possible.
 -HP/Mana regen is spotty reward-wise on task completion. I'd say it's firing maybe 80% of the time
--Need to whittle down power up triggers to like 5-8
--Need kanban link in ribbon, especially for mobile
+-Achievements:
+    -Still getting multiple "First Quest" achievements. I'm definitely not on my first quest anymore so that's wrong to begin with. It appears the achievement just isn't saving properly
+
+## Scrivener's quill checklist:
+-Need more options on the create/update modal for quests in general
+    -The example/demo frontmatter is confusing. It should reflect what the actual default frontmatter is and ideally allow for changing it.
+    -Can we have a reading mode looking demo for the preview? The markdown version might not be for everybody. If we go this route, we should also allow for changing the default frontmatter in settings above the preview.
+    -What is the point of the right column in the create/update modal? It's not editable and doesn't seem to do anything beyond saying "2 fields filled out" as you fill out fields. Seems useless.
+-Daily quest not saving as daily, it's saving as a side quest. Still behaves the way I want it to by and large but not accurate and likely will cause issues.
+
+
+## Battle Issues
+
 
 ## Mobile issues checklist:
+
+
 
