@@ -12,6 +12,7 @@ import { Character } from '../models/Character';
 import { useCharacterStore } from '../store/characterStore';
 import { useQuestStore } from '../store/questStore';
 import { readTasksFromFile, getTaskCompletion, Task, TaskCompletion } from '../services/TaskFileService';
+import { resolveLinkedPath } from '../utils/pathValidator';
 import { calculateXPWithBonus, checkLevelUp, getLevelUpMessage } from '../services/XPSystem';
 import { processXPForStats, applyLevelUpStats, STAT_NAMES } from '../services/StatsService';
 import { AchievementService } from '../services/AchievementService';
@@ -515,7 +516,9 @@ export function useXPAward({ app, vault, customStatMappings, onCategoryUsed, onS
         for (const quest of quests.values()) {
             if (!isManualQuest(quest) || !quest.linkedTaskFile) continue;
 
-            const filePath = quest.linkedTaskFile;
+            const rawPath = quest.linkedTaskFile;
+            // Resolve to actual vault path (handles missing .md extension)
+            const filePath = resolveLinkedPath(vault, rawPath) ?? rawPath;
             watchedFiles.add(filePath);
 
             // Skip if already watching

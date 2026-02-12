@@ -27,7 +27,13 @@ export function validateLinkedPath(vault: Vault, path: string): TFile | null {
     }
 
     // Try to get the file from the vault
-    const file = vault.getAbstractFileByPath(normalizedPath);
+    let file = vault.getAbstractFileByPath(normalizedPath);
+
+    // Fallback: if not found and path has no extension, try appending .md
+    // Obsidian's "Copy vault path" no longer includes the .md extension
+    if (!file && !normalizedPath.match(/\.[a-zA-Z0-9]+$/)) {
+        file = vault.getAbstractFileByPath(normalizedPath + '.md');
+    }
 
     if (!file) {
         // File not found - this is expected for deleted/renamed files, no need to warn
@@ -40,6 +46,16 @@ export function validateLinkedPath(vault: Vault, path: string): TFile | null {
     }
 
     return file;
+}
+
+/**
+ * Resolve a linked path to its actual vault path string.
+ * Handles paths without .md extension (Obsidian's "Copy vault path" omits it).
+ * Returns the resolved path or null if not found.
+ */
+export function resolveLinkedPath(vault: Vault, path: string): string | null {
+    const file = validateLinkedPath(vault, path);
+    return file ? file.path : null;
 }
 
 /**
