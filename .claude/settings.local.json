@@ -3,7 +3,13 @@
     "allow": [
       "Bash(wc:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebFetch(domain:docs.obsidian.md)",
+      "WebFetch(domain:publish-01.obsidian.md)",
+      "WebSearch",
+      "WebFetch(domain:deepwiki.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npx vitest:*)"
     ]
   }
 }

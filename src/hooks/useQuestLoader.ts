@@ -13,6 +13,7 @@ import { useTaskSectionsStore } from '../store/taskSectionsStore';
 import { loadAllQuests, loadSingleQuest, watchQuestFolderGranular } from '../services/QuestService';
 import { readTasksFromMultipleFiles, getTaskCompletion, TaskCompletion, TaskSection } from '../services/TaskFileService';
 import { isManualQuest, Quest } from '../models/Quest';
+import { resolveLinkedPath } from '../utils/pathValidator';
 import type { QuestBoardSettings } from '../settings';
 
 interface UseQuestLoaderOptions {
@@ -84,12 +85,19 @@ export function useQuestLoader({
         for (const quest of quests) {
             if (isManualQuest(quest)) {
                 if (quest.linkedTaskFile) {
-                    linkedFileToQuestRef.current.set(quest.linkedTaskFile, quest.questId);
+                    // Resolve to actual vault path (handles missing .md extension)
+                    const resolved = resolveLinkedPath(vault, quest.linkedTaskFile);
+                    if (resolved) {
+                        linkedFileToQuestRef.current.set(resolved, quest.questId);
+                    }
                 }
                 if (quest.linkedTaskFiles) {
-                    quest.linkedTaskFiles.forEach(f =>
-                        linkedFileToQuestRef.current.set(f, quest.questId)
-                    );
+                    quest.linkedTaskFiles.forEach(f => {
+                        const resolved = resolveLinkedPath(vault, f);
+                        if (resolved) {
+                            linkedFileToQuestRef.current.set(resolved, quest.questId);
+                        }
+                    });
                 }
             }
         }

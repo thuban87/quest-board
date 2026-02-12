@@ -1988,3 +1988,77 @@ See detailed logs:
 Continue with Phase 4 priorities from Feature Roadmap v2.
 ```
 
+---
+
+## 2026-02-11 - Fix: Extension-Less linkedTaskFile Path Resolution
+
+**Focus:** Diagnosing and fixing quest task files not displaying on kanban/sidebar boards
+
+### Root Cause:
+
+Obsidian's "Copy vault path" command no longer includes the `.md` file extension. When users paste these paths into `linkedTaskFile`, `vault.getAbstractFileByPath()` fails to find the file since it expects the full path with extension.
+
+This caused **three separate failures**:
+1. **Task display** — `validateLinkedPath()` returned null, so tasks never loaded
+2. **File watchers** — `useQuestLoader` and `useXPAward` stored extension-less paths as map keys, but Obsidian's `modify` events emit `file.path` with `.md`, so watchers never matched
+3. **XP awards** — No file watcher match meant no task toggle detection, so no XP was awarded
+
+### Completed:
+
+- ✅ Added `.md` extension fallback to `validateLinkedPath()` in `pathValidator.ts`
+  - If path not found and has no extension, tries appending `.md` before giving up
+- ✅ Added `resolveLinkedPath()` helper to `pathValidator.ts`
+  - Returns the actual vault path string (with extension) for use in maps/comparisons
+- ✅ Updated `useQuestLoader.ts` — `linkedFileToQuestRef` map now stores resolved paths
+- ✅ Updated `useXPAward.ts` — file watcher setup now resolves paths before storing/comparing
+
+### Files Changed:
+
+- `src/utils/pathValidator.ts` — `.md` fallback in `validateLinkedPath()`, new `resolveLinkedPath()` helper
+- `src/hooks/useQuestLoader.ts` — Import `resolveLinkedPath`, use in `updateLinkedFileMap()`
+- `src/hooks/useXPAward.ts` — Import `resolveLinkedPath`, use in file watcher setup
+- `src/services/TaskFileService.ts` — No functional changes (debug logging added and removed)
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault — tasks display, toggling works, XP awards fire
+- ✅ Deployed to production
+- ✅ Both extension-less paths (new Obsidian behavior) and full paths (existing quests) work
+
+### Blockers/Issues:
+- None
+
+---
+
+## Next Session Prompt
+
+```
+Extension-less linkedTaskFile path resolution fixed and deployed to production.
+
+What was done:
+- Added .md fallback to validateLinkedPath() for Obsidian's new "Copy vault path" behavior
+- Added resolveLinkedPath() helper for consistent path resolution
+- Patched useQuestLoader and useXPAward file watcher maps to use resolved paths
+- All existing quests with .md paths continue to work
+
+Continue with Phase 4 priorities from Feature Roadmap v2.
+```
+
+## Git Commit Message
+
+```
+fix: resolve extension-less linkedTaskFile paths
+
+Obsidian's "Copy vault path" no longer includes .md extension.
+This broke task display, file watchers, and XP awards for quests
+using pasted vault paths.
+
+Changes:
+- validateLinkedPath() now tries appending .md as fallback
+- New resolveLinkedPath() helper returns actual vault path
+- useQuestLoader linkedFileToQuestRef uses resolved paths
+- useXPAward file watchers use resolved paths
+
+Files: pathValidator.ts, useQuestLoader.ts, useXPAward.ts
+```
+
