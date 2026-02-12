@@ -16,8 +16,8 @@ import { MONSTER_TEMPLATES, getMonsterTemplate } from '../src/data/monsters';
 import { Monster, MonsterPrefix, PREFIX_CONFIG } from '../src/models/Monster';
 
 describe('Monster Templates', () => {
-    it('should have 19 monster templates', () => {
-        expect(MONSTER_TEMPLATES.length).toBe(19);
+    it('should have 39 monster templates (19 base + 20 bosses)', () => {
+        expect(MONSTER_TEMPLATES.length).toBe(39);
     });
 
     it('all templates should have required fields', () => {
@@ -81,14 +81,21 @@ describe('Monster Creation', () => {
     });
 
     it('should apply tier multipliers', () => {
-        const overworld = createMonster('skeleton', 20, 'overworld', { forcePrefix: 'none' });
-        const dungeon = createMonster('skeleton', 20, 'dungeon', { forcePrefix: 'none' });
-        const boss = createMonster('skeleton', 20, 'boss', { forcePrefix: 'none' });
-        const raid = createMonster('skeleton', 20, 'raid_boss', { forcePrefix: 'none' });
+        // Use averaged samples to eliminate flakiness from stat variance
+        // (skeleton has ±15% variance which can overwhelm the small tier multipliers)
+        const samples = 20;
+        let owSum = 0, dungeonSum = 0, bossSum = 0, raidSum = 0;
 
-        // Boss and raid should have more HP
-        expect(boss!.maxHP).toBeGreaterThan(overworld!.maxHP);
-        expect(raid!.maxHP).toBeGreaterThan(boss!.maxHP);
+        for (let i = 0; i < samples; i++) {
+            owSum += createMonster('skeleton', 20, 'overworld', { forcePrefix: 'none' })!.maxHP;
+            dungeonSum += createMonster('skeleton', 20, 'dungeon', { forcePrefix: 'none' })!.maxHP;
+            bossSum += createMonster('skeleton', 20, 'boss', { forcePrefix: 'none' })!.maxHP;
+            raidSum += createMonster('skeleton', 20, 'raid_boss', { forcePrefix: 'none' })!.maxHP;
+        }
+
+        // Boss and raid averages should be higher (tier multipliers: boss=1.06, raid=1.1)
+        expect(bossSum / samples).toBeGreaterThan(owSum / samples);
+        expect(raidSum / samples).toBeGreaterThan(bossSum / samples);
     });
 
     it('should return null for unknown template', () => {
