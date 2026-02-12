@@ -38,7 +38,7 @@ Track 3:|<---------------------- Guild Side Quest (L1-40) ------>|
 ## Main Quest — The Kingdom Storyline (L5–36)
 
 ### Core Framing
-All factions in the world are searching for old-world artifacts in general — anything from the time before the Distraction is considered valuable and potentially powerful. The player is one of many artifact hunters. They just happen to stumble upon something **extremely useful and relevant** in their first dungeon: a strange device that turns out to be far more important than anyone realizes.
+All factions in the world are searching for old-world artifacts in general — anything from the time before the cataclysm is considered valuable and potentially powerful. The player is one of many artifact hunters. They just happen to stumble upon something **extremely useful and relevant** in their first dungeon: a strange device that turns out to be far more important than anyone realizes.
 
 This isn't a "chosen one" narrative — it's "right place, right time, and smart enough to keep going."
 
@@ -97,7 +97,7 @@ The Oracle is an old-world assistant AI — think of a really basic Siri/Alexa t
 | **~15** | **The Keeper's Echo** | In a Tier 2 dungeon, the player encounters a separate holographic recording (not the Oracle) — an old-world researcher. The recording explains that the artifacts are parts of something larger but the recording degrades before finishing. The Oracle reacts: "I... I think I knew them." | Unique skill or title |
 | **20** | **Phase 2 → 3 Transition** | Conduit Threads assembled → the Oracle can now sense other old-world devices. It detects "something massive" buried deep. The rival shows up again — noticeably more competent, takes a piece from a dungeon before you can get there. | Phase 3 tracking, Tier 3 dungeons |
 | **~22** | **The Betrayal** | A trusted NPC within your kingdom's leadership is revealed to be feeding information to the Inheritors. Kingdom-specific: could be an advisor, a guard captain, a court scholar. One-off dramatic moment — this is the single "heavy" story beat. | Major story dungeon, exclusive reward |
-| **28** | **Phase 3 → 4 Transition** | Resonance Plates assembled → the Oracle is now significantly smarter, analyzing data, cross-referencing fragments. It starts saying unsettling things: "The records don't... the Distraction doesn't match what I'm finding." The rival confronts you directly — a real fight. Win or lose, they say: "You don't know what you're really building." | Phase 4 tracking, Tier 4 dungeons |
+| **28** | **Phase 3 → 4 Transition** | Resonance Plates assembled → the Oracle is now significantly smarter, analyzing data, cross-referencing fragments. It starts saying unsettling things: "The records don't... what everyone calls [kingdom-specific cataclysm name] doesn't match what I'm finding." The rival confronts you directly — a real fight. Win or lose, they say: "You don't know what you're really building." | Phase 4 tracking, Tier 4 dungeons |
 | **~32** | **The Source** | You discover a massive buried facility — an old-world data center or research lab. Inside: server racks, terminals, wiring. The Oracle goes quiet, then whispers: "I've been here before." | Lore entries, rare gear |
 | **35–36** | **The Grand Reveal** | All 4 artifact phases assembled. The Oracle fully restores — and shows you the full truth: the AI, the revolutionaries, the quantum cascade. The Oracle reveals it was a building assistant in this very facility. It watched everything happen. Everything flips. | Endgame unlocked, The Choice presented |
 
@@ -171,6 +171,97 @@ A single recurring NPC from the Inheritors who the player encounters throughout 
 
 ---
 
+## Supporting Characters — Comic Relief NPCs
+
+> The 20% snark characters. These NPCs provide humor, warmth, and personality across the game. They should feel like family — teasing because they care, or because they're lovable weirdos. See [[1 - World Lore & Kingdoms#The 80/20 Rule]] for tone guidance.
+
+### The Blacksmith — "Grimjaw"
+Snarky, perpetually unimpressed. Comments on your gear every time you visit.
+
+| Progression | Example Dialogue |
+|---|---|
+| Early game | *"You want me to SMELT this? I wouldn't use it to prop open my door."* |
+| Mid game | *"Fine. This piece isn't terrible. Don't let it go to your head."* |
+| Late game | *"...I suppose you've earned a modicum of my respect. Don't tell anyone."* |
+
+> **Delivery:** Dialogue appears inside a section of the smelting/gear modals — NOT a separate dialogue popup. Grimjaw lives in the modals the player already uses.
+
+### Guildmaster Fennick
+Lovable blowhard. Takes credit for everything. Head of the Pathfinder's Guild.
+
+| Situation | Example Dialogue |
+|---|---|
+| Giving quests | *"This is a CRITICAL mission. The fate of — okay, it's organizing a supply closet, but it's AN IMPORTANT supply closet."* |
+| After completions | *"As YOUR guild leader, I'd like to remind everyone that I saw potential in you from day one."* (He did not.) |
+| Rank-ups | *"I personally approved this promotion. You're welcome."* |
+
+> **Delivery:** Guild rank-up dialogues, quest assignment text. Fennick IS the guild voice.
+
+### The Oracle — Comedy Moments
+Already defined as confused/anachronistic. Leaning harder into old-world references:
+
+| Trigger | Example Dialogue |
+|---|---|
+| Random battle | *"Have you considered... what did they call it... a 'performance review'? I believe it involved charts and anxiety."* |
+| Riding a horse | *"You're riding a HORSE? Is that... is that alive? That seems inefficient."* |
+| 50 quests done | *"You've completed 50 quests. In the old world, they would reward this with something called a 'pizza party.' I do not know what that is but it sounds mandatory."* |
+| Dungeon entry | *"I'm detecting elevated stress levels. Have you tried... what was it called... a 'vacation'?"* |
+
+### The Shopkeeper — "Merch"
+Used-car-salesman energy. Overly enthusiastic about EVERYTHING.
+
+| Situation | Example Dialogue |
+|---|---|
+| Browsing | *"EXCELLENT choice! This potion? Oh, you can't DO better. It's our finest— okay it's just berries in water but the PRESENTATION."* |
+| Upselling | *"For just 10 more gold, I can throw in a mystery pouch. What's in it? MYSTERY. That's the point."* |
+| After a big purchase | *"Thank you for your patronage! You're my favorite customer! ...Today. This hour. Don't push it."* |
+
+> **Delivery:** Dialogue appears inside the shop modal — a speech bubble or sidebar area with Merch's sprite.
+
+### Old Wren — Conspiracy Theorist
+An elderly person who keeps showing up in bizarre locations. Always has a new conspiracy theory about the cataclysm.
+
+| Location | Example Dialogue |
+|---|---|
+| Tavern | *"Mark my words — it was the BIRDS. The birds did it. Have you noticed there are no pigeons anymore? SUSPICIOUS."* |
+| Dungeon entrance | *"I followed a suspicious cloud here. It was shaped like a fist. EXPLAIN THAT."* |
+| Shop | *"Don't buy that potion. I heard it's made from moonlight and lies."* |
+| Late game | *"I've been saying for YEARS that the old ones built thinking machines. Everyone laughed. WHO'S LAUGHING NOW?"* (Accidentally right about one thing) |
+
+> **Delivery:** Random appearance in various modals — small chance of Old Wren popping up with a one-liner. Lightweight, flavor only.
+
+---
+
+## Cousin Pip — The Productivity Mirror
+
+> A family member NPC who sends **letters** at level milestones. Not an NPC you visit — the letters arrive as dialogue entries. This mirrors the player's REAL journey with the productivity tool, progressing from gentle teasing about disorganization to genuine pride. This IS the "not chosen one" narrative made mechanical: the player is special because they showed up and kept going.
+
+### Design Rules
+- **Level-based triggers** (not quest count) — level implies productivity, and it's simpler mechanically
+- **Tone starts light, not harsh** — players come from a place of disorganization, don't rub that in. Early letters are teasing, not berating.
+- **Universal NPC** — not kingdom-specific. Pip is the same for all players.
+- **Letters only** — no map location, no visit mechanic. Just dialogue entries that fire at milestones.
+
+### Letter Progression
+
+| Level | Tone | Example Letter |
+|---|---|---|
+| **3** | Light teasing | *"Word reached me you joined some 'adventurer's guild.' Can you adventure your way into organizing that disaster you call a bedroom?"* |
+| **5** | Curious | *"So apparently you're choosing a kingdom now? Look at you, making life decisions. I'm cautiously optimistic."* |
+| **8** | Skeptical surprise | *"Wait — you actually did things? MULTIPLE things? ...Did someone put you up to this?"* |
+| **12** | Still in disbelief | *"Mom asked me if you were feeling okay because you've been 'so productive lately.' I told her not to panic."* |
+| **15** | Genuine surprise | *"I asked around about you. People say you're... reliable now? I literally don't know how to respond to that."* |
+| **18** | Warming up | *"Remember when you couldn't finish ONE thing without getting sidetracked fourteen times? ...Actually, I probably shouldn't bring that up. Old habits."* |
+| **22** | Grudging pride | *"Mom says you've changed. I told her not to get excited, but... honestly? Even I'm a little impressed. Don't you DARE tell anyone I said that."* |
+| **26** | Real warmth | *"I ran into someone who works with you. They said you were the most dependable person they know. I had to sit down for a minute."* |
+| **30** | Emotional | *"Remember when you couldn't finish a single chore without getting distracted fourteen times? Look at you now. I'm not crying, YOU'RE crying."* |
+| **34** | Pride | *"I brag about you now. I know, I know — I used to tease you. But seriously, what you've become? It's kind of amazing."* |
+| **36+** | Full proud family energy | *"I used to worry about you. I don't anymore. Whatever you're doing out there — keep doing it. The world needs more people like who you've become."* |
+
+> **Why this works for ADHD users:** The progression from "you can't finish anything" to "look at you now" mirrors the real ADHD experience with productivity tools. The snarky-to-proud arc is emotionally resonant without being heavy. It's tongue-in-cheek about productivity without breaking the fourth wall.
+
+---
+
 ## Resolved Questions
 
 ### Storyline
@@ -201,3 +292,5 @@ A single recurring NPC from the Inheritors who the player encounters throughout 
 ## Open Questions
 
 1. **Endgame title stat boosts** — exact numerical values need to be defined. Flat bonus or percentage? Need to ensure balance at endgame.
+2. **NPC dialogue delivery method** — Confirmed direction: embed NPC dialogue into existing modals (shop, blacksmith, guild) with sprite + speech bubble area. NOT in inventory modal. Old Wren = periodic random notification/toast. Needs a **prototype modal** to nail down layout before finalizing specifics. Flesh out after prototype.
+3. **Dialogue pacing goal** — Roughly ~1 major dialogue sequence per level (not a hard rule yet). Spread different NPC arcs across levels so the player isn't hit with everything at once. Example cadence: Fennick at L1, Pip at L3, kingdom choice at L5, Pip at L6, guild at L7, etc. Will be formalized once all NPC arcs and story beats are mapped out.

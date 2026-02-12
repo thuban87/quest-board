@@ -151,6 +151,7 @@ Pre-filled in plugin data. At each phase transition, 2–3 real-world quests are
 | **Flashback dungeons** | Special unlockable dungeons that show old-world locations as they looked before the cascade — clean, functioning, populated. |
 | **Kingdom PvP tournaments** | Competitive battle events between players of different kingdoms (if multiplayer is ever added). |
 | **Collectible lore cards** | Discoverable entries that fill a codex about the old world — artwork, facts, flavor text. |
+| **Guild Job Board kingdom posting** | Repurpose the "pick your kingdom via a guild task posting" concept for guild-specific content or side quest mechanics. Originally brainstormed as a kingdom selection option but replaced by the Crossroads Festival. |
 
 ---
 
@@ -199,3 +200,17 @@ Pre-filled in plugin data. At each phase transition, 2–3 real-world quests are
 **Documentation restructure.** Split original 1000+ line brainstorming document into 5 focused docs:
 - Resolved open questions: Dragonkin origin (mutated lizards), guild name (Pathfinder's Guild), Job Board mechanics (rotating 3-quest pool with 7-day cooldown), rival naming (text input, alpha only), Oracle portrait (Brad will sprite), MVP dialogue scope (everything ships), leader reactions (yes, aligned to endgame paths)
 - Original brainstorming doc archived as `Story & Lore Brainstorming (Original).md`
+
+### Session 4 — 2026-02-12
+**Deep brainstorming and decision-locking pass.** Major decisions finalized:
+- Cataclysm renamed from "The Great Distraction" (now truth-only term at L35+) to kingdom-specific folk names (Starholm: "When the world broke", Aldenmere: "The Unraveling", Jadespire: "The Great Stillness", Solara: "The Great Collapse", Ashara: "The Rending")
+- Added folk theories about the cataclysm (6 theories with NPC believer groups)
+- Kingdom rulers named: King Harken, King Castellan, Queen Jinren, Queen Marisun, King Obaran
+- Kingdom-to-path alignment locked: Solara=Restore Archive, Ashara=Defend Dawn, Aldenmere=Join Inheritors, Jadespire+Starholm=Power-hungry
+- Allegiance skills reworked to all-passive (Trailblazer's Drive, Ancient Ward, Market Insight, Bonds of Vitality, Ancestral Fortitude)
+- Kingdom selection = Crossroads Festival at L5 (ambassadors from each kingdom pitch the player)
+- Automaton monsters updated to biped-only designs
+- Comic relief NPCs defined: Blacksmith "Grimjaw", Guildmaster Fennick, Shopkeeper "Merch", Old Wren (conspiracy theorist), Oracle comedy moments
+- Family member NPC "Cousin Pip" — level-based letters tracking productivity progress (teasing → pride arc)
+- 80/20 NPC tone rule established (80% respectful, 20% lovable snark)
+- Guild Job Board Posting concept noted for future use
