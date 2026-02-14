@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-02-14T00:17:38.366Z",
+  "lastUpdated": "2026-02-14T01:47:17.973Z",
   "fileCount": 783,
   "files": {
     "backgrounds/battle-bg.jpg": {
@@ -1352,40 +1352,40 @@
       "size": 353
     },
     "sprites/monsters/bosses/boss-alpha-wolf/boss-alpha-wolf.gif": {
-      "hash": "261d0d2f",
-      "size": 4904
+      "hash": "bebcf1d1",
+      "size": 7716
     },
     "sprites/monsters/bosses/boss-alpha-wolf/boss-alpha-wolf_east.png": {
-      "hash": "1bb46218",
-      "size": 1467
+      "hash": "4c06dec6",
+      "size": 2277
     },
     "sprites/monsters/bosses/boss-alpha-wolf/boss-alpha-wolf_north-east.png": {
-      "hash": "fa1ac4df",
-      "size": 1486
+      "hash": "230de838",
+      "size": 2009
     },
     "sprites/monsters/bosses/boss-alpha-wolf/boss-alpha-wolf_north-west.png": {
-      "hash": "bacd29bf",
-      "size": 1410
+      "hash": "7d957b72",
+      "size": 2072
     },
     "sprites/monsters/bosses/boss-alpha-wolf/boss-alpha-wolf_north.png": {
-      "hash": "c67a5a11",
-      "size": 1041
+      "hash": "71de4a56",
+      "size": 1757
     },
     "sprites/monsters/bosses/boss-alpha-wolf/boss-alpha-wolf_south-east.png": {
-      "hash": "c9e88ebd",
-      "size": 1589
+      "hash": "50e7c64a",
+      "size": 2433
     },
     "sprites/monsters/bosses/boss-alpha-wolf/boss-alpha-wolf_south-west.png": {
-      "hash": "85004281",
-      "size": 1532
+      "hash": "f0720d79",
+      "size": 2436
     },
     "sprites/monsters/bosses/boss-alpha-wolf/boss-alpha-wolf_south.png": {
-      "hash": "dd091b96",
-      "size": 1042
+      "hash": "bf10d859",
+      "size": 2292
     },
     "sprites/monsters/bosses/boss-alpha-wolf/boss-alpha-wolf_west.png": {
-      "hash": "c0bf2dc6",
-      "size": 1420
+      "hash": "30a178f4",
+      "size": 2230
     },
     "sprites/monsters/bosses/boss-ancient-dragon/boss-ancient-dragon.gif": {
       "hash": "500f91a0",
@@ -1640,40 +1640,40 @@
       "size": 2721
     },
     "sprites/monsters/bosses/boss-grizzled-ancient/boss-grizzled-ancient.gif": {
-      "hash": "7ce32572",
-      "size": 5280
+      "hash": "077ea881",
+      "size": 8218
     },
     "sprites/monsters/bosses/boss-grizzled-ancient/boss-grizzled-ancient_east.png": {
-      "hash": "49d54dd5",
-      "size": 1683
+      "hash": "b31c8077",
+      "size": 2055
     },
     "sprites/monsters/bosses/boss-grizzled-ancient/boss-grizzled-ancient_north-east.png": {
-      "hash": "4e4c3e78",
-      "size": 1476
+      "hash": "64238ef4",
+      "size": 2187
     },
     "sprites/monsters/bosses/boss-grizzled-ancient/boss-grizzled-ancient_north-west.png": {
-      "hash": "dc684c49",
-      "size": 1600
+      "hash": "58303a14",
+      "size": 2174
     },
     "sprites/monsters/bosses/boss-grizzled-ancient/boss-grizzled-ancient_north.png": {
-      "hash": "32c0dfdf",
-      "size": 1187
+      "hash": "640e0341",
+      "size": 2395
     },
     "sprites/monsters/bosses/boss-grizzled-ancient/boss-grizzled-ancient_south-east.png": {
-      "hash": "5abd64aa",
-      "size": 1381
+      "hash": "d4298051",
+      "size": 2279
     },
     "sprites/monsters/bosses/boss-grizzled-ancient/boss-grizzled-ancient_south-west.png": {
-      "hash": "9e5fba51",
-      "size": 1452
+      "hash": "beb3c651",
+      "size": 2248
     },
     "sprites/monsters/bosses/boss-grizzled-ancient/boss-grizzled-ancient_south.png": {
-      "hash": "058477ee",
-      "size": 1769
+      "hash": "ca351555",
+      "size": 2784
     },
     "sprites/monsters/bosses/boss-grizzled-ancient/boss-grizzled-ancient_west.png": {
-      "hash": "d04171e3",
-      "size": 1598
+      "hash": "bb849a09",
+      "size": 2056
     },
     "sprites/monsters/bosses/boss-ironforge-champion/boss-ironforge-champion.gif": {
       "hash": "c47206d1",
@@ -2072,184 +2072,184 @@
       "size": 2375
     },
     "sprites/monsters/common/bear/bear.gif": {
-      "hash": "7ce70d98",
-      "size": 4670
+      "hash": "b04d6cb5",
+      "size": 6652
     },
     "sprites/monsters/common/bear/bear_east.png": {
-      "hash": "fae3975b",
-      "size": 1239
+      "hash": "fbf30f74",
+      "size": 1779
     },
     "sprites/monsters/common/bear/bear_north-east.png": {
-      "hash": "266bb73f",
-      "size": 1209
+      "hash": "4c008406",
+      "size": 1610
     },
     "sprites/monsters/common/bear/bear_north-west.png": {
-      "hash": "db6c780c",
-      "size": 1262
+      "hash": "532357f6",
+      "size": 1617
     },
     "sprites/monsters/common/bear/bear_north.png": {
-      "hash": "31a35ef4",
-      "size": 1120
+      "hash": "bed57ea7",
+      "size": 1587
     },
     "sprites/monsters/common/bear/bear_south-east.png": {
-      "hash": "a5698503",
-      "size": 1342
+      "hash": "32ac751e",
+      "size": 1891
     },
     "sprites/monsters/common/bear/bear_south-west.png": {
-      "hash": "a90a71ca",
-      "size": 1358
+      "hash": "2652c01a",
+      "size": 1839
     },
     "sprites/monsters/common/bear/bear_south.png": {
-      "hash": "b539b27f",
-      "size": 1569
+      "hash": "c5173b48",
+      "size": 2095
     },
     "sprites/monsters/common/bear/bear_west.png": {
-      "hash": "8c6ec10e",
-      "size": 1208
+      "hash": "28f4bacf",
+      "size": 1769
     },
     "sprites/monsters/common/berserker/berserker.gif": {
-      "hash": "80fb92e1",
-      "size": 4047
+      "hash": "8b0d33bf",
+      "size": 7278
     },
     "sprites/monsters/common/berserker/berserker_east.png": {
-      "hash": "b00d135d",
-      "size": 902
+      "hash": "f0465983",
+      "size": 1653
     },
     "sprites/monsters/common/berserker/berserker_north-east.png": {
-      "hash": "862169ef",
-      "size": 1013
+      "hash": "ff1a7774",
+      "size": 1767
     },
     "sprites/monsters/common/berserker/berserker_north-west.png": {
-      "hash": "230c936e",
-      "size": 1012
+      "hash": "81dfa0ab",
+      "size": 1770
     },
     "sprites/monsters/common/berserker/berserker_north.png": {
-      "hash": "b3ae5bd2",
-      "size": 745
+      "hash": "84ed23c7",
+      "size": 1847
     },
     "sprites/monsters/common/berserker/berserker_south-east.png": {
-      "hash": "8ede432a",
-      "size": 1009
+      "hash": "425de59c",
+      "size": 1937
     },
     "sprites/monsters/common/berserker/berserker_south-west.png": {
-      "hash": "8bf64aeb",
-      "size": 1063
+      "hash": "239d450c",
+      "size": 1957
     },
     "sprites/monsters/common/berserker/berserker_south.png": {
-      "hash": "1c7be044",
-      "size": 1056
+      "hash": "d9ca7473",
+      "size": 2160
     },
     "sprites/monsters/common/berserker/berserker_west.png": {
-      "hash": "e9c3c602",
-      "size": 918
+      "hash": "d42e5912",
+      "size": 1668
     },
     "sprites/monsters/common/bugbear/bugbear.gif": {
-      "hash": "e2c06be5",
-      "size": 4681
+      "hash": "1fefd684",
+      "size": 6946
     },
     "sprites/monsters/common/bugbear/bugbear_east.png": {
-      "hash": "21c6e3fb",
-      "size": 1087
+      "hash": "985f1862",
+      "size": 1656
     },
     "sprites/monsters/common/bugbear/bugbear_north-east.png": {
-      "hash": "5da05484",
-      "size": 1273
+      "hash": "b78e4177",
+      "size": 1760
     },
     "sprites/monsters/common/bugbear/bugbear_north-west.png": {
-      "hash": "f8baa6ad",
-      "size": 1178
+      "hash": "715eda22",
+      "size": 1802
     },
     "sprites/monsters/common/bugbear/bugbear_north.png": {
-      "hash": "0a75397e",
-      "size": 1245
+      "hash": "38a3b9df",
+      "size": 1909
     },
     "sprites/monsters/common/bugbear/bugbear_south-east.png": {
-      "hash": "8b4fdbe9",
-      "size": 1421
+      "hash": "55e70cdf",
+      "size": 2060
     },
     "sprites/monsters/common/bugbear/bugbear_south-west.png": {
-      "hash": "7d593667",
-      "size": 1419
+      "hash": "35254828",
+      "size": 2063
     },
     "sprites/monsters/common/bugbear/bugbear_south.png": {
-      "hash": "da652326",
-      "size": 1584
+      "hash": "5d290ad1",
+      "size": 2298
     },
     "sprites/monsters/common/bugbear/bugbear_west.png": {
-      "hash": "8c047ea2",
-      "size": 1079
+      "hash": "52427054",
+      "size": 1689
     },
     "sprites/monsters/common/cave-troll/cave-troll.gif": {
-      "hash": "1e5c7413",
-      "size": 4397
+      "hash": "5cc2b6c4",
+      "size": 8585
     },
     "sprites/monsters/common/cave-troll/cave-troll_east.png": {
-      "hash": "cf1d91ac",
-      "size": 1111
+      "hash": "5be29256",
+      "size": 2206
     },
     "sprites/monsters/common/cave-troll/cave-troll_north-east.png": {
-      "hash": "38bd7230",
-      "size": 1143
+      "hash": "be245b13",
+      "size": 2408
     },
     "sprites/monsters/common/cave-troll/cave-troll_north-west.png": {
-      "hash": "3803fc9d",
-      "size": 1183
+      "hash": "fd08af92",
+      "size": 2459
     },
     "sprites/monsters/common/cave-troll/cave-troll_north.png": {
-      "hash": "aa8603dd",
-      "size": 1147
+      "hash": "fb5d7dab",
+      "size": 2466
     },
     "sprites/monsters/common/cave-troll/cave-troll_south-east.png": {
-      "hash": "4017a6f1",
-      "size": 1257
+      "hash": "2944d8ec",
+      "size": 2481
     },
     "sprites/monsters/common/cave-troll/cave-troll_south-west.png": {
-      "hash": "4cb80aaf",
-      "size": 1285
+      "hash": "40cff3c7",
+      "size": 2552
     },
     "sprites/monsters/common/cave-troll/cave-troll_south.png": {
-      "hash": "8784f713",
-      "size": 1401
+      "hash": "5a4a85ec",
+      "size": 3075
     },
     "sprites/monsters/common/cave-troll/cave-troll_west.png": {
-      "hash": "156156b1",
-      "size": 1115
+      "hash": "080aad3d",
+      "size": 2240
     },
     "sprites/monsters/common/dark-ranger/dark-ranger.gif": {
-      "hash": "59f706af",
-      "size": 2882
+      "hash": "2a6ffed1",
+      "size": 6746
     },
     "sprites/monsters/common/dark-ranger/dark-ranger_east.png": {
-      "hash": "dd95b8fc",
-      "size": 683
+      "hash": "42ad2b1a",
+      "size": 1794
     },
     "sprites/monsters/common/dark-ranger/dark-ranger_north-east.png": {
-      "hash": "bb318200",
-      "size": 683
+      "hash": "5a09e40c",
+      "size": 1635
     },
     "sprites/monsters/common/dark-ranger/dark-ranger_north-west.png": {
-      "hash": "42dcd184",
-      "size": 687
+      "hash": "7bece70e",
+      "size": 1800
     },
     "sprites/monsters/common/dark-ranger/dark-ranger_north.png": {
-      "hash": "fd68116a",
-      "size": 457
+      "hash": "40a664ab",
+      "size": 1316
     },
     "sprites/monsters/common/dark-ranger/dark-ranger_south-east.png": {
-      "hash": "004def7e",
-      "size": 809
+      "hash": "58b72568",
+      "size": 1865
     },
     "sprites/monsters/common/dark-ranger/dark-ranger_south-west.png": {
-      "hash": "cf69a5e1",
-      "size": 819
+      "hash": "fe2e9f9f",
+      "size": 1883
     },
     "sprites/monsters/common/dark-ranger/dark-ranger_south.png": {
-      "hash": "b283a77f",
-      "size": 808
+      "hash": "af3b0f77",
+      "size": 1956
     },
     "sprites/monsters/common/dark-ranger/dark-ranger_west.png": {
-      "hash": "9570a35b",
-      "size": 665
+      "hash": "df20f93d",
+      "size": 1635
     },
     "sprites/monsters/common/drake/drake.gif": {
       "hash": "107cd467",
@@ -2288,40 +2288,40 @@
       "size": 1751
     },
     "sprites/monsters/common/eye-beast/eye-beast.gif": {
-      "hash": "23aec05c",
-      "size": 3787
+      "hash": "897b4344",
+      "size": 6646
     },
     "sprites/monsters/common/eye-beast/eye-beast_east.png": {
-      "hash": "e204076b",
-      "size": 951
+      "hash": "6954bfe7",
+      "size": 1635
     },
     "sprites/monsters/common/eye-beast/eye-beast_north-east.png": {
-      "hash": "b6e2f487",
-      "size": 961
+      "hash": "1d5aa85b",
+      "size": 1580
     },
     "sprites/monsters/common/eye-beast/eye-beast_north-west.png": {
-      "hash": "532737f2",
-      "size": 1052
+      "hash": "1a79d3f1",
+      "size": 1584
     },
     "sprites/monsters/common/eye-beast/eye-beast_north.png": {
-      "hash": "2661d14d",
-      "size": 1072
+      "hash": "ba353e1b",
+      "size": 1669
     },
     "sprites/monsters/common/eye-beast/eye-beast_south-east.png": {
-      "hash": "976ca794",
-      "size": 1068
+      "hash": "26d81782",
+      "size": 1932
     },
     "sprites/monsters/common/eye-beast/eye-beast_south-west.png": {
-      "hash": "de1427a3",
-      "size": 1065
+      "hash": "f485abb3",
+      "size": 1883
     },
     "sprites/monsters/common/eye-beast/eye-beast_south.png": {
-      "hash": "4505382b",
-      "size": 999
+      "hash": "ca570cb9",
+      "size": 2043
     },
     "sprites/monsters/common/eye-beast/eye-beast_west.png": {
-      "hash": "67a2d2cf",
-      "size": 775
+      "hash": "d1ef0c29",
+      "size": 1651
     },
     "sprites/monsters/common/ghost/ghost.gif": {
       "hash": "4ddc418f",
@@ -2360,112 +2360,112 @@
       "size": 1534
     },
     "sprites/monsters/common/giant-rat/giant-rat.gif": {
-      "hash": "20f37ba9",
-      "size": 5102
+      "hash": "91c0cc02",
+      "size": 7588
     },
     "sprites/monsters/common/giant-rat/giant-rat_east.png": {
-      "hash": "12225564",
-      "size": 1414
+      "hash": "6126d65e",
+      "size": 2304
     },
     "sprites/monsters/common/giant-rat/giant-rat_north-east.png": {
-      "hash": "65147ea2",
-      "size": 1374
+      "hash": "25b0b209",
+      "size": 2134
     },
     "sprites/monsters/common/giant-rat/giant-rat_north-west.png": {
-      "hash": "0e746e98",
-      "size": 1285
+      "hash": "8bc44fc9",
+      "size": 2007
     },
     "sprites/monsters/common/giant-rat/giant-rat_north.png": {
-      "hash": "d11e104c",
-      "size": 1558
+      "hash": "5580e86c",
+      "size": 1955
     },
     "sprites/monsters/common/giant-rat/giant-rat_south-east.png": {
-      "hash": "9bf4102d",
-      "size": 1530
+      "hash": "8a81a85d",
+      "size": 2399
     },
     "sprites/monsters/common/giant-rat/giant-rat_south-west.png": {
-      "hash": "ace57fe1",
-      "size": 1586
+      "hash": "3cc5cee0",
+      "size": 2337
     },
     "sprites/monsters/common/giant-rat/giant-rat_south.png": {
-      "hash": "8f999899",
-      "size": 1767
+      "hash": "d9e294db",
+      "size": 2406
     },
     "sprites/monsters/common/giant-rat/giant-rat_west.png": {
-      "hash": "b8d11432",
-      "size": 1333
+      "hash": "6721413f",
+      "size": 2284
     },
     "sprites/monsters/common/goblin/goblin.gif": {
-      "hash": "ac21ff17",
-      "size": 4166
+      "hash": "741270d9",
+      "size": 6079
     },
     "sprites/monsters/common/goblin/goblin_east.png": {
-      "hash": "94767bf8",
-      "size": 817
+      "hash": "87a27982",
+      "size": 1350
     },
     "sprites/monsters/common/goblin/goblin_north-east.png": {
-      "hash": "8a673a05",
-      "size": 996
+      "hash": "91b76813",
+      "size": 1522
     },
     "sprites/monsters/common/goblin/goblin_north-west.png": {
-      "hash": "e9ac7c77",
-      "size": 979
+      "hash": "9cfbf430",
+      "size": 1435
     },
     "sprites/monsters/common/goblin/goblin_north.png": {
-      "hash": "412f61fa",
-      "size": 939
+      "hash": "c4efb1cc",
+      "size": 1507
     },
     "sprites/monsters/common/goblin/goblin_south-east.png": {
-      "hash": "2a576122",
-      "size": 1069
+      "hash": "b764ebb0",
+      "size": 1826
     },
     "sprites/monsters/common/goblin/goblin_south-west.png": {
-      "hash": "3468f837",
-      "size": 1045
+      "hash": "29d2f7d0",
+      "size": 1816
     },
     "sprites/monsters/common/goblin/goblin_south.png": {
-      "hash": "a6bee44e",
-      "size": 1037
+      "hash": "e1aa570c",
+      "size": 1817
     },
     "sprites/monsters/common/goblin/goblin_west.png": {
-      "hash": "60396645",
-      "size": 846
+      "hash": "ef243ee5",
+      "size": 1365
     },
     "sprites/monsters/common/hobgoblin/hobgoblin.gif": {
-      "hash": "17645ebd",
-      "size": 3771
+      "hash": "b0c346c0",
+      "size": 6393
     },
     "sprites/monsters/common/hobgoblin/hobgoblin_east.png": {
-      "hash": "258b7efd",
-      "size": 825
+      "hash": "eeaf5021",
+      "size": 1324
     },
     "sprites/monsters/common/hobgoblin/hobgoblin_north-east.png": {
-      "hash": "185c5b8f",
-      "size": 865
+      "hash": "a2426486",
+      "size": 1603
     },
     "sprites/monsters/common/hobgoblin/hobgoblin_north-west.png": {
-      "hash": "5700a3ff",
-      "size": 918
+      "hash": "c95f6538",
+      "size": 1648
     },
     "sprites/monsters/common/hobgoblin/hobgoblin_north.png": {
-      "hash": "c8152bd1",
-      "size": 841
+      "hash": "c896be0d",
+      "size": 1583
     },
     "sprites/monsters/common/hobgoblin/hobgoblin_south-east.png": {
-      "hash": "51e97160",
-      "size": 1034
+      "hash": "b1943253",
+      "size": 1604
     },
     "sprites/monsters/common/hobgoblin/hobgoblin_south-west.png": {
-      "hash": "fc77cfcb",
-      "size": 1047
+      "hash": "46af697c",
+      "size": 1651
     },
     "sprites/monsters/common/hobgoblin/hobgoblin_south.png": {
-      "hash": "50eec277",
-      "size": 1022
+      "hash": "7a050768",
+      "size": 1817
     },
     "sprites/monsters/common/hobgoblin/hobgoblin_west.png": {
-      "hash": "fe2d9648",
-      "size": 854
+      "hash": "81684e28",
+      "size": 1328
     },
     "sprites/monsters/common/mimic/mimic.gif": {
       "hash": "a83825b7",
@@ -2504,184 +2504,184 @@
       "size": 2021
     },
     "sprites/monsters/common/river-troll/river-troll.gif": {
-      "hash": "fae092ae",
-      "size": 4135
+      "hash": "a2ea714a",
+      "size": 5917
     },
     "sprites/monsters/common/river-troll/river-troll_east.png": {
-      "hash": "1510c8af",
-      "size": 1010
+      "hash": "2b499644",
+      "size": 1669
     },
     "sprites/monsters/common/river-troll/river-troll_north-east.png": {
-      "hash": "a04234df",
-      "size": 1124
+      "hash": "0dca64dc",
+      "size": 1750
     },
     "sprites/monsters/common/river-troll/river-troll_north-west.png": {
-      "hash": "31250919",
-      "size": 1063
+      "hash": "90682145",
+      "size": 1739
     },
     "sprites/monsters/common/river-troll/river-troll_north.png": {
-      "hash": "e76bff80",
-      "size": 1144
+      "hash": "7341c092",
+      "size": 1758
     },
     "sprites/monsters/common/river-troll/river-troll_south-east.png": {
-      "hash": "7bafedcf",
-      "size": 1165
+      "hash": "00e55dfe",
+      "size": 1825
     },
     "sprites/monsters/common/river-troll/river-troll_south-west.png": {
-      "hash": "ce5b5f88",
-      "size": 1146
+      "hash": "13903c07",
+      "size": 1749
     },
     "sprites/monsters/common/river-troll/river-troll_south.png": {
-      "hash": "024e1205",
-      "size": 1293
+      "hash": "88aa284a",
+      "size": 2069
     },
     "sprites/monsters/common/river-troll/river-troll_west.png": {
-      "hash": "e37ae1f5",
-      "size": 898
+      "hash": "12851a18",
+      "size": 1637
     },
     "sprites/monsters/common/rogue-dwarf/rogue-dwarf.gif": {
-      "hash": "7c3ca2f2",
-      "size": 3487
+      "hash": "5e439b89",
+      "size": 5891
     },
     "sprites/monsters/common/rogue-dwarf/rogue-dwarf_east.png": {
-      "hash": "0e8d1ac6",
-      "size": 738
+      "hash": "62c455ac",
+      "size": 1431
     },
     "sprites/monsters/common/rogue-dwarf/rogue-dwarf_north-east.png": {
-      "hash": "e82a48b1",
-      "size": 834
+      "hash": "108295ab",
+      "size": 1635
     },
     "sprites/monsters/common/rogue-dwarf/rogue-dwarf_north-west.png": {
-      "hash": "5b5112f1",
-      "size": 849
+      "hash": "f40648d7",
+      "size": 1595
     },
     "sprites/monsters/common/rogue-dwarf/rogue-dwarf_north.png": {
-      "hash": "173cb624",
-      "size": 828
+      "hash": "de8394ad",
+      "size": 1637
     },
     "sprites/monsters/common/rogue-dwarf/rogue-dwarf_south-east.png": {
-      "hash": "c5a9a08f",
-      "size": 960
+      "hash": "18e33e94",
+      "size": 1752
     },
     "sprites/monsters/common/rogue-dwarf/rogue-dwarf_south-west.png": {
-      "hash": "39c6856e",
-      "size": 967
+      "hash": "d062ba4c",
+      "size": 1860
     },
     "sprites/monsters/common/rogue-dwarf/rogue-dwarf_south.png": {
-      "hash": "56b27c3c",
-      "size": 1005
+      "hash": "eedbe3a3",
+      "size": 1921
     },
     "sprites/monsters/common/rogue-dwarf/rogue-dwarf_west.png": {
-      "hash": "6677c7de",
-      "size": 737
+      "hash": "919d7322",
+      "size": 1440
     },
     "sprites/monsters/common/shadow-elf/shadow-elf.gif": {
-      "hash": "bff1c6fe",
-      "size": 3528
+      "hash": "b270fee4",
+      "size": 5698
     },
     "sprites/monsters/common/shadow-elf/shadow-elf_east.png": {
-      "hash": "4aef7e3d",
-      "size": 760
+      "hash": "e14fc897",
+      "size": 1418
     },
     "sprites/monsters/common/shadow-elf/shadow-elf_north-east.png": {
-      "hash": "e4b0b2b7",
-      "size": 749
+      "hash": "ef8c003c",
+      "size": 1613
     },
     "sprites/monsters/common/shadow-elf/shadow-elf_north-west.png": {
-      "hash": "296c4bfa",
-      "size": 795
+      "hash": "625ec485",
+      "size": 1673
     },
     "sprites/monsters/common/shadow-elf/shadow-elf_north.png": {
-      "hash": "afe70571",
-      "size": 726
+      "hash": "08432979",
+      "size": 1438
     },
     "sprites/monsters/common/shadow-elf/shadow-elf_south-east.png": {
-      "hash": "e56a7887",
-      "size": 1027
+      "hash": "b4687bf4",
+      "size": 1646
     },
     "sprites/monsters/common/shadow-elf/shadow-elf_south-west.png": {
-      "hash": "3c551287",
-      "size": 1013
+      "hash": "ef725ef6",
+      "size": 1716
     },
     "sprites/monsters/common/shadow-elf/shadow-elf_south.png": {
-      "hash": "f14a8c19",
-      "size": 950
+      "hash": "8f2a4ff5",
+      "size": 1612
     },
     "sprites/monsters/common/shadow-elf/shadow-elf_west.png": {
-      "hash": "c5d0ca3a",
-      "size": 794
+      "hash": "1a5b13a0",
+      "size": 1414
     },
     "sprites/monsters/common/skeleton/skeleton.gif": {
-      "hash": "bb789a16",
-      "size": 4073
+      "hash": "a95562e2",
+      "size": 4683
     },
     "sprites/monsters/common/skeleton/skeleton_east.png": {
-      "hash": "f3eb8ad4",
-      "size": 922
+      "hash": "65a1d939",
+      "size": 926
     },
     "sprites/monsters/common/skeleton/skeleton_north-east.png": {
-      "hash": "ba44285a",
-      "size": 1004
+      "hash": "760ccded",
+      "size": 1139
     },
     "sprites/monsters/common/skeleton/skeleton_north-west.png": {
-      "hash": "be8b4ad3",
-      "size": 971
+      "hash": "26d97d9c",
+      "size": 1192
     },
     "sprites/monsters/common/skeleton/skeleton_north.png": {
-      "hash": "1334ffab",
-      "size": 1014
+      "hash": "b299140d",
+      "size": 1284
     },
     "sprites/monsters/common/skeleton/skeleton_south-east.png": {
-      "hash": "335f58da",
-      "size": 1105
+      "hash": "9afe0e4c",
+      "size": 1284
     },
     "sprites/monsters/common/skeleton/skeleton_south-west.png": {
-      "hash": "fe54c290",
-      "size": 1007
+      "hash": "99a587ad",
+      "size": 1250
     },
     "sprites/monsters/common/skeleton/skeleton_south.png": {
-      "hash": "2c2844ae",
-      "size": 1013
+      "hash": "7d4ad994",
+      "size": 1354
     },
     "sprites/monsters/common/skeleton/skeleton_west.png": {
-      "hash": "24572648",
-      "size": 895
+      "hash": "42462b1e",
+      "size": 948
     },
     "sprites/monsters/common/wolf/wolf.gif": {
-      "hash": "e4c604d4",
-      "size": 2981
+      "hash": "c57c84a2",
+      "size": 6976
     },
     "sprites/monsters/common/wolf/wolf_east.png": {
-      "hash": "fca143e0",
-      "size": 750
+      "hash": "c4d56bae",
+      "size": 2006
     },
     "sprites/monsters/common/wolf/wolf_north-east.png": {
-      "hash": "ccd6537f",
-      "size": 770
+      "hash": "e1f202e2",
+      "size": 1958
     },
     "sprites/monsters/common/wolf/wolf_north-west.png": {
-      "hash": "29ed48b1",
-      "size": 789
+      "hash": "785dce5c",
+      "size": 1963
     },
     "sprites/monsters/common/wolf/wolf_north.png": {
-      "hash": "c5a45ffd",
-      "size": 561
+      "hash": "9bdc1057",
+      "size": 1575
     },
     "sprites/monsters/common/wolf/wolf_south-east.png": {
-      "hash": "31c0cc81",
-      "size": 847
+      "hash": "d2c97347",
+      "size": 2142
     },
     "sprites/monsters/common/wolf/wolf_south-west.png": {
-      "hash": "d91e2435",
-      "size": 804
+      "hash": "96b1605b",
+      "size": 2107
     },
     "sprites/monsters/common/wolf/wolf_south.png": {
-      "hash": "c77ff0d4",
-      "size": 701
+      "hash": "3045aaec",
+      "size": 1832
     },
     "sprites/monsters/common/wolf/wolf_west.png": {
-      "hash": "dfceb823",
-      "size": 716
+      "hash": "fa2a0dfa",
+      "size": 1985
     },
     "sprites/monsters/common/wyvern/wyvern.gif": {
       "hash": "b48785e5",
@@ -2720,40 +2720,40 @@
       "size": 2369
     },
     "sprites/monsters/common/zombie/zombie.gif": {
-      "hash": "aabb80d6",
-      "size": 3724
+      "hash": "e9e9331e",
+      "size": 5660
     },
     "sprites/monsters/common/zombie/zombie_east.png": {
-      "hash": "1d523f20",
-      "size": 823
+      "hash": "9c22def0",
+      "size": 1355
     },
     "sprites/monsters/common/zombie/zombie_north-east.png": {
-      "hash": "4edd818f",
-      "size": 894
+      "hash": "3e51a73d",
+      "size": 1341
     },
     "sprites/monsters/common/zombie/zombie_north-west.png": {
-      "hash": "c6f300ad",
-      "size": 914
+      "hash": "0a730e0e",
+      "size": 1337
     },
     "sprites/monsters/common/zombie/zombie_north.png": {
-      "hash": "021b1713",
-      "size": 949
+      "hash": "f69534d8",
+      "size": 1232
     },
     "sprites/monsters/common/zombie/zombie_south-east.png": {
-      "hash": "b08d6aeb",
-      "size": 965
+      "hash": "90c3818c",
+      "size": 1359
     },
     "sprites/monsters/common/zombie/zombie_south-west.png": {
-      "hash": "988259f3",
-      "size": 938
+      "hash": "bb110a51",
+      "size": 1373
     },
     "sprites/monsters/common/zombie/zombie_south.png": {
-      "hash": "93c5b3d6",
-      "size": 1032
+      "hash": "0923310e",
+      "size": 1440
     },
     "sprites/monsters/common/zombie/zombie_west.png": {
-      "hash": "b504e29f",
-      "size": 831
+      "hash": "cd954da1",
+      "size": 1376
     },
     "sprites/player/bard/bard-tier-4.gif": {
       "hash": "028fbe0d",

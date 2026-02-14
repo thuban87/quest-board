@@ -365,7 +365,7 @@ An eye beast in pixel art style, front-facing hovering pose. Large central eye w
 ### 💀 Undead
 - [ ] Skeleton
 - [ ] Zombie
-- [ ] Ghost
+- [x] Ghost ✅ 2026-02-13
 
 ### 👺 Goblins
 - [ ] Goblin
@@ -385,11 +385,11 @@ An eye beast in pixel art style, front-facing hovering pose. Large central eye w
 - [ ] Berserker
 
 ### 🐉 Dragonkin
-- [ ] Drake
-- [ ] Wyvern
+- [x] Drake ✅ 2026-02-13
+- [x] Wyvern ✅ 2026-02-13
 
 ### 👁️ Aberrations
-- [ ] Mimic
+- [x] Mimic ✅ 2026-02-13
 - [ ] Eye Beast
 
 ---
@@ -497,35 +497,35 @@ An incomprehensible void spawn boss in pixel art style, front-facing eldritch ho
 ### 🐺 Beast Bosses
 - [ ] Alpha Wolf (`boss-alpha-wolf`)
 - [ ] Grizzled Ancient (`boss-grizzled-ancient`)
-- [ ] Rat King (`boss-rat-king`)
+- [x] Rat King (`boss-rat-king`)
 
 ### 💀 Undead Bosses
-- [ ] Bone Collector (`boss-bone-collector`)
-- [ ] Lich (`boss-lich`)
-- [ ] Wraith Lord (`boss-wraith-lord`)
+- [x] Bone Collector (`boss-bone-collector`) ✅ 2026-02-13
+- [x] Lich (`boss-lich`) ✅ 2026-02-13
+- [x] Wraith Lord (`boss-wraith-lord`) ✅ 2026-02-13
 
 ### 👺 Goblin Bosses
-- [ ] Goblin Warlord (`boss-goblin-warlord`)
-- [ ] Bugbear Tyrant (`boss-bugbear-tyrant`)
+- [x] Goblin Warlord (`boss-goblin-warlord`) ✅ 2026-02-13
+- [x] Bugbear Tyrant (`boss-bugbear-tyrant`) ✅ 2026-02-13
 
 ### 🧌 Troll Bosses
-- [ ] Mountain Troll (`boss-mountain-troll`)
-- [ ] Swamp Horror (`boss-swamp-horror`)
+- [x] Mountain Troll (`boss-mountain-troll`) ✅ 2026-02-13
+- [x] Swamp Horror (`boss-swamp-horror`) ✅ 2026-02-13
 
 ### 🧝 Night Elf Bosses
-- [ ] Shadow Assassin (`boss-shadow-assassin`)
-- [ ] Dark Matriarch (`boss-dark-matriarch`)
+- [x] Shadow Assassin (`boss-shadow-assassin`) ✅ 2026-02-13
+- [x] Dark Matriarch (`boss-dark-matriarch`) ✅ 2026-02-13
 
 ### ⛏️ Dwarf Bosses
-- [ ] Ironforge Champion (`boss-ironforge-champion`)
-- [ ] Rune Berserker (`boss-rune-berserker`)
+- [x] Ironforge Champion (`boss-ironforge-champion`) ✅ 2026-02-13
+- [x] Rune Berserker (`boss-rune-berserker`) ✅ 2026-02-13
 
 ### 🐉 Dragonkin Bosses
-- [ ] Elder Drake (`boss-elder-drake`)
-- [ ] Wyvern Matriarch (`boss-wyvern-matriarch`)
-- [ ] Ancient Dragon (`boss-ancient-dragon`)
+- [x] Elder Drake (`boss-elder-drake`) ✅ 2026-02-13
+- [x] Wyvern Matriarch (`boss-wyvern-matriarch`) ✅ 2026-02-13
+- [x] Ancient Dragon (`boss-ancient-dragon`) ✅ 2026-02-13
 
 ### 👁️ Aberration Bosses
-- [ ] The Devourer (`boss-the-devourer`)
-- [ ] Beholder (`boss-beholder`)
-- [ ] Void Spawn (`boss-void-spawn`)
+- [x] The Devourer (`boss-the-devourer`) ✅ 2026-02-13
+- [x] Beholder (`boss-beholder`) ✅ 2026-02-13
+- [x] Void Spawn (`boss-void-spawn`) ✅ 2026-02-13
