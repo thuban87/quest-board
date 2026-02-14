@@ -265,7 +265,7 @@ export const CASTLE_CRYPT: DungeonTemplate = {
                 { position: [7, 4], tier: 'master' },
             ],
             monsters: [
-                { position: [5, 2], pool: ['eye-beast'], isBoss: true },
+                { position: [5, 2], pool: ['boss-lich'], isBoss: true },
             ],
         },
     ],

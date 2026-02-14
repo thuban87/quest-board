@@ -48,6 +48,7 @@ export type ProgressCallback = (phase: 'generating' | 'validating' | 'saving', d
 // =====================
 
 export const VALID_MONSTER_IDS = new Set([
+    // Regular monsters
     'wolf', 'bear', 'giant-rat',           // beasts
     'skeleton', 'zombie', 'ghost',          // undead
     'goblin', 'hobgoblin', 'bugbear',      // goblins
@@ -56,6 +57,15 @@ export const VALID_MONSTER_IDS = new Set([
     'rogue-dwarf', 'berserker',            // dwarves
     'drake', 'wyvern',                     // dragonkin
     'mimic', 'eye-beast',                  // aberrations
+    // Boss monsters
+    'boss-alpha-wolf', 'boss-grizzled-ancient', 'boss-rat-king',  // beast bosses
+    'boss-bone-collector', 'boss-lich', 'boss-wraith-lord', // undead bosses
+    'boss-goblin-warlord', 'boss-bugbear-tyrant',          // goblin bosses
+    'boss-mountain-troll', 'boss-swamp-horror',            // troll bosses
+    'boss-shadow-assassin', 'boss-dark-matriarch',         // night elf bosses
+    'boss-ironforge-champion', 'boss-rune-berserker',      // dwarf bosses
+    'boss-elder-drake', 'boss-wyvern-matriarch', 'boss-ancient-dragon', // dragonkin bosses
+    'boss-the-devourer', 'boss-beholder', 'boss-void-spawn', // aberration bosses
 ]);
 
 const MONSTER_CATEGORIES: Record<string, string[]> = {

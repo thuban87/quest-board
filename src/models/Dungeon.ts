@@ -166,6 +166,7 @@ export interface RoomState {
     monstersKilled: string[];    // IDs of killed monsters
     trapsTriggered: string[];    // IDs of triggered traps
     puzzlesSolved: string[];     // IDs of solved puzzles
+    monsterRolls: Record<string, string>;  // Pre-rolled monster IDs: "monster_x_y" → templateId
 }
 
 /**

@@ -22,7 +22,7 @@ import { DungeonDeathModal, calculateRescueCost } from '../modals/DungeonDeathMo
 import { InventoryModal } from '../modals/InventoryModal';
 import { DungeonMapModal } from '../modals/DungeonMapModal';
 import { useUIStore } from '../store/uiStore';
-import type { Direction, RoomTemplate, TileSet, DungeonTemplate } from '../models/Dungeon';
+import type { Direction, RoomTemplate, RoomState, TileSet, DungeonTemplate } from '../models/Dungeon';
 import type { LootDrop } from '../models/Gear';
 
 // =====================
@@ -419,7 +419,7 @@ interface RoomGridProps {
     playerFacing: Direction;
     characterClass: string;
     characterLevel: number;
-    roomState?: { chestsOpened: string[]; monstersKilled: string[] };
+    roomState?: RoomState;
     onTileClick: (x: number, y: number) => void;
     tileSize: number;
     spriteOffset: number;
@@ -461,15 +461,12 @@ function RoomGrid({
             for (let x = 0; x < row.length; x++) {
                 const char = row[x];
 
-                // Look up monster sprite if this is a monster tile
+                // Look up monster sprite from pre-rolled ID
                 let monsterSpritePath: string | null = null;
-                if (char === LAYOUT_CHARS.MONSTER && room.monsters) {
-                    const monsterDef = room.monsters.find(m =>
-                        m.position[0] === x && m.position[1] === y
-                    );
-                    if (monsterDef && monsterDef.pool.length > 0) {
-                        // Use the first template ID and use SpriteService for proper path
-                        const templateId = monsterDef.pool[0];
+                if (char === LAYOUT_CHARS.MONSTER && roomState?.monsterRolls) {
+                    const monsterKey = `monster_${x}_${y}`;
+                    const templateId = roomState.monsterRolls[monsterKey];
+                    if (templateId) {
                         monsterSpritePath = getMonsterGifPath(assetFolder, adapter, templateId);
                     }
                 }
@@ -772,8 +769,10 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ assetFolder, adapter, 
                 );
 
                 if (monsterDef) {
-                    // Pick a random template from the pool
-                    const templateId = monsterDef.pool[Math.floor(Math.random() * monsterDef.pool.length)];
+                    // Use the pre-rolled template ID so it matches the tile sprite
+                    const roomState = useDungeonStore.getState().roomStates[currentRoomId];
+                    const templateId = roomState?.monsterRolls?.[monsterId]
+                        ?? monsterDef.pool[Math.floor(Math.random() * monsterDef.pool.length)];
                     const dungeonState = useDungeonStore.getState();
                     const monsterLevel = dungeonState.scaledLevel;
                     const tier = monsterDef.isBoss ? 'boss' : 'dungeon';
