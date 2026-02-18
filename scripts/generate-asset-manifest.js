@@ -27,6 +27,8 @@ function walkDir(dir, baseDir = dir) {
         const fullPath = path.join(dir, entry.name);
 
         if (entry.isDirectory()) {
+            // Skip archived sprites — old versions kept locally for review only
+            if (entry.name === 'archive') continue;
             Object.assign(files, walkDir(fullPath, baseDir));
         } else if (entry.isFile()) {
             const ext = path.extname(entry.name).toLowerCase();

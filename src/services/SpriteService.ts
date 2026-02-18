@@ -7,8 +7,9 @@
  * Path conventions:
  * - Player: assets/sprites/player/{class}/tier{n}/{class}_tier_{n}.gif (animated)
  * - Player: assets/sprites/player/{class}/tier{n}/{class}_tier_{n}_{direction}.png (static)
- * - Monster: assets/sprites/monsters/{monster-id}/{monster-id}.gif (animated)
- * - Monster: assets/sprites/monsters/{monster-id}/{monster-id}_{direction}.png (static)
+ * - Monster (common): assets/sprites/monsters/common/{monster-id}/{monster-id}.gif
+ * - Monster (boss):   assets/sprites/monsters/bosses/{monster-id}/{monster-id}.gif
+ * - Same pattern for directional PNGs with _{direction}.png suffix
  */
 
 import { DataAdapter } from 'obsidian';
@@ -87,6 +88,14 @@ export function getPlayerBattleSprite(
 // =====================
 
 /**
+ * Determine the monster subfolder based on ID convention.
+ * Boss monsters (id starts with 'boss-') go in 'bosses/', others in 'common/'.
+ */
+function getMonsterSubfolder(monsterId: string): string {
+    return monsterId.startsWith('boss-') ? 'bosses' : 'common';
+}
+
+/**
  * Get the path to an animated monster sprite (GIF)
  * Used for: Bounty modal, monster lexicon
  * 
@@ -99,8 +108,8 @@ export function getMonsterGifPath(
     monsterId: string
 ): string {
     const basePath = getBasePath(assetFolder);
-    // IDs now match folder names and filenames directly (kebab-case)
-    const filePath = `${basePath}/monsters/${monsterId}/${monsterId}.gif`;
+    const subfolder = getMonsterSubfolder(monsterId);
+    const filePath = `${basePath}/monsters/${subfolder}/${monsterId}/${monsterId}.gif`;
     return adapter.getResourcePath(filePath);
 }
 
@@ -118,8 +127,8 @@ export function getMonsterSpritePath(
     direction: SpriteDirection = MONSTER_BATTLE_DIRECTION
 ): string {
     const basePath = getBasePath(assetFolder);
-    // IDs now match folder names and filenames directly (kebab-case)
-    const filePath = `${basePath}/monsters/${monsterId}/${monsterId}_${direction}.png`;
+    const subfolder = getMonsterSubfolder(monsterId);
+    const filePath = `${basePath}/monsters/${subfolder}/${monsterId}/${monsterId}_${direction}.png`;
     return adapter.getResourcePath(filePath);
 }
 
@@ -144,9 +153,10 @@ export function getMonsterFallbackSprite(
     monsterId: string
 ): string {
     const basePath = getBasePath(assetFolder);
+    const subfolder = getMonsterSubfolder(monsterId);
 
     // Try south-west first (battle), then south (fallback for mimic-like monsters)
-    const primaryPath = `${basePath}/monsters/${monsterId}/${monsterId}_south-west.png`;
+    const primaryPath = `${basePath}/monsters/${subfolder}/${monsterId}/${monsterId}_south-west.png`;
 
     // Note: We can't actually check file existence synchronously in Obsidian
     // So we return primary and let the img element's onError handle fallback

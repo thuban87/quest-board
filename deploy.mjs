@@ -68,6 +68,9 @@ function copyDirRecursive(src, dest) {
 
     const entries = readdirSync(src);
     for (const entry of entries) {
+        // Skip archived sprites — old versions kept locally for review only
+        if (entry === 'archive') continue;
+
         const srcPath = join(src, entry);
         const destPath = join(dest, entry);
 

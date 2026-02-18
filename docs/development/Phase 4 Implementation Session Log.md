@@ -2062,3 +2062,118 @@ Changes:
 Files: pathValidator.ts, useQuestLoader.ts, useXPAward.ts
 ```
 
+---
+
+## 2026-02-18 - Sprite Sizing Tuning (84x84 Assets)
+
+**Focus:** Adjusting sprite sizing across all views to accommodate new 84x84 pixel art assets with transparent padding
+
+### Completed:
+
+#### Centralized Sprite Sizing System
+- ✅ Added CSS variables to `variables.css`: `--qb-sprite-scale: 1.5`, `--qb-sprite-xs/sm/md/lg/battle/battle-mob`
+- ✅ Uses `transform: scale()` with `overflow: hidden` containers to zoom past transparent padding
+- ✅ Battle view sprites (player + monster) — perfect at 1.5x scale
+- ✅ Full-page character sheet sprites — perfect at 1.5x scale
+- ✅ Sidebar character sheet sprites — good at 96px + 1.5x scale
+
+#### Sidebar Sprite Specificity Fix
+- ✅ Scoped `.qb-sheet-sprite` rules in `fullpage.css` under `.qb-charpage` parent
+- ✅ Prevented full-page 192px size from overriding sidebar's 96px size via CSS cascade
+- ✅ Removed inline width/height from `CharacterIdentity.tsx` to allow CSS control
+
+#### Dungeon Player Sprite
+- ✅ Added `--dungeon-sprite-scale: 2.0` variable
+- ✅ Applied scale to `.qb-player-image` — works perfectly
+
+#### Dungeon Monster Sprite (Root Cause Investigation)
+- ✅ **Root cause 1: CSS class collision** — `qb-monster-sprite` used by both combat.css (280px battle container div) and dungeon (img tag). Renamed dungeon monster `<img>` class to `qb-monster-image`
+- ✅ **Root cause 2: Animation vs transform conflict** — `qb-idle-float` animation keyframes use `transform: translateY()` which completely replaces any static `transform: scale()` on the same element. Moved animation to container div, kept scale on inner img
+- ✅ Wrapped dungeon monster `<img>` in `<div class="qb-dungeon-monster-sprite">` container (mirrors `.qb-player-sprite` pattern)
+- ✅ Added `--dungeon-monster-scale: 1.5` tunable variable
+
+#### Battle View Fix
+- ✅ Changed dungeon combat overlay to use `getMonsterBattleSprite()` (SW PNG) instead of `getMonsterGifPath()` (GIF)
+- ✅ Added `getMonsterBattleSprite` import to `DungeonView.tsx`
+
+### Files Changed:
+
+**CSS:**
+- `src/styles/variables.css` — Centralized sprite size variables, scale factors
+- `src/styles/combat.css` — `overflow: hidden` and scale transforms on battle containers
+- `src/styles/character.css` — `overflow: hidden` on sidebar sprite
+- `src/styles/fullpage.css` — Scoped sprite rules under `.qb-charpage`
+- `src/styles/dungeons.css` — `--dungeon-sprite-scale`, `--dungeon-monster-scale`, `.qb-dungeon-monster-sprite` container, `.qb-monster-image` with scale
+
+**Components:**
+- `src/components/DungeonView.tsx` — Wrapped monster img in container div, changed class to `qb-monster-image`, switched battle overlay to `getMonsterBattleSprite()`
+- `src/components/character/CharacterIdentity.tsx` — Removed inline width/height from sprite container
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Battle sprites (player + monster) display correctly
+- ✅ Full-page character sheet sprite sized correctly
+- ✅ Sidebar character sheet sprite sized correctly (96px)
+- ✅ Dungeon player sprite scaled correctly at 2.0x
+- ✅ Dungeon monster sprites scaled correctly at 1.5x (user-tuned via dev tools)
+- ✅ Dungeon battle overlay uses static SW PNG instead of GIF
+
+### Key Technical Lessons:
+- **CSS `animation` overrides static `transform`**: If an animation's keyframes set `transform`, they completely replace any static `transform` property on the same element. Solution: put animation and transform on different elements (container vs inner img).
+- **CSS class collisions across views**: Using the same class name (`qb-monster-sprite`) for both a battle view `<div>` container and a dungeon `<img>` element causes leaked styles. Use view-specific class names.
+
+### Blockers/Issues:
+- **Monster mismatch**: Ghost on dungeon map → skeleton in battle. Game logic issue in monster spawning, not sprite issue. Deferred.
+
+---
+
+## Next Session Prompt
+
+```
+Sprite sizing tuning complete. All views optimized for 84x84 pixel art.
+
+What was done:
+- Centralized sprite CSS variables with scale factors
+- Battle view, character sheets (full + sidebar), dungeon sprites all tuned
+- Root cause: animation keyframes were overriding scale transforms
+- Root cause: CSS class name collision between combat.css and dungeons.css
+- Battle overlay switched from GIF to SW PNG
+
+Known issue (deferred):
+- Monster mismatch between dungeon nav and battle (game logic, not sprite)
+
+Continue with Phase 4 priorities from Feature Roadmap v2.
+Key tuning variables in dungeons.css:
+  --dungeon-sprite-scale: 2.0  (player)
+  --dungeon-monster-scale: 1.5  (monsters)
+```
+
+## Git Commit Message
+
+```
+fix: tune sprite sizing across all views for 84x84 assets
+
+Centralized Sprite System:
+- Added CSS variables for sprite sizes and scale factors
+- transform: scale() + overflow: hidden to zoom past transparent padding
+- Battle view, character sheets, dungeon sprites all properly sized
+
+Dungeon Monster Fix (root cause):
+- Animation keyframes (qb-idle-float) were overriding static transform: scale()
+- Moved animation to container div, kept scale on inner img
+- Renamed dungeon monster class to avoid combat.css collision
+
+Battle View Fix:
+- Dungeon combat overlay now uses getMonsterBattleSprite() (SW PNG)
+  instead of getMonsterGifPath() (GIF)
+
+Tunable variables:
+  --qb-sprite-scale: 1.5 (battle/character sheet)
+  --dungeon-sprite-scale: 2.0 (dungeon player)
+  --dungeon-monster-scale: 1.5 (dungeon monsters)
+
+Files: variables.css, combat.css, character.css, fullpage.css,
+dungeons.css, DungeonView.tsx, CharacterIdentity.tsx
+```
+

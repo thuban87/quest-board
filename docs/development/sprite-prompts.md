@@ -162,13 +162,13 @@ A legendary cleric saint in pixel art style, south-facing portrait view. Wearing
 A novice bard in pixel art style, south-facing portrait view. Wearing colorful but worn traveling clothes with patches. Holding a simple wooden lute, slightly out of tune. Cheerful eager expression. Dramatic performing stance. No background.
 
 ### Tier 2 - Apprentice Bard  
-An apprentice bard in pixel art style, south-facing portrait view. Wearing flashy performer's outfit in pink and purple with jester-like flair. Playing an elegant lute with visible musical notes floating. Feathered cap. Charming confident smile. Theatrical bow stance. No background.
+An apprentice bard in pixel art style, south-facing portrait view. Wearing flashy performer's outfit in brown and green with purple accents. Playing an elegant lute with visible musical notes floating. Feathered cap. Charming confident smile. Theatrical bow stance. No background.
 
 ### Tier 3 - Journeyman Bard
 A journeyman bard minstrel in pixel art style, south-facing portrait view. Wearing elaborate bardic costume with cape and magical instrument case. Playing an enchanted lute with pink magical notes flowing from strings. Masquerade half-mask. Roses and hearts floating nearby. Captivating performance stance. No background.
 
 ### Tier 4 - Master Bard
-A master bard virtuoso in pixel art style, south-facing portrait view. Wearing magnificent stage costume in pink, purple and gold with flowing ribbons. Playing a legendary instrument radiating pink magical harmonies that enchant viewers. Elegant mask with musical note motif. Magical butterflies and hearts swirling. Star of the show presence. No background.
+A master bard virtuoso in pixel art style, south-facing portrait view. Wearing magnificent stage costume in brown and gold with purple accents and with flowing ribbons. Playing a legendary instrument radiating pink magical harmonies that enchant viewers. Elegant mask with musical note motif. Magical butterflies and hearts swirling. Star of the show presence. No background.
 
 ### Tier 5 - Legendary Bard
 A legendary bard legend in pixel art style, south-facing portrait view. Wearing reality-shaping performance attire that changes color with mood, made of woven music. Playing an instrument of pure harmonic energy creating visible symphonies. Crown of eternal inspiration. Reality bending to the music's beauty. Aura of overwhelming charisma. No background.
@@ -358,36 +358,174 @@ An eye beast in pixel art style, front-facing hovering pose. Large central eye w
 ## Monster Sprite Checklist
 
 ### 🐺 Beasts
-- [ ] Wolf
-- [ ] Bear
-- [ ] Giant Rat
+- [x] Wolf
+- [x] Bear
+- [x] Giant Rat
 
 ### 💀 Undead
-- [ ] Skeleton
-- [ ] Zombie
-- [ ] Ghost
+- [x] Skeleton
+- [x] Zombie
+- [x] Ghost ✅ 2026-02-13
 
 ### 👺 Goblins
-- [ ] Goblin
-- [ ] Hobgoblin
-- [ ] Bugbear
+- [x] Goblin
+- [x] Hobgoblin
+- [x] Bugbear
 
 ### 🧌 Trolls
-- [ ] Cave Troll
-- [ ] River Troll
+- [x] Cave Troll
+- [x] River Troll
 
 ### 🧝 Night Elves
-- [ ] Shadow Elf
-- [ ] Dark Ranger
+- [x] Shadow Elf
+- [x] Dark Ranger
 
 ### ⛏️ Dwarves
-- [ ] Rogue Dwarf
-- [ ] Berserker
+- [x] Rogue Dwarf
+- [x] Berserker
 
 ### 🐉 Dragonkin
-- [ ] Drake
-- [ ] Wyvern
+- [x] Drake ✅ 2026-02-13
+- [x] Wyvern ✅ 2026-02-13
 
 ### 👁️ Aberrations
-- [ ] Mimic
-- [ ] Eye Beast
+- [x] Mimic ✅ 2026-02-13
+- [x] Eye Beast
+
+---
+
+## Boss Monster Sprites
+
+All boss sprites should be **pixel art style**, **front-facing**, **imposing combat pose**, **no background**. Bosses should appear **noticeably larger and more powerful** than their base counterparts, with distinct visual tells of their elite status (crowns, glowing effects, ornate armor, unique coloring).
+
+---
+
+### 🐺 Beast Bosses
+
+#### Alpha Wolf
+A massive dire wolf boss in pixel art style, front-facing dominant stance. Silver fur with glowing golden eyes. Enormous size, towering over a normal wolf. Deep scars across muzzle. Hackles raised, teeth bared in commanding snarl. Aura of pack authority radiating from it. Dark fantasy RPG boss. No background.
+
+#### Grizzled Ancient
+A colossal ancient bear boss in pixel art style, front-facing threatening pose. Massive scarred body covered in patches of frost and ice. Gray-white fur matted with age. Standing on hind legs, towering and enormous. Claws like swords, eyes burning with primal fury. Battle scars covering entire body from countless fights. Dark fantasy RPG boss. No background.
+
+#### Rat King
+A grotesque rat king boss in pixel art style, front-facing horrific pose. A writhing mass of dozens of giant rats fused together, their tails knotted into an unholy crown formation. Multiple heads with glowing red eyes snapping in all directions. Unnaturally large, dripping with disease. Surrounded by swarming smaller rats. Dark fantasy RPG boss. No background.
+
+---
+
+### 💀 Undead Bosses
+
+#### Bone Collector
+A towering skeletal construct boss in pixel art style, front-facing menacing stance. Built from hundreds of collected bones fused together into a massive humanoid form. Wielding an enormous bone scythe. Multiple skulls embedded in torso. Glowing dark purple eye sockets. Tattered dark robes. Radiating necrotic energy. Dark fantasy RPG boss. No background.
+
+#### Lich
+An ancient lich boss in pixel art style, front-facing casting pose. Skeletal undead sorcerer in decayed royal robes of black and purple. Glowing phylactery hanging from neck. Hands crackling with necrotic green-black energy. Crown of dark iron on skull. Hollow eye sockets blazing with malevolent purple flame. Swirling dark magic aura. Dark fantasy RPG boss. No background.
+
+#### Wraith Lord
+A spectral knight boss in pixel art style, front-facing hovering combat stance. Translucent ghostly figure in ethereal plate armor. Wielding a massive spectral greatsword trailing dark mist. Glowing violet eyes burning with ancient rage. Tattered ghostly cape flowing upward. Chains of binding wrapped around arms. Surrounded by wisps of trapped souls. Dark fantasy RPG boss. No background.
+
+---
+
+### 👺 Goblin Bosses
+
+#### Goblin Warlord
+A goblin warlord boss in pixel art style, front-facing commanding stance. Large battle-hardened goblin chieftain in spiked black iron armor. Wielding a massive serrated war cleaver. Crown of bones and metal spikes. War paint across face, one eye scarred shut. Commanding and brutal, standing on a pile of broken weapons. Dark fantasy RPG boss. No background.
+
+#### Bugbear Tyrant
+A colossal bugbear tyrant boss in pixel art style, front-facing intimidating pose. Enormous bugbear towering over all goblinkin, muscles bulging impossibly. Wielding an uprooted tree trunk as a massive club. Crude crown of bent iron. Dark brown fur matted with trophies and chains. Eyes burning with savage intelligence. Ground cracking beneath its weight. Dark fantasy RPG boss. No background.
+
+---
+
+### 🧌 Troll Bosses
+
+#### Mountain Troll
+A massive mountain troll boss in pixel art style, front-facing towering stance. Enormous stone-skinned troll covered in moss, lichens, and embedded rocks. Gray rocky hide nearly impenetrable. Hunched but still towering over everything. Wielding a boulder in each hand. Small trees growing from shoulders. Nearly indistinguishable from a living mountain. Dark fantasy RPG boss. No background.
+
+#### Swamp Horror
+A mutated swamp horror boss in pixel art style, front-facing lurching pose. A nightmarish troll-thing mutated beyond recognition by swamp magic. Bloated body oozing toxic green sludge. Multiple twisted limbs. Vines and rotting vegetation growing from flesh. Pools of acid dripping from claws. Glowing sickly yellow-green eyes. Surrounded by toxic miasma. Dark fantasy RPG boss. No background.
+
+---
+
+### 🧝 Night Elf Bosses
+
+#### Shadow Assassin
+An elite shadow assassin boss in pixel art style, front-facing crouched strike pose. Dark elf assassin wreathed in living shadow. Midnight-black leather armor with violet runes. Twin wickedly curved daggers dripping green venom. Glowing violet eyes visible through shadow hood. Body partially dissolving into liquid darkness. Wisps of shadow trailing from every movement. Dark fantasy RPG boss. No background.
+
+#### Dark Matriarch
+A dark elf queen boss in pixel art style, front-facing regal casting pose. Ancient shadow elf queen in flowing black and violet robes of forbidden dark magic. Ornate dark crown with obsidian gems. Hands raised channeling swirling dark energy orbs. Long white hair floating with magical power. Piercing violet eyes radiating ancient malice. Shadow tendrils reaching from the ground around her. Dark fantasy RPG boss. No background.
+
+---
+
+### ⛏️ Dwarf Bosses
+
+#### Ironforge Champion
+A legendary dwarf champion boss in pixel art style, front-facing defensive battle stance. Stout powerful dwarf in ornate full plate armor inscribed with earth runes. Wielding a massive war hammer crackling with earth magic in one hand and a tower shield in the other. Elaborate horned helm. Thick braided beard with metal clasps. Ground trembling with earth energy at feet. Dark fantasy RPG boss. No background.
+
+#### Rune Berserker
+A frenzied rune berserker boss in pixel art style, front-facing berserk attack pose. Bare-chested muscular dwarf covered head to toe in glowing orange-red runes. Eyes blazing with pure elemental fury. Wielding two massive runic battle axes crackling with energy. Wild flaming red beard. War paint and ritual scars. Aura of raw elemental power exploding outward. Dark fantasy RPG boss. No background.
+
+---
+
+### 🐉 Dragonkin Bosses
+
+#### Elder Drake
+An ancient elder drake boss in pixel art style, front-facing aggressive roar pose. Massive dragon far larger than a normal drake. Scales shimmering like molten metal, glowing orange-red between plates. Enormous wings partially spread. Flames pouring from nostrils and between teeth. Battle-scarred with ancient wounds. Eyes burning with centuries of cunning. Dark fantasy RPG boss. No background.
+
+#### Wyvern Matriarch
+A wyvern matriarch boss in pixel art style, front-facing diving strike pose. Enormous queen wyvern, larger and deadlier than her brood. Dark green scales with iridescent shimmer. Massive bat-like wings fully spread. Barbed tail dripping potent venom, coiled to strike. Multiple scars from protecting her nest. Piercing intelligent eyes. Dark fantasy RPG boss. No background.
+
+#### Ancient Dragon
+A legendary ancient dragon boss in pixel art style, front-facing devastating roar pose. Colossal wyrm of immense power. Scales shimmering with arcane fire in red, gold, and purple. Enormous wings that blot out the sky. Crown of natural horns. Breath of pure arcane destruction leaking from jaws. Body radiating waves of heat. Eyes like molten gems of terrifying intelligence. The ultimate predator. Dark fantasy RPG boss. No background.
+
+---
+
+### 👁️ Aberration Bosses
+
+#### The Devourer
+A nightmarish devourer boss in pixel art style, front-facing attack pose. A massive mimic that has consumed hundreds of adventurers. Shifting mass of teeth, tongues, and gleaming treasure. Dozens of eyes peering from within. Half-digested armor and weapons visible in its amorphous body. Multiple grasping pseudopods. Far larger than a normal mimic. Horrifying amalgamation of chest and monster. Dark fantasy RPG boss. No background.
+
+#### Beholder
+A massive beholder boss in pixel art style, front-facing hovering pose. Enormous floating sphere of flesh covered in writhing eyestalks. Huge central eye glowing with anti-magic power. Each eyestalk emanating a different colored beam of reality-warping energy. Massive tooth-filled maw beneath the central eye. Alien and deeply unsettling. Tentacles writhing below. Dark fantasy RPG boss. No background.
+
+#### Void Spawn
+An incomprehensible void spawn boss in pixel art style, front-facing eldritch horror pose. An entity from beyond reality, form constantly shifting and impossible to fully perceive. Mass of writhing dark tentacles emerging from a tear in space. Multiple eyes that glow with cosmic void energy. Patches of starfield visible through its body. Reality warping and cracking around it. Deeply alien and terrifying. Dark fantasy RPG boss. No background.
+
+---
+
+## Boss Monster Sprite Checklist
+
+### 🐺 Beast Bosses
+- [x] Alpha Wolf (`boss-alpha-wolf`)
+- [x] Grizzled Ancient (`boss-grizzled-ancient`)
+- [x] Rat King (`boss-rat-king`)
+
+### 💀 Undead Bosses
+- [x] Bone Collector (`boss-bone-collector`) ✅ 2026-02-13
+- [x] Lich (`boss-lich`) ✅ 2026-02-13
+- [x] Wraith Lord (`boss-wraith-lord`) ✅ 2026-02-13
+
+### 👺 Goblin Bosses
+- [x] Goblin Warlord (`boss-goblin-warlord`) ✅ 2026-02-13
+- [x] Bugbear Tyrant (`boss-bugbear-tyrant`) ✅ 2026-02-13
+
+### 🧌 Troll Bosses
+- [x] Mountain Troll (`boss-mountain-troll`) ✅ 2026-02-13
+- [x] Swamp Horror (`boss-swamp-horror`) ✅ 2026-02-13
+
+### 🧝 Night Elf Bosses
+- [x] Shadow Assassin (`boss-shadow-assassin`) ✅ 2026-02-13
+- [x] Dark Matriarch (`boss-dark-matriarch`) ✅ 2026-02-13
+
+### ⛏️ Dwarf Bosses
+- [x] Ironforge Champion (`boss-ironforge-champion`) ✅ 2026-02-13
+- [x] Rune Berserker (`boss-rune-berserker`) ✅ 2026-02-13
+
+### 🐉 Dragonkin Bosses
+- [x] Elder Drake (`boss-elder-drake`) ✅ 2026-02-13
+- [x] Wyvern Matriarch (`boss-wyvern-matriarch`) ✅ 2026-02-13
+- [x] Ancient Dragon (`boss-ancient-dragon`) ✅ 2026-02-13
+
+### 👁️ Aberration Bosses
+- [x] The Devourer (`boss-the-devourer`) ✅ 2026-02-13
+- [x] Beholder (`boss-beholder`) ✅ 2026-02-13
+- [x] Void Spawn (`boss-void-spawn`) ✅ 2026-02-13

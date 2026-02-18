@@ -16,6 +16,7 @@ import type {
 import type { LootReward } from '../models/Gear';
 import { getDungeonTemplate } from '../data/dungeons';
 import { findSpawnPosition } from '../data/TileRegistry';
+import type { RoomTemplate } from '../models/Dungeon';
 import { useCharacterStore } from './characterStore';
 
 // ============================================
@@ -111,7 +112,27 @@ function createEmptyRoomState(): RoomState {
         monstersKilled: [],
         trapsTriggered: [],
         puzzlesSolved: [],
+        monsterRolls: {},
     };
+}
+
+/**
+ * Pre-roll monster template IDs for each monster tile in a room.
+ * Each monster position gets a random pick from its pool, stored
+ * so that the navigation sprite and combat encounter always match.
+ */
+function preRollMonsters(room: RoomTemplate): Record<string, string> {
+    const rolls: Record<string, string> = {};
+    if (!room.monsters) return rolls;
+
+    for (const monsterDef of room.monsters) {
+        if (monsterDef.pool.length === 0) continue;
+        const [x, y] = monsterDef.position;
+        const key = `monster_${x}_${y}`;
+        rolls[key] = monsterDef.pool[Math.floor(Math.random() * monsterDef.pool.length)];
+    }
+
+    return rolls;
 }
 
 // ============================================
@@ -163,7 +184,7 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             playerPosition: spawnPosition,
             playerFacing: 'south',
             visitedRooms: new Set(combinedRooms),
-            roomStates: { [firstRoom.id]: createEmptyRoomState() },
+            roomStates: { [firstRoom.id]: { ...createEmptyRoomState(), monsterRolls: preRollMonsters(firstRoom) } },
             pendingLoot: [],
             sessionGold: 0,
             sessionXP: 0,
@@ -246,10 +267,10 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
         // Calculate entry position based on which door we came through
         const entryPosition = getEntryPosition(room.layout, room.width, room.height, entryDirection);
 
-        // Initialize room state if first visit
+        // Initialize room state if first visit (pre-roll monsters)
         const newRoomStates = { ...state.roomStates };
         if (!newRoomStates[roomId]) {
-            newRoomStates[roomId] = createEmptyRoomState();
+            newRoomStates[roomId] = { ...createEmptyRoomState(), monsterRolls: preRollMonsters(room) };
         }
 
         const newVisitedRooms = new Set(state.visitedRooms);
@@ -345,9 +366,12 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
         // Clear monstersKilled from all rooms but keep chestsOpened
         const newRoomStates: Record<string, RoomState> = {};
         for (const [roomId, roomState] of Object.entries(state.roomStates)) {
+            // Re-roll monsters on restart so returning players see fresh encounters
+            const room = template.rooms.find(r => r.id === roomId);
             newRoomStates[roomId] = {
                 ...roomState,
-                monstersKilled: [], // Clear killed monsters
+                monstersKilled: [],
+                monsterRolls: room ? preRollMonsters(room) : {},
             };
         }
 

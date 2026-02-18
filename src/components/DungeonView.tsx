@@ -16,13 +16,13 @@ import { findPath, getFacingDirection, getStepPosition, canWalkTo } from '../uti
 import { lootGenerationService } from '../services/LootGenerationService';
 import { monsterService } from '../services/MonsterService';
 import { startBattleWithMonster } from '../services/BattleService';
-import { getMonsterGifPath, getPlayerSpritePath as getSpritePlayerPath, getPlayerBattleSprite } from '../services/SpriteService';
+import { getMonsterGifPath, getMonsterBattleSprite, getPlayerSpritePath as getSpritePlayerPath, getPlayerBattleSprite } from '../services/SpriteService';
 import { BattleView } from './BattleView';
 import { DungeonDeathModal, calculateRescueCost } from '../modals/DungeonDeathModal';
 import { InventoryModal } from '../modals/InventoryModal';
 import { DungeonMapModal } from '../modals/DungeonMapModal';
 import { useUIStore } from '../store/uiStore';
-import type { Direction, RoomTemplate, TileSet, DungeonTemplate } from '../models/Dungeon';
+import type { Direction, RoomTemplate, RoomState, TileSet, DungeonTemplate } from '../models/Dungeon';
 import type { LootDrop } from '../models/Gear';
 
 // =====================
@@ -167,22 +167,24 @@ function Tile({ char, x, y, tileSet, assetFolder, adapter, roomState, monsterSpr
                 style={floorPath ? { backgroundImage: `url("${floorPath}")` } : undefined}
             >
                 {monsterSpritePath ? (
-                    <img
-                        src={monsterSpritePath}
-                        alt="Monster"
-                        className="qb-monster-sprite"
-                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                            // Hide broken image and show emoji fallback (only once)
-                            e.currentTarget.style.display = 'none';
-                            const parent = e.currentTarget.parentElement;
-                            if (parent && !parent.querySelector('.qb-monster-emoji')) {
-                                const emoji = document.createElement('span');
-                                emoji.className = 'qb-tile-emoji qb-monster-emoji';
-                                emoji.innerText = '👹';
-                                parent.appendChild(emoji);
-                            }
-                        }}
-                    />
+                    <div className="qb-dungeon-monster-sprite">
+                        <img
+                            src={monsterSpritePath}
+                            alt="Monster"
+                            className="qb-monster-image"
+                            onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                                // Hide broken image and show emoji fallback (only once)
+                                e.currentTarget.style.display = 'none';
+                                const parent = e.currentTarget.parentElement?.parentElement;
+                                if (parent && !parent.querySelector('.qb-monster-emoji')) {
+                                    const emoji = document.createElement('span');
+                                    emoji.className = 'qb-tile-emoji qb-monster-emoji';
+                                    emoji.innerText = '👹';
+                                    parent.appendChild(emoji);
+                                }
+                            }}
+                        />
+                    </div>
                 ) : (
                     <span className="qb-tile-emoji qb-monster-emoji">👹</span>
                 )}
@@ -419,7 +421,7 @@ interface RoomGridProps {
     playerFacing: Direction;
     characterClass: string;
     characterLevel: number;
-    roomState?: { chestsOpened: string[]; monstersKilled: string[] };
+    roomState?: RoomState;
     onTileClick: (x: number, y: number) => void;
     tileSize: number;
     spriteOffset: number;
@@ -461,15 +463,12 @@ function RoomGrid({
             for (let x = 0; x < row.length; x++) {
                 const char = row[x];
 
-                // Look up monster sprite if this is a monster tile
+                // Look up monster sprite from pre-rolled ID
                 let monsterSpritePath: string | null = null;
-                if (char === LAYOUT_CHARS.MONSTER && room.monsters) {
-                    const monsterDef = room.monsters.find(m =>
-                        m.position[0] === x && m.position[1] === y
-                    );
-                    if (monsterDef && monsterDef.pool.length > 0) {
-                        // Use the first template ID and use SpriteService for proper path
-                        const templateId = monsterDef.pool[0];
+                if (char === LAYOUT_CHARS.MONSTER && roomState?.monsterRolls) {
+                    const monsterKey = `monster_${x}_${y}`;
+                    const templateId = roomState.monsterRolls[monsterKey];
+                    if (templateId) {
                         monsterSpritePath = getMonsterGifPath(assetFolder, adapter, templateId);
                     }
                 }
@@ -657,7 +656,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ assetFolder, adapter, 
 
     const isMobile = Platform.isMobile;
 
-    // Scalable tile/sprite sizes - desktop: 128px, mobile: 40px (smaller to fit more tiles)
+    // Scalable tile/sprite sizes - must match CSS vars in dungeons.css
     const tileSize = isMobile ? 40 : 128;
     const spriteOffset = isMobile ? 4 : 16;
 
@@ -772,8 +771,10 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ assetFolder, adapter, 
                 );
 
                 if (monsterDef) {
-                    // Pick a random template from the pool
-                    const templateId = monsterDef.pool[Math.floor(Math.random() * monsterDef.pool.length)];
+                    // Use the pre-rolled template ID so it matches the tile sprite
+                    const roomState = useDungeonStore.getState().roomStates[currentRoomId];
+                    const templateId = roomState?.monsterRolls?.[monsterId]
+                        ?? monsterDef.pool[Math.floor(Math.random() * monsterDef.pool.length)];
                     const dungeonState = useDungeonStore.getState();
                     const monsterLevel = dungeonState.scaledLevel;
                     const tier = monsterDef.isBoss ? 'boss' : 'dungeon';
@@ -1320,7 +1321,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ assetFolder, adapter, 
                     // Get current monster from battle store for sprite path
                     const currentMonster = useBattleStore.getState().monster;
                     const monsterSpritePath = currentMonster?.templateId
-                        ? getMonsterGifPath(assetFolder, adapter, currentMonster.templateId)
+                        ? getMonsterBattleSprite(assetFolder, adapter, currentMonster.templateId)
                         : undefined;
 
                     // Get player sprite path for battle (use south-facing for battle stance)
