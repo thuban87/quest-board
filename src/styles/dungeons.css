@@ -1,4 +1,4 @@
-﻿/* ===========================================
+/* ===========================================
    Dungeons CSS Module
    =========================================== */
 /* Note: Some styles in this file continue from elite-modal which starts elsewhere */
@@ -133,6 +133,8 @@
   --dungeon-tile-size: 128px;
   --dungeon-sprite-size: 96px;
   --dungeon-sprite-offset: 16px;
+  --dungeon-sprite-scale: 2.0;
+  --dungeon-monster-scale: 1.5;
   /* (128-96)/2 to center sprite on tile */
 
   display: flex;
@@ -178,8 +180,8 @@
 }
 
 .qb-dungeon-avatar-btn {
-  width: 48px;
-  height: 48px;
+  width: var(--qb-sprite-xs);
+  height: var(--qb-sprite-xs);
   border-radius: 50%;
   border: 2px solid var(--interactive-accent);
   background: var(--background-primary);
@@ -458,6 +460,7 @@
   height: var(--dungeon-sprite-size, 96px);
   pointer-events: none;
   z-index: 10;
+  overflow: hidden;
   /* Position is set via inline style using JS calculated values */
 }
 
@@ -466,6 +469,7 @@
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
+  transform: scale(var(--dungeon-sprite-scale, 1.5));
 }
 
 .qb-player-emoji {
@@ -1011,6 +1015,8 @@
    =========================================== */
 .qb-tile-monster {
   position: relative;
+  z-index: 5;
+  overflow: visible;
 }
 
 .qb-monster-emoji {
@@ -1020,13 +1026,23 @@
   z-index: 10;
 }
 
-.qb-monster-sprite {
+/* Dungeon Monster Sprite Container (mirrors .qb-player-sprite pattern) */
+.qb-dungeon-monster-sprite {
+  width: var(--dungeon-tile-size, 128px);
+  height: var(--dungeon-tile-size, 128px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: qb-idle-float 2s ease-in-out infinite;
+}
+
+.qb-monster-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
-  animation: qb-idle-float 2s ease-in-out infinite;
-  z-index: 10;
+  transform: scale(var(--dungeon-monster-scale, 3));
 }
 
 /* ===========================================

@@ -571,16 +571,16 @@
 /* ===========================================
    Character Sheet Sprite & Gear Slots
    =========================================== */
-.qb-sheet-sprite-container {
+.qb-charpage .qb-sheet-sprite-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--qb-spacing-xs);
 }
 
-.qb-sheet-sprite {
-  width: 128px;
-  height: 128px;
+.qb-charpage .qb-sheet-sprite {
+  width: var(--qb-sprite-lg);
+  height: var(--qb-sprite-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -590,7 +590,7 @@
   overflow: hidden;
 }
 
-.qb-sprite-image {
+.qb-charpage .qb-sprite-image {
   width: 100%;
   height: 100%;
   object-fit: contain;

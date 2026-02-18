@@ -36,6 +36,22 @@
   /* Transitions */
   --qb-transition-fast: 150ms ease;
   --qb-transition-normal: 250ms ease;
+
+  /* Sprite Sizes — centralized tokens for all sprite dimensions */
+  --qb-sprite-scale: 1.5;
+  /* Zoom factor to fill past transparent padding */
+  --qb-sprite-xs: 64px;
+  /* Dungeon avatar, small icons */
+  --qb-sprite-sm: 96px;
+  /* Sidebar character sheet */
+  --qb-sprite-md: 128px;
+  /* Default sprite-image, previews */
+  --qb-sprite-lg: 192px;
+  /* Character sheet container (full page) */
+  --qb-sprite-battle: 280px;
+  /* Battle view containers (player & monster) */
+  --qb-sprite-battle-mob: 140px;
+  /* Mobile battle sprites */
 }
 /* ===========================================
    Quest Board Container
@@ -590,12 +606,13 @@
   margin-bottom: var(--qb-spacing-xl);
 }
 .qb-sheet-sprite {
-  width: 80px;
-  height: 80px;
+  width: var(--qb-sprite-sm);
+  height: var(--qb-sprite-sm);
   border-radius: var(--qb-radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 .qb-sheet-emoji {
   font-size: 2.5rem;
@@ -798,7 +815,7 @@
 .qb-charpage .qb-sheet-sprite {
   border: 3px solid;
   box-shadow: 0 0 20px rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.35),
-              0 0 40px rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.15);
+    0 0 40px rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.15);
   border-radius: var(--qb-radius-lg);
 }
 .qb-charpage .qb-sprite-image {
@@ -835,15 +852,33 @@
     "acc1    boots   acc2   "
     ".       acc3    .      ";
 }
-.qb-paperdoll-slot-head       { grid-area: head; }
-.qb-paperdoll-slot-shield     { grid-area: shield; }
-.qb-paperdoll-slot-weapon     { grid-area: weapon; }
-.qb-paperdoll-slot-chest      { grid-area: chest; }
-.qb-paperdoll-slot-accessory1 { grid-area: acc1; }
-.qb-paperdoll-slot-legs       { grid-area: legs; }
-.qb-paperdoll-slot-accessory2 { grid-area: acc2; }
-.qb-paperdoll-slot-boots      { grid-area: boots; }
-.qb-paperdoll-slot-accessory3 { grid-area: acc3; }
+.qb-paperdoll-slot-head {
+  grid-area: head;
+}
+.qb-paperdoll-slot-shield {
+  grid-area: shield;
+}
+.qb-paperdoll-slot-weapon {
+  grid-area: weapon;
+}
+.qb-paperdoll-slot-chest {
+  grid-area: chest;
+}
+.qb-paperdoll-slot-accessory1 {
+  grid-area: acc1;
+}
+.qb-paperdoll-slot-legs {
+  grid-area: legs;
+}
+.qb-paperdoll-slot-accessory2 {
+  grid-area: acc2;
+}
+.qb-paperdoll-slot-boots {
+  grid-area: boots;
+}
+.qb-paperdoll-slot-accessory3 {
+  grid-area: acc3;
+}
 /* Center sprite silhouette */
 .qb-paperdoll-sprite {
   grid-area: sprite;
@@ -936,14 +971,14 @@
   font-size: 1rem;
 }
 /* When action menu is in the charpage top area, display as single row */
-.qb-charpage > .qb-action-menu {
+.qb-charpage>.qb-action-menu {
   margin-bottom: var(--qb-spacing-lg);
   flex-shrink: 0;
 }
-.qb-charpage > .qb-action-menu h3 {
+.qb-charpage>.qb-action-menu h3 {
   display: none;
 }
-.qb-charpage > .qb-action-menu .qb-action-menu-grid {
+.qb-charpage>.qb-action-menu .qb-action-menu-grid {
   grid-template-columns: repeat(6, 1fr);
 }
 .qb-action-menu-grid {
@@ -965,13 +1000,13 @@
   cursor: pointer;
   transition: all var(--qb-transition-fast);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06),
-              0 2px 6px rgba(0, 0, 0, 0.2);
+    0 2px 6px rgba(0, 0, 0, 0.2);
   min-height: 80px;
 }
 .qb-action-menu-btn:hover {
   transform: scale(1.04) translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3),
-              0 0 12px rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.3);
+    0 0 12px rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.3);
   border-color: var(--interactive-accent);
   background: rgba(0, 0, 0, 0.35);
 }
@@ -999,7 +1034,7 @@
 .theme-light .qb-action-menu-btn:hover {
   background: var(--background-secondary);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
-              0 0 8px rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.2);
+    0 0 8px rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.2);
 }
 /* ===========================================
    Consumables Belt
@@ -1240,8 +1275,8 @@
   border-radius: var(--qb-radius-md);
 }
 .qb-preview-sprite {
-  width: 96px;
-  height: 96px;
+  width: var(--qb-sprite-md);
+  height: var(--qb-sprite-md);
   margin: 0 auto var(--qb-spacing-md);
   border-radius: var(--qb-radius-md);
   display: flex;
@@ -3280,15 +3315,15 @@
 /* ===========================================
    Character Sheet Sprite & Gear Slots
    =========================================== */
-.qb-sheet-sprite-container {
+.qb-charpage .qb-sheet-sprite-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--qb-spacing-xs);
 }
-.qb-sheet-sprite {
-  width: 128px;
-  height: 128px;
+.qb-charpage .qb-sheet-sprite {
+  width: var(--qb-sprite-lg);
+  height: var(--qb-sprite-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3297,7 +3332,7 @@
   border-radius: var(--qb-radius-md);
   overflow: hidden;
 }
-.qb-sprite-image {
+.qb-charpage .qb-sprite-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -6732,8 +6767,8 @@
   max-width: 300px;
 }
 .qb-monster-sprite {
-  width: 240px;
-  height: 240px;
+  width: var(--qb-sprite-battle);
+  height: var(--qb-sprite-battle);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6741,6 +6776,7 @@
   border-radius: var(--qb-radius-md);
   border: 3px solid rgba(255, 255, 255, 0.3);
   animation: qb-idle-float 2s ease-in-out infinite;
+  overflow: hidden;
 }
 .qb-monster-sprite .qb-sprite-emoji {
   font-size: 6rem;
@@ -6873,8 +6909,8 @@
 }
 .qb-battle-player .qb-player-sprite {
   position: relative;
-  width: 240px;
-  height: 240px;
+  width: var(--qb-sprite-battle);
+  height: var(--qb-sprite-battle);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6884,15 +6920,17 @@
   animation: qb-idle-float 2s ease-in-out infinite;
   animation-delay: 0.5s;
   flex-shrink: 0;
+  overflow: hidden;
 }
 .qb-battle-player .qb-player-sprite .qb-sprite-emoji {
   font-size: 6rem;
 }
 .qb-battle-player .qb-player-sprite .qb-sprite-image {
-  width: 192px;
-  height: 192px;
+  width: 100%;
+  height: 100%;
   image-rendering: pixelated;
   object-fit: contain;
+  transform: scale(var(--qb-sprite-scale, 1));
 }
 .qb-defending-indicator {
   position: absolute;
@@ -7515,16 +7553,16 @@
 }
 /* Monster sprite - smaller for mobile */
 .qb-battle-view.mobile .qb-monster-sprite {
-  width: 100px;
-  height: 100px;
+  width: var(--qb-sprite-battle-mob);
+  height: var(--qb-sprite-battle-mob);
   max-width: 100%;
 }
 .qb-battle-view.mobile .qb-monster-sprite .qb-sprite-emoji {
   font-size: 3rem;
 }
 .qb-battle-view.mobile .qb-monster-sprite .qb-sprite-image {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
 }
 /* Monster info responsive */
@@ -7551,16 +7589,16 @@
 }
 /* Player sprite - smaller for mobile */
 .qb-battle-view.mobile .qb-battle-player .qb-player-sprite {
-  width: 100px;
-  height: 100px;
+  width: var(--qb-sprite-battle-mob);
+  height: var(--qb-sprite-battle-mob);
   max-width: 100%;
 }
 .qb-battle-view.mobile .qb-battle-player .qb-player-sprite .qb-sprite-emoji {
   font-size: 3rem;
 }
 .qb-battle-view.mobile .qb-battle-player .qb-player-sprite .qb-sprite-image {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
 }
 /* Player HP/Mana bars - text ABOVE the bar */
@@ -7704,18 +7742,20 @@
    Sprite Images (bundled assets)
    =========================================== */
 .qb-sprite-image {
-  width: 96px;
-  height: 96px;
+  width: var(--qb-sprite-md);
+  height: var(--qb-sprite-md);
   image-rendering: pixelated;
   object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+  transform: scale(var(--qb-sprite-scale, 1));
 }
-.qb-battle-player .qb-player-sprite .qb-sprite-image {
-  width: 192px;
-  height: 192px;
-}
-.qb-sheet-sprite .qb-sprite-image {
-  width: 96px;
-  height: 96px;
+.qb-battle-player .qb-player-sprite .qb-sprite-image,
+.qb-sheet-sprite .qb-sprite-image,
+.qb-preview-sprite .qb-sprite-image {
+  width: 100%;
+  height: 100%;
+  transform: scale(var(--qb-sprite-scale, 1));
 }
 .qb-sprite-emoji.hidden,
 .qb-sprite-image.hidden {
@@ -8391,6 +8431,8 @@
   --dungeon-tile-size: 128px;
   --dungeon-sprite-size: 96px;
   --dungeon-sprite-offset: 16px;
+  --dungeon-sprite-scale: 2.0;
+  --dungeon-monster-scale: 1.5;
   /* (128-96)/2 to center sprite on tile */
 
   display: flex;
@@ -8431,8 +8473,8 @@
   gap: var(--qb-spacing-sm);
 }
 .qb-dungeon-avatar-btn {
-  width: 48px;
-  height: 48px;
+  width: var(--qb-sprite-xs);
+  height: var(--qb-sprite-xs);
   border-radius: 50%;
   border: 2px solid var(--interactive-accent);
   background: var(--background-primary);
@@ -8674,6 +8716,7 @@
   height: var(--dungeon-sprite-size, 96px);
   pointer-events: none;
   z-index: 10;
+  overflow: hidden;
   /* Position is set via inline style using JS calculated values */
 }
 .qb-player-image {
@@ -8681,6 +8724,7 @@
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
+  transform: scale(var(--dungeon-sprite-scale, 1.5));
 }
 .qb-player-emoji {
   font-size: 2rem;
@@ -9156,6 +9200,8 @@
    =========================================== */
 .qb-tile-monster {
   position: relative;
+  z-index: 5;
+  overflow: visible;
 }
 .qb-monster-emoji {
   font-size: 3.5rem;
@@ -9163,13 +9209,22 @@
   animation: qb-idle-float 2s ease-in-out infinite;
   z-index: 10;
 }
-.qb-monster-sprite {
+/* Dungeon Monster Sprite Container (mirrors .qb-player-sprite pattern) */
+.qb-dungeon-monster-sprite {
+  width: var(--dungeon-tile-size, 128px);
+  height: var(--dungeon-tile-size, 128px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: qb-idle-float 2s ease-in-out infinite;
+}
+.qb-monster-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
-  animation: qb-idle-float 2s ease-in-out infinite;
-  z-index: 10;
+  transform: scale(var(--dungeon-monster-scale, 3));
 }
 /* ===========================================
    Minimap - Corner Overlay

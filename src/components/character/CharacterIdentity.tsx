@@ -35,8 +35,6 @@ export const CharacterIdentity: React.FC<CharacterIdentityProps> = ({
                     <div
                         className="qb-sheet-sprite"
                         style={{
-                            width: spriteSize,
-                            height: spriteSize,
                             borderColor: classInfo.primaryColor,
                             backgroundColor: classInfo.primaryColor + '33',
                         }}

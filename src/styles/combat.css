@@ -314,8 +314,8 @@
 }
 
 .qb-monster-sprite {
-  width: 240px;
-  height: 240px;
+  width: var(--qb-sprite-battle);
+  height: var(--qb-sprite-battle);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -323,6 +323,7 @@
   border-radius: var(--qb-radius-md);
   border: 3px solid rgba(255, 255, 255, 0.3);
   animation: qb-idle-float 2s ease-in-out infinite;
+  overflow: hidden;
 }
 
 .qb-monster-sprite .qb-sprite-emoji {
@@ -475,8 +476,8 @@
 
 .qb-battle-player .qb-player-sprite {
   position: relative;
-  width: 240px;
-  height: 240px;
+  width: var(--qb-sprite-battle);
+  height: var(--qb-sprite-battle);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -486,6 +487,7 @@
   animation: qb-idle-float 2s ease-in-out infinite;
   animation-delay: 0.5s;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .qb-battle-player .qb-player-sprite .qb-sprite-emoji {
@@ -493,10 +495,11 @@
 }
 
 .qb-battle-player .qb-player-sprite .qb-sprite-image {
-  width: 192px;
-  height: 192px;
+  width: 100%;
+  height: 100%;
   image-rendering: pixelated;
   object-fit: contain;
+  transform: scale(var(--qb-sprite-scale, 1));
 }
 
 .qb-defending-indicator {
@@ -1223,8 +1226,8 @@
 
 /* Monster sprite - smaller for mobile */
 .qb-battle-view.mobile .qb-monster-sprite {
-  width: 100px;
-  height: 100px;
+  width: var(--qb-sprite-battle-mob);
+  height: var(--qb-sprite-battle-mob);
   max-width: 100%;
 }
 
@@ -1233,8 +1236,8 @@
 }
 
 .qb-battle-view.mobile .qb-monster-sprite .qb-sprite-image {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
 }
 
@@ -1268,8 +1271,8 @@
 
 /* Player sprite - smaller for mobile */
 .qb-battle-view.mobile .qb-battle-player .qb-player-sprite {
-  width: 100px;
-  height: 100px;
+  width: var(--qb-sprite-battle-mob);
+  height: var(--qb-sprite-battle-mob);
   max-width: 100%;
 }
 
@@ -1278,8 +1281,8 @@
 }
 
 .qb-battle-view.mobile .qb-battle-player .qb-player-sprite .qb-sprite-image {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
 }
 
@@ -1445,20 +1448,21 @@
    Sprite Images (bundled assets)
    =========================================== */
 .qb-sprite-image {
-  width: 96px;
-  height: 96px;
+  width: var(--qb-sprite-md);
+  height: var(--qb-sprite-md);
   image-rendering: pixelated;
   object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+  transform: scale(var(--qb-sprite-scale, 1));
 }
 
-.qb-battle-player .qb-player-sprite .qb-sprite-image {
-  width: 192px;
-  height: 192px;
-}
-
-.qb-sheet-sprite .qb-sprite-image {
-  width: 96px;
-  height: 96px;
+.qb-battle-player .qb-player-sprite .qb-sprite-image,
+.qb-sheet-sprite .qb-sprite-image,
+.qb-preview-sprite .qb-sprite-image {
+  width: 100%;
+  height: 100%;
+  transform: scale(var(--qb-sprite-scale, 1));
 }
 
 .qb-sprite-emoji.hidden,

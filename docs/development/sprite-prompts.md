@@ -162,13 +162,13 @@ A legendary cleric saint in pixel art style, south-facing portrait view. Wearing
 A novice bard in pixel art style, south-facing portrait view. Wearing colorful but worn traveling clothes with patches. Holding a simple wooden lute, slightly out of tune. Cheerful eager expression. Dramatic performing stance. No background.
 
 ### Tier 2 - Apprentice Bard  
-An apprentice bard in pixel art style, south-facing portrait view. Wearing flashy performer's outfit in pink and purple with jester-like flair. Playing an elegant lute with visible musical notes floating. Feathered cap. Charming confident smile. Theatrical bow stance. No background.
+An apprentice bard in pixel art style, south-facing portrait view. Wearing flashy performer's outfit in brown and green with purple accents. Playing an elegant lute with visible musical notes floating. Feathered cap. Charming confident smile. Theatrical bow stance. No background.
 
 ### Tier 3 - Journeyman Bard
 A journeyman bard minstrel in pixel art style, south-facing portrait view. Wearing elaborate bardic costume with cape and magical instrument case. Playing an enchanted lute with pink magical notes flowing from strings. Masquerade half-mask. Roses and hearts floating nearby. Captivating performance stance. No background.
 
 ### Tier 4 - Master Bard
-A master bard virtuoso in pixel art style, south-facing portrait view. Wearing magnificent stage costume in pink, purple and gold with flowing ribbons. Playing a legendary instrument radiating pink magical harmonies that enchant viewers. Elegant mask with musical note motif. Magical butterflies and hearts swirling. Star of the show presence. No background.
+A master bard virtuoso in pixel art style, south-facing portrait view. Wearing magnificent stage costume in brown and gold with purple accents and with flowing ribbons. Playing a legendary instrument radiating pink magical harmonies that enchant viewers. Elegant mask with musical note motif. Magical butterflies and hearts swirling. Star of the show presence. No background.
 
 ### Tier 5 - Legendary Bard
 A legendary bard legend in pixel art style, south-facing portrait view. Wearing reality-shaping performance attire that changes color with mood, made of woven music. Playing an instrument of pure harmonic energy creating visible symphonies. Crown of eternal inspiration. Reality bending to the music's beauty. Aura of overwhelming charisma. No background.
@@ -358,31 +358,31 @@ An eye beast in pixel art style, front-facing hovering pose. Large central eye w
 ## Monster Sprite Checklist
 
 ### 🐺 Beasts
-- [ ] Wolf
-- [ ] Bear
-- [ ] Giant Rat
+- [x] Wolf
+- [x] Bear
+- [x] Giant Rat
 
 ### 💀 Undead
-- [ ] Skeleton
-- [ ] Zombie
+- [x] Skeleton
+- [x] Zombie
 - [x] Ghost ✅ 2026-02-13
 
 ### 👺 Goblins
-- [ ] Goblin
-- [ ] Hobgoblin
-- [ ] Bugbear
+- [x] Goblin
+- [x] Hobgoblin
+- [x] Bugbear
 
 ### 🧌 Trolls
-- [ ] Cave Troll
-- [ ] River Troll
+- [x] Cave Troll
+- [x] River Troll
 
 ### 🧝 Night Elves
-- [ ] Shadow Elf
-- [ ] Dark Ranger
+- [x] Shadow Elf
+- [x] Dark Ranger
 
 ### ⛏️ Dwarves
-- [ ] Rogue Dwarf
-- [ ] Berserker
+- [x] Rogue Dwarf
+- [x] Berserker
 
 ### 🐉 Dragonkin
 - [x] Drake ✅ 2026-02-13
@@ -390,7 +390,7 @@ An eye beast in pixel art style, front-facing hovering pose. Large central eye w
 
 ### 👁️ Aberrations
 - [x] Mimic ✅ 2026-02-13
-- [ ] Eye Beast
+- [x] Eye Beast
 
 ---
 
@@ -495,8 +495,8 @@ An incomprehensible void spawn boss in pixel art style, front-facing eldritch ho
 ## Boss Monster Sprite Checklist
 
 ### 🐺 Beast Bosses
-- [ ] Alpha Wolf (`boss-alpha-wolf`)
-- [ ] Grizzled Ancient (`boss-grizzled-ancient`)
+- [x] Alpha Wolf (`boss-alpha-wolf`)
+- [x] Grizzled Ancient (`boss-grizzled-ancient`)
 - [x] Rat King (`boss-rat-king`)
 
 ### 💀 Undead Bosses

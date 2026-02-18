@@ -253,16 +253,17 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 
 #### Tier 4: Polish & UI
 
-| Feature | Description | Effort |
-|---------|-------------|--------|
-| **Class Change Modal** | UI to change class (with XP cost) | Low |
-| **Dual-Class Unlock UI** | Modal at L25 for secondary class | Low |
-| **Smelting Gold Cost** | Charge gold based on tier of gear involved | Low |
-| **Cross-Class Gear Drops** | Get gear types you can't wear (for smelting, dual-class prep) | Low |
-| **Gear Reward Planning** | Define loot tables for raids and special quests | Medium |
-| **Enrage System** | Penalty for stale quests | Low |
-| **Export Stats** | Share progress | Low |
-| **Character Edit Modal** | Edit existing character (name, appearance) without resetting progress | Low |
+| Feature                    | Description                                                                                                             | Effort |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------ |
+| **Class Change Modal**     | UI to change class (with XP cost)                                                                                       | Low    |
+| **Dual-Class Unlock UI**   | Modal at L25 for secondary class                                                                                        | Low    |
+| **Smelting Gold Cost**     | Charge gold based on tier of gear involved                                                                              | Low    |
+| **Cross-Class Gear Drops** | Get gear types you can't wear (for smelting, dual-class prep)                                                           | Low    |
+| **Gear Reward Planning**   | Define loot tables for raids and special quests                                                                         | Medium |
+| **Enrage System**          | Penalty for stale quests                                                                                                | Low    |
+| **Export Stats**           | Share progress                                                                                                          | Low    |
+| **Character Edit Modal**   | Edit existing character (name, appearance) without resetting progress                                                   | Low    |
+| **Create quest from file** | Allow for creating a quest from a file, via a context menu in the file tree, a command palette and editor context menu. |        |
 
 ---
 
@@ -394,5 +395,5 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-02-08 (Power-Up Rebalance — pool gating, 7 new effects, Limit Break scaling, 163 tests)
+**Last Updated:** 2026-02-18 (Sprite Sizing Tuning — centralized CSS variables, dungeon monster fix, battle view GIF→PNG)
 

@@ -35,4 +35,20 @@
   /* Transitions */
   --qb-transition-fast: 150ms ease;
   --qb-transition-normal: 250ms ease;
+
+  /* Sprite Sizes — centralized tokens for all sprite dimensions */
+  --qb-sprite-scale: 1.5;
+  /* Zoom factor to fill past transparent padding */
+  --qb-sprite-xs: 64px;
+  /* Dungeon avatar, small icons */
+  --qb-sprite-sm: 96px;
+  /* Sidebar character sheet */
+  --qb-sprite-md: 128px;
+  /* Default sprite-image, previews */
+  --qb-sprite-lg: 192px;
+  /* Character sheet container (full page) */
+  --qb-sprite-battle: 280px;
+  /* Battle view containers (player & monster) */
+  --qb-sprite-battle-mob: 140px;
+  /* Mobile battle sprites */
 }

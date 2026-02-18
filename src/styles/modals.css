@@ -211,8 +211,8 @@
 }
 
 .qb-preview-sprite {
-  width: 96px;
-  height: 96px;
+  width: var(--qb-sprite-md);
+  height: var(--qb-sprite-md);
   margin: 0 auto var(--qb-spacing-md);
   border-radius: var(--qb-radius-md);
   display: flex;
