@@ -263,7 +263,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | **Enrage System**          | Penalty for stale quests                                                                                                | Low    |
 | **Export Stats**           | Share progress                                                                                                          | Low    |
 | **Character Edit Modal**   | Edit existing character (name, appearance) without resetting progress                                                   | Low    |
-| **Create quest from file** | Allow for creating a quest from a file, via a context menu in the file tree, a command palette and editor context menu. |        |
+| **Create quest from file** | Allow for creating a quest from a file, via a context menu in the file tree, a command palette and editor context menu. | ✅ Complete |
 
 ---
 

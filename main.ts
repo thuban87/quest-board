@@ -5,7 +5,7 @@
  * All business logic lives in services, components, and stores.
  */
 
-import { Plugin, WorkspaceLeaf } from 'obsidian';
+import { Plugin, WorkspaceLeaf, TFile } from 'obsidian';
 import { QuestBoardSettings, DEFAULT_SETTINGS, QuestBoardSettingTab } from './src/settings';
 import {
     QUEST_BOARD_VIEW_TYPE,
@@ -24,6 +24,7 @@ import { getAllDungeonTemplates, registerUserDungeons, clearUserDungeons, getRan
 import { loadUserDungeons, createDungeonTemplateDoc } from './src/services/UserDungeonLoader';
 import type { DungeonTemplate } from './src/models/Dungeon';
 import { CreateQuestModal } from './src/modals/CreateQuestModal';
+import { CreateQuestFromFileModal } from './src/modals/CreateQuestFromFileModal';
 import { AIQuestGeneratorModal } from './src/modals/AIQuestGeneratorModal';
 import { ApplicationGauntletModal, InterviewArenaModal } from './src/modals/JobHuntModal';
 import { openSmartTemplateModal } from './src/modals/SmartTemplateModal';
@@ -291,6 +292,58 @@ export default class QuestBoardPlugin extends Plugin {
                 }).open();
             },
         });
+
+        // Add command to create quest from current file
+        this.addCommand({
+            id: 'create-quest-from-file',
+            name: 'Create Quest from Current File',
+            checkCallback: (checking) => {
+                const file = this.app.workspace.getActiveFile();
+                if (file && file.extension === 'md') {
+                    if (!checking) {
+                        new CreateQuestFromFileModal(this.app, this, file, () => {
+                            this.app.workspace.trigger('quest-board:refresh');
+                        }).open();
+                    }
+                    return true;
+                }
+                return false;
+            },
+        });
+
+        // Context menu: file explorer right-click
+        this.registerEvent(
+            this.app.workspace.on('file-menu', (menu, file) => {
+                if (file instanceof TFile && file.extension === 'md') {
+                    menu.addItem((item) => {
+                        item.setTitle('Create quest from file')
+                            .setIcon('swords')
+                            .onClick(() => {
+                                new CreateQuestFromFileModal(this.app, this, file, () => {
+                                    this.app.workspace.trigger('quest-board:refresh');
+                                }).open();
+                            });
+                    });
+                }
+            })
+        );
+
+        // Context menu: editor right-click
+        this.registerEvent(
+            this.app.workspace.on('editor-menu', (menu, editor, info) => {
+                if (info.file) {
+                    menu.addItem((item) => {
+                        item.setTitle('Create quest from file')
+                            .setIcon('swords')
+                            .onClick(() => {
+                                new CreateQuestFromFileModal(this.app, this, info.file!, () => {
+                                    this.app.workspace.trigger('quest-board:refresh');
+                                }).open();
+                            });
+                    });
+                }
+            })
+        );
 
         // Add command for AI quest generation
         this.addCommand({
