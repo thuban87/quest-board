@@ -395,5 +395,5 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-02-19 (Obsidian Guidelines Alignment — Phase 1 complete: LICENSE, versions.json, manifest fixes, import cleanup; Phase 3 complete: confirm() → ConfirmModal conversion; Phase 4 complete: vault.modify → vault.process/processFrontMatter, fetch → requestUrl; Phase 5 complete: innerHTML → DOM API conversion; Phase 6 complete: vault.on() → registerEvent() event registration cleanup)
+**Last Updated:** 2026-02-19 (Obsidian Guidelines Alignment — Phase 1 complete: LICENSE, versions.json, manifest fixes, import cleanup; Phase 3 complete: confirm() → ConfirmModal conversion; Phase 4 complete: vault.modify → vault.process/processFrontMatter, fetch → requestUrl; Phase 5 complete: innerHTML → DOM API conversion; Phase 6 complete: vault.on() → registerEvent() event registration cleanup; Phase 7 complete: settings UI createEl(h*) → setHeading() conversion)
 

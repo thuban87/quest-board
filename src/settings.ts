@@ -226,12 +226,12 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        containerEl.createEl('h2', { text: 'Quest Board Settings' });
+        new Setting(containerEl).setHeading().setName('Quest Board Settings');
 
         // ═══════════════════════════════════════════════════════════════════
         // SECTION 1: ESSENTIAL SETTINGS
         // ═══════════════════════════════════════════════════════════════════
-        containerEl.createEl('h3', { text: 'Essential Settings' });
+        new Setting(containerEl).setHeading().setName('Essential Settings');
         containerEl.createEl('p', {
             text: 'Core settings required for the plugin to function.',
             cls: 'qb-section-description'
@@ -332,7 +332,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 }));
 
         // --- Asset Delivery ---
-        filePathsContent.createEl('h4', { text: '🎨 Asset Delivery' });
+        new Setting(filePathsContent).setHeading().setName('Asset Delivery');
 
         const assetFolderSetting = new Setting(filePathsContent)
             .setName('Asset Folder')
@@ -456,7 +456,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         // ═══════════════════════════════════════════════════════════════════
         // SECTION 3: GAMEPLAY SETTINGS
         // ═══════════════════════════════════════════════════════════════════
-        containerEl.createEl('h3', { text: 'Gameplay Settings' });
+        new Setting(containerEl).setHeading().setName('Gameplay Settings');
         containerEl.createEl('p', {
             text: 'Core game mechanics and progression settings.',
             cls: 'qb-section-description'
@@ -541,7 +541,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         // ═══════════════════════════════════════════════════════════════════
         // SECTION 4: QUEST MANAGEMENT
         // ═══════════════════════════════════════════════════════════════════
-        containerEl.createEl('h3', { text: 'Quest Management' });
+        new Setting(containerEl).setHeading().setName('Quest Management');
         containerEl.createEl('p', {
             text: 'Configure quest creation, templates, and folder settings.',
             cls: 'qb-section-description'
@@ -610,7 +610,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         // ═══════════════════════════════════════════════════════════════════
         // SECTION 5: KANBAN BOARD
         // ═══════════════════════════════════════════════════════════════════
-        containerEl.createEl('h3', { text: 'Kanban Board' });
+        new Setting(containerEl).setHeading().setName('Kanban Board');
         containerEl.createEl('p', {
             text: 'Customize Kanban columns and mobile display options.',
             cls: 'qb-section-description'
@@ -675,7 +675,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         // ═══════════════════════════════════════════════════════════════════
         // SECTION 6: DAILY NOTES INTEGRATION
         // ═══════════════════════════════════════════════════════════════════
-        containerEl.createEl('h3', { text: 'Daily Notes Integration' });
+        new Setting(containerEl).setHeading().setName('Daily Notes Integration');
         containerEl.createEl('p', {
             text: 'Log quest activity to your daily notes.',
             cls: 'qb-section-description'
@@ -748,7 +748,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
         // ═══════════════════════════════════════════════════════════════════
         // SECTION 7: AI FEATURES
         // ═══════════════════════════════════════════════════════════════════
-        containerEl.createEl('h3', { text: 'AI Features' });
+        new Setting(containerEl).setHeading().setName('AI Features');
         containerEl.createEl('p', {
             text: 'Configure AI-powered quest generation and dungeon creation.',
             cls: 'qb-section-description'
@@ -789,7 +789,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
 
         // Balance Testing Section (DEV ONLY - hidden in production builds)
         if (DEV_FEATURES_ENABLED) {
-            advancedContent.createEl('h4', { text: '🧪 Balance Testing' });
+            new Setting(advancedContent).setHeading().setName('Balance Testing');
 
             new Setting(advancedContent)
                 .setName('Enable Balance Test Logging')
@@ -834,7 +834,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         }));
 
                 // Test Character Generator
-                advancedContent.createEl('h5', { text: '⚡ Quick Test Character' });
+                new Setting(advancedContent).setHeading().setName('Quick Test Character');
                 advancedContent.createEl('p', {
                     text: 'Generate a test character with appropriate stats, gear, and skills for the selected level.',
                     cls: 'setting-item-description'
@@ -923,7 +923,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 }));
 
         // Excluded Set Folders Section
-        advancedContent.createEl('h4', { text: 'Set Bonus Configuration' });
+        new Setting(advancedContent).setHeading().setName('Set Bonus Configuration');
         advancedContent.createEl('p', {
             text: 'Quest folders that should NOT form gear sets. Gear from these folders will have no set membership.',
             cls: 'setting-item-description'
@@ -946,7 +946,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
 
         // Character Section (if character exists)
         if (this.plugin.settings.character) {
-            advancedContent.createEl('h4', { text: 'Character' });
+            new Setting(advancedContent).setHeading().setName('Character');
 
             new Setting(advancedContent)
                 .setName('Character Name')
@@ -1074,7 +1074,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         new AITestLabModal(this.app, this.plugin).open();
                     }));
 
-            devContent.createEl('h4', { text: '🧪 Gemini AI Testing (Inline - Legacy)' });
+            new Setting(devContent).setHeading().setName('Gemini AI Testing (Inline - Legacy)');
 
             new Setting(devContent)
                 .setName('Test Set Bonus Generation')
