@@ -376,6 +376,28 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
+## ✅ Obsidian Guidelines Alignment — Complete (2026-02-19)
+
+Pre-BRAT release audit addressing all community plugin guideline requirements. Completed across 13 phases in a single day.
+
+| Phase | Work | Impact |
+|-------|------|--------|
+| 1 | LICENSE, versions.json, manifest fixes, import cleanup | Release blockers resolved |
+| 2 | Production values reset | ⏸️ Deferred until public release |
+| 3 | `confirm()` → ConfirmModal (9 sites, 6 files) | No native browser dialogs |
+| 4 | `vault.modify()` → `vault.process()` (7 sites); `fetch()` → `requestUrl()` (5 sites) | Atomic file I/O, proper network API |
+| 5 | `innerHTML` → DOM API (13 sites, 5 files) | XSS surface eliminated |
+| 6 | `vault.on()` → `registerEvent()` (9 registrations, 5 files) | Auto-cleanup on plugin unload |
+| 7 | `createEl('h*')` → `setHeading()` (13 headings in settings) | Native Obsidian heading style |
+| 8-12 | `base.css` audit + retirement (33 dead selectors removed) | CSS namespace clean |
+| 13 | `@keyframes` renaming (12 keyframes, 3 CSS files) | Full `qb-` namespace compliance |
+
+**Key deliverables:** ConfirmModal class, 142 net lines removed in Phase 4, base.css fully retired, zero unprefixed CSS selectors/keyframes remaining.
+
+**Docs:** [Alignment Plan](launch-considerations/01%20-%20Obsidian%20guidelines%20alignment%20plan.md) | [Session Log](launch-considerations/Obsidian%20Alignment%20Session%20Log.md)
+
+---
+
 ## Architecture Notes
 
 ### File Counts (for reference)
@@ -395,5 +417,4 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-02-18 (Sprite Sizing Tuning — centralized CSS variables, dungeon monster fix, battle view GIF→PNG)
-
+**Last Updated:** 2026-02-19 (Obsidian Guidelines Alignment project COMPLETE — all 13 phases finished, Phase 2 deferred until public release)

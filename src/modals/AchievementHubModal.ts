@@ -6,6 +6,7 @@
  */
 
 import { App, Modal, Notice, Setting } from 'obsidian';
+import { ConfirmModal } from './ConfirmModal';
 import { Achievement, isUnlocked, getProgressPercent } from '../models/Achievement';
 import { useCharacterStore } from '../store/characterStore';
 import { AchievementService, calculateAchievementProgress } from '../services/AchievementService';
@@ -264,7 +265,13 @@ export class AchievementHubModal extends Modal {
     }
 
     private async deleteAchievement(achievement: Achievement) {
-        if (!confirm(`Delete "${achievement.name}"?`)) return;
+        const confirmed = await ConfirmModal.show(this.app, {
+            title: 'Delete Achievement',
+            message: `Delete "${achievement.name}"?`,
+            confirmText: 'Delete',
+            danger: true,
+        });
+        if (!confirmed) return;
 
         const achievements = useCharacterStore.getState().achievements;
         const updated = achievements.filter(a => a.id !== achievement.id);

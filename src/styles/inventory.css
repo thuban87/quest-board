@@ -835,10 +835,10 @@
 .qb-loot-emoji {
   font-size: 3rem;
   margin-bottom: var(--qb-spacing-sm);
-  animation: loot-bounce 0.6s ease;
+  animation: qb-loot-bounce 0.6s ease;
 }
 
-@keyframes loot-bounce {
+@keyframes qb-loot-bounce {
 
   0%,
   100% {
@@ -878,10 +878,10 @@
   background: var(--background-secondary);
   border-radius: var(--qb-radius-md);
   border: 2px solid var(--background-modifier-border);
-  animation: loot-slide-in 0.3s ease;
+  animation: qb-loot-slide-in 0.3s ease;
 }
 
-@keyframes loot-slide-in {
+@keyframes qb-loot-slide-in {
   0% {
     opacity: 0;
     transform: translateX(-20px);

@@ -5,7 +5,7 @@
  * Sets are based on quest folder structure.
  */
 
-import { App } from 'obsidian';
+import { App, requestUrl } from 'obsidian';
 import {
     GearItem,
     SetBonus,
@@ -296,25 +296,19 @@ Effect types:
 
 Be creative! Match stats to themes (fitness→strength, study→wisdom, work→intelligence).`;
 
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: {
-                            temperature: 0.8,
-                        },
-                    }),
-                }
-            );
+            const response = await requestUrl({
+                url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        temperature: 0.8,
+                    },
+                }),
+            });
 
-            if (!response.ok) {
-                throw new Error(`Gemini API error: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = response.json;
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
             if (!text) {
@@ -411,26 +405,20 @@ Effect types available:
 
 Be creative! The stat should match the theme (e.g., fitness→strength, study→wisdom, work→intelligence).`;
 
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: {
-                            temperature: 0.8,
-                            maxOutputTokens: 1024,
-                        },
-                    }),
-                }
-            );
+            const response = await requestUrl({
+                url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        temperature: 0.8,
+                        maxOutputTokens: 1024,
+                    },
+                }),
+            });
 
-            if (!response.ok) {
-                throw new Error(`Gemini API error: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = response.json;
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
             if (!text) {

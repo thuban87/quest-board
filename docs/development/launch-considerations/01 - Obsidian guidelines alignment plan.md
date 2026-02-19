@@ -18,7 +18,7 @@ This plan addresses all findings from the pre-BRAT release audit. Issues are org
 
 ---
 
-## Phase 1: Missing Files, Manifest Fixes & Import Cleanup
+## Phase 1: Missing Files, Manifest Fixes & Import Cleanup — ✅ Complete (2026-02-19)
 
 **Priority:** 🔴 Release Blocker
 **Scope:** Small — 3 new/modified files + import cleanup across 2 files
@@ -92,7 +92,7 @@ This plan addresses all findings from the pre-BRAT release audit. Issues are org
 
 ---
 
-## Phase 3: `confirm()` → ConfirmModal Conversion
+## Phase 3: `confirm()` → ConfirmModal Conversion ✅ Completed (2026-02-19)
 
 **Priority:** 🔴 Release Blocker (Obsidian guideline: no native browser dialogs)  
 **Scope:** Medium — 5 files, 9 call sites  
@@ -153,7 +153,7 @@ if (confirmed) {
 
 ---
 
-## Phase 4: `vault.modify()` → `vault.process()` Conversion + `fetch()` → `requestUrl()`
+## Phase 4: `vault.modify()` → `vault.process()` Conversion + `fetch()` → `requestUrl()` — ✅ Complete (2026-02-19)
 
 **Priority:** 🟡 Recommended (Obsidian best practices for atomic file ops and network requests)
 **Scope:** Medium — 10 files, 12 call sites (7 file I/O + 5 network)
@@ -273,7 +273,7 @@ const data = response.json;  // Note: requestUrl returns parsed JSON directly
 
 ---
 
-## Phase 5: `innerHTML` → DOM API Conversion
+## Phase 5: `innerHTML` → DOM API Conversion ✅ Completed 2026-02-19
 
 **Priority:** 🟡 Recommended (security surface reduction)  
 **Scope:** Medium-Large — 5+ files, 13+ call sites  
@@ -330,7 +330,7 @@ While the current `innerHTML` usage renders internal plugin data (not user-suppl
 
 ---
 
-## Phase 6: Event Registration Cleanup (`vault.on()` → `registerEvent()`)
+## Phase 6: Event Registration Cleanup (`vault.on()` → `registerEvent()`) ✅ Completed
 
 **Priority:** 🟡 Recommended (Obsidian best practice for resource cleanup)
 **Scope:** Medium — 5 files, ~9 event registrations
@@ -387,7 +387,7 @@ plugin.registerEvent(vault.on('create', async (file) => { ... }));
 
 ---
 
-## Phase 7: Settings UI — `createEl('h*')` → `setHeading()` Conversion
+## Phase 7: Settings UI — `createEl('h*')` → `setHeading()` Conversion — ✅ Complete (2026-02-19)
 
 **Priority:** 🟡 Recommended (Obsidian settings UI consistency)
 **Scope:** Small — 1 file, 13 call sites
@@ -429,7 +429,7 @@ The settings tab currently uses **zero** `setHeading()` calls and **13** `create
 
 ---
 
-## Phase 8: CSS Prefix — `base.css` Core Layout
+## Phase 8: CSS Prefix — `base.css` Core Layout — ✅ Complete (2026-02-19)
 
 **Priority:** 🟡 Recommended (CSS namespace collision prevention)  
 **Scope:** Small — 1 CSS file, 0-1 TS files  
@@ -462,7 +462,7 @@ The settings tab currently uses **zero** `setHeading()` calls and **13** `create
 
 ---
 
-## Phase 9: CSS Prefix — `base.css` Quest Columns
+## Phase 9: CSS Prefix — `base.css` Quest Columns — ✅ Complete (2026-02-19, collapsed into Phase 8)
 
 **Priority:** 🟡 Recommended  
 **Scope:** Small — 1 CSS file, potential TS updates  
@@ -486,7 +486,7 @@ The settings tab currently uses **zero** `setHeading()` calls and **13** `create
 
 ---
 
-## Phase 10: CSS Prefix — `base.css` Quest Cards
+## Phase 10: CSS Prefix — `base.css` Quest Cards — ✅ Complete (2026-02-19, collapsed into Phase 8)
 
 **Priority:** 🟡 Recommended  
 **Scope:** Small-Medium — 1 CSS file, 1-2 TS files  
@@ -519,7 +519,7 @@ The settings tab currently uses **zero** `setHeading()` calls and **13** `create
 
 ---
 
-## Phase 11: CSS Prefix — `base.css` Character & Stats
+## Phase 11: CSS Prefix — `base.css` Character & Stats — ✅ Complete (2026-02-19, collapsed into Phase 8)
 
 **Priority:** 🟡 Recommended  
 **Scope:** Small-Medium — 1 CSS file, 1 TS file  
@@ -552,7 +552,7 @@ The settings tab currently uses **zero** `setHeading()` calls and **13** `create
 
 ---
 
-## Phase 12: CSS Prefix — `base.css` Shared & Cleanup
+## Phase 12: CSS Prefix — `base.css` Shared & Cleanup — ✅ Complete (2026-02-19, collapsed into Phase 8)
 
 **Priority:** 🟡 Recommended  
 **Scope:** Small — 1 CSS file  
@@ -578,7 +578,7 @@ The settings tab currently uses **zero** `setHeading()` calls and **13** `create
 
 ---
 
-## Phase 13: CSS Prefix — `@keyframes` Renaming
+## Phase 13: CSS Prefix — `@keyframes` Renaming — ✅ Complete (2026-02-19)
 
 **Priority:** 🟡 Recommended  
 **Scope:** Small — 3 CSS files  

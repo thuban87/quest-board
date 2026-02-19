@@ -2,7 +2,6 @@
 /* All modules are bundled into styles.css during build */
 
 @import "./variables.css";
-@import "./base.css";
 @import "./kanban.css";
 @import "./character.css";
 @import "./modals.css";

@@ -500,7 +500,7 @@ export async function moveQuest(
         if (isAIGeneratedQuest(updatedQuest)) {
             saveResult = await saveAIQuest(vault, options.storageFolder, updatedQuest);
         } else {
-            saveResult = await saveManualQuest(vault, options.storageFolder, updatedQuest);
+            saveResult = await saveManualQuest(options.app!, vault, options.storageFolder, updatedQuest);
         }
 
         if (!saveResult) {
@@ -609,7 +609,7 @@ export async function completeQuest(
             if (isAIGeneratedQuest(updatedQuest)) {
                 await saveAIQuest(vault, options.storageFolder, updatedQuest);
             } else {
-                await saveManualQuest(vault, options.storageFolder, updatedQuest);
+                await saveManualQuest(options.app!, vault, options.storageFolder, updatedQuest);
             }
         } catch (error) {
             console.error('[QuestActionsService] Failed to save quest:', error);
@@ -630,6 +630,7 @@ export async function completeQuest(
  * Reopen a completed quest - clears completedDate, moves to first column, and logs event.
  */
 export async function reopenQuest(
+    app: App,
     vault: Vault,
     questId: string,
     storageFolder: string,
@@ -684,7 +685,7 @@ export async function reopenQuest(
         if (isAIGeneratedQuest(updatedQuest)) {
             await saveAIQuest(vault, storageFolder, updatedQuest);
         } else {
-            await saveManualQuest(vault, storageFolder, updatedQuest);
+            await saveManualQuest(app, vault, storageFolder, updatedQuest);
         }
     } catch (error) {
         console.error('[QuestActionsService] Failed to save reopened quest:', error);

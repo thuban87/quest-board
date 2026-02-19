@@ -87,16 +87,15 @@ export class InventoryManagementModal extends Modal {
         const headerEl = contentEl.createEl('div', { cls: 'qb-modal-header' });
         headerEl.style.justifyContent = 'center';
         headerEl.style.textAlign = 'center';
-        headerEl.innerHTML = `
-            <span class="qb-modal-icon">⚠️</span>
-            <div class="qb-modal-title-group">
-                <h2>${this.options.title || 'Inventory Full!'}</h2>
-                <p class="qb-modal-subtitle">
-                    You have <strong>${pendingCount}</strong> new item${pendingCount !== 1 ? 's' : ''} 
-                    but only <strong>${Math.max(0, freeSlots)}</strong> free slot${freeSlots !== 1 ? 's' : ''}.
-                </p>
-            </div>
-        `;
+        headerEl.createEl('span', { cls: 'qb-modal-icon', text: '⚠️' });
+        const titleGroup = headerEl.createEl('div', { cls: 'qb-modal-title-group' });
+        titleGroup.createEl('h2', { text: this.options.title || 'Inventory Full!' });
+        const subtitle = titleGroup.createEl('p', { cls: 'qb-modal-subtitle' });
+        subtitle.appendText('You have ');
+        subtitle.createEl('strong', { text: String(pendingCount) });
+        subtitle.appendText(` new item${pendingCount !== 1 ? 's' : ''} but only `);
+        subtitle.createEl('strong', { text: String(Math.max(0, freeSlots)) });
+        subtitle.appendText(` free slot${freeSlots !== 1 ? 's' : ''}.`);
 
         // Status bar (updates dynamically)
         const statusBar = contentEl.createEl('div', { cls: 'qb-inventory-status-bar' });
@@ -285,12 +284,22 @@ export class InventoryManagementModal extends Modal {
 
         // Running totals
         const totalsEl = statusBar.createEl('div', { cls: 'qb-status-totals' });
-        totalsEl.innerHTML = `
-            <span>📦 Keeping: <strong>${keepCount}</strong></span>
-            <span>🗑️ Trashing: <strong>${trashCount}</strong></span>
-            <span>💰 Selling: <strong>${sellCount}</strong> (${sellGold}g)</span>
-            <span>📊 Result: <strong>${afterAdd}/${character.inventoryLimit}</strong></span>
-        `;
+        const keepSpan = totalsEl.createEl('span');
+        keepSpan.appendText('📦 Keeping: ');
+        keepSpan.createEl('strong', { text: String(keepCount) });
+
+        const trashSpan = totalsEl.createEl('span');
+        trashSpan.appendText('🗑️ Trashing: ');
+        trashSpan.createEl('strong', { text: String(trashCount) });
+
+        const sellSpan = totalsEl.createEl('span');
+        sellSpan.appendText('💰 Selling: ');
+        sellSpan.createEl('strong', { text: String(sellCount) });
+        sellSpan.appendText(` (${sellGold}g)`);
+
+        const resultSpan = totalsEl.createEl('span');
+        resultSpan.appendText('📊 Result: ');
+        resultSpan.createEl('strong', { text: `${afterAdd}/${character.inventoryLimit}` });
 
         // Update confirm button state
         const confirmBtn = this.contentEl.querySelector('.qb-confirm-btn') as HTMLButtonElement;

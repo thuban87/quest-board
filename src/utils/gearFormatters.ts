@@ -168,61 +168,77 @@ function getStatDiffClass(diff: number): string {
 }
 
 /**
- * Format a stat difference with sign and styling.
+ * Create a stat difference element with sign and styling.
+ * Returns null if diff is 0 (no change).
  */
-function formatStatDiff(diff: number, label: string): string {
-    if (diff === 0) return '';
+function createStatDiff(diff: number, label: string): HTMLDivElement | null {
+    if (diff === 0) return null;
     const sign = diff > 0 ? '+' : '';
-    const cls = getStatDiffClass(diff);
-    return `<div class="${cls}">${sign}${diff} ${label}</div>`;
+    const el = document.createElement('div');
+    el.className = getStatDiffClass(diff);
+    el.textContent = `${sign}${diff} ${label}`;
+    return el;
 }
 
 /**
- * Create a detailed stat section for a single gear item.
+ * Build a detailed stat section for a single gear item into a parent element.
+ * Uses DocumentFragment for batched DOM insertion.
  */
-function buildGearStatsHtml(item: GearItem): string {
+function buildGearStats(parent: HTMLElement, item: GearItem): void {
     const tierInfo = TIER_INFO[item.tier];
-    const lines: string[] = [];
+    const frag = document.createDocumentFragment();
+
+    // Helper to create a div with class and text
+    const addDiv = (cls: string, text: string, style?: Partial<CSSStyleDeclaration>): HTMLDivElement => {
+        const el = document.createElement('div');
+        el.className = cls;
+        el.textContent = text;
+        if (style) {
+            Object.assign(el.style, style);
+        }
+        frag.appendChild(el);
+        return el;
+    };
 
     // Header with name colored by tier
-    lines.push(`<div class="qb-tt-name" style="color: ${tierInfo.color}">${item.name}</div>`);
+    addDiv('qb-tt-name', item.name, { color: tierInfo.color });
 
     // Tier, Level, Slot
-    lines.push(`<div class="qb-tt-tier">${tierInfo.emoji} ${tierInfo.name}</div>`);
-    lines.push(`<div class="qb-tt-meta">Level ${item.level} • ${GEAR_SLOT_NAMES[item.slot]}</div>`);
+    addDiv('qb-tt-tier', `${tierInfo.emoji} ${tierInfo.name}`);
+    addDiv('qb-tt-meta', `Level ${item.level} • ${GEAR_SLOT_NAMES[item.slot]}`);
 
     // Armor/Weapon type
     if (item.armorType) {
-        lines.push(`<div class="qb-tt-type">${ARMOR_TYPE_NAMES[item.armorType]}</div>`);
+        addDiv('qb-tt-type', ARMOR_TYPE_NAMES[item.armorType]);
     }
     if (item.weaponType) {
-        lines.push(`<div class="qb-tt-type">${WEAPON_TYPE_NAMES[item.weaponType]}</div>`);
+        addDiv('qb-tt-type', WEAPON_TYPE_NAMES[item.weaponType]);
     }
 
-    lines.push('<div class="qb-tt-divider"></div>');
+    addDiv('qb-tt-divider', '');
 
     // Primary stat
     const primaryStatName = STAT_NAMES[item.stats.primaryStat] || item.stats.primaryStat;
-    lines.push(`<div class="qb-tt-stat">+${item.stats.primaryValue} ${primaryStatName}</div>`);
+    addDiv('qb-tt-stat', `+${item.stats.primaryValue} ${primaryStatName}`);
 
     // Combat stats
     if (item.stats.attackPower) {
-        lines.push(`<div class="qb-tt-stat">+${item.stats.attackPower} Attack Power</div>`);
+        addDiv('qb-tt-stat', `+${item.stats.attackPower} Attack Power`);
     }
     if (item.stats.defense) {
-        lines.push(`<div class="qb-tt-stat">+${item.stats.defense} Defense</div>`);
+        addDiv('qb-tt-stat', `+${item.stats.defense} Defense`);
     }
     if (item.stats.magicDefense) {
-        lines.push(`<div class="qb-tt-stat">+${item.stats.magicDefense} Magic Defense</div>`);
+        addDiv('qb-tt-stat', `+${item.stats.magicDefense} Magic Defense`);
     }
     if (item.stats.critChance) {
-        lines.push(`<div class="qb-tt-stat">+${item.stats.critChance}% Crit Chance</div>`);
+        addDiv('qb-tt-stat', `+${item.stats.critChance}% Crit Chance`);
     }
     if (item.stats.dodgeChance) {
-        lines.push(`<div class="qb-tt-stat">+${item.stats.dodgeChance}% Dodge</div>`);
+        addDiv('qb-tt-stat', `+${item.stats.dodgeChance}% Dodge`);
     }
     if (item.stats.blockChance) {
-        lines.push(`<div class="qb-tt-stat">+${item.stats.blockChance}% Block</div>`);
+        addDiv('qb-tt-stat', `+${item.stats.blockChance}% Block`);
     }
 
     // Secondary stats
@@ -230,66 +246,68 @@ function buildGearStatsHtml(item: GearItem): string {
         for (const [stat, val] of Object.entries(item.stats.secondaryStats)) {
             if (val && val > 0) {
                 const statName = STAT_NAMES[stat] || stat;
-                lines.push(`<div class="qb-tt-stat">+${val} ${statName}</div>`);
+                addDiv('qb-tt-stat', `+${val} ${statName}`);
             }
         }
     }
 
     // Set info
     if (item.setName) {
-        lines.push('<div class="qb-tt-divider"></div>');
-        lines.push(`<div class="qb-tt-set">⚔️ ${item.setName} Set</div>`);
+        addDiv('qb-tt-divider', '');
+        addDiv('qb-tt-set', `⚔️ ${item.setName} Set`);
     }
 
     // Sell value
-    lines.push('<div class="qb-tt-divider"></div>');
-    lines.push(`<div class="qb-tt-sell">💰 Sell: ${item.sellValue || 0}g</div>`);
+    addDiv('qb-tt-divider', '');
+    addDiv('qb-tt-sell', `💰 Sell: ${item.sellValue || 0}g`);
 
-    return lines.join('');
+    parent.appendChild(frag); // Single DOM insertion
 }
 
 /**
- * Build the stat difference summary section.
+ * Build the stat difference summary section into a parent element.
+ * Uses DocumentFragment for batched DOM insertion.
  */
-function buildComparisonSummaryHtml(newItem: GearItem, equipped: GearItem): string {
-    const lines: string[] = [];
-    lines.push('<div class="qb-tt-comparison-header">If you equip this:</div>');
+function buildComparisonSummary(parent: HTMLElement, newItem: GearItem, equipped: GearItem): void {
+    const frag = document.createDocumentFragment();
+
+    const header = document.createElement('div');
+    header.className = 'qb-tt-comparison-header';
+    header.textContent = 'If you equip this:';
+    frag.appendChild(header);
+
+    // Helper to append stat diff if non-zero
+    let hasChanges = false;
+    const appendDiff = (diff: number, label: string) => {
+        const el = createStatDiff(diff, label);
+        if (el) {
+            frag.appendChild(el);
+            hasChanges = true;
+        }
+    };
 
     // Primary stat
     const primaryDiff = newItem.stats.primaryValue - equipped.stats.primaryValue;
     const primaryStatName = STAT_NAMES[newItem.stats.primaryStat] || newItem.stats.primaryStat;
-    const primaryStr = formatStatDiff(primaryDiff, primaryStatName);
-    if (primaryStr) lines.push(primaryStr);
+    appendDiff(primaryDiff, primaryStatName);
 
     // Attack Power
-    const atkDiff = (newItem.stats.attackPower || 0) - (equipped.stats.attackPower || 0);
-    const atkStr = formatStatDiff(atkDiff, 'Attack Power');
-    if (atkStr) lines.push(atkStr);
+    appendDiff((newItem.stats.attackPower || 0) - (equipped.stats.attackPower || 0), 'Attack Power');
 
     // Defense
-    const defDiff = (newItem.stats.defense || 0) - (equipped.stats.defense || 0);
-    const defStr = formatStatDiff(defDiff, 'Defense');
-    if (defStr) lines.push(defStr);
+    appendDiff((newItem.stats.defense || 0) - (equipped.stats.defense || 0), 'Defense');
 
     // Magic Defense
-    const mdefDiff = (newItem.stats.magicDefense || 0) - (equipped.stats.magicDefense || 0);
-    const mdefStr = formatStatDiff(mdefDiff, 'Magic Defense');
-    if (mdefStr) lines.push(mdefStr);
+    appendDiff((newItem.stats.magicDefense || 0) - (equipped.stats.magicDefense || 0), 'Magic Defense');
 
     // Crit
-    const critDiff = (newItem.stats.critChance || 0) - (equipped.stats.critChance || 0);
-    const critStr = formatStatDiff(critDiff, '% Crit');
-    if (critStr) lines.push(critStr);
+    appendDiff((newItem.stats.critChance || 0) - (equipped.stats.critChance || 0), '% Crit');
 
     // Dodge
-    const dodgeDiff = (newItem.stats.dodgeChance || 0) - (equipped.stats.dodgeChance || 0);
-    const dodgeStr = formatStatDiff(dodgeDiff, '% Dodge');
-    if (dodgeStr) lines.push(dodgeStr);
+    appendDiff((newItem.stats.dodgeChance || 0) - (equipped.stats.dodgeChance || 0), '% Dodge');
 
     // Block
-    const blockDiff = (newItem.stats.blockChance || 0) - (equipped.stats.blockChance || 0);
-    const blockStr = formatStatDiff(blockDiff, '% Block');
-    if (blockStr) lines.push(blockStr);
+    appendDiff((newItem.stats.blockChance || 0) - (equipped.stats.blockChance || 0), '% Block');
 
     // Secondary stats comparison
     const allSecondaryStats = new Set([
@@ -301,16 +319,17 @@ function buildComparisonSummaryHtml(newItem: GearItem, equipped: GearItem): stri
         const oldVal = equipped.stats.secondaryStats?.[stat as keyof typeof equipped.stats.secondaryStats] || 0;
         const diff = (newVal as number) - (oldVal as number);
         const statName = STAT_NAMES[stat] || stat;
-        const str = formatStatDiff(diff, statName);
-        if (str) lines.push(str);
+        appendDiff(diff, statName);
     }
 
-    if (lines.length === 1) {
-        // No differences - just the header
-        lines.push('<div class="qb-stat-neutral">No stat changes</div>');
+    if (!hasChanges) {
+        const noChange = document.createElement('div');
+        noChange.className = 'qb-stat-neutral';
+        noChange.textContent = 'No stat changes';
+        frag.appendChild(noChange);
     }
 
-    return lines.join('');
+    parent.appendChild(frag); // Single DOM insertion
 }
 
 /**
@@ -328,7 +347,7 @@ export function createGearComparisonTooltip(
     // Single item (no comparison)
     if (!equipped) {
         const panel = tooltip.createEl('div', { cls: 'qb-tt-panel qb-tt-single' });
-        panel.innerHTML = buildGearStatsHtml(item);
+        buildGearStats(panel, item);
         return tooltip;
     }
 
@@ -339,17 +358,17 @@ export function createGearComparisonTooltip(
     const leftPanel = tooltip.createEl('div', { cls: 'qb-tt-panel qb-tt-new' });
     leftPanel.createEl('div', { cls: 'qb-tt-panel-header', text: '📦 In Inventory' });
     const leftContent = leftPanel.createEl('div', { cls: 'qb-tt-panel-content' });
-    leftContent.innerHTML = buildGearStatsHtml(item);
+    buildGearStats(leftContent, item);
 
     // Right panel: Equipped item
     const rightPanel = tooltip.createEl('div', { cls: 'qb-tt-panel qb-tt-equipped' });
     rightPanel.createEl('div', { cls: 'qb-tt-panel-header', text: '⚔️ Currently Equipped' });
     const rightContent = rightPanel.createEl('div', { cls: 'qb-tt-panel-content' });
-    rightContent.innerHTML = buildGearStatsHtml(equipped);
+    buildGearStats(rightContent, equipped);
 
     // Bottom: Comparison summary
     const summaryPanel = tooltip.createEl('div', { cls: 'qb-tt-summary' });
-    summaryPanel.innerHTML = buildComparisonSummaryHtml(item, equipped);
+    buildComparisonSummary(summaryPanel, item, equipped);
 
     return tooltip;
 }

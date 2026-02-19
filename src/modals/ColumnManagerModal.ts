@@ -11,6 +11,7 @@
  */
 
 import { App, Modal, Notice, Setting } from 'obsidian';
+import { ConfirmModal } from './ConfirmModal';
 import type QuestBoardPlugin from '../../main';
 import {
     CustomColumn,
@@ -60,10 +61,8 @@ export class ColumnManagerModal extends Modal {
 
         // Warning box
         const warningBox = contentEl.createEl('div', { cls: 'qb-column-manager-warning' });
-        warningBox.innerHTML = `
-            <strong>⚠️ Important:</strong> Column IDs are stored in quest frontmatter. 
-            Renaming an ID will cause existing quests to migrate to the first column.
-        `;
+        warningBox.createEl('strong', { text: '⚠️ Important:' });
+        warningBox.appendText(' Column IDs are stored in quest frontmatter. Renaming an ID will cause existing quests to migrate to the first column.');
 
         // Column list
         const listContainer = contentEl.createEl('div', { cls: 'qb-column-list' });
@@ -341,8 +340,14 @@ export class ColumnManagerModal extends Modal {
             text: 'Reset to Defaults',
             cls: 'qb-column-btn'
         });
-        resetBtn.addEventListener('click', () => {
-            if (confirm('Reset all columns to defaults? This cannot be undone.')) {
+        resetBtn.addEventListener('click', async () => {
+            const confirmed = await ConfirmModal.show(this.app, {
+                title: 'Reset Columns',
+                message: 'Reset all columns to defaults? This cannot be undone.',
+                confirmText: 'Reset',
+                danger: true,
+            });
+            if (confirmed) {
                 this.columns = JSON.parse(JSON.stringify(DEFAULT_COLUMNS));
                 this.editingIndex = null;
                 this.renderContent();
@@ -425,7 +430,13 @@ export class ColumnManagerModal extends Modal {
             return;
         }
 
-        if (confirm(`Delete column "${column.title}"? Quests in this column will migrate to the first column.`)) {
+        const confirmed = await ConfirmModal.show(this.app, {
+            title: 'Delete Column',
+            message: `Delete column "${column.title}"? Quests in this column will migrate to the first column.`,
+            confirmText: 'Delete',
+            danger: true,
+        });
+        if (confirmed) {
             // Get the target column (first column that's not being deleted)
             const targetColumn = this.columns.find((_, i) => i !== index);
             if (!targetColumn) {

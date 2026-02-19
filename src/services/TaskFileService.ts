@@ -6,6 +6,7 @@
  */
 
 import { Vault, TFile, debounce } from 'obsidian';
+import type QuestBoardPlugin from '../../main';
 import { validateLinkedPath } from '../utils/pathValidator';
 
 /**
@@ -337,6 +338,7 @@ export function countNewlyCompleted(
  * Returns an unsubscribe function
  */
 export function watchTaskFile(
+    plugin: QuestBoardPlugin,
     vault: Vault,
     filePath: string,
     callback: (result: TaskFileResult) => void,
@@ -348,16 +350,16 @@ export function watchTaskFile(
         callback(result);
     }, debounceMs, true);
 
-    // Register event handlers
-    const onModify = vault.on('modify', (file) => {
+    // Register event handlers (auto-cleaned by plugin.registerEvent on unload)
+    plugin.registerEvent(vault.on('modify', (file) => {
         if (file.path === filePath) {
             debouncedCallback(file as TFile);
         }
-    });
+    }));
 
-    // Return unsubscribe function
+    // Return cleanup function
     return () => {
-        vault.offref(onModify);
+        /* Event listener auto-cleaned by plugin.registerEvent */
     };
 }
 
@@ -373,25 +375,29 @@ export async function toggleTaskInFile(
     if (!file) return false;
 
     try {
-        const content = await vault.read(file);
-        const lines = content.split('\n');
-        const lineIndex = lineNumber - 1; // Convert to 0-indexed
+        let toggled = false;
+        await vault.process(file, (content) => {
+            const lines = content.split('\n');
+            const lineIndex = lineNumber - 1; // Convert to 0-indexed
 
-        if (lineIndex < 0 || lineIndex >= lines.length) return false;
+            if (lineIndex < 0 || lineIndex >= lines.length) return content;
 
-        const line = lines[lineIndex];
+            const line = lines[lineIndex];
 
-        // Toggle checkbox
-        if (line.includes('[ ]')) {
-            lines[lineIndex] = line.replace('[ ]', '[x]');
-        } else if (line.includes('[x]') || line.includes('[X]')) {
-            lines[lineIndex] = line.replace(/\[[xX]\]/, '[ ]');
-        } else {
-            return false; // Not a task line
-        }
+            // Toggle checkbox
+            if (line.includes('[ ]')) {
+                lines[lineIndex] = line.replace('[ ]', '[x]');
+                toggled = true;
+            } else if (line.includes('[x]') || line.includes('[X]')) {
+                lines[lineIndex] = line.replace(/\[[xX]\]/, '[ ]');
+                toggled = true;
+            } else {
+                return content; // Not a task line
+            }
 
-        await vault.modify(file, lines.join('\n'));
-        return true;
+            return lines.join('\n');
+        });
+        return toggled;
     } catch (error) {
         console.error('[TaskFileService] Failed to toggle task:', error);
         return false;

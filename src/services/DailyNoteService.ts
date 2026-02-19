@@ -133,85 +133,77 @@ export class DailyNoteService {
      */
     private async appendToNote(file: TFile, entry: DailyLogEntry): Promise<void> {
         try {
-            const content = await this.vault.read(file);
             const heading = this.settings.dailyNoteHeading || '## Quest Board Activity';
-
-            // Check if heading already exists
-            const headingIndex = content.indexOf(heading);
 
             // Format the log entry
             const logLine = this.formatLogEntry(entry);
             const summaryLine = this.formatSummaryLine();
 
-            let newContent: string;
+            await this.vault.process(file, (content) => {
+                // Check if heading already exists
+                const headingIndex = content.indexOf(heading);
 
-            if (headingIndex !== -1) {
-                // Heading exists - insert entries immediately after heading line
-                const headingLineEnd = content.indexOf('\n', headingIndex);
-                const insertPoint = headingLineEnd !== -1 ? headingLineEnd + 1 : headingIndex + heading.length;
+                if (headingIndex !== -1) {
+                    // Heading exists - insert entries immediately after heading line
+                    const headingLineEnd = content.indexOf('\n', headingIndex);
+                    const insertPoint = headingLineEnd !== -1 ? headingLineEnd + 1 : headingIndex + heading.length;
 
-                // Get content after heading to find existing entries
-                const afterHeading = content.slice(insertPoint);
+                    // Get content after heading to find existing entries
+                    const afterHeading = content.slice(insertPoint);
 
-                // Find where our Quest Board entries end (look for next heading or end of file)
-                const nextHeadingMatch = afterHeading.match(/^##? [^\n]+$/m);
-                const questBoardSectionEnd = nextHeadingMatch?.index ?? afterHeading.length;
+                    // Find where our Quest Board entries end (look for next heading or end of file)
+                    const nextHeadingMatch = afterHeading.match(/^##? [^\n]+$/m);
+                    const questBoardSectionEnd = nextHeadingMatch?.index ?? afterHeading.length;
 
-                // Get existing Quest Board lines (our entries only)
-                const sectionContent = afterHeading.slice(0, questBoardSectionEnd);
-                const existingLines = sectionContent.split('\n').filter(line =>
-                    line.startsWith('- ✅') || line.startsWith('- 🏆')
-                );
+                    // Get existing Quest Board lines (our entries only)
+                    const sectionContent = afterHeading.slice(0, questBoardSectionEnd);
+                    const existingLines = sectionContent.split('\n').filter(line =>
+                        line.startsWith('- ✅') || line.startsWith('- 🏆')
+                    );
 
-                // Remove old summary if present
-                const entriesOnly = existingLines.filter(line => !line.startsWith('- 🏆'));
+                    // Remove old summary if present
+                    const entriesOnly = existingLines.filter(line => !line.startsWith('- 🏆'));
 
-                // Build new entries section
-                const allEntries = [...entriesOnly, logLine, summaryLine];
-                const newEntriesBlock = allEntries.join('\n') + '\n';
+                    // Build new entries section
+                    const allEntries = [...entriesOnly, logLine, summaryLine];
+                    const newEntriesBlock = allEntries.join('\n') + '\n';
 
-                // Check if there's content before our entries that we need to preserve
-                const contentBeforeEntries = sectionContent.split('\n').filter(line =>
-                    !line.startsWith('- ✅') && !line.startsWith('- 🏆') && line.trim() !== ''
-                );
+                    // If there ARE existing entries, replace them
+                    if (existingLines.length > 0) {
+                        // Find exactly where entries start in afterHeading
+                        const firstEntryMatch = afterHeading.match(/^- [✅🏆]/m);
+                        if (firstEntryMatch && firstEntryMatch.index !== undefined) {
+                            const entriesStart = firstEntryMatch.index;
 
-                // If there ARE existing entries, replace them
-                if (existingLines.length > 0) {
-                    // Find exactly where entries start in afterHeading
-                    const firstEntryMatch = afterHeading.match(/^- [✅🏆]/m);
-                    if (firstEntryMatch && firstEntryMatch.index !== undefined) {
-                        const entriesStart = firstEntryMatch.index;
-
-                        // Find where entries end
-                        const linesAfterFirst = afterHeading.slice(entriesStart).split('\n');
-                        let entriesLineCount = 0;
-                        for (const line of linesAfterFirst) {
-                            if (line.startsWith('- ✅') || line.startsWith('- 🏆') || line.trim() === '') {
-                                entriesLineCount++;
-                            } else {
-                                break;
+                            // Find where entries end
+                            const linesAfterFirst = afterHeading.slice(entriesStart).split('\n');
+                            let entriesLineCount = 0;
+                            for (const line of linesAfterFirst) {
+                                if (line.startsWith('- ✅') || line.startsWith('- 🏆') || line.trim() === '') {
+                                    entriesLineCount++;
+                                } else {
+                                    break;
+                                }
                             }
+
+                            const beforeEntries = afterHeading.slice(0, entriesStart);
+                            const afterEntries = linesAfterFirst.slice(entriesLineCount).join('\n');
+
+                            return content.slice(0, insertPoint) + beforeEntries + newEntriesBlock + afterEntries;
+                        } else {
+                            // Fallback - just append after heading
+                            return content.slice(0, insertPoint) + newEntriesBlock + afterHeading;
                         }
-
-                        const beforeEntries = afterHeading.slice(0, entriesStart);
-                        const afterEntries = linesAfterFirst.slice(entriesLineCount).join('\n');
-
-                        newContent = content.slice(0, insertPoint) + beforeEntries + newEntriesBlock + afterEntries;
                     } else {
-                        // Fallback - just append after heading
-                        newContent = content.slice(0, insertPoint) + newEntriesBlock + afterHeading;
+                        // No existing entries - just insert right after heading
+                        return content.slice(0, insertPoint) + newEntriesBlock + afterHeading;
                     }
                 } else {
-                    // No existing entries - just insert right after heading
-                    newContent = content.slice(0, insertPoint) + newEntriesBlock + afterHeading;
+                    // Heading doesn't exist - add it at the end
+                    const section = `\n${heading}\n${logLine}\n${summaryLine}\n`;
+                    return content + section;
                 }
-            } else {
-                // Heading doesn't exist - add it at the end
-                const section = `\n${heading}\n${logLine}\n${summaryLine}\n`;
-                newContent = content + section;
-            }
-
-            await this.vault.modify(file, newContent);
+            });
         } catch (error) {
             console.error('[DailyNoteService] Failed to append to daily note:', error);
         }

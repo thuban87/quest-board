@@ -69,36 +69,33 @@ async function updateQuestStatusInFile(
             return;
         }
 
-        const content = await vault.read(file);
-        const lines = content.split(/\r?\n/);
+        await vault.process(file, (content) => {
+            const lines = content.split(/\r?\n/);
 
-        // Find and update the status line in frontmatter
-        let inFrontmatter = false;
-        let frontmatterEnd = -1;
+            // Find and update the status line in frontmatter
+            let inFrontmatter = false;
 
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
 
-            if (i === 0 && line === '---') {
-                inFrontmatter = true;
-                continue;
+                if (i === 0 && line === '---') {
+                    inFrontmatter = true;
+                    continue;
+                }
+
+                if (inFrontmatter && line === '---') {
+                    break;
+                }
+
+                if (inFrontmatter && line.startsWith('status:')) {
+                    // Update the status line
+                    lines[i] = `status: ${newStatus}`;
+                    break;
+                }
             }
 
-            if (inFrontmatter && line === '---') {
-                frontmatterEnd = i;
-                break;
-            }
-
-            if (inFrontmatter && line.startsWith('status:')) {
-                // Update the status line
-                lines[i] = `status: ${newStatus}`;
-                break;
-            }
-        }
-
-        // Write the updated content back
-        const newContent = lines.join('\n');
-        await vault.modify(file, newContent);
+            return lines.join('\n');
+        });
     } catch (error) {
         console.error(`[columnMigration] Error updating file ${filePath}:`, error);
     }

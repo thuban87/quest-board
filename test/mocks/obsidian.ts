@@ -113,6 +113,7 @@ export class TFolder extends TAbstractFile {
 // ============== Settings ==============
 
 export class Setting {
+    setHeading(): this { return this; }
     setName(_name: string): this { return this; }
     setDesc(_desc: string): this { return this; }
     addText(_cb: (text: unknown) => void): this { return this; }

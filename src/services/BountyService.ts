@@ -11,6 +11,7 @@
  * - Falls back to hardcoded templates if no API key
  */
 
+import { requestUrl } from 'obsidian';
 import type { Quest } from '../models/Quest';
 import type { Character } from '../models/Character';
 import type { Monster } from '../models/Monster';
@@ -414,25 +415,19 @@ Be creative and fun! Match monsters to the theme:
 - Home/chores themes → goblins, beasts
 - Creative themes → night_elves, aberrations`;
 
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: {
-                            temperature: 0.9,
-                        },
-                    }),
-                }
-            );
+            const response = await requestUrl({
+                url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        temperature: 0.9,
+                    },
+                }),
+            });
 
-            if (!response.ok) {
-                throw new Error(`Gemini API error: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = response.json;
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
             if (!text) {

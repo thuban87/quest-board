@@ -77,6 +77,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     // Quest loading and file watching (replaces duplicated loadQuests/watchQuestFolder logic)
     const { pendingSavesRef } = useQuestLoader({
         vault: app.vault,
+        plugin,
         storageFolder: plugin.settings.storageFolder,
         settings: plugin.settings,
         useSaveLock: true,
@@ -100,6 +101,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     useXPAward({
         app,
         vault: app.vault,
+        plugin,
 
         customStatMappings: plugin.settings.categoryStatMappings,
         onCategoryUsed: async (category) => {
@@ -266,7 +268,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
             useQuestStore.getState().upsertQuest({ ...quest, sortOrder: newSortOrder });
         }
         // Persist to file
-        await updateQuestSortOrder(app.vault, plugin.settings.storageFolder, questId, newSortOrder);
+        await updateQuestSortOrder(app, app.vault, plugin.settings.storageFolder, questId, newSortOrder);
     }, [app.vault, plugin.settings.storageFolder]);
 
     // DnD sensors and drag handler (uses consolidated hook)
@@ -307,7 +309,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
 
     // Reopen quest handler
     const handleReopenQuest = useCallback(async (questId: string) => {
-        await reopenQuest(app.vault, questId, plugin.settings.storageFolder, plugin.settings);
+        await reopenQuest(app, app.vault, questId, plugin.settings.storageFolder, plugin.settings);
     }, [app.vault, plugin.settings]);
 
     // Archive quest handler

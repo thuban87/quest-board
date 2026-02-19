@@ -7,6 +7,7 @@
  */
 
 import { App, Modal, Notice, Setting, TFile, TFolder, TextAreaComponent } from 'obsidian';
+import { ConfirmModal } from './ConfirmModal';
 import type QuestBoardPlugin from '../../main';
 import { ParsedTemplate } from '../services/TemplateService';
 import { TemplatePreviewModal, TemplatePreviewData, PreviewSection } from './TemplatePreviewModal';
@@ -997,9 +998,12 @@ Write your quest description here.
             // Check if file already exists
             const existingFile = this.app.vault.getAbstractFileByPath(outputPath);
             if (existingFile) {
-                const overwrite = window.confirm(
-                    `A quest file "${questSlug}.md" already exists. Overwrite it?`
-                );
+                const overwrite = await ConfirmModal.show(this.app, {
+                    title: 'Overwrite Quest File',
+                    message: `A quest file "${questSlug}.md" already exists. Overwrite it?`,
+                    confirmText: 'Overwrite',
+                    danger: true,
+                });
                 if (!overwrite) return;
                 await this.app.vault.modify(existingFile as TFile, content);
             } else {
@@ -1051,9 +1055,12 @@ Write your quest description here.
             if (!this.isEditing) {
                 const existing = this.app.vault.getAbstractFileByPath(filePath);
                 if (existing) {
-                    const overwrite = window.confirm(
-                        `A template named "${fileName}" already exists. Overwrite it?`
-                    );
+                    const overwrite = await ConfirmModal.show(this.app, {
+                        title: 'Overwrite Template',
+                        message: `A template named "${fileName}" already exists. Overwrite it?`,
+                        confirmText: 'Overwrite',
+                        danger: true,
+                    });
                     if (!overwrite) return;
                 }
             }
