@@ -593,7 +593,6 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     const { createDungeonTemplateDoc } = await import('./services/UserDungeonLoader');
                     const folder = this.plugin.settings.userDungeonFolder || 'Quest Board/dungeons';
                     await createDungeonTemplateDoc(this.app.vault, folder);
-                    const Notice = (await import('obsidian')).Notice;
                     new Notice(`📜 Template created at ${folder}/DUNGEON_FORMAT.md`);
                 }));
 
@@ -892,7 +891,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                             this.plugin.settings.character = testCharacter;
                             await this.plugin.saveSettings();
 
-                            new (await import('obsidian')).Notice(
+                            new Notice(
                                 `✅ Generated Level ${selectedLevel} ${selectedClass.charAt(0).toUpperCase() + selectedClass.slice(1)} test character!`
                             );
                         }));

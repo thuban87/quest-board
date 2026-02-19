@@ -3,9 +3,8 @@
     "name": "Quest Board",
     "version": "1.0.0",
     "minAppVersion": "1.4.0",
-    "description": "Gamified task tracker with RPG mechanics. Turn your to-do list into an epic quest!",
+    "description": "Gamified task tracker with RPG mechanics. Turn your to-do list into an epic quest.",
     "author": "Brad Wales",
     "authorUrl": "https://github.com/thuban87",
-    "fundingUrl": "",
     "isDesktopOnly": false
 }

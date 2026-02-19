@@ -5,7 +5,7 @@
  * All business logic lives in services, components, and stores.
  */
 
-import { Plugin, WorkspaceLeaf, TFile } from 'obsidian';
+import { Plugin, WorkspaceLeaf, TFile, Notice } from 'obsidian';
 import { QuestBoardSettings, DEFAULT_SETTINGS, QuestBoardSettingTab } from './src/settings';
 import {
     QUEST_BOARD_VIEW_TYPE,
@@ -464,7 +464,7 @@ export default class QuestBoardPlugin extends Plugin {
                 const store = useCharacterStore.getState();
                 const character = store.character;
                 if (!character) {
-                    new (require('obsidian').Notice)('❌ No character found!', 2000);
+                    new Notice('❌ No character found!', 2000);
                     return;
                 }
                 // Check if already resting (recovery timer active)
@@ -497,7 +497,7 @@ export default class QuestBoardPlugin extends Plugin {
                 this.settings.character = useCharacterStore.getState().character;
                 await this.saveSettings();
 
-                new (require('obsidian').Notice)('🏨 Long Rest complete! HP and Mana fully restored. Resting for 30 minutes.', 3000);
+                new Notice('🏨 Long Rest complete! HP and Mana fully restored. Resting for 30 minutes.', 3000);
             },
         });
 
@@ -508,13 +508,13 @@ export default class QuestBoardPlugin extends Plugin {
             callback: () => {
                 const character = useCharacterStore.getState().character;
                 if (!character) {
-                    new (require('obsidian').Notice)('❌ No character found!', 2000);
+                    new Notice('❌ No character found!', 2000);
                     return;
                 }
 
                 // Check stamina
                 if ((character.stamina ?? 0) < 1) {
-                    new (require('obsidian').Notice)('⚡ Not enough stamina! Complete quests to earn stamina.', 3000);
+                    new Notice('⚡ Not enough stamina! Complete quests to earn stamina.', 3000);
                     return;
                 }
 
@@ -527,7 +527,7 @@ export default class QuestBoardPlugin extends Plugin {
                 // Create monster first
                 const monster = createRandomMonster(character.level, tier);
                 if (!monster) {
-                    new (require('obsidian').Notice)('❌ Failed to create monster', 2000);
+                    new Notice('❌ Failed to create monster', 2000);
                     return;
                 }
 
@@ -563,7 +563,7 @@ export default class QuestBoardPlugin extends Plugin {
                         useCharacterStore.getState().consumeStamina();
                         this.activateBattleView();
                     } else {
-                        new (require('obsidian').Notice)('❌ Failed to start battle', 2000);
+                        new Notice('❌ Failed to start battle', 2000);
                     }
                 }
             },
@@ -645,7 +645,7 @@ export default class QuestBoardPlugin extends Plugin {
                 // Use settings.character directly (store may not be initialized yet)
                 const character = this.settings.character;
                 if (!character) {
-                    new (require('obsidian').Notice)('❌ No character found! Create one first.', 2000);
+                    new Notice('❌ No character found! Create one first.', 2000);
                     return;
                 }
 
@@ -662,7 +662,7 @@ export default class QuestBoardPlugin extends Plugin {
                         if (success) {
                             this.activateDungeonView();
                         } else {
-                            new (require('obsidian').Notice)('❌ Failed to load dungeon', 2000);
+                            new Notice('❌ Failed to load dungeon', 2000);
                         }
                     },
                     false // Include test cave for dev command
@@ -675,7 +675,7 @@ export default class QuestBoardPlugin extends Plugin {
             id: 'check-asset-updates',
             name: 'Check for Asset Updates',
             callback: async () => {
-                const { Notice } = require('obsidian');
+
                 new Notice('📦 Checking for asset updates...', 2000);
                 try {
                     const { needsUpdate, files, orphaned, remoteManifest } = await this.assetService.checkForUpdates();
@@ -735,7 +735,7 @@ export default class QuestBoardPlugin extends Plugin {
      * Called from the vault-ready setTimeout in onload().
      */
     private async checkAssetsOnStartup(): Promise<void> {
-        const { Notice } = require('obsidian');
+
 
         try {
             // Case 1: True first install — user has never configured assets
@@ -916,7 +916,7 @@ export default class QuestBoardPlugin extends Plugin {
         // Check if quests folder exists
         const questsFolder = vault.getAbstractFileByPath(questsPath);
         if (!questsFolder || !(questsFolder as any).children) {
-            new (await import('obsidian')).Notice('❌ No quests folder found');
+            new Notice('❌ No quests folder found');
             return;
         }
 
@@ -991,7 +991,7 @@ export default class QuestBoardPlugin extends Plugin {
         }
 
         // Show result notice
-        const Notice = (await import('obsidian')).Notice;
+
         new Notice(
             `✅ Migration complete!\n` +
             `${migratedCount} quests updated\n` +

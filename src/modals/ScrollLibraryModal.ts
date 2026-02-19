@@ -5,7 +5,7 @@
  * with smart suggestions, usage stats, filters, and RPG theming.
  */
 
-import { App, Modal, Notice, Setting, TFile } from 'obsidian';
+import { App, Menu, Modal, Notice, Setting, TFile } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { TemplateService, ParsedTemplate } from '../services/TemplateService';
 import { getTemplateStatsService, TemplateStats } from '../services/TemplateStatsService';
@@ -493,7 +493,7 @@ export class ScrollLibraryModal extends Modal {
      */
     private showContextMenu(e: MouseEvent, parsed: ParsedTemplate): void {
         // Create a simple context menu using Obsidian's menu system
-        const menu = new (require('obsidian')).Menu();
+        const menu = new Menu();
 
         menu.addItem((item: any) => {
             item.setTitle('📝 Revise the Contract')

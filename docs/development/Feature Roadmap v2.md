@@ -395,5 +395,5 @@ Settings are complex enough to warrant their own collection:
 
 ---
 
-**Last Updated:** 2026-02-18 (Sprite Sizing Tuning — centralized CSS variables, dungeon monster fix, battle view GIF→PNG)
+**Last Updated:** 2026-02-19 (Obsidian Guidelines Alignment — Phase 1 complete: LICENSE, versions.json, manifest fixes, import cleanup)
 

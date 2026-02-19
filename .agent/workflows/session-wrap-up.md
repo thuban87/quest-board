@@ -15,11 +15,13 @@ git status
 git diff --stat
 ```
 
-2. **Update the Session Log.** Add a new entry to `docs\development\Phase 4 Implementation Session Log.md` documenting what was accomplished this session. Follow the existing entry format in the file. Include: date, what was done, files changed, test results, and any issues discovered.
+2. **Update the Session Log.** Add a new entry to `docs\development\launch-considerations\Obsidian Alignment Session Log.md` documenting what was accomplished this session. Follow the existing entry format in the file. Include: date, what was done, files changed, test results, and any issues discovered.
 
 3. **Update the Feature Roadmap.** Update `docs\development\Feature Roadmap v2.md` to reflect completed work, status changes, or any new items discovered during the session.
 
-4. **Provide a git commit message.** Generate a clear, descriptive commit message summarizing all work done this session. **Do not use quotation marks anywhere in the message.** Format:
+4. **Update the planning guide** Update `docs\development\launch-considerations\01 - Obsidian guidelines alignment plan.md` witha brief "completed" status next to the phase header.
+
+5. **Provide a git commit message.** Generate a clear, descriptive commit message summarizing all work done this session. **Do not use quotation marks anywhere in the message.** Format:
 
 ```
 feat/fix/refactor/test/docs(scope): short summary
