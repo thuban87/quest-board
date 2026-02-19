@@ -5,6 +5,7 @@
  * Creates epic, ADHD-friendly quests with category-specific themes.
  */
 
+import { requestUrl } from 'obsidian';
 import type { QuestBoardSettings } from '../settings';
 import { QuestStatus, QuestPriority, QuestDifficulty } from '../models/QuestStatus';
 import { QUEST_SCHEMA_VERSION } from '../models/Quest';
@@ -89,26 +90,19 @@ class AIQuestServiceClass {
         try {
             const prompt = this.buildPrompt(input, availableCategories);
 
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: {
-                            temperature: 0.7,  // Lower = more consistent formatting, less creative variation
-                        },
-                    }),
-                }
-            );
+            const response = await requestUrl({
+                url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        temperature: 0.7,
+                    },
+                }),
+            });
 
-            if (!response.ok) {
-                const errorMessage = this.parseGeminiError(response.status);
-                return { success: false, error: errorMessage };
-            }
-
-            const data = await response.json();
+            const data = response.json;
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
             if (!text) {

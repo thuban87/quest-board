@@ -303,42 +303,29 @@ async function appendBattleReport(
     }
 
     // Get or create note
-    let file = vault.getAbstractFileByPath(notePath);
-    let existingContent = '';
-    let battleNumber = 1;
+    const file = vault.getAbstractFileByPath(notePath);
 
     if (file instanceof TFile) {
-        existingContent = await vault.read(file);
-        // Count existing battles to continue numbering
-        const battleMatches = existingContent.match(/## Battle #(\d+)/g);
-        if (battleMatches && battleMatches.length > 0) {
-            const lastMatch = battleMatches[battleMatches.length - 1];
-            const lastNumber = parseInt(lastMatch.replace('## Battle #', ''), 10);
-            if (!isNaN(lastNumber)) {
-                battleNumber = lastNumber + 1;
+        // Existing file: use vault.process for atomic read-modify-write
+        await vault.process(file, (existingContent) => {
+            let battleNumber = 1;
+            const battleMatches = existingContent.match(/## Battle #(\d+)/g);
+            if (battleMatches && battleMatches.length > 0) {
+                const lastMatch = battleMatches[battleMatches.length - 1];
+                const lastNumber = parseInt(lastMatch.replace('## Battle #', ''), 10);
+                if (!isNaN(lastNumber)) {
+                    battleNumber = lastNumber + 1;
+                }
             }
-        }
+
+            const report = formatBattleReport(battleNumber, outcome, battleLog, finalHP, finalMana);
+            return existingContent + report;
+        });
     } else {
-        // Create new note with header
-        existingContent = `# ${noteName}\n\nBalance testing log for ${currentBattleData.characterClass} class.\n\n---\n\n`;
-    }
-
-    // Format report
-    const report = formatBattleReport(
-        battleNumber,
-        outcome,
-        battleLog,
-        finalHP,
-        finalMana
-    );
-
-    // Append report
-    const newContent = existingContent + report;
-
-    if (file instanceof TFile) {
-        await vault.modify(file, newContent);
-    } else {
-        await vault.create(notePath, newContent);
+        // New file: create with header + first report
+        const header = `# ${noteName}\n\nBalance testing log for ${currentBattleData.characterClass} class.\n\n---\n\n`;
+        const report = formatBattleReport(1, outcome, battleLog, finalHP, finalMana);
+        await vault.create(notePath, header + report);
     }
 }
 

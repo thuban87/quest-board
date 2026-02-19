@@ -373,25 +373,29 @@ export async function toggleTaskInFile(
     if (!file) return false;
 
     try {
-        const content = await vault.read(file);
-        const lines = content.split('\n');
-        const lineIndex = lineNumber - 1; // Convert to 0-indexed
+        let toggled = false;
+        await vault.process(file, (content) => {
+            const lines = content.split('\n');
+            const lineIndex = lineNumber - 1; // Convert to 0-indexed
 
-        if (lineIndex < 0 || lineIndex >= lines.length) return false;
+            if (lineIndex < 0 || lineIndex >= lines.length) return content;
 
-        const line = lines[lineIndex];
+            const line = lines[lineIndex];
 
-        // Toggle checkbox
-        if (line.includes('[ ]')) {
-            lines[lineIndex] = line.replace('[ ]', '[x]');
-        } else if (line.includes('[x]') || line.includes('[X]')) {
-            lines[lineIndex] = line.replace(/\[[xX]\]/, '[ ]');
-        } else {
-            return false; // Not a task line
-        }
+            // Toggle checkbox
+            if (line.includes('[ ]')) {
+                lines[lineIndex] = line.replace('[ ]', '[x]');
+                toggled = true;
+            } else if (line.includes('[x]') || line.includes('[X]')) {
+                lines[lineIndex] = line.replace(/\[[xX]\]/, '[ ]');
+                toggled = true;
+            } else {
+                return content; // Not a task line
+            }
 
-        await vault.modify(file, lines.join('\n'));
-        return true;
+            return lines.join('\n');
+        });
+        return toggled;
     } catch (error) {
         console.error('[TaskFileService] Failed to toggle task:', error);
         return false;

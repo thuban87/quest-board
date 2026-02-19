@@ -13,6 +13,7 @@
  * - Structured cleanup responses
  */
 
+import { requestUrl } from 'obsidian';
 import type { QuestBoardSettings } from '../settings';
 import type { TileSet, DungeonDifficulty } from '../models/Dungeon';
 import type { GearSlot } from '../models/Gear';
@@ -240,26 +241,19 @@ class AIDungeonServiceClass {
         if (!apiKey) return null;
 
         try {
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: {
-                            temperature: 0.4,  // Lower for more consistent formatting
-                        },
-                    }),
-                }
-            );
+            const response = await requestUrl({
+                url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        temperature: 0.4,
+                    },
+                }),
+            });
 
-            if (!response.ok) {
-                const errorMessage = this.parseGeminiError(response.status);
-                throw new Error(errorMessage);
-            }
-
-            const data = await response.json();
+            const data = response.json;
             const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
             if (!text) {

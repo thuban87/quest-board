@@ -517,6 +517,7 @@ function generateQuestFrontmatter(quest: ManualQuest): string {
  * For NEW files: Creates with standard structure.
  */
 export async function saveManualQuest(
+    app: App,
     vault: Vault,
     baseFolder: string,
     quest: ManualQuest
@@ -539,13 +540,14 @@ export async function saveManualQuest(
 
         if (existingFile instanceof TFile) {
             // SURGICAL UPDATE: Only modify specific frontmatter fields
-            const existingContent = await vault.read(existingFile);
-            const updatedContent = updateFrontmatterFields(existingContent, {
-                status: quest.status,
-                completedDate: quest.completedDate,  // Pass null to clear from file
+            await app.fileManager.processFrontMatter(existingFile, (fm) => {
+                fm.status = quest.status;
+                if (quest.completedDate) {
+                    fm.completedDate = quest.completedDate;
+                } else {
+                    delete fm.completedDate;
+                }
             });
-
-            await vault.modify(existingFile, updatedContent);
         } else {
             // New file - create with full structure
             const frontmatter = generateQuestFrontmatter(quest);
@@ -560,106 +562,14 @@ export async function saveManualQuest(
     }
 }
 
-/**
- * Surgically update specific frontmatter fields in a markdown file.
- * Only touches the specified fields, leaves everything else untouched.
- * Pass null to REMOVE a field from frontmatter.
- */
-function updateFrontmatterFields(
-    content: string,
-    updates: Record<string, string | number | boolean | null | undefined>
-): string {
-    const lines = content.split('\n');
 
-    // Find frontmatter boundaries
-    let frontmatterStart = -1;
-    let frontmatterEnd = -1;
-
-    for (let i = 0; i < lines.length; i++) {
-        if (lines[i].trim() === '---') {
-            if (frontmatterStart === -1) {
-                frontmatterStart = i;
-            } else {
-                frontmatterEnd = i;
-                break;
-            }
-        }
-    }
-
-    if (frontmatterStart === -1 || frontmatterEnd === -1) {
-        console.error('[QuestService] No valid frontmatter found');
-        return content;
-    }
-
-    // Track lines to remove (indices shift, so collect first, remove later)
-    const linesToRemove: number[] = [];
-
-    // Update only the specified fields within frontmatter
-    for (let i = frontmatterStart + 1; i < frontmatterEnd; i++) {
-        const line = lines[i];
-        const colonIndex = line.indexOf(':');
-        if (colonIndex === -1) continue;
-
-        const key = line.substring(0, colonIndex).trim();
-
-        if (key in updates) {
-            const newValue = updates[key];
-            if (newValue === undefined) {
-                // Skip - don't update undefined values
-                continue;
-            }
-
-            if (newValue === null) {
-                // Mark line for removal (e.g., clearing completedDate)
-                linesToRemove.push(i);
-                continue;
-            }
-
-            // Format the value appropriately
-            let formattedValue: string;
-            if (typeof newValue === 'string') {
-                // Check if original used quotes
-                const originalValue = line.substring(colonIndex + 1).trim();
-                if (originalValue.startsWith('"') || originalValue.startsWith("'")) {
-                    formattedValue = `"${newValue}"`;
-                } else {
-                    formattedValue = newValue;
-                }
-            } else {
-                formattedValue = String(newValue);
-            }
-
-            lines[i] = `${key}: ${formattedValue}`;
-        }
-    }
-
-    // Remove lines marked for deletion (in reverse order to preserve indices)
-    for (let i = linesToRemove.length - 1; i >= 0; i--) {
-        lines.splice(linesToRemove[i], 1);
-        frontmatterEnd--;  // Adjust for removed line
-    }
-
-    // Handle adding completedDate if it doesn't exist but should
-    if (updates.completedDate && !content.includes('completedDate:')) {
-        // Insert before closing ---
-        lines.splice(frontmatterEnd, 0, `completedDate: "${updates.completedDate}"`);
-        frontmatterEnd++; // Adjust for inserted line
-    }
-
-    // Handle adding sortOrder if it doesn't exist but should
-    if (updates.sortOrder !== undefined && !content.includes('sortOrder:')) {
-        // Insert before closing ---
-        lines.splice(frontmatterEnd, 0, `sortOrder: ${updates.sortOrder}`);
-    }
-
-    return lines.join('\n');
-}
 
 /**
  * Update just the sortOrder field for a quest.
  * Used for intra-column drag reordering.
  */
 export async function updateQuestSortOrder(
+    app: App,
     vault: Vault,
     baseFolder: string,
     questId: string,
@@ -674,11 +584,9 @@ export async function updateQuestSortOrder(
             const file = vault.getAbstractFileByPath(filePath);
 
             if (file instanceof TFile) {
-                const existingContent = await vault.read(file);
-                const updatedContent = updateFrontmatterFields(existingContent, {
-                    sortOrder,
+                await app.fileManager.processFrontMatter(file, (fm) => {
+                    fm.sortOrder = sortOrder;
                 });
-                await vault.modify(file, updatedContent);
                 return true;
             }
         }
@@ -687,11 +595,9 @@ export async function updateQuestSortOrder(
         const basePath = `${baseFolder}/${safeQuestId}.md`;
         const baseFile = vault.getAbstractFileByPath(basePath);
         if (baseFile instanceof TFile) {
-            const existingContent = await vault.read(baseFile);
-            const updatedContent = updateFrontmatterFields(existingContent, {
-                sortOrder,
+            await app.fileManager.processFrontMatter(baseFile, (fm) => {
+                fm.sortOrder = sortOrder;
             });
-            await vault.modify(baseFile, updatedContent);
             return true;
         }
 

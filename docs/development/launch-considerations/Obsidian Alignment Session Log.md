@@ -102,19 +102,76 @@ Each session entry should include:
 
 ---
 
+## 2026-02-19 - Phase 4: vault.modify → vault.process & fetch → requestUrl
+
+**Focus:** Convert read-modify-write `vault.modify()` patterns to atomic APIs (`vault.process()` / `processFrontMatter()`) and replace `fetch()` with Obsidian's `requestUrl()`
+
+### Completed:
+
+**Part A1 — `processFrontMatter()` (QuestService.ts):**
+- ✅ Converted `saveManualQuest` status/completedDate update to `app.fileManager.processFrontMatter()`
+- ✅ Converted `updateQuestSortOrder` (2 sites) to `processFrontMatter()`
+- ✅ Deleted 94-line `updateFrontmatterFields` helper (no longer needed)
+- ✅ Added `app: App` parameter to `saveManualQuest`, `updateQuestSortOrder`, and `reopenQuest`
+- ✅ Updated all 7 call sites across `QuestActionsService.ts`, `SidebarQuests.tsx`, `FullKanban.tsx`
+
+**Part A2 — `vault.process()` (4 files):**
+- ✅ Converted `columnMigration.ts` `updateQuestStatusInFile` — status updates during column deletion
+- ✅ Converted `TaskFileService.ts` `toggleTaskInFile` — checkbox toggle
+- ✅ Converted `DailyNoteService.ts` `appendToNote` — daily note log entries
+- ✅ Converted `BalanceTestingService.ts` `appendBattleReport` — battle report appending
+
+**Part B — `requestUrl()` (4 files, 5 sites):**
+- ✅ Converted `AIQuestService.ts` `generateQuest`
+- ✅ Converted `AIDungeonService.ts` `callGemini`
+- ✅ Converted `SetBonusService.ts` `generateBatchBonuses` and `generateThematicBonuses`
+- ✅ Converted `BountyService.ts` `generateDescriptions`
+
+### Files Changed:
+
+**Modified (13 files, +208/-350 lines — net reduction of 142 lines):**
+- `src/services/QuestService.ts` — processFrontMatter for frontmatter ops, deleted updateFrontmatterFields
+- `src/services/QuestActionsService.ts` — added app param to saveManualQuest/reopenQuest calls
+- `src/components/SidebarQuests.tsx` — updated updateQuestSortOrder/reopenQuest calls
+- `src/components/FullKanban.tsx` — updated updateQuestSortOrder/reopenQuest calls
+- `src/utils/columnMigration.ts` — vault.process for status updates
+- `src/services/TaskFileService.ts` — vault.process for checkbox toggle
+- `src/services/DailyNoteService.ts` — vault.process for daily note appending
+- `src/services/BalanceTestingService.ts` — vault.process for battle report appending
+- `src/services/AIQuestService.ts` — requestUrl + import
+- `src/services/AIDungeonService.ts` — requestUrl + import
+- `src/services/SetBonusService.ts` — requestUrl (2 sites) + import
+- `src/services/BountyService.ts` — requestUrl + import
+
+### Testing Notes:
+
+- ✅ Build passes (`npm run build`, 5.08 MB)
+- ✅ 389/390 tests pass — 1 pre-existing failure (`monster.test.ts: sturdy prefix +10% HP`, math assertion unrelated to our changes)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Manual Obsidian testing — all 10 test cases passed (quest moves, drag reorder, reopen, task toggle, daily note logging, column deletion, AI quest gen, AI dungeon gen, bounty trigger, set bonuses skipped — no active set)
+- Note: AI Dungeon generation hit a 503 on 2nd pass — this is a Google API server-side error, not a code bug
+
+### Blockers/Issues:
+
+- Pre-existing test failure in `monster.test.ts` (sturdy prefix HP scaling) — not related to Phase 4
+
+---
+
 ## Next Session Prompt
 
 ```
-Phase 3 of Obsidian Guidelines Alignment is complete.
+Phase 4 of Obsidian Guidelines Alignment is complete.
 
 What was done:
-- ✅ Created ConfirmModal class (static show() method, Promise<boolean>, danger mode)
-- ✅ Converted all 9 confirm() calls across 6 files to use ConfirmModal
-- ✅ Zero native confirm() calls remain in the codebase
+- Converted 7 vault.modify() read-modify-write sites to vault.process() / processFrontMatter()
+- Converted 5 fetch() sites to requestUrl()
+- Deleted 94-line updateFrontmatterFields helper
+- Net code reduction: 142 lines
 
 Phases completed so far:
 - Phase 1: Missing files, manifest fixes, import cleanup
-- Phase 3: confirm() → ConfirmModal conversion (Phase 2 deferred per plan)
+- Phase 3: confirm() -> ConfirmModal conversion (Phase 2 deferred per plan)
+- Phase 4: vault.modify -> vault.process/processFrontMatter, fetch -> requestUrl
 
 Next up: Check the alignment plan for the next uncompleted phase and continue.
 
@@ -128,18 +185,25 @@ Key files to reference:
 ## Git Commit Message
 
 ```
-refactor(guidelines): Phase 3 - replace confirm() with ConfirmModal
+refactor(guidelines): Phase 4 - vault.modify to vault.process and fetch to requestUrl
 
-New Files:
-- src/modals/ConfirmModal.ts - reusable Obsidian-native confirmation modal with static show() method
+Part A1 - processFrontMatter (QuestService.ts):
+- saveManualQuest and updateQuestSortOrder now use app.fileManager.processFrontMatter()
+- Deleted 94-line updateFrontmatterFields helper
+- Added app param to saveManualQuest, updateQuestSortOrder, reopenQuest
+- Updated 7 call sites in QuestActionsService, SidebarQuests, FullKanban
 
-Conversions (9 total across 6 files):
-- settings.ts: Reset Stats and Master Reset confirmations
-- ColumnManagerModal.ts: Reset Columns and Delete Column confirmations
-- ScrivenersQuillModal.ts: Overwrite Quest File and Overwrite Template confirmations
-- WatchedFolderManagerModal.ts: Delete Watcher confirmation
-- ScrollLibraryModal.ts: Burn the Scroll confirmation (fixed variable shadowing)
-- AchievementHubModal.ts: Delete Achievement confirmation
+Part A2 - vault.process (4 files):
+- columnMigration.ts updateQuestStatusInFile
+- TaskFileService.ts toggleTaskInFile
+- DailyNoteService.ts appendToNote
+- BalanceTestingService.ts appendBattleReport
 
-Zero native confirm()/window.confirm() calls remain in codebase
+Part B - requestUrl (4 files, 5 sites):
+- AIQuestService.ts, AIDungeonService.ts, SetBonusService.ts (2), BountyService.ts
+- Uses response.json property instead of response.json() method
+- requestUrl throws on HTTP errors so !response.ok checks removed
+
+13 files changed, +208/-350 lines (net -142)
 ```
+
