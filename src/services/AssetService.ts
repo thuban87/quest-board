@@ -19,6 +19,8 @@ import { App, Vault, DataAdapter, requestUrl, RequestUrlParam } from 'obsidian';
 import { safeJsonParse } from '../utils/safeJson';
 
 const CDN_BASE = 'https://cdn.jsdelivr.net/gh/thuban87/quest-board@main/assets';
+/** Manifest fetched from raw GitHub to bypass jsDelivr CDN caching issues */
+const MANIFEST_URL = 'https://raw.githubusercontent.com/thuban87/quest-board/main/assets/manifest.json';
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY_MS = 500;
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB safety limit
@@ -282,7 +284,7 @@ export class AssetService {
     }
 
     private async fetchRemoteManifest(): Promise<AssetManifest> {
-        const response = await requestUrl({ url: `${CDN_BASE}/manifest.json?t=${Date.now()}`, timeout: 15000 } as RequestUrlParamWithTimeout);
+        const response = await requestUrl({ url: `${MANIFEST_URL}?t=${Date.now()}`, timeout: 15000 } as RequestUrlParamWithTimeout);
         // Sanity guard: reject unexpectedly large responses (corrupted CDN, error pages)
         if (response.text.length > 1_000_000) {
             throw new Error('Manifest too large — possible CDN error');

@@ -2128,10 +2128,50 @@ Files: pathValidator.ts, useQuestLoader.ts, useXPAward.ts
 
 ---
 
+## 2026-02-18 - Fix: Manifest CDN Caching Issue
+
+**Focus:** Asset update system failing because jsDelivr aggressively caches `manifest.json`
+
+### Root Cause:
+
+jsDelivr CDN was serving a 6-day-old `manifest.json` (Feb 12, 559 files) despite the GitHub repo having the current version (Feb 18, 1003 files). Purging via `purge.jsdelivr.net` was throttled and ultimately ineffective — the CDN refused to invalidate the cached manifest even after multiple purge attempts over several hours.
+
+This meant "Update assets" in Obsidian saw zero new files because the stale manifest matched the local copy.
+
+### Fix:
+
+Switched `fetchRemoteManifest()` in `AssetService.ts` to fetch from `raw.githubusercontent.com` instead of `cdn.jsdelivr.net`. Raw GitHub has no CDN caching layer, so the manifest is always current.
+
+- **Manifest fetch** → `raw.githubusercontent.com` (always fresh)
+- **File downloads** → `cdn.jsdelivr.net` (unchanged, works fine for individual assets)
+
+This is a one-line URL change. No architectural or flow changes.
+
+### Why this is safe:
+
+- The manifest is just a JSON index listing files and hashes — same file regardless of source
+- jsDelivr doesn't "expect" anything; it's a passive file server
+- New files on jsDelivr are fetched fresh from GitHub on first request (pull-through cache)
+- Changed files at the same path might briefly serve stale images, but won't error out
+
+### Files Changed:
+
+- `src/services/AssetService.ts` — Added `MANIFEST_URL` constant pointing to raw GitHub, updated `fetchRemoteManifest()` to use it
+
+### Testing Notes:
+- ✅ Build passes
+- ✅ Deployed to test vault — "Update assets" immediately detected 444 new files
+- ✅ Deployed to production — all new sprites downloaded successfully
+
+### Blockers/Issues:
+- None
+
+---
+
 ## Next Session Prompt
 
 ```
-Sprite sizing tuning complete. All views optimized for 84x84 pixel art.
+Sprite sizing + manifest CDN fix complete. All deployed to production.
 
 What was done:
 - Centralized sprite CSS variables with scale factors
@@ -2139,41 +2179,25 @@ What was done:
 - Root cause: animation keyframes were overriding scale transforms
 - Root cause: CSS class name collision between combat.css and dungeons.css
 - Battle overlay switched from GIF to SW PNG
+- AssetService manifest fetch moved from jsDelivr to raw GitHub (CDN caching fix)
 
 Known issue (deferred):
 - Monster mismatch between dungeon nav and battle (game logic, not sprite)
 
 Continue with Phase 4 priorities from Feature Roadmap v2.
-Key tuning variables in dungeons.css:
-  --dungeon-sprite-scale: 2.0  (player)
-  --dungeon-monster-scale: 1.5  (monsters)
 ```
 
 ## Git Commit Message
 
 ```
-fix: tune sprite sizing across all views for 84x84 assets
+fix: bypass jsDelivr CDN for manifest fetch
 
-Centralized Sprite System:
-- Added CSS variables for sprite sizes and scale factors
-- transform: scale() + overflow: hidden to zoom past transparent padding
-- Battle view, character sheets, dungeon sprites all properly sized
+jsDelivr aggressively caches manifest.json (served 6-day-old version
+despite purge attempts). Switched fetchRemoteManifest() to use
+raw.githubusercontent.com which has no CDN caching layer.
 
-Dungeon Monster Fix (root cause):
-- Animation keyframes (qb-idle-float) were overriding static transform: scale()
-- Moved animation to container div, kept scale on inner img
-- Renamed dungeon monster class to avoid combat.css collision
+File downloads still use jsDelivr (unaffected by this issue).
 
-Battle View Fix:
-- Dungeon combat overlay now uses getMonsterBattleSprite() (SW PNG)
-  instead of getMonsterGifPath() (GIF)
-
-Tunable variables:
-  --qb-sprite-scale: 1.5 (battle/character sheet)
-  --dungeon-sprite-scale: 2.0 (dungeon player)
-  --dungeon-monster-scale: 1.5 (dungeon monsters)
-
-Files: variables.css, combat.css, character.css, fullpage.css,
-dungeons.css, DungeonView.tsx, CharacterIdentity.tsx
+Files: AssetService.ts
 ```
 
