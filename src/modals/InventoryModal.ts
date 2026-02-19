@@ -356,9 +356,13 @@ export class InventoryModal extends Modal {
         });
 
         const statsEl = infoEl.createEl('div', { cls: 'qb-inventory-item-stats' });
-        statsEl.innerHTML = `+${item.stats.primaryValue} ${item.stats.primaryStat}`;
-        if (item.stats.attackPower) statsEl.innerHTML += ` • +${item.stats.attackPower} ATK`;
-        if (item.stats.defense) statsEl.innerHTML += ` • +${item.stats.defense} DEF`;
+        statsEl.createSpan({ text: `+${item.stats.primaryValue} ${item.stats.primaryStat}` });
+        if (item.stats.attackPower) {
+            statsEl.createSpan({ text: ` • +${item.stats.attackPower} ATK` });
+        }
+        if (item.stats.defense) {
+            statsEl.createSpan({ text: ` • +${item.stats.defense} DEF` });
+        }
 
         // Show set membership if present
         if (isSetItem(item)) {

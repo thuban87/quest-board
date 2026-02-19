@@ -157,21 +157,67 @@ Each session entry should include:
 
 ---
 
+## 2026-02-19 - Phase 5: `innerHTML` → DOM API Conversion
+
+**Focus:** Convert all 13 `innerHTML` assignments to Obsidian's `createEl()` / `createDiv()` / `appendText()` DOM APIs to eliminate XSS surface and align with Obsidian reviewer expectations
+
+### Completed:
+
+- ✅ `gearFormatters.ts` — Refactored `buildGearStatsHtml()` → `buildGearStats()` (DocumentFragment pattern, single DOM insertion)
+- ✅ `gearFormatters.ts` — Refactored `formatStatDiff()` → `createStatDiff()` (returns HTMLDivElement | null)
+- ✅ `gearFormatters.ts` — Refactored `buildComparisonSummaryHtml()` → `buildComparisonSummary()` (DocumentFragment pattern)
+- ✅ `gearFormatters.ts` — Updated `createGearComparisonTooltip()` — 4 innerHTML call sites replaced with direct function calls
+- ✅ `ColumnManagerModal.ts` — Warning box (createEl('strong') + appendText)
+- ✅ `InventoryManagementModal.ts` — Header with icon/title/subtitle (createEl chain)
+- ✅ `InventoryManagementModal.ts` — Running totals (4 stat spans with embedded strong elements)
+- ✅ `InventoryModal.ts` — Stats display (createSpan for primary + conditional ATK/DEF)
+- ✅ `BlacksmithModal.ts` — Modal header (createEl chain)
+- ✅ `BlacksmithModal.ts` — Instructions with bold + list (createEl('p') + createEl('ul'))
+- ✅ `BlacksmithModal.ts` — Smelting preview (createEl('span') with inline style for tier color)
+
+### Files Changed:
+
+**Modified (5 files, +139/-105 lines — net increase of 34 lines):**
+- `src/utils/gearFormatters.ts` — 4 innerHTML sites converted to DocumentFragment builders
+- `src/modals/ColumnManagerModal.ts` — 1 innerHTML site converted
+- `src/modals/InventoryManagementModal.ts` — 2 innerHTML sites converted
+- `src/modals/InventoryModal.ts` — 3 innerHTML += sites converted to createSpan
+- `src/modals/BlacksmithModal.ts` — 3 innerHTML sites converted
+
+### Testing Notes:
+
+- ✅ Build passes (`npm run build`, 5.08 MB)
+- ✅ All 13 test files pass (`npx vitest run`)
+- ✅ `rg "innerHTML" src` — 0 results (all 13 sites removed)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Manual Obsidian test — all 5 visual regression areas passed:
+  1. Gear tooltips (single item)
+  2. Gear comparison (dual-panel)
+  3. Blacksmith modal (header, instructions, preview)
+  4. Column Manager (warning box)
+  5. Inventory Management (header + totals)
+
+### Blockers/Issues:
+
+- None
+
+---
+
 ## Next Session Prompt
 
 ```
-Phase 4 of Obsidian Guidelines Alignment is complete.
+Phase 5 of Obsidian Guidelines Alignment is complete.
 
 What was done:
-- Converted 7 vault.modify() read-modify-write sites to vault.process() / processFrontMatter()
-- Converted 5 fetch() sites to requestUrl()
-- Deleted 94-line updateFrontmatterFields helper
-- Net code reduction: 142 lines
+- Converted all 13 innerHTML sites across 5 files to DOM API
+- gearFormatters.ts: DocumentFragment pattern for tooltip builders
+- ColumnManagerModal, InventoryManagementModal, InventoryModal, BlacksmithModal: createEl/appendText
 
 Phases completed so far:
 - Phase 1: Missing files, manifest fixes, import cleanup
 - Phase 3: confirm() -> ConfirmModal conversion (Phase 2 deferred per plan)
 - Phase 4: vault.modify -> vault.process/processFrontMatter, fetch -> requestUrl
+- Phase 5: innerHTML -> DOM API conversion
 
 Next up: Check the alignment plan for the next uncompleted phase and continue.
 
@@ -185,25 +231,17 @@ Key files to reference:
 ## Git Commit Message
 
 ```
-refactor(guidelines): Phase 4 - vault.modify to vault.process and fetch to requestUrl
+refactor(guidelines): Phase 5 - innerHTML to DOM API conversion
 
-Part A1 - processFrontMatter (QuestService.ts):
-- saveManualQuest and updateQuestSortOrder now use app.fileManager.processFrontMatter()
-- Deleted 94-line updateFrontmatterFields helper
-- Added app param to saveManualQuest, updateQuestSortOrder, reopenQuest
-- Updated 7 call sites in QuestActionsService, SidebarQuests, FullKanban
+- gearFormatters.ts: buildGearStatsHtml/buildComparisonSummaryHtml refactored
+  to DocumentFragment builders (buildGearStats/buildComparisonSummary)
+- gearFormatters.ts: formatStatDiff refactored to createStatDiff returning element
+- ColumnManagerModal.ts: warning box converted to createEl + appendText
+- InventoryManagementModal.ts: header and running totals converted to createEl chains
+- InventoryModal.ts: stats innerHTML += converted to createSpan calls
+- BlacksmithModal.ts: header, instructions, and preview converted to createEl chains
 
-Part A2 - vault.process (4 files):
-- columnMigration.ts updateQuestStatusInFile
-- TaskFileService.ts toggleTaskInFile
-- DailyNoteService.ts appendToNote
-- BalanceTestingService.ts appendBattleReport
-
-Part B - requestUrl (4 files, 5 sites):
-- AIQuestService.ts, AIDungeonService.ts, SetBonusService.ts (2), BountyService.ts
-- Uses response.json property instead of response.json() method
-- requestUrl throws on HTTP errors so !response.ok checks removed
-
-13 files changed, +208/-350 lines (net -142)
+5 files changed, +139/-105 lines
+Zero innerHTML remaining in src/ (rg confirmed)
 ```
 

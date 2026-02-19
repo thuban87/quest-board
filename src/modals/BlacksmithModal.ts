@@ -59,24 +59,25 @@ export class BlacksmithModal extends Modal {
         this.modalEl.addClass('qb-modal-wide');
 
         // Header
-        contentEl.createEl('div', { cls: 'qb-modal-header' }).innerHTML = `
-            <span class="qb-modal-icon">🔨</span>
-            <div class="qb-modal-title-group">
-                <h2>The Blacksmith</h2>
-                <p class="qb-modal-subtitle">"Three into one, stronger than before..."</p>
-            </div>
-        `;
+        const headerEl = contentEl.createEl('div', { cls: 'qb-modal-header' });
+        headerEl.createEl('span', { cls: 'qb-modal-icon', text: '🔨' });
+        const titleGroup = headerEl.createEl('div', { cls: 'qb-modal-title-group' });
+        titleGroup.createEl('h2', { text: 'The Blacksmith' });
+        titleGroup.createEl('p', { cls: 'qb-modal-subtitle', text: '"Three into one, stronger than before..."' });
 
         // Instructions
         const instructionsEl = contentEl.createEl('div', { cls: 'qb-blacksmith-instructions' });
-        instructionsEl.innerHTML = `
-            <p>Select <strong>3 items of the same tier</strong> to smelt into 1 higher-tier item.</p>
-            <ul>
-                <li>✅ <strong>Same-slot bonus:</strong> 3 items of same slot → guaranteed that slot</li>
-                <li>🎲 Mixed slots → random slot from inputs</li>
-                <li>📊 Output level = average of input levels (rounded up)</li>
-            </ul>
-        `;
+        const instrP = instructionsEl.createEl('p');
+        instrP.appendText('Select ');
+        instrP.createEl('strong', { text: '3 items of the same tier' });
+        instrP.appendText(' to smelt into 1 higher-tier item.');
+        const ul = instructionsEl.createEl('ul');
+        const li1 = ul.createEl('li');
+        li1.appendText('✅ ');
+        li1.createEl('strong', { text: 'Same-slot bonus:' });
+        li1.appendText(' 3 items of same slot → guaranteed that slot');
+        ul.createEl('li', { text: '🎲 Mixed slots → random slot from inputs' });
+        ul.createEl('li', { text: '📊 Output level = average of input levels (rounded up)' });
 
         // Main container (two panes)
         const mainContainer = contentEl.createEl('div', { cls: 'qb-blacksmith-container' });
@@ -267,11 +268,14 @@ export class BlacksmithModal extends Modal {
                     const tierInfo = TIER_INFO[preview.outputTier];
 
                     const previewEl = previewContent.createEl('div', { cls: `qb-preview-item qb-tier-${preview.outputTier}` });
-                    previewEl.innerHTML = `
-                        <span class="qb-preview-tier" style="color: ${tierInfo.color}">${tierInfo.emoji} ${tierInfo.name}</span>
-                        <span class="qb-preview-level">Level ~${preview.outputLevel}</span>
-                        <span class="qb-preview-slot">${preview.outputSlot === 'random' ? '🎲 Random Slot' : `${GEAR_SLOT_NAMES[preview.outputSlot]}`}</span>
-                    `;
+                    const tierSpan = previewEl.createEl('span', { cls: 'qb-preview-tier' });
+                    tierSpan.style.color = tierInfo.color;
+                    tierSpan.textContent = `${tierInfo.emoji} ${tierInfo.name}`;
+                    previewEl.createEl('span', { cls: 'qb-preview-level', text: `Level ~${preview.outputLevel}` });
+                    previewEl.createEl('span', {
+                        cls: 'qb-preview-slot',
+                        text: preview.outputSlot === 'random' ? '🎲 Random Slot' : GEAR_SLOT_NAMES[preview.outputSlot]
+                    });
 
                     if (preview.hasSameSlotBonus) {
                         previewContent.createEl('p', {

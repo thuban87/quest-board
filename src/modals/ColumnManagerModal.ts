@@ -61,10 +61,8 @@ export class ColumnManagerModal extends Modal {
 
         // Warning box
         const warningBox = contentEl.createEl('div', { cls: 'qb-column-manager-warning' });
-        warningBox.innerHTML = `
-            <strong>⚠️ Important:</strong> Column IDs are stored in quest frontmatter. 
-            Renaming an ID will cause existing quests to migrate to the first column.
-        `;
+        warningBox.createEl('strong', { text: '⚠️ Important:' });
+        warningBox.appendText(' Column IDs are stored in quest frontmatter. Renaming an ID will cause existing quests to migrate to the first column.');
 
         // Column list
         const listContainer = contentEl.createEl('div', { cls: 'qb-column-list' });
