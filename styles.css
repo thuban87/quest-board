@@ -4130,9 +4130,9 @@
 /* Timed buffs that are expiring soon pulse */
 .qb-buff-expiring {
   border-color: #ff6b35;
-  animation: buff-pulse 1.5s ease-in-out infinite;
+  animation: qb-buff-pulse 1.5s ease-in-out infinite;
 }
-@keyframes buff-pulse {
+@keyframes qb-buff-pulse {
 
   0%,
   100% {
@@ -4190,9 +4190,9 @@
   color: var(--qb-technomancer-color);
   font-weight: 700;
   margin-left: 2px;
-  animation: stat-buff-pulse 2s ease-in-out infinite;
+  animation: qb-stat-buff-pulse 2s ease-in-out infinite;
 }
-@keyframes stat-buff-pulse {
+@keyframes qb-stat-buff-pulse {
 
   0%,
   100% {
@@ -4994,9 +4994,9 @@
 .qb-loot-emoji {
   font-size: 3rem;
   margin-bottom: var(--qb-spacing-sm);
-  animation: loot-bounce 0.6s ease;
+  animation: qb-loot-bounce 0.6s ease;
 }
-@keyframes loot-bounce {
+@keyframes qb-loot-bounce {
 
   0%,
   100% {
@@ -5032,9 +5032,9 @@
   background: var(--background-secondary);
   border-radius: var(--qb-radius-md);
   border: 2px solid var(--background-modifier-border);
-  animation: loot-slide-in 0.3s ease;
+  animation: qb-loot-slide-in 0.3s ease;
 }
-@keyframes loot-slide-in {
+@keyframes qb-loot-slide-in {
   0% {
     opacity: 0;
     transform: translateX(-20px);
@@ -8634,32 +8634,32 @@
    =========================================== */
 /* Exit animations - room slides OUT */
 .qb-transition-exiting-north {
-  animation: slide-out-north 0.2s ease-in forwards;
+  animation: qb-slide-out-north 0.2s ease-in forwards;
 }
 .qb-transition-exiting-south {
-  animation: slide-out-south 0.2s ease-in forwards;
+  animation: qb-slide-out-south 0.2s ease-in forwards;
 }
 .qb-transition-exiting-east {
-  animation: slide-out-east 0.2s ease-in forwards;
+  animation: qb-slide-out-east 0.2s ease-in forwards;
 }
 .qb-transition-exiting-west {
-  animation: slide-out-west 0.2s ease-in forwards;
+  animation: qb-slide-out-west 0.2s ease-in forwards;
 }
 /* Enter animations - room slides IN */
 .qb-transition-entering-north {
-  animation: slide-in-from-south 0.2s ease-out forwards;
+  animation: qb-slide-in-from-south 0.2s ease-out forwards;
 }
 .qb-transition-entering-south {
-  animation: slide-in-from-north 0.2s ease-out forwards;
+  animation: qb-slide-in-from-north 0.2s ease-out forwards;
 }
 .qb-transition-entering-east {
-  animation: slide-in-from-west 0.2s ease-out forwards;
+  animation: qb-slide-in-from-west 0.2s ease-out forwards;
 }
 .qb-transition-entering-west {
-  animation: slide-in-from-east 0.2s ease-out forwards;
+  animation: qb-slide-in-from-east 0.2s ease-out forwards;
 }
 /* Keyframes for exit animations */
-@keyframes slide-out-north {
+@keyframes qb-slide-out-north {
   from {
     transform: translateY(0);
     opacity: 1;
@@ -8670,7 +8670,7 @@
     opacity: 0;
   }
 }
-@keyframes slide-out-south {
+@keyframes qb-slide-out-south {
   from {
     transform: translateY(0);
     opacity: 1;
@@ -8681,7 +8681,7 @@
     opacity: 0;
   }
 }
-@keyframes slide-out-east {
+@keyframes qb-slide-out-east {
   from {
     transform: translateX(0);
     opacity: 1;
@@ -8692,7 +8692,7 @@
     opacity: 0;
   }
 }
-@keyframes slide-out-west {
+@keyframes qb-slide-out-west {
   from {
     transform: translateX(0);
     opacity: 1;
@@ -8704,7 +8704,7 @@
   }
 }
 /* Keyframes for enter animations */
-@keyframes slide-in-from-north {
+@keyframes qb-slide-in-from-north {
   from {
     transform: translateY(-100%);
     opacity: 0;
@@ -8715,7 +8715,7 @@
     opacity: 1;
   }
 }
-@keyframes slide-in-from-south {
+@keyframes qb-slide-in-from-south {
   from {
     transform: translateY(100%);
     opacity: 0;
@@ -8726,7 +8726,7 @@
     opacity: 1;
   }
 }
-@keyframes slide-in-from-west {
+@keyframes qb-slide-in-from-west {
   from {
     transform: translateX(-100%);
     opacity: 0;
@@ -8737,7 +8737,7 @@
     opacity: 1;
   }
 }
-@keyframes slide-in-from-east {
+@keyframes qb-slide-in-from-east {
   from {
     transform: translateX(100%);
     opacity: 0;

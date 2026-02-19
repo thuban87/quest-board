@@ -930,10 +930,10 @@
 /* Timed buffs that are expiring soon pulse */
 .qb-buff-expiring {
   border-color: #ff6b35;
-  animation: buff-pulse 1.5s ease-in-out infinite;
+  animation: qb-buff-pulse 1.5s ease-in-out infinite;
 }
 
-@keyframes buff-pulse {
+@keyframes qb-buff-pulse {
 
   0%,
   100% {
@@ -997,10 +997,10 @@
   color: var(--qb-technomancer-color);
   font-weight: 700;
   margin-left: 2px;
-  animation: stat-buff-pulse 2s ease-in-out infinite;
+  animation: qb-stat-buff-pulse 2s ease-in-out infinite;
 }
 
-@keyframes stat-buff-pulse {
+@keyframes qb-stat-buff-pulse {
 
   0%,
   100% {
