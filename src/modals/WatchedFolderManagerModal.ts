@@ -7,6 +7,7 @@
  */
 
 import { App, Modal, Setting, TFile, TFolder, Notice } from 'obsidian';
+import { ConfirmModal } from './ConfirmModal';
 import type QuestBoardPlugin from '../../main';
 import type { WatchedFolderConfig } from '../services/FolderWatchService';
 
@@ -160,7 +161,13 @@ export class WatchedFolderManagerModal extends Modal {
                 cls: 'mod-warning'
             });
             deleteBtn.addEventListener('click', async () => {
-                if (confirm(`Delete watcher for "${templateName}"?\n\nThis will NOT delete the template file.`)) {
+                const confirmed = await ConfirmModal.show(this.app, {
+                    title: 'Delete Watcher',
+                    message: `Delete watcher for "${templateName}"?\n\nThis will NOT delete the template file.`,
+                    confirmText: 'Delete',
+                    danger: true,
+                });
+                if (confirmed) {
                     // Remove from array
                     this.plugin.settings.watchedFolderConfigs =
                         this.plugin.settings.watchedFolderConfigs.filter(c => c.id !== config.id);

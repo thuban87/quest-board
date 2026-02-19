@@ -6,6 +6,7 @@
  */
 
 import { App, Menu, Modal, Notice, Setting, TFile } from 'obsidian';
+import { ConfirmModal } from './ConfirmModal';
 import type QuestBoardPlugin from '../../main';
 import { TemplateService, ParsedTemplate } from '../services/TemplateService';
 import { getTemplateStatsService, TemplateStats } from '../services/TemplateStatsService';
@@ -563,11 +564,14 @@ export class ScrollLibraryModal extends Modal {
      * Confirm and delete a template
      */
     private async confirmDeleteTemplate(parsed: ParsedTemplate): Promise<void> {
-        const confirm = window.confirm(
-            `🔥 Burn the Scroll?\n\nThis will permanently delete "${parsed.name}".\n\nThis action cannot be undone.`
-        );
+        const confirmed = await ConfirmModal.show(this.app, {
+            title: 'Burn the Scroll',
+            message: `This will permanently delete "${parsed.name}". This action cannot be undone.`,
+            confirmText: 'Burn',
+            danger: true,
+        });
 
-        if (confirm) {
+        if (confirmed) {
             try {
                 const file = this.app.vault.getAbstractFileByPath(parsed.path);
                 if (file instanceof TFile) {

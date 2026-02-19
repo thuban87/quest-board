@@ -61,18 +61,62 @@ Each session entry should include:
 
 ---
 
+## 2026-02-19 - Phase 3: `confirm()` → ConfirmModal Conversion
+
+**Focus:** Replace all 9 native `confirm()` browser dialogs with a custom Obsidian-native `ConfirmModal` class
+
+### Completed:
+
+- ✅ Created `src/modals/ConfirmModal.ts` — reusable modal with static `show()` method returning `Promise<boolean>`, supports danger mode via `.setWarning()`
+- ✅ Converted `settings.ts` — 2 sites (Reset Stats, Master Reset)
+- ✅ Converted `ColumnManagerModal.ts` — 2 sites (Reset Columns, Delete Column); reset handler upgraded from sync to async
+- ✅ Converted `ScrivenersQuillModal.ts` — 2 sites (Overwrite Quest File, Overwrite Template)
+- ✅ Converted `WatchedFolderManagerModal.ts` — 1 site (Delete Watcher)
+- ✅ Converted `ScrollLibraryModal.ts` — 1 site (Burn the Scroll); fixed variable shadowing (`confirm` → `confirmed`)
+- ✅ Converted `AchievementHubModal.ts` — 1 site (Delete Achievement)
+
+### Files Changed:
+
+**New:**
+- `src/modals/ConfirmModal.ts` — Reusable confirmation modal class
+
+**Modified:**
+- `src/settings.ts` — Added ConfirmModal import, converted 2 confirm() calls
+- `src/modals/ColumnManagerModal.ts` — Added ConfirmModal import, converted 2 confirm() calls
+- `src/modals/ScrivenersQuillModal.ts` — Added ConfirmModal import, converted 2 window.confirm() calls
+- `src/modals/WatchedFolderManagerModal.ts` — Added ConfirmModal import, converted 1 confirm() call
+- `src/modals/ScrollLibraryModal.ts` — Added ConfirmModal import, converted 1 window.confirm() call
+- `src/modals/AchievementHubModal.ts` — Added ConfirmModal import, converted 1 confirm() call
+
+### Testing Notes:
+
+- ✅ Build passes (`npm run build`)
+- ✅ All 13 test files pass (168 tests, `npx vitest run`)
+- ✅ `rg "confirm\("` — zero `confirm()` or `window.confirm()` calls remaining (only JSDoc reference in ConfirmModal.ts)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Manual Obsidian test — all 9 confirmation dialogs verified working (cancel, confirm, escape)
+
+### Blockers/Issues:
+
+- The alignment plan stated a `ConfirmModal` class "already exists from earlier compliance work" — this was incorrect; the class had to be created from scratch. No impact on scope or effort.
+
+---
+
 ## Next Session Prompt
 
 ```
-Phase 1 of Obsidian Guidelines Alignment is complete.
+Phase 3 of Obsidian Guidelines Alignment is complete.
 
 What was done:
-- ✅ Created LICENSE (MIT) and versions.json
-- ✅ Fixed manifest.json (period, removed fundingUrl)
-- ✅ Converted all require/import('obsidian') calls to top-level imports (15 total across 3 files)
+- ✅ Created ConfirmModal class (static show() method, Promise<boolean>, danger mode)
+- ✅ Converted all 9 confirm() calls across 6 files to use ConfirmModal
+- ✅ Zero native confirm() calls remain in the codebase
 
-Next up: Phase 3 (confirm() → ConfirmModal conversion). Phase 2 is deferred per the plan.
-Review the 9 call sites in the alignment plan and begin converting them to use the existing ConfirmModal class.
+Phases completed so far:
+- Phase 1: Missing files, manifest fixes, import cleanup
+- Phase 3: confirm() → ConfirmModal conversion (Phase 2 deferred per plan)
+
+Next up: Check the alignment plan for the next uncompleted phase and continue.
 
 Key files to reference:
 - docs/development/launch-considerations/01 - Obsidian guidelines alignment plan.md - Full plan
@@ -84,19 +128,18 @@ Key files to reference:
 ## Git Commit Message
 
 ```
-refactor(guidelines): Phase 1 - missing files, manifest fixes, import cleanup
+refactor(guidelines): Phase 3 - replace confirm() with ConfirmModal
 
 New Files:
-- LICENSE (MIT) - required for Obsidian submission
-- versions.json - required for BRAT auto-update
+- src/modals/ConfirmModal.ts - reusable Obsidian-native confirmation modal with static show() method
 
-Manifest Fixes:
-- Added trailing period to description
-- Removed empty fundingUrl key
+Conversions (9 total across 6 files):
+- settings.ts: Reset Stats and Master Reset confirmations
+- ColumnManagerModal.ts: Reset Columns and Delete Column confirmations
+- ScrivenersQuillModal.ts: Overwrite Quest File and Overwrite Template confirmations
+- WatchedFolderManagerModal.ts: Delete Watcher confirmation
+- ScrollLibraryModal.ts: Burn the Scroll confirmation (fixed variable shadowing)
+- AchievementHubModal.ts: Delete Achievement confirmation
 
-Import Cleanup:
-- Converted 12 require/import('obsidian') calls in main.ts to top-level Notice import
-- Converted 1 require('obsidian') call in ScrollLibraryModal.ts to top-level Menu import
-- Converted 2 import('obsidian') calls in settings.ts to existing top-level Notice import
-- Zero runtime require/import('obsidian') calls remain in codebase
+Zero native confirm()/window.confirm() calls remain in codebase
 ```

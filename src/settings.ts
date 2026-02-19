@@ -6,6 +6,7 @@
  */
 
 import { App, PluginSettingTab, Setting, TFolder, TextComponent, Notice } from 'obsidian';
+import { ConfirmModal } from './modals/ConfirmModal';
 import type QuestBoardPlugin from '../main';
 import type { Character } from './models/Character';
 import type { InventoryItem } from './models/Consumable';
@@ -986,7 +987,13 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         new Notice('❌ No character to reset');
                         return;
                     }
-                    if (confirm('Reset all stats and streaks? Your XP, level, and achievements will be preserved.')) {
+                    const confirmed = await ConfirmModal.show(this.app, {
+                        title: 'Reset Stats',
+                        message: 'Reset all stats and streaks? Your XP, level, and achievements will be preserved.',
+                        confirmText: 'Reset',
+                        danger: true,
+                    });
+                    if (confirmed) {
                         this.plugin.settings.character.statBonuses = {
                             strength: 0,
                             intelligence: 0,
@@ -1025,7 +1032,13 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         return;
                     }
                     // Extra confirm dialog as second layer of protection
-                    if (confirm('Are you ABSOLUTELY sure? This will delete all character progress, achievements, and inventory. This cannot be undone.')) {
+                    const confirmed = await ConfirmModal.show(this.app, {
+                        title: 'Reset All Data',
+                        message: 'Are you ABSOLUTELY sure? This will delete all character progress, achievements, and inventory. This cannot be undone.',
+                        confirmText: 'Reset All Data',
+                        danger: true,
+                    });
+                    if (confirmed) {
                         this.plugin.settings.character = null;
                         this.plugin.settings.achievements = [];
                         this.plugin.settings.inventory = [];
