@@ -77,6 +77,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     // Quest loading and file watching (replaces duplicated loadQuests/watchQuestFolder logic)
     const { pendingSavesRef } = useQuestLoader({
         vault: app.vault,
+        plugin,
         storageFolder: plugin.settings.storageFolder,
         settings: plugin.settings,
         useSaveLock: true,
@@ -100,6 +101,7 @@ export const FullKanban: React.FC<FullKanbanProps> = ({ plugin, app }) => {
     useXPAward({
         app,
         vault: app.vault,
+        plugin,
 
         customStatMappings: plugin.settings.categoryStatMappings,
         onCategoryUsed: async (category) => {

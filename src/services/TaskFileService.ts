@@ -6,6 +6,7 @@
  */
 
 import { Vault, TFile, debounce } from 'obsidian';
+import type QuestBoardPlugin from '../../main';
 import { validateLinkedPath } from '../utils/pathValidator';
 
 /**
@@ -337,6 +338,7 @@ export function countNewlyCompleted(
  * Returns an unsubscribe function
  */
 export function watchTaskFile(
+    plugin: QuestBoardPlugin,
     vault: Vault,
     filePath: string,
     callback: (result: TaskFileResult) => void,
@@ -348,16 +350,16 @@ export function watchTaskFile(
         callback(result);
     }, debounceMs, true);
 
-    // Register event handlers
-    const onModify = vault.on('modify', (file) => {
+    // Register event handlers (auto-cleaned by plugin.registerEvent on unload)
+    plugin.registerEvent(vault.on('modify', (file) => {
         if (file.path === filePath) {
             debouncedCallback(file as TFile);
         }
-    });
+    }));
 
-    // Return unsubscribe function
+    // Return cleanup function
     return () => {
-        vault.offref(onModify);
+        /* Event listener auto-cleaned by plugin.registerEvent */
     };
 }
 

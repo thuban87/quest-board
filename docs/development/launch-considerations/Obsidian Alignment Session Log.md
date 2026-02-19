@@ -203,21 +203,70 @@ Each session entry should include:
 
 ---
 
+## 2026-02-19 - Phase 6: Event Registration Cleanup (`vault.on()` → `registerEvent()`)
+
+**Focus:** Convert all manual `vault.on()` event registrations to use Obsidian's `plugin.registerEvent()` for automatic cleanup on plugin unload
+
+### Completed:
+
+- ✅ `QuestService.ts` — 4 `vault.on()` calls (create, modify, delete, rename) converted to `plugin.registerEvent()`; removed 4 `vault.offref()` calls; added `plugin` parameter to `watchQuestFolderGranular()`
+- ✅ `FolderWatchService.ts` — 2 `vault.on()` calls (create, rename) converted to `this.plugin.registerEvent()`; added active-config guard pattern for dynamic stop/start support; removed 2 `vault.offref()` calls
+- ✅ `TaskFileService.ts` — 1 `vault.on()` call converted to `plugin.registerEvent()`; added `plugin` parameter to `watchTaskFile()`
+- ✅ `useQuestLoader.ts` — 1 direct `vault.on('modify')` converted to `plugin.registerEvent()`; added `plugin` to hook options; passes `plugin` to `watchQuestFolderGranular()`
+- ✅ `useXPAward.ts` — 1 `vault.on('modify')` per task file converted to `plugin.registerEvent()`; added `plugin` to hook options
+- ✅ `SidebarQuests.tsx` — Updated `useQuestLoader` and `useXPAward` calls to pass `plugin` prop
+- ✅ `FullKanban.tsx` — Updated `useQuestLoader` and `useXPAward` calls to pass `plugin` prop
+
+### Files Changed:
+
+**Modified (7 files, +45/-33 lines):**
+- `src/services/QuestService.ts` — added `plugin` param, 4 registerEvent conversions, removed offref
+- `src/services/FolderWatchService.ts` — 2 registerEvent conversions, guard pattern, removed offref
+- `src/services/TaskFileService.ts` — added `plugin` param, 1 registerEvent conversion, removed offref
+- `src/hooks/useQuestLoader.ts` — added `plugin` to options, 1 registerEvent, passes plugin to service
+- `src/hooks/useXPAward.ts` — added `plugin` to options, 1 registerEvent per file watcher
+- `src/components/SidebarQuests.tsx` — passes `plugin` to both hooks
+- `src/components/FullKanban.tsx` — passes `plugin` to both hooks
+
+### Testing Notes:
+
+- ✅ Build passes (`npm run build`, 5.08 MB)
+- ✅ 388/390 tests pass — 2 pre-existing failures in `monster.test.ts` (fierce/sturdy prefix stat assertions — unrelated to event registration)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Manual Obsidian testing — all 7 test cases passed:
+  1. Quest board loads normally
+  2. New quest file creation detected
+  3. Quest frontmatter edit reflected
+  4. Quest deletion reflected
+  5. Linked task file check/uncheck updates progress
+  6. Watched folder triggers quest generation
+  7. Plugin disable/re-enable — no zombie listeners
+
+### Blockers/Issues:
+
+- 2 pre-existing test failures in `monster.test.ts` (fierce/sturdy prefix) — flaky due to randomized level selection. Not related to this phase.
+- User noted: duplicate quest appears briefly on file creation until app reload (item 2). May be related to `registerEvent` not supporting selective unregister — the old `onCreate` listener fires once before the new one. Low priority, cosmetic only.
+- User noted: horizontal scroll on 2/4 kanban columns when all expanded. Not related to this phase — pre-existing CSS issue.
+
+---
+
 ## Next Session Prompt
 
 ```
-Phase 5 of Obsidian Guidelines Alignment is complete.
+Phase 6 of Obsidian Guidelines Alignment is complete.
 
 What was done:
-- Converted all 13 innerHTML sites across 5 files to DOM API
-- gearFormatters.ts: DocumentFragment pattern for tooltip builders
-- ColumnManagerModal, InventoryManagementModal, InventoryModal, BlacksmithModal: createEl/appendText
+- Converted all 9 vault.on() event registrations across 7 files to plugin.registerEvent()
+- Removed all manual vault.offref() cleanup calls
+- Added plugin parameter threading from components through hooks to services
+- FolderWatchService uses active-config guard pattern for dynamic stop/start
 
 Phases completed so far:
 - Phase 1: Missing files, manifest fixes, import cleanup
 - Phase 3: confirm() -> ConfirmModal conversion (Phase 2 deferred per plan)
 - Phase 4: vault.modify -> vault.process/processFrontMatter, fetch -> requestUrl
 - Phase 5: innerHTML -> DOM API conversion
+- Phase 6: vault.on() -> registerEvent() conversion
 
 Next up: Check the alignment plan for the next uncompleted phase and continue.
 
@@ -231,17 +280,16 @@ Key files to reference:
 ## Git Commit Message
 
 ```
-refactor(guidelines): Phase 5 - innerHTML to DOM API conversion
+refactor(guidelines): Phase 6 - event registration cleanup
 
-- gearFormatters.ts: buildGearStatsHtml/buildComparisonSummaryHtml refactored
-  to DocumentFragment builders (buildGearStats/buildComparisonSummary)
-- gearFormatters.ts: formatStatDiff refactored to createStatDiff returning element
-- ColumnManagerModal.ts: warning box converted to createEl + appendText
-- InventoryManagementModal.ts: header and running totals converted to createEl chains
-- InventoryModal.ts: stats innerHTML += converted to createSpan calls
-- BlacksmithModal.ts: header, instructions, and preview converted to createEl chains
+- QuestService.ts: 4 vault.on() calls converted to plugin.registerEvent()
+- FolderWatchService.ts: 2 vault.on() calls with active-config guard pattern
+- TaskFileService.ts: 1 vault.on() call converted
+- useQuestLoader.ts: linked file watcher + passes plugin to service
+- useXPAward.ts: per-file task watchers converted
+- SidebarQuests.tsx + FullKanban.tsx: pass plugin prop to hooks
 
-5 files changed, +139/-105 lines
-Zero innerHTML remaining in src/ (rg confirmed)
+7 files changed, +45/-33 lines
+All vault.offref() manual cleanup removed
 ```
 

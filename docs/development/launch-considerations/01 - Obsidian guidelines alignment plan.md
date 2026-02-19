@@ -330,7 +330,7 @@ While the current `innerHTML` usage renders internal plugin data (not user-suppl
 
 ---
 
-## Phase 6: Event Registration Cleanup (`vault.on()` → `registerEvent()`)
+## Phase 6: Event Registration Cleanup (`vault.on()` → `registerEvent()`) ✅ Completed
 
 **Priority:** 🟡 Recommended (Obsidian best practice for resource cleanup)
 **Scope:** Medium — 5 files, ~9 event registrations

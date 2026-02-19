@@ -218,7 +218,10 @@ export class FolderWatchService {
         };
 
         // Set up file creation listener with debounce
-        const onCreateRef = this.vault.on('create', async (file) => {
+        const configId = config.id;
+        this.plugin.registerEvent(this.vault.on('create', async (file) => {
+            // Guard: skip if this watcher was stopped (registerEvent doesn't support selective unregister)
+            if (!this.unsubscribers.has(configId)) return;
             if (!(file instanceof TFile)) return;
             if (!isDirectChild(file.path)) return;
             if (file.extension !== 'md') return;
@@ -232,10 +235,12 @@ export class FolderWatchService {
             // Set debounce timer (2 seconds to allow for renaming)
             const timer = setTimeout(() => processFile(file), 2000);
             pendingFiles.set(file.path, timer);
-        });
+        }));
 
         // Set up rename listener to catch "Untitled" -> real name
-        const onRenameRef = this.vault.on('rename', async (file, oldPath) => {
+        this.plugin.registerEvent(this.vault.on('rename', async (file, oldPath) => {
+            // Guard: skip if this watcher was stopped
+            if (!this.unsubscribers.has(configId)) return;
             if (!(file instanceof TFile)) return;
             if (!isDirectChild(file.path)) return;
             if (file.extension !== 'md') return;
@@ -254,11 +259,10 @@ export class FolderWatchService {
                 // Process immediately since user has finalized name
                 await processFile(file);
             }
-        });
+        }));
 
         this.unsubscribers.set(config.id, () => {
-            this.vault.offref(onCreateRef);
-            this.vault.offref(onRenameRef);
+            // Event listeners auto-cleaned by plugin.registerEvent on unload
             // Clear any pending timers
             for (const timer of pendingFiles.values()) {
                 clearTimeout(timer);

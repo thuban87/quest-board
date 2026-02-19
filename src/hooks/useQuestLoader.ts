@@ -8,6 +8,7 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import { Vault, TFile } from 'obsidian';
+import type QuestBoardPlugin from '../../main';
 import { useQuestStore } from '../store/questStore';
 import { useTaskSectionsStore } from '../store/taskSectionsStore';
 import { loadAllQuests, loadSingleQuest, watchQuestFolderGranular } from '../services/QuestService';
@@ -18,6 +19,7 @@ import type { QuestBoardSettings } from '../settings';
 
 interface UseQuestLoaderOptions {
     vault: Vault;
+    plugin: QuestBoardPlugin;
     storageFolder: string;
     /** Settings for status resolution */
     settings?: QuestBoardSettings;
@@ -42,6 +44,7 @@ interface UseQuestLoaderResult {
  */
 export function useQuestLoader({
     vault,
+    plugin,
     storageFolder,
     settings,
     useSaveLock = false,
@@ -140,7 +143,7 @@ export function useQuestLoader({
         loadQuestsAndSections();
 
         // Granular watcher for quest files
-        const unsubscribeQuests = watchQuestFolderGranular(vault, storageFolder, {
+        const unsubscribeQuests = watchQuestFolderGranular(plugin, vault, storageFolder, {
             onQuestModified: async (filePath, quest) => {
                 // Skip if save is pending for this quest
                 if (quest && pendingSavesRef.current.has(quest.questId)) {
@@ -221,7 +224,7 @@ export function useQuestLoader({
         }, 300, settings);  // Pass settings for status resolution
 
         // Watch linked task files (outside quest folder)
-        const onLinkedFileModify = vault.on('modify', async (file) => {
+        plugin.registerEvent(vault.on('modify', async (file) => {
             if (!(file instanceof TFile)) return;
 
             const questId = linkedFileToQuestRef.current.get(file.path);
@@ -240,11 +243,10 @@ export function useQuestLoader({
             if (quest) {
                 await loadSectionsForQuest(quest);
             }
-        });
+        }));
 
         return () => {
             unsubscribeQuests();
-            vault.offref(onLinkedFileModify);
         };
     }, [vault, storageFolder, useSaveLock, upsertQuest, removeQuest,
         loadSectionsForQuest, removeQuestSections]);

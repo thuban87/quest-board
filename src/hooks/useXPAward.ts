@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { App, Vault, Notice, debounce } from 'obsidian';
+import type QuestBoardPlugin from '../../main';
 import { Quest, isManualQuest } from '../models/Quest';
 import { Character } from '../models/Character';
 import { useCharacterStore } from '../store/characterStore';
@@ -33,6 +34,7 @@ import {
 interface UseXPAwardOptions {
     app: App;
     vault: Vault;
+    plugin: QuestBoardPlugin;
     customStatMappings?: Record<string, string>;
     onCategoryUsed?: (category: string) => void;
     onSaveCharacter: () => Promise<void>;
@@ -58,7 +60,7 @@ let subscriberCount = 0;
 /**
  * Hook to watch task files and award XP on completion
  */
-export function useXPAward({ app, vault, customStatMappings, onCategoryUsed, onSaveCharacter }: UseXPAwardOptions) {
+export function useXPAward({ app, vault, plugin, customStatMappings, onCategoryUsed, onSaveCharacter }: UseXPAwardOptions) {
     // Use refs that point to the global singletons (for React pattern compatibility)
     const taskSnapshotsRef = useRef(globalTaskSnapshots);
     const fileWatchersRef = useRef(globalFileWatchers);
@@ -546,14 +548,14 @@ export function useXPAward({ app, vault, customStatMappings, onCategoryUsed, onS
                 }
             }, 300, false);  // false = don't fire immediately
 
-            const onModify = vault.on('modify', (file) => {
+            plugin.registerEvent(vault.on('modify', (file) => {
                 if (file.path === filePath) {
                     debouncedCheck();
                 }
-            });
+            }));
 
             fileWatchersRef.current.set(filePath, () => {
-                vault.offref(onModify);
+                /* Event listener auto-cleaned by plugin.registerEvent */
             });
         }
 

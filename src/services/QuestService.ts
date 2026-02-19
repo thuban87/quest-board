@@ -6,6 +6,7 @@
  */
 
 import { App, Vault, TFile, TFolder, debounce } from 'obsidian';
+import type QuestBoardPlugin from '../../main';
 import { Quest, ManualQuest, AIGeneratedQuest, isAIGeneratedQuest, QUEST_SCHEMA_VERSION } from '../models/Quest';
 import { QuestType, QuestStatus, QuestPriority, QuestDifficulty } from '../models/QuestStatus';
 import { validateQuest, validateQuestWithNotice } from '../utils/validator';
@@ -805,6 +806,7 @@ export type QuestFileEvent =
  * Efficient for large quest counts - only reloads the affected quest file.
  */
 export function watchQuestFolderGranular(
+    plugin: QuestBoardPlugin,
     vault: Vault,
     baseFolder: string,
     callbacks: {
@@ -826,7 +828,7 @@ export function watchQuestFolderGranular(
         callbacks.onQuestModified(filePath, result.quest);
     };
 
-    const onCreate = vault.on('create', async (file) => {
+    plugin.registerEvent(vault.on('create', async (file) => {
         if (file.path.startsWith(baseFolder) && file instanceof TFile) {
             // Small delay to ensure file is fully written
             setTimeout(async () => {
@@ -836,9 +838,9 @@ export function watchQuestFolderGranular(
                 }
             }, 100);
         }
-    });
+    }));
 
-    const onModify = vault.on('modify', (file) => {
+    plugin.registerEvent(vault.on('modify', (file) => {
         if (file.path.startsWith(baseFolder) && file instanceof TFile) {
             // Debounce per-file to handle rapid edits
             const existing = pendingModifies.get(file.path);
@@ -854,15 +856,15 @@ export function watchQuestFolderGranular(
                 }, debounceMs)
             );
         }
-    });
+    }));
 
-    const onDelete = vault.on('delete', (file) => {
+    plugin.registerEvent(vault.on('delete', (file) => {
         if (file.path.startsWith(baseFolder)) {
             callbacks.onQuestDeleted(file.path);
         }
-    });
+    }));
 
-    const onRename = vault.on('rename', async (file, oldPath) => {
+    plugin.registerEvent(vault.on('rename', async (file, oldPath) => {
         if (file.path.startsWith(baseFolder) || oldPath.startsWith(baseFolder)) {
             if (file instanceof TFile) {
                 const result = await loadSingleQuest(vault, file.path, settings);
@@ -871,14 +873,10 @@ export function watchQuestFolderGranular(
                 callbacks.onQuestRenamed(file.path, oldPath, null);
             }
         }
-    });
+    }));
 
-    // Return unsubscribe function
+    // Return cleanup function (event listeners auto-cleaned by plugin.registerEvent)
     return () => {
-        vault.offref(onCreate);
-        vault.offref(onModify);
-        vault.offref(onDelete);
-        vault.offref(onRename);
         // Clear pending timeouts
         pendingModifies.forEach(timeout => clearTimeout(timeout));
         pendingModifies.clear();
