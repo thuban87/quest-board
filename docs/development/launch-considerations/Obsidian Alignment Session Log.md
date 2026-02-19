@@ -280,15 +280,71 @@ Each session entry should include:
 
 ---
 
+## 2026-02-19 - Phases 8-12: CSS Prefix — `base.css` Retirement
+
+**Focus:** Audit all unprefixed CSS selectors in `base.css`, archive dead code, and retire the file entirely
+
+### Completed:
+
+**Phase 8 — Core Layout (6 selectors + 4 descendants):**
+- ✅ Audited `quest-board-container`, `quest-board-header`, `quest-board-kanban`, `quest-board-empty` — all dead (0 TS/TSX references)
+- ✅ Audited `.quest-board-header` descendants (h1, .character-info, .character-name, .character-level) — all dead
+- ✅ Archived to `deprecated-code/base-css-phase8-core-layout.css`
+- ✅ Removed from `base.css`
+
+**Phases 9-12 — Remaining selectors (23 selectors):**
+- ✅ Audited all remaining selectors — ALL dead. Components already migrated to `qb-` prefixed classes:
+  - `QuestCard.tsx` → `qb-quest-card` (not `quest-card`)
+  - `CharacterSidebar.tsx` → `qb-character-sheet` (not `character-sheet`)
+  - `DungeonView.tsx` → `qb-stat-label`, `qb-stat-value` (not `stat-label`, `stat-value`)
+  - `EquipmentGrid.tsx` → `qb-gear-slot` (not `gear-slot`)
+  - `SidebarQuests.tsx` → `qb-sb-xp-bar` (not `xp-bar`)
+- ✅ Archived to `deprecated-code/base-css-phases9-12-remaining.css`
+- ✅ Removed `@import "./base.css"` from `src/styles/index.css`
+- ✅ Deleted `src/styles/base.css` entirely
+- ✅ Added `deprecated-code/` to `.gitignore`
+
+### Key Finding:
+
+The plan expected Phases 9-12 to involve renaming live selectors. In reality, **all components had already been migrated to `qb-` prefixed class names** — the unprefixed CSS in `base.css` was leftover dead code from before the migration. This collapsed 5 planned phases (8-12) into a single dead code cleanup session.
+
+### Files Changed:
+
+**New:**
+- `deprecated-code/base-css-phase8-core-layout.css` — Phase 8 archive
+- `deprecated-code/base-css-phases9-12-remaining.css` — Phases 9-12 archive
+
+**Modified:**
+- `.gitignore` — Added `deprecated-code/`
+- `src/styles/index.css` — Removed `@import "./base.css"`
+
+**Deleted:**
+- `src/styles/base.css` — Fully retired (all 276 lines were dead code)
+
+### Testing Notes:
+
+- ✅ Build passes (`npm run build`, 5.08 MB)
+- ✅ All 13 test files pass (`npx vitest run`)
+- ✅ `rg "quest-board-container|quest-board-header|quest-board-kanban|quest-board-empty" src/styles/base.css` — file no longer exists
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ Manual Obsidian test — board renders correctly, no visual regressions
+
+### Blockers/Issues:
+
+- None
+
+---
+
 ## Next Session Prompt
 
 ```
-Phase 7 of Obsidian Guidelines Alignment is complete.
+Phases 8-12 of Obsidian Guidelines Alignment are complete.
 
 What was done:
-- Converted all 13 createEl('h*') heading calls to setHeading() in settings.ts
-- Removed emoji prefixes from 4 headings
-- Added setHeading() to test mock
+- Audited all 33 unprefixed selectors in base.css -- ALL were dead code
+- Components had already been migrated to qb- prefixed classes
+- Archived dead CSS to deprecated-code/ folder (gitignored)
+- Deleted base.css entirely and removed its import from index.css
 
 Phases completed so far:
 - Phase 1: Missing files, manifest fixes, import cleanup
@@ -296,9 +352,11 @@ Phases completed so far:
 - Phase 4: vault.modify -> vault.process/processFrontMatter, fetch -> requestUrl
 - Phase 5: innerHTML -> DOM API conversion
 - Phase 6: vault.on() -> registerEvent() event registration cleanup
-- Phase 7: Settings UI createEl('h*') -> setHeading() conversion
+- Phase 7: Settings UI createEl(h*) -> setHeading() conversion
+- Phases 8-12: CSS Prefix -- base.css fully retired (all dead code)
 
-Next up: Phase 8 (CSS Prefix — base.css Core Layout). Check the alignment plan for details.
+Next up: Phase 13 (@keyframes renaming in dungeons.css, power-ups.css, inventory.css).
+Check the alignment plan for details.
 
 Key files to reference:
 - docs/development/launch-considerations/01 - Obsidian guidelines alignment plan.md - Full plan
@@ -310,13 +368,15 @@ Key files to reference:
 ## Git Commit Message
 
 ```
-refactor(guidelines): Phase 7 - settings UI setHeading conversion
+refactor(css): Phases 8-12 - retire base.css entirely as dead code
 
-- settings.ts: 13 createEl(h*) calls converted to Setting.setHeading().setName()
-- Removed emoji prefixes from 4 heading texts
-- test/mocks/obsidian.ts: added setHeading() to Setting mock
+- Audited all 33 unprefixed selectors in base.css -- zero TS/TSX references
+- Components already use qb- prefixed classes in kanban.css, character.css, etc.
+- Archived dead CSS to deprecated-code/ folder (2 files, gitignored)
+- Removed @import base.css from src/styles/index.css
+- Deleted src/styles/base.css (276 lines of dead code)
+- Phases 9-12 collapsed into Phase 8 session -- nothing to rename, only remove
 
-2 files changed
+5 files changed, 4 insertions(+), 518 deletions(-)
 ```
-
 

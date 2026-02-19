@@ -28,3 +28,6 @@ test-output.txt
 
 # Archived sprites (old versions kept for review)
 assets/sprites/archive/
+
+# Deprecated code archive (dead code preserved for reference)
+deprecated-code/
