@@ -8,7 +8,7 @@ import { App, Modal, Setting, TFile, TFolder, Notice, TextComponent, DropdownCom
 import type QuestBoardPlugin from '../../main';
 import { QuestPriority, QuestDifficulty } from '../models/QuestStatus';
 import { ManualQuest, QUEST_SCHEMA_VERSION } from '../models/Quest';
-import { saveManualQuest, loadAllQuests } from '../services/QuestService';
+import { saveManualQuest, loadAllQuests, saveNewQuestFile } from '../services/QuestService';
 import { ColumnConfigService } from '../services/ColumnConfigService';
 
 /**
@@ -53,6 +53,15 @@ interface QuestFormData {
     rewards: string;
 }
 
+/**
+ * Optional initial values for pre-filling the quest form.
+ * Used by CreateQuestFromFileModal's "Edit before creating" flow.
+ */
+export interface CreateQuestInitialValues {
+    questName?: string;
+    linkedTaskFile?: string;
+}
+
 export class CreateQuestModal extends Modal {
     private plugin: QuestBoardPlugin;
     private formData: QuestFormData;
@@ -60,7 +69,7 @@ export class CreateQuestModal extends Modal {
     private availableTypes: string[] = [];  // Dynamic from folders
     private onSave: () => void;
 
-    constructor(app: App, plugin: QuestBoardPlugin, onSave?: () => void) {
+    constructor(app: App, plugin: QuestBoardPlugin, onSave?: () => void, initialValues?: CreateQuestInitialValues) {
         super(app);
         this.plugin = plugin;
         this.onSave = onSave || (() => { });
@@ -68,12 +77,12 @@ export class CreateQuestModal extends Modal {
         // Initialize form with defaults
         const columnConfigService = new ColumnConfigService(plugin.settings);
         this.formData = {
-            questName: '',
+            questName: initialValues?.questName || '',
             questType: 'main',  // Default, will be updated from folders
             status: columnConfigService.getDefaultColumn(),  // First column by default
             category: '',
             priority: QuestPriority.MEDIUM,
-            linkedTaskFile: '',
+            linkedTaskFile: initialValues?.linkedTaskFile || '',
             xpPerTask: 5,
             completionBonus: 30,
             dueDate: '',
@@ -105,6 +114,7 @@ export class CreateQuestModal extends Modal {
             .setDesc('Display name for your quest')
             .addText(text => {
                 text.setPlaceholder('Enter quest name...')
+                    .setValue(this.formData.questName)
                     .onChange(value => this.formData.questName = value);
                 text.inputEl.addClass('qb-input-wide');
             });
@@ -454,8 +464,20 @@ export class CreateQuestModal extends Modal {
             milestones: [],
         };
 
-        // Save with body sections
-        const success = await this.saveQuestWithBody(quest);
+        // Save with body sections using shared utility
+        const success = await saveNewQuestFile(
+            this.app,
+            this.plugin.settings.storageFolder,
+            quest,
+            {
+                description: this.formData.description,
+                objectives: this.formData.objectives,
+                rewards: this.formData.rewards,
+                dueDate: this.formData.dueDate,
+                estimatedTime: this.formData.estimatedTime,
+                difficulty: this.formData.difficulty,
+            }
+        );
 
         if (success) {
             new Notice(`✅ Quest "${quest.questName}" created!`);
@@ -463,91 +485,6 @@ export class CreateQuestModal extends Modal {
             this.close();
         } else {
             new Notice('❌ Failed to create quest. Check console for details.');
-        }
-    }
-
-    private async saveQuestWithBody(quest: ManualQuest): Promise<boolean> {
-        try {
-            // Use questType directly as folder name (lowercase)
-            const subFolder = `quests/${quest.questType.toLowerCase()}`;
-
-            const folderPath = `${this.plugin.settings.storageFolder}/${subFolder}`;
-            const filePath = `${folderPath}/${quest.questId}.md`;
-
-            // Ensure folder exists
-            const folder = this.app.vault.getAbstractFileByPath(folderPath);
-            if (!folder) {
-                await this.app.vault.createFolder(folderPath);
-            }
-
-            // Build frontmatter
-            const frontmatterLines = [
-                '---',
-                `schemaVersion: ${quest.schemaVersion}`,
-                `questId: "${quest.questId}"`,
-                `questName: "${quest.questName}"`,
-                `questType: ${quest.questType}`,
-                `category: "${quest.category}"`,
-                `status: ${quest.status}`,
-                `priority: ${quest.priority}`,
-                `linkedTaskFile: "${quest.linkedTaskFile}"`,
-                `xpPerTask: ${quest.xpPerTask}`,
-                `completionBonus: ${quest.completionBonus}`,
-                `visibleTasks: ${quest.visibleTasks}`,
-                `createdDate: "${quest.createdDate}"`,
-            ];
-
-            // Add optional fields
-            if (this.formData.dueDate) {
-                frontmatterLines.push(`dueDate: "${this.formData.dueDate}"`);
-            }
-            if (this.formData.estimatedTime) {
-                frontmatterLines.push(`estimatedTime: "${this.formData.estimatedTime}"`);
-            }
-            if (this.formData.difficulty !== QuestDifficulty.MEDIUM) {
-                frontmatterLines.push(`difficulty: ${this.formData.difficulty}`);
-            }
-
-            frontmatterLines.push('---');
-
-            // Build body
-            const bodyLines = [
-                '',
-                `# ${quest.questName}`,
-                '',
-            ];
-
-            if (this.formData.description) {
-                bodyLines.push('## Description', '', this.formData.description, '');
-            }
-
-            if (this.formData.objectives) {
-                bodyLines.push('## Objectives', '', this.formData.objectives, '');
-            }
-
-            if (this.formData.rewards) {
-                bodyLines.push('## Rewards', '', this.formData.rewards, '');
-            }
-
-            // If self-linking, add Tasks section
-            if (quest.linkedTaskFile === filePath) {
-                bodyLines.push('## Tasks', '', '- [ ] First task', '- [ ] Second task', '');
-            }
-
-            const content = frontmatterLines.join('\n') + bodyLines.join('\n');
-
-            // Create or overwrite file
-            const existingFile = this.app.vault.getAbstractFileByPath(filePath);
-            if (existingFile instanceof TFile) {
-                await this.app.vault.modify(existingFile, content);
-            } else {
-                await this.app.vault.create(filePath, content);
-            }
-
-            return true;
-        } catch (error) {
-            console.error('[CreateQuestModal] Failed to save quest:', error);
-            return false;
         }
     }
 }

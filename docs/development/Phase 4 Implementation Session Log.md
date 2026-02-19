@@ -2201,3 +2201,102 @@ File downloads still use jsDelivr (unaffected by this issue).
 Files: AssetService.ts
 ```
 
+---
+
+## 2026-02-18 - Create Quest from File
+
+**Focus:** New feature to create quests directly from existing vault files via context menus and command palette
+
+### Completed:
+
+#### Service Layer Refactoring
+- ✅ Extracted `saveQuestWithBody()` from `CreateQuestModal` into `QuestService.ts` as shared `saveNewQuestFile()` function
+- ✅ Created `QuestBodySections` interface for optional body content (description, objectives, rewards, etc.)
+- ✅ Updated `CreateQuestModal` to use the shared utility instead of private method
+
+#### Pre-fill Support for CreateQuestModal
+- ✅ Added `CreateQuestInitialValues` interface (optional `questName` and `linkedTaskFile`)
+- ✅ Updated constructor to accept optional `initialValues` parameter
+- ✅ Form fields (`questName`, `linkedTaskFile`) now pre-populate via `.setValue()` when initial values provided
+
+#### New Modal: CreateQuestFromFileModal
+- ✅ Created `src/modals/CreateQuestFromFileModal.ts` — small 2-button chooser
+- ✅ **"⚡ Create now"** — Instant quest creation with defaults (name from basename, type: main, category: general, default column status)
+- ✅ **"✏️ Edit before creating"** — Opens full `CreateQuestModal` pre-filled with file name and linked path
+
+#### Three Entry Points in main.ts
+- ✅ **File tree context menu** — Right-click `.md` file → "Create quest from file" (uses `file-menu` event)
+- ✅ **Editor context menu** — Right-click inside editor → "Create quest from file" (uses `editor-menu` event)
+- ✅ **Command palette** — "Create Quest from Current File" with `checkCallback` (only active when `.md` file is open)
+
+### Files Changed:
+
+**New:**
+- `src/modals/CreateQuestFromFileModal.ts` — 2-button chooser modal
+
+**Modified:**
+- `main.ts` — Added `TFile` import, `CreateQuestFromFileModal` import, 3 entry points (command, file-menu, editor-menu)
+- `src/modals/CreateQuestModal.ts` — Added `CreateQuestInitialValues` interface, updated constructor, replaced `saveQuestWithBody()` with shared `saveNewQuestFile()`, added `.setValue()` for pre-fill
+- `src/services/QuestService.ts` — Added `App` import, `QuestDifficulty` import, `QuestBodySections` interface, `saveNewQuestFile()` function
+
+### Testing Notes:
+- ✅ Build passes (`npm run build`)
+- ✅ Deployed to test vault (`npm run deploy:test`)
+- ✅ All 3 entry points tested and working
+- ✅ "Create now" instant creation works correctly
+- ✅ "Edit before creating" pre-fills name and linked file in full modal
+- ✅ Existing "Create New Quest" command unaffected
+
+### Blockers/Issues:
+- None
+
+### Design Decisions:
+
+**Code Extraction over Duplication:** Instead of duplicating quest file creation logic, the private `saveQuestWithBody()` method was extracted into `QuestService.ts` as a shared utility. Both `CreateQuestModal` and `CreateQuestFromFileModal` now use the same function, keeping the codebase DRY.
+
+**Duplicate Linking Allowed:** The same file can be linked to multiple quests. No uniqueness check was added — this is intentional for flexibility (e.g., a large project file linked to quests for different aspects).
+
+---
+
+## Next Session Prompt
+
+```
+Create Quest from File feature implemented and tested.
+
+What was done this session:
+- ✅ Extracted saveQuestWithBody into QuestService.ts as shared saveNewQuestFile()
+- ✅ Added pre-fill support to CreateQuestModal (optional initialValues)
+- ✅ Created CreateQuestFromFileModal (2-button chooser: Create Now / Edit Before Creating)
+- ✅ Registered 3 entry points: file-menu, editor-menu, command palette
+- ✅ All 3 entry points tested and confirmed working
+
+Continue with Phase 4 priorities from Feature Roadmap v2.
+
+Key files to reference:
+- docs/development/Feature Roadmap v2.md - Current priorities
+- src/modals/CreateQuestFromFileModal.ts - New 2-button chooser modal
+- src/services/QuestService.ts - Shared saveNewQuestFile() function
+```
+
+## Git Commit Message
+
+```
+feat(quests): add Create Quest from File feature
+
+New Feature:
+- Create quests directly from existing vault files
+- 2-button chooser modal: Create Now (instant) or Edit Before Creating (full form)
+- Three entry points: file tree context menu, editor context menu, command palette
+
+Service Refactoring:
+- Extracted saveQuestWithBody from CreateQuestModal into QuestService.saveNewQuestFile
+- Created QuestBodySections interface for optional body content
+- Both CreateQuestModal and CreateQuestFromFileModal use shared utility
+
+CreateQuestModal Enhancement:
+- Added CreateQuestInitialValues interface for pre-filling quest name and linked file
+- Constructor now accepts optional initialValues parameter
+
+Files: main.ts, CreateQuestModal.ts, CreateQuestFromFileModal.ts (new), QuestService.ts
+```
+

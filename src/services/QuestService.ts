@@ -5,9 +5,9 @@
  * Handles both manual (markdown) and AI-generated (JSON) quests.
  */
 
-import { Vault, TFile, TFolder, debounce } from 'obsidian';
+import { App, Vault, TFile, TFolder, debounce } from 'obsidian';
 import { Quest, ManualQuest, AIGeneratedQuest, isAIGeneratedQuest, QUEST_SCHEMA_VERSION } from '../models/Quest';
-import { QuestType, QuestStatus, QuestPriority } from '../models/QuestStatus';
+import { QuestType, QuestStatus, QuestPriority, QuestDifficulty } from '../models/QuestStatus';
 import { validateQuest, validateQuestWithNotice } from '../utils/validator';
 import { safeJsonParse, safeJsonStringify } from '../utils/safeJson';
 import { ensureFolderExists } from '../utils/pathValidator';
@@ -775,6 +775,112 @@ export async function deleteQuestFile(
         return false;
     } catch (error) {
         console.error('[QuestService] Failed to delete quest:', error);
+        return false;
+    }
+}
+
+/**
+ * Optional body sections when creating a new quest file.
+ * Used by both CreateQuestModal and CreateQuestFromFileModal.
+ */
+export interface QuestBodySections {
+    description?: string;
+    objectives?: string;
+    rewards?: string;
+    dueDate?: string;
+    estimatedTime?: string;
+    difficulty?: QuestDifficulty;
+}
+
+/**
+ * Create a new quest markdown file with frontmatter and body sections.
+ * Shared utility for all quest creation flows (manual modal, quick-create, etc.).
+ */
+export async function saveNewQuestFile(
+    app: App,
+    storageFolder: string,
+    quest: ManualQuest,
+    bodySections?: QuestBodySections
+): Promise<boolean> {
+    try {
+        // Use questType directly as folder name (lowercase)
+        const subFolder = `quests/${quest.questType.toLowerCase()}`;
+        const folderPath = `${storageFolder}/${subFolder}`;
+        const filePath = `${folderPath}/${quest.questId}.md`;
+
+        // Ensure folder exists
+        const folder = app.vault.getAbstractFileByPath(folderPath);
+        if (!folder) {
+            await app.vault.createFolder(folderPath);
+        }
+
+        // Build frontmatter
+        const frontmatterLines = [
+            '---',
+            `schemaVersion: ${quest.schemaVersion}`,
+            `questId: "${quest.questId}"`,
+            `questName: "${quest.questName}"`,
+            `questType: ${quest.questType}`,
+            `category: "${quest.category}"`,
+            `status: ${quest.status}`,
+            `priority: ${quest.priority}`,
+            `linkedTaskFile: "${quest.linkedTaskFile}"`,
+            `xpPerTask: ${quest.xpPerTask}`,
+            `completionBonus: ${quest.completionBonus}`,
+            `visibleTasks: ${quest.visibleTasks}`,
+            `createdDate: "${quest.createdDate}"`,
+        ];
+
+        // Add optional fields from body sections
+        if (bodySections?.dueDate) {
+            frontmatterLines.push(`dueDate: "${bodySections.dueDate}"`);
+        }
+        if (bodySections?.estimatedTime) {
+            frontmatterLines.push(`estimatedTime: "${bodySections.estimatedTime}"`);
+        }
+        if (bodySections?.difficulty && bodySections.difficulty !== QuestDifficulty.MEDIUM) {
+            frontmatterLines.push(`difficulty: ${bodySections.difficulty}`);
+        }
+
+        frontmatterLines.push('---');
+
+        // Build body
+        const bodyLines = [
+            '',
+            `# ${quest.questName}`,
+            '',
+        ];
+
+        if (bodySections?.description) {
+            bodyLines.push('## Description', '', bodySections.description, '');
+        }
+
+        if (bodySections?.objectives) {
+            bodyLines.push('## Objectives', '', bodySections.objectives, '');
+        }
+
+        if (bodySections?.rewards) {
+            bodyLines.push('## Rewards', '', bodySections.rewards, '');
+        }
+
+        // If self-linking, add Tasks section
+        if (quest.linkedTaskFile === filePath) {
+            bodyLines.push('## Tasks', '', '- [ ] First task', '- [ ] Second task', '');
+        }
+
+        const content = frontmatterLines.join('\n') + bodyLines.join('\n');
+
+        // Create or overwrite file
+        const existingFile = app.vault.getAbstractFileByPath(filePath);
+        if (existingFile instanceof TFile) {
+            await app.vault.modify(existingFile, content);
+        } else {
+            await app.vault.create(filePath, content);
+        }
+
+        return true;
+    } catch (error) {
+        console.error('[QuestService] Failed to save new quest file:', error);
         return false;
     }
 }
