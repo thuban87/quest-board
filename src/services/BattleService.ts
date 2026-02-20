@@ -311,7 +311,7 @@ function hydrateBattlePlayer(character: Character, stats: CombatStats): import('
  * Copy volatile status effects back to persistent storage.
  * Called on battle end (victory, defeat, retreat) to persist status effects between battles.
  */
-function copyVolatileStatusToPersistent(): void {
+export function copyVolatileStatusToPersistent(): void {
     const player = useBattleStore.getState().player;
     if (!player) return;
 
@@ -938,7 +938,7 @@ function checkBattleOutcome(): void {
 /**
  * Handle player victory
  */
-function handleVictory(): void {
+export function handleVictory(): void {
     const store = useBattleStore.getState();
     const characterStore = useCharacterStore.getState();
     const { monster, lootBonus } = store;
@@ -1438,4 +1438,5 @@ export const battleService = {
     setSelectedSkill,
     getSelectedSkill,
     clearSelectedSkill,
+    handleVictory,
 };

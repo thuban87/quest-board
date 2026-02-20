@@ -404,7 +404,8 @@ Overhaul of the consumable system from 11 items to 30+, adding stat elixirs, cle
 |-------|--------|-------|
 | 1: Potion Rework + Model Foundation | ✅ Complete | 30 items, 6-tier potions, store rewrite, revive_potion bugfix |
 | 1.5: Tests — Potion Rework | ✅ Complete | 89 tests (62 model + 27 store) |
-| 2: Simple Combat Consumables | 🔲 Pending | Wire effects in BattleService |
+| 2: Simple Combat Consumables | ✅ Complete | ConsumableUsageService, BattleView integration, ConsumablePicker expansion |
+| 2.5: Tests — Simple Combat | ✅ Complete | 24 tests, all passing |
 | 3: Complex Combat Consumables | 🔲 Pending | Buff system, enchantment procs |
 | 4: UI Polish & Loot Tables | 🔲 Pending | Inventory tooltips, loot rebalance |
 
@@ -431,4 +432,4 @@ Overhaul of the consumable system from 11 items to 30+, adding stat elixirs, cle
 
 ---
 
-**Last Updated:** 2026-02-19 (Expanded Consumables Phase 1 + 1.5 complete)
+**Last Updated:** 2026-02-20 (Expanded Consumables Phase 2 + 2.5 complete)

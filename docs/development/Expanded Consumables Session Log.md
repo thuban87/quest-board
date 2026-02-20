@@ -13,8 +13,8 @@
 |-------|--------|------|-------|
 | 1: Potion Rework + Model Foundation | ✅ | 2026-02-19 | All 30 items, 6-tier potions, store rewrite, revive_potion bugfix |
 | 1.5: Tests — Potion Rework | ✅ | 2026-02-19 | 89 tests (62 model + 27 store), all passing |
-| 2: Simple Combat Consumables | 🔲 | | |
-| 2.5: Tests — Simple Combat | 🔲 | | |
+| 2: Simple Combat Consumables | ✅ | 2026-02-20 | ConsumableUsageService, BattleView integration, ConsumablePicker expansion |
+| 2.5: Tests — Simple Combat | ✅ | 2026-02-20 | 24 tests, all passing |
 | 3: Complex Combat Consumables | 🔲 | | |
 | 3.5: Tests — Complex Combat | 🔲 | | |
 | 4: UI Polish & Loot Tables | 🔲 | | |
@@ -57,3 +57,38 @@
 
 #### Next Session Prompt
 Continue with Phase 2: Simple Combat Consumables. This phase wires up the new consumable effects in BattleService (cleansing, enchantment oils, tactical items) and adds the ConsumablePicker filter expansion. Refer to the Expanded Consumables Implementation Guide Phase 2 section.
+
+### Session 2 — 2026-02-20
+
+**Phases completed:** 2 (Simple Combat Consumables) and 2.5 (Tests)
+
+#### Phase 2: Simple Combat Consumables
+
+**Files created:**
+- `src/services/ConsumableUsageService.ts` — New service with 6 handler functions: `handleHpRestore`, `handleManaRestore`, `handleCleanseDot`, `handleCleanseCurseCC`, `handleDirectDamage`, `handleGuaranteedRetreat`. Central dispatcher `executeConsumable()` returns typed `ConsumableResult` with success/logMessage/endsTurn/endsBattle.
+
+**Files modified:**
+- `src/services/BattleService.ts` — Exported `copyVolatileStatusToPersistent` and `handleVictory` (previously module-private). Added `handleVictory` to the `battleService` export object.
+- `src/components/BattleView.tsx` — Replaced inline `handleItemUse` with service-delegating version that calls `executeConsumable()`, handles retreat/victory/turn-ending outcomes. Expanded `ConsumablePicker` filter from HP/MP only to all 6 `combatUsable` effect types. Added `getEffectText()` for display text per consumable type.
+
+**Manual testing results:**
+- ✅ Firebomb deals correct damage, works on killing blows (victory triggers)
+- ✅ Smoke Bomb triggers instant retreat
+- ✅ New items appear in ConsumablePicker with correct descriptions
+- ✅ HP/MP potions still work (regression check)
+- ⚠️ Purifying Salve / Sacred Water not manually tested (couldn't trigger burn/curse in test session — covered by unit tests)
+
+#### Phase 2.5: Tests — Simple Combat Consumables
+
+**Files created:**
+- `test/services/ConsumableUsageService.test.ts` — 24 tests covering all 6 handlers, error cases, clamping, status effect filtering, damage formula at multiple levels, killing blow victory, copyVolatileStatusToPersistent mock verification, result structure validation
+
+**Test results:** 24/24 passing. Pre-existing flaky failure in `monster.test.ts` still present (unrelated).
+
+#### Issues Discovered
+- **Pre-existing flaky test** still present in `monster.test.ts:119` — randomness-based assertion for fierce prefix stat boost.
+- **ConsumablePicker not independently testable** — It's a local component inside `BattleView.tsx`, not exported. Full RTL rendering of BattleView would be needed to unit test it. Deferred.
+
+#### Next Session Prompt
+Continue with Phase 3: Complex Combat Consumables. This phase adds the buff system for Ironbark Ward (DEF stage boost) and enchantment oil procs (burn/poison/freeze on attack). Refer to the Expanded Consumables Implementation Guide Phase 3 section.
+

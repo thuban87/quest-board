@@ -399,7 +399,7 @@ The new `hp-potion-major` and `hp-potion-supreme` (and MP equivalents) are new I
 
 ---
 
-## 🔲 Phase 2: Simple Combat Consumables
+## ✅ Phase 2: Simple Combat Consumables — Completed 2026-02-20
 
 **Estimated Time:** 2-2.5 hours
 **Prerequisite:** Phase 1
@@ -682,7 +682,7 @@ const getEffectText = (def: ConsumableDefinition): string => {
 
 ---
 
-## 🔲 Phase 2.5: Tests — Simple Combat Consumables
+## ✅ Phase 2.5: Tests — Simple Combat Consumables — Completed 2026-02-20
 
 **Estimated Time:** 2-2.5 hours
 **Prerequisite:** Phase 2 manually verified
