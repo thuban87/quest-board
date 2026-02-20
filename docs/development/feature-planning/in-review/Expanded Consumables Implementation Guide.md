@@ -1,8 +1,13 @@
 # Expanded Consumables Implementation Guide
 
 **Status:** Not Started
-**Estimated Sessions:** 4
+**Estimated Sessions:** 8 (4 build + 4 test)
 **Created:** 2026-02-06
+**Last Updated:** 2026-02-19
+**Companion Session Log:** [Expanded Consumables Session Log](../development/Expanded%20Consumables%20Session%20Log.md)
+
+> [!NOTE]
+> Obsidian plugin guidelines (`.agent/rules/obsidian-plugin-guidelines.md`) reviewed 2026-02-19. Plan avoids innerHTML, uses CSS-variable-based styling with `qb-` prefixed classes, and limits console output to `console.warn`/`console.error` (gated behind debug setting where possible).
 
 ---
 
@@ -12,11 +17,20 @@
 - [Design Decisions](#design-decisions)
 - [HP/Mana Potion Rework](#hpmana-potion-rework)
 - [New Consumable Catalog](#new-consumable-catalog)
-- [Session 1: Potion Rework + Model Foundation](#session-1-potion-rework--model-foundation)
-- [Session 2: Simple Combat Consumables](#session-2-simple-combat-consumables)
-- [Session 3: Complex Combat Consumables](#session-3-complex-combat-consumables)
-- [Session 4: UI Polish & Loot Tables](#session-4-ui-polish--loot-tables)
+- [Plan Summary](#plan-summary)
+- [Phase 1: Potion Rework + Model Foundation](#phase-1-potion-rework--model-foundation)
+- [Phase 1.5: Tests — Potion Rework + Model Foundation](#phase-15-tests--potion-rework--model-foundation)
+- [Phase 2: Simple Combat Consumables](#phase-2-simple-combat-consumables)
+- [Phase 2.5: Tests — Simple Combat Consumables](#phase-25-tests--simple-combat-consumables)
+- [Phase 3: Complex Combat Consumables](#phase-3-complex-combat-consumables)
+- [Phase 3.5: Tests — Complex Combat Consumables](#phase-35-tests--complex-combat-consumables)
+- [Phase 4: UI Polish & Loot Tables](#phase-4-ui-polish--loot-tables)
+- [Phase 4.5: Tests — UI Polish & Loot Tables](#phase-45-tests--ui-polish--loot-tables)
+- [Verification Checklist](#verification-checklist)
 - [File Change Summary](#file-change-summary)
+- [Security & Validation](#security--validation)
+- [Performance Considerations](#performance-considerations)
+- [Rollback Plan](#rollback-plan)
 - [Key References](#key-references)
 - [Tuning Notes](#tuning-notes)
 
@@ -175,11 +189,37 @@ Battle-scoped buffs. Last 5 turns in current battle. One active at a time. Avail
 
 ---
 
-## Session 1: Potion Rework + Model Foundation
+## Plan Summary
 
+| Phase | Title | Effort | Depends On | Est. Time |
+|-------|-------|--------|------------|-----------|
+| 1 | Potion Rework + Model Foundation | Large | — | 2-2.5h |
+| 1.5 | Tests: Potion Rework + Model | Medium | Phase 1 | 1.5-2h |
+| 2 | Simple Combat Consumables | Large | Phase 1 | 2-2.5h |
+| 2.5 | Tests: Simple Combat Consumables | Large | Phase 2 | 2-2.5h |
+| 3 | Complex Combat Consumables | Large | Phase 2 | 2.5-3h |
+| 3.5 | Tests: Complex Combat Consumables | Large | Phase 3 | 2-2.5h |
+| 4 | UI Polish & Loot Tables | Medium | Phase 3 | 2-2.5h |
+| 4.5 | Tests: UI Polish & Loot Tables | Medium | Phase 4 | 1.5-2h |
+
+**Total estimated:** ~8 sessions across 16-20 hours.
+
+**Execution order:** Strictly sequential (each phase depends on the prior). No parallelization possible.
+
+> [!IMPORTANT]
+> Phase 2 has a cross-dependency with Phase 3A: the `handleDefStageBoost` handler needs the `ConsumableBuff` type and `addConsumableBuff` store action from Phase 3A. The Ironbark Ward handler is therefore **deferred to Phase 3A** to avoid cross-phase build errors.
+
+---
+
+## 🔲 Phase 1: Potion Rework + Model Foundation
+
+**Estimated Time:** 2-2.5 hours
+**Prerequisite:** —
 **Goal:** Rework HP/MP potions to 6 tiers, expand the ConsumableEffect enum with all new types, define every new consumable item, and update the store + loot generation to use the new tiers.
 
 ### Phase 1A: Expand Consumable Model
+
+**Goal:** Define all new ConsumableEffect types, expand the ConsumableDefinition interface, and rewrite the CONSUMABLES record with 25 items.
 
 **File: `src/models/Consumable.ts`**
 
@@ -286,6 +326,8 @@ export const TACTICAL_IDS = ['firebomb', 'smoke-bomb', 'ironbark-ward'];
 
 ### Phase 1B: Update Store Modal
 
+**Goal:** Reorganize the store with all new items, level-gating, and smart tier display.
+
 **File: `src/modals/StoreModal.ts`**
 
 1. **Update STORE_ITEMS array** with all 6 HP potion tiers, all 6 MP potion tiers, and all new consumable items with their prices from the catalog tables.
@@ -303,19 +345,28 @@ export const TACTICAL_IDS = ['firebomb', 'smoke-bomb', 'ironbark-ward'];
 
 ### Phase 1C: Update Loot Generation
 
+**Goal:** Verify loot generation works with new potion tier functions. Fix `revive_potion` ID typo if present.
+
 **File: `src/services/LootGenerationService.ts`**
 
 1. The existing `getHpPotionForLevel()` and `getMpPotionForLevel()` calls automatically use the updated functions from 1A. No changes needed to the call sites, just verify the imports still work.
 
-2. Verify `rollQuestConsumable()` still works. The `revive_potion` ID has a typo (underscore vs hyphen: `revive_potion` vs `revive-potion`). Check and fix if needed -- this is a pre-existing bug.
+2. **Fix `revive_potion` ID typo** (confirmed blocker): `rollQuestConsumable()` references `revive_potion` (underscore) but the CONSUMABLES record uses `revive-potion` (hyphen). This means revive potions have **never dropped from quest loot** — only purchasable from the store. Fix the ID in `rollQuestConsumable` to `revive-potion`. This is a pre-existing bug that must be fixed in Phase 1, not deferred.
 
 ### Phase 1D: Inventory Migration
 
 Players with old potion IDs in their inventory need migration. The old `hp-potion-minor`, `hp-potion-lesser`, `hp-potion-greater`, `hp-potion-superior` IDs are being reused with new values, so existing inventory items automatically get the buffed values. No migration needed for potions.
 
+> [!NOTE]
+> **ID reuse means implicit buffs.** Players who already have `hp-potion-greater` in inventory will see its heal value jump from 250 HP → 660 HP (a 2.6× increase) because the ID is reused with the new tier values. This is an intentional rebalance — existing stock becomes more valuable. No migration code needed, but worth noting if a player reports "my potions heal way more now."
+
 The new `hp-potion-major` and `hp-potion-supreme` (and MP equivalents) are new IDs that simply didn't exist before.
 
-### Session 1 Testing
+#### Tech Debt:
+- ~~Verify `revive_potion` vs `revive-potion` ID typo~~ → **Confirmed blocker, fixed in Phase 1C**
+- Old 4-tier potion IDs reused with new values — existing inventory items get buffed automatically (see note above)
+
+### Phase 1 Manual Testing
 
 - [ ] `npm run build` passes
 - [ ] `npm run deploy:test`
@@ -329,9 +380,33 @@ The new `hp-potion-major` and `hp-potion-supreme` (and MP equivalents) are new I
 
 ---
 
-## Session 2: Simple Combat Consumables
+## 🔲 Phase 1.5: Tests — Potion Rework + Model Foundation
 
-**Goal:** Create a service to handle consumable business logic (keeping BattleView focused on UI), then wire up the 5 straightforward combat consumables: cleansing items, Firebomb, Smoke Bomb, and Ironbark Ward.
+**Estimated Time:** 1.5-2 hours
+**Prerequisite:** Phase 1 manually verified
+**Goal:** Unit test the new consumable model, helper functions, and store modal level-gating. Target ≥80% line/branch coverage on modified files.
+
+### Test Files
+
+| Test File | Covers | Key Cases |
+|-----------|--------|-----------|
+| `test/models/Consumable.test.ts` | Model + helpers | All 25 definitions valid, `getHpPotionForLevel` returns correct tier at each breakpoint, `getMpPotionForLevel` edge cases (L1, L7, L8, L40), all helper arrays contain correct IDs |
+| `test/modals/StoreModal.test.ts` | Store UI | Level-gating shows/hides items correctly, smart tier display shows ±1 tier, prices match definitions |
+
+**Coverage target:** ≥80% line, ≥80% branch on `Consumable.ts`
+
+**Command:** `npx vitest run test/models/Consumable.test.ts | Out-File -FilePath test-output.txt -Encoding utf8`
+
+---
+
+## 🔲 Phase 2: Simple Combat Consumables
+
+**Estimated Time:** 2-2.5 hours
+**Prerequisite:** Phase 1
+**Goal:** Create a service to handle consumable business logic (keeping BattleView focused on UI), then wire up the 4 straightforward combat consumables: cleansing items, Firebomb, and Smoke Bomb.
+
+> [!NOTE]
+> Ironbark Ward (`DEF_STAGE_BOOST`) is **deferred to Phase 3A** because it depends on the `ConsumableBuff` type and `addConsumableBuff` store action that don't exist until Phase 3A.
 
 ### Phase 2A: Create ConsumableUsageService
 
@@ -362,10 +437,13 @@ export interface ConsumableResult {
 }
 
 /**
- * Use a consumable item in combat.
+ * Execute a consumable item in combat.
  * Returns a result object describing what happened.
+ * 
+ * NOTE: Named `executeConsumable` (not `useConsumable`) to avoid
+ * triggering React's Rules of Hooks — `use*` prefix is reserved.
  */
-export function useConsumableInCombat(
+export function executeConsumable(
     itemId: string,
     characterLevel: number
 ): ConsumableResult {
@@ -387,8 +465,7 @@ export function useConsumableInCombat(
             return handleDirectDamage(def, characterLevel);
         case ConsumableEffect.GUARANTEED_RETREAT:
             return handleGuaranteedRetreat();
-        case ConsumableEffect.DEF_STAGE_BOOST:
-            return handleDefStageBoost(def);
+        // DEF_STAGE_BOOST deferred to Phase 3A (needs ConsumableBuff from battleStore)
         default:
             return { success: false, logMessage: '', endsTurn: false, error: 'Effect not implemented' };
     }
@@ -452,9 +529,10 @@ function handleCleanseCurseCC(): ConsumableResult {
 }
 
 function handleDirectDamage(def: ConsumableDefinition, level: number): ConsumableResult {
-    // Defensive validation
-    if (!def.damageFormula?.base || def.damageFormula?.perLevel === undefined) {
-        console.error('[ConsumableUsageService] Invalid damage formula for:', def.id);
+    // Defensive validation — use != null for both undefined and null safety
+    if (!def.damageFormula?.base || def.damageFormula?.perLevel == null) {
+        // Data integrity warning (not debug output) — route through debugLog if available
+        console.warn('[ConsumableUsageService] Invalid damage formula for:', def.id);
         return { success: false, logMessage: '', endsTurn: false, error: 'Invalid damage formula' };
     }
 
@@ -492,34 +570,8 @@ function handleGuaranteedRetreat(): ConsumableResult {
     };
 }
 
-function handleDefStageBoost(def: ConsumableDefinition): ConsumableResult {
-    const store = useBattleStore.getState();
-    const player = store.player;
-    if (!player || !def.stageChange) {
-        return { success: false, logMessage: '', endsTurn: false, error: 'Invalid stage change' };
-    }
-
-    // Apply +2 DEF stages (clamped to ±6)
-    const newDef = Math.min(6, Math.max(-6, player.statStages.def + def.stageChange.stages));
-    store.updatePlayer({
-        statStages: { ...player.statStages, def: newDef },
-    });
-
-    // Add as ConsumableBuff for turn-based expiry (Phase 3A will add the interface)
-    store.addConsumableBuff({
-        type: ConsumableEffect.DEF_STAGE_BOOST,
-        turnsRemaining: def.turnDuration ?? 4,
-        chance: 0, // Not a proc effect
-        statusType: null as any, // Not applicable
-        stageChange: def.stageChange.stages, // Track how much to reverse on expiry
-    });
-
-    return {
-        success: true,
-        logMessage: 'Used Ironbark Ward: Defense rose!',
-        endsTurn: true,
-    };
-}
+// handleDefStageBoost is implemented in Phase 3A alongside ConsumableBuff
+// (see Phase 3A section for full implementation)
 ```
 
 ### Phase 2B: Update BattleView to Use Service
@@ -529,10 +581,10 @@ function handleDefStageBoost(def: ConsumableDefinition): ConsumableResult {
 Replace the inline item handler with a call to the service:
 
 ```typescript
-import { useConsumableInCombat } from '../services/ConsumableUsageService';
+import { executeConsumable } from '../services/ConsumableUsageService';
 
 const handleUseItem = (itemId: string) => {
-    const result = useConsumableInCombat(itemId, character?.level ?? 1);
+    const result = executeConsumable(itemId, character?.level ?? 1);
 
     if (!result.success) {
         console.error('[BattleView] Consumable failed:', result.error);
@@ -574,8 +626,6 @@ This keeps BattleView as a thin UI layer that reacts to service results.
 
 ### Phase 2C: Update ConsumablePicker
 
-### Phase 2F: Update ConsumablePicker
-
 **File: `src/components/BattleView.tsx`**
 
 Expand the filter in `ConsumablePicker` to include new combat-usable types:
@@ -592,7 +642,8 @@ const availableConsumables = inventory.filter(item => {
         ConsumableEffect.CLEANSE_CURSE_CC,
         ConsumableEffect.DIRECT_DAMAGE,
         ConsumableEffect.GUARANTEED_RETREAT,
-        ConsumableEffect.DEF_STAGE_BOOST,
+        // DEF_STAGE_BOOST deferred to Phase 3A — uncomment when handler exists
+        // ConsumableEffect.DEF_STAGE_BOOST,
     ].includes(def.effect);
 });
 ```
@@ -613,26 +664,69 @@ const getEffectText = (def: ConsumableDefinition): string => {
 };
 ```
 
-### Session 2 Testing
+#### Tech Debt:
+- `handleDirectDamage` damage formula doesn't account for monster resistances/weaknesses — acceptable for V1
+- `handleGuaranteedRetreat` calls `copyVolatileStatusToPersistent` directly — verify this function is exported from BattleService
+
+### Phase 2 Manual Testing
 
 - [ ] `npm run build` passes
 - [ ] `npm run deploy:test`
-- [ ] Buy Purifying Salve, get burned in combat, use salve -- burn icon disappears
-- [ ] Buy Sacred Water, get cursed/paralyzed, use water -- effects removed
-- [ ] Buy Firebomb, use in combat -- damage applied, monster HP drops, turn passes to enemy
-- [ ] Firebomb kills monster -- victory triggers correctly
-- [ ] Buy Smoke Bomb, use in combat -- instant retreat, no damage taken, no RNG roll
-- [ ] Buy Ironbark Ward, use in combat -- DEF stage increases, enemy hits for less damage
+- [ ] Buy Purifying Salve, get burned in combat, use salve — burn icon disappears
+- [ ] Buy Sacred Water, get cursed/paralyzed, use water — effects removed
+- [ ] Buy Firebomb, use in combat — damage applied, monster HP drops, turn passes to enemy
+- [ ] Firebomb kills monster — victory triggers correctly
+- [ ] Buy Smoke Bomb, use in combat — instant retreat, no damage taken, no RNG roll
 - [ ] All new items appear in consumable picker with correct descriptions
 - [ ] HP/MP potions still work as before (regression check)
 
 ---
 
-## Session 3: Complex Combat Consumables
+## 🔲 Phase 2.5: Tests — Simple Combat Consumables
 
-**Goal:** Wire up the three systems that need new battle state: enchantment oils (attack proc system), Phoenix Tear (death intercept), and stat elixirs (real-time buff integration).
+**Estimated Time:** 2-2.5 hours
+**Prerequisite:** Phase 2 manually verified
+**Goal:** Unit test ConsumableUsageService and the updated ConsumablePicker. Target ≥80% coverage.
 
-### Phase 3A: Add ConsumableBuff to Battle State
+### Test Files
+
+| Test File | Covers | Key Cases |
+|-----------|--------|-----------|
+| `test/services/ConsumableUsageService.test.ts` [NEW] | All handlers | HP/MP restore clamping, cleanse DoT removes only DoTs, cleanse CC removes curse+CC but not DoTs, Firebomb damage formula at multiple levels, Firebomb killing blow triggers victory, Smoke Bomb calls copyVolatileStatusToPersistent, unknown item returns error |
+| `test/components/ConsumablePicker.test.ts` [NEW] | Picker UI | Filters out non-combat items, shows correct effect text per type, empty state when no items, quantity display |
+
+**Coverage target:** ≥80% line, ≥80% branch on `ConsumableUsageService.ts`
+
+**Store Mocking:** `ConsumableUsageService` calls `useBattleStore.getState()` directly. In tests, use the pattern established in `test/store/battleStore.test.ts`:
+```typescript
+import { useBattleStore } from '../../src/store/battleStore';
+
+beforeEach(() => {
+    // Reset store to initial state
+    useBattleStore.setState({
+        playerCurrentHP: 100,
+        playerStats: { maxHP: 200, maxMana: 100 },
+        monster: { currentHP: 500, statusEffects: [] },
+        player: { volatileStatusEffects: [] },
+        // ... other fields as needed
+    });
+});
+```
+No `vi.mock()` needed — Zustand stores work directly in tests.
+
+**Command:** `npx vitest run test/services/ConsumableUsageService.test.ts | Out-File -FilePath test-output.txt -Encoding utf8`
+
+---
+
+## 🔲 Phase 3: Complex Combat Consumables
+
+**Estimated Time:** 2.5-3 hours
+**Prerequisite:** Phase 2
+**Goal:** Wire up the four systems that need new battle state: Ironbark Ward (deferred from Phase 2), enchantment oils (attack proc system), Phoenix Tear (death intercept), and stat elixirs (real-time buff integration).
+
+### Phase 3A: Add ConsumableBuff to Battle State + Ironbark Ward
+
+**Goal:** Add the `ConsumableBuff` type and store actions to `battleStore`, then implement the deferred Ironbark Ward handler in `ConsumableUsageService`.
 
 **File: `src/store/battleStore.ts`**
 
@@ -655,6 +749,9 @@ export interface ConsumableBuff {
 
 2. Add `consumableBuffs: ConsumableBuff[]` to the `BattlePlayer` interface. Initialize as empty array `[]` in `hydrateBattlePlayer`.
 
+> [!NOTE]
+> **Battle reset is safe.** `hydrateBattlePlayer` creates a fresh `BattlePlayer` on every `startBattleWithMonster` call — no risk of buffs leaking between battles. Verified in `BattleService.ts`.
+
 3. Add store actions:
    - `addConsumableBuff(buff: ConsumableBuff)` -- adds buff, replacing any existing buff of the same type (only one enchantment at a time)
    - `tickConsumableBuffs()` -- decrements `turnsRemaining` on all buffs, handles expiry:
@@ -667,32 +764,75 @@ tickConsumableBuffs: () => {
     const { player } = get();
     if (!player) return;
 
+    // Collect side effects from expired buffs BEFORE filtering
+    let defAdjustment = 0;
+    for (const buff of player.consumableBuffs) {
+        if (buff.turnsRemaining - 1 <= 0) {
+            // This buff is expiring — collect side effects
+            if (buff.type === ConsumableEffect.DEF_STAGE_BOOST && buff.stageChange) {
+                defAdjustment -= buff.stageChange; // Reverse the stage boost
+            }
+        }
+    }
+
+    // Decrement and filter in a single pass
     const updated = player.consumableBuffs
         .map(buff => ({ ...buff, turnsRemaining: buff.turnsRemaining - 1 }))
-        .filter(buff => {
-            if (buff.turnsRemaining > 0) return true;
-            
-            // Handle expiry side effects
-            if (buff.type === ConsumableEffect.DEF_STAGE_BOOST && buff.stageChange) {
-                // Reverse the DEF boost (clamped to -6)
-                const newDef = Math.max(-6, player.statStages.def - buff.stageChange);
-                set(state => ({
-                    player: state.player ? {
-                        ...state.player,
-                        statStages: { ...state.player.statStages, def: newDef },
-                    } : null,
-                }));
-            }
-            return false;
-        });
+        .filter(buff => buff.turnsRemaining > 0);
 
-    set(state => ({
-        player: state.player ? { ...state.player, consumableBuffs: updated } : null,
-    }));
+    // Apply everything in a single set() call
+    const newDef = defAdjustment !== 0
+        ? Math.max(-6, player.statStages.def + defAdjustment)
+        : player.statStages.def;
+
+    set({
+        player: {
+            ...player,
+            consumableBuffs: updated,
+            ...(defAdjustment !== 0 ? {
+                statStages: { ...player.statStages, def: newDef },
+            } : {}),
+        },
+    });
 },
+
+```
+
+**File: `src/services/ConsumableUsageService.ts`**
+
+Now that `ConsumableBuff` and `addConsumableBuff` exist, add the deferred Ironbark Ward handler:
+
+```typescript
+// Add to switch in useConsumableInCombat:
+case ConsumableEffect.DEF_STAGE_BOOST:
+    return handleDefStageBoost(def);
+
+// Handler:
+function handleDefStageBoost(def: ConsumableDefinition): ConsumableResult {
+    const store = useBattleStore.getState();
+    const player = store.player;
+    if (!player || !def.stageChange) {
+        return { success: false, logMessage: '', endsTurn: false, error: 'Invalid stage change' };
+    }
+
+    const newDef = Math.min(6, Math.max(-6, player.statStages.def + def.stageChange.stages));
+    store.updatePlayer({ statStages: { ...player.statStages, def: newDef } });
+
+    store.addConsumableBuff({
+        type: ConsumableEffect.DEF_STAGE_BOOST,
+        turnsRemaining: def.turnDuration ?? 4,
+        chance: 0,
+        statusType: null,
+        stageChange: def.stageChange.stages,
+    });
+
+    return { success: true, logMessage: 'Used Ironbark Ward: Defense rose!', endsTurn: true };
+}
 ```
 
 ### Phase 3B: Implement Enchantment Oil Usage
+
+**Goal:** Add enchantment oil handlers that return `ConsumableResult` (maintaining the service's stateless pattern).
 
 **File: `src/services/ConsumableUsageService.ts`**
 
@@ -705,7 +845,7 @@ case ConsumableEffect.ENCHANT_FREEZE:
     return handleEnchantmentOil(def);
 ```
 
-Handler:
+Handler (returns `ConsumableResult` — BattleView handles state transitions):
 ```typescript
 function handleEnchantmentOil(def: ConsumableDefinition): ConsumableResult {
     const store = useBattleStore.getState();
@@ -717,108 +857,163 @@ function handleEnchantmentOil(def: ConsumableDefinition): ConsumableResult {
         statusType: def.statusType!,
     };
     store.addConsumableBuff(buff);
-    addLogEntry({
-        turn: turnNumber,
-        actor: 'player',
-        action: `Applied ${def.name}: attacks may inflict ${getStatusDisplayName(def.statusType!)}!`,
-        result: 'heal',
-    });
-    // Costs your turn
-    advanceState('ENEMY_TURN');
-    battleService.executeMonsterTurn();
-};
+
+    return {
+        success: true,
+        logMessage: `Applied ${def.name}: attacks may inflict ${getStatusDisplayName(def.statusType!)}!`,
+        endsTurn: true,
+    };
+}
 ```
 
 ### Phase 3C: Enchantment Proc System
+
+**Goal:** Add `processConsumableBuffProcs()` to StatusEffectService and wire it into both attack paths in BattleService.
 
 **File: `src/services/StatusEffectService.ts`**
 
 Add a new function to handle consumable buff procs. This keeps `BattleService` focused on turn execution while `StatusEffectService` owns all status-related logic:
 
 ```typescript
-import { useBattleStore, BattleMonster } from '../store/battleStore';
+import { BattleMonster } from '../store/battleStore';
+import { ConsumableBuff } from '../store/battleStore';
 import { getStatusDisplayName } from '../models/StatusEffect';
 
 /**
  * Process consumable buff procs after player deals damage.
  * Called from BattleService after damage is dealt in attacks/skills.
  * 
- * @param monster The target monster
+ * This is a PURE function — it takes data in and returns data out.
+ * BattleService owns the store writes, keeping StatusEffectService
+ * free of store dependencies (easier to test, no circular imports).
+ * 
+ * BattleMonster structurally satisfies StatusCombatant (has name, maxHP,
+ * currentHP, statusEffects), so no `as any` cast is needed.
+ * 
  * @param damage Damage dealt (no procs if 0)
- * @returns true if a proc occurred
+ * @param monster The target monster (read from store by caller)
+ * @param consumableBuffs The player's active consumable buffs
+ * @returns Object with procOccurred flag, updated monster (if proc'd), and log message
  */
 export function processConsumableBuffProcs(
+    damage: number,
     monster: BattleMonster,
-    damage: number
-): boolean {
-    if (damage <= 0) return false;
-
-    const store = useBattleStore.getState();
-    const player = store.player;
-    if (!player?.consumableBuffs?.length) return false;
+    consumableBuffs: ConsumableBuff[]
+): { procOccurred: boolean; updatedMonster?: Partial<BattleMonster>; logMessage?: string } {
+    if (damage <= 0 || !consumableBuffs?.length) {
+        return { procOccurred: false };
+    }
 
     // Only check enchantment-type buffs (not stage boosts)
-    const enchantmentBuffs = player.consumableBuffs.filter(
+    const enchantmentBuffs = consumableBuffs.filter(
         b => b.statusType !== null && b.chance > 0
     );
 
     for (const buff of enchantmentBuffs) {
         if (Math.random() * 100 < buff.chance) {
-            // Apply status to monster
+            // Deep-copy monster with fresh statusEffects to avoid mutating caller's reference
+            const monsterCopy: BattleMonster = {
+                ...monster,
+                statusEffects: [...(monster.statusEffects ?? [])],
+            };
+
+            // Apply status to the copy (applyStatus mutates in-place)
             applyStatus(
-                monster as any,
+                monsterCopy,
                 buff.statusType!,
                 3, // 3 turns duration for consumable-applied effects
                 'player',
                 'minor',
-                'consumable'
+                'enchant_oil' // sourceSkillId — identifies the source for debugging
             );
-            store.updateMonster({ statusEffects: [...(monster.statusEffects ?? [])] });
-            store.addLogEntry({
-                turn: store.turnNumber,
-                actor: 'player',
-                action: `${getStatusDisplayName(buff.statusType!)} proc'd from enchantment!`,
-                result: 'hit',
-            });
-            return true; // Only one proc per attack
+
+            return {
+                procOccurred: true,
+                updatedMonster: { statusEffects: monsterCopy.statusEffects },
+                logMessage: `${getStatusDisplayName(buff.statusType!)} proc'd from enchantment!`,
+            };
         }
     }
-    return false;
+    return { procOccurred: false };
 }
 ```
 
 **File: `src/services/BattleService.ts`**
 
-After damage is dealt in `executePlayerAttack()` and `executePlayerSkill()`, call the proc handler:
+After damage is dealt in `executePlayerAttack()` and `executePlayerSkill()`, call the proc handler.
+
+**Exact insertion point for `executePlayerAttack()`** (currently at line ~424-457):
+Insert **after** `store.updateMonsterHP(newMonsterHP)` but **before** `store.advanceState('ANIMATING_PLAYER')`:
 
 ```typescript
 import { processConsumableBuffProcs } from './StatusEffectService';
 
-// After damage calculation...
-processConsumableBuffProcs(monster, damage);
+// After damage calculation and HP update...
+store.updateMonsterHP(newMonsterHP);
+
+// Check for enchantment oil procs — pure function, caller handles state write
+const procResult = processConsumableBuffProcs(
+    damage,
+    store.monster!,
+    store.player?.consumableBuffs ?? []
+);
+if (procResult.procOccurred) {
+    store.updateMonster(procResult.updatedMonster!);
+    store.addLogEntry({
+        turn: store.turnNumber,
+        actor: 'player',
+        action: procResult.logMessage!,
+        result: 'hit',
+    });
+}
+
+store.advanceState('ANIMATING_PLAYER');
 ```
 
-**Tick consumable buffs at end of player turn.** Add to `checkBattleOutcome()` or `checkBattleOutcomeWithStatusTick()` (choose one location to avoid double-ticking):
+**Same pattern for `executePlayerSkill()`** — find the damage application point and insert the proc call after HP update.
 
-```typescript
-// Tick consumable buffs
-useBattleStore.getState().tickConsumableBuffs();
-```
+**Tick consumable buffs at end of player turn:**
+
+> [!IMPORTANT]
+> **Spike item:** The exact insertion point requires tracing the battle state machine flow during implementation. The goal is to guarantee `tickConsumableBuffs()` runs **exactly once per player turn**, after both attack/skill execution and status tick. There are at least 4 defeat paths through `handleDefeat`, and `checkBattleOutcomeWithStatusTick` already ticks status effects — placing the buff tick in the wrong location could cause double-ticking (halving buff durations) or missed ticks.
+>
+> **During implementation:** Read the full turn flow in `BattleService.ts`, trace where control returns after `executePlayerAttack`/`executePlayerSkill`, and find the single point that runs once before `ENEMY_TURN`. Likely candidates: end of `executePlayerTurn()`, or the success path of `checkBattleOutcomeWithStatusTick()` (after status tick, before advancing to enemy turn).
 
 ### Phase 3D: Implement Phoenix Tear
 
-**Pre-requisite: Update `characterStore.removeInventoryItem`** to return a boolean indicating success. This is a one-line change:
+**Goal:** Add Phoenix Tear death intercept in `handleDefeat()` and change `removeInventoryItem` to return `boolean`.
+
+> [!IMPORTANT]
+> **Critical prerequisite:** `removeInventoryItem` in `characterStore.ts` currently returns `void`. It **must** be changed to return `boolean` first, otherwise the Phoenix Tear guard (`const consumed = characterStore.removeInventoryItem(...)`) will always be `undefined` (falsy) and the tear will silently never activate.
+
+**Step 1: Update `characterStore.removeInventoryItem` to return boolean**
+
+This is a small but critical change:
 
 ```typescript
 // In characterStore.ts, modify removeInventoryItem:
 removeInventoryItem: (itemId: string, quantity: number = 1): boolean => {
-    // ... existing logic ...
-    // At the end, after successful removal:
+    const { inventory } = get();
+    const existing = inventory.find((i) => i.itemId === itemId);
+
+    if (!existing || existing.quantity < quantity) return false; // Not found or insufficient
+
+    if (existing.quantity <= quantity) {
+        set({ inventory: inventory.filter((i) => i.itemId !== itemId) });
+    } else {
+        set({
+            inventory: inventory.map((i) =>
+                i.itemId === itemId
+                    ? { ...i, quantity: i.quantity - quantity }
+                    : i
+            ),
+        });
+    }
     return true;
-    // If item not found or insufficient quantity:
-    return false;
 },
 ```
+
+**Step 2: Add Phoenix Tear check in `handleDefeat()`**
 
 **File: `src/services/BattleService.ts`**
 
@@ -871,9 +1066,13 @@ function handleDefeat(): void {
             store.incrementTurn();
             store.advanceState('PLAYER_INPUT');
 
-            // Save the inventory change
+            // Save the inventory change.
+            // saveCallback is a module-level variable in BattleService.ts
+            // (set via setSaveCallback() during plugin init in main.ts).
+            // Use `void` to explicitly signal intentional non-awaiting,
+            // since handleDefeat is synchronous (per Obsidian guideline §5).
             if (saveCallback) {
-                saveCallback().catch(err =>
+                void saveCallback().catch(err =>
                     console.error('[BattleService] Save failed:', err)
                 );
             }
@@ -895,6 +1094,8 @@ function handleDefeat(): void {
 All death paths go through `handleDefeat()`, so a single check there covers everything.
 
 ### Phase 3E: Implement Stat Elixirs
+
+**Goal:** Add stat elixir usage from character page via `activePowerUps` integration.
 
 **File: `src/store/characterStore.ts`** (for activePowerUps integration)
 
@@ -926,10 +1127,11 @@ useStatElixir: (itemId: string): boolean => {
     const consumed = get().removeInventoryItem(itemId, 1);
     if (!consumed) return false;
 
-    // Calculate the stat boost (10% of base stat)
-    const boostAmount = Math.floor(character.baseStats[def.statTarget] * 0.10);
+    // Calculate the stat boost — use stat_percent_boost (same as Iron Grip)
+    // This applies +10% AFTER all flat bonuses, matching the plan's description.
+    // Using stat_boost would only add 10% of base (before gear), which is wrong.
 
-    // Create ActivePowerUp using the CORRECT interface shape
+    // Create ActivePowerUp using stat_percent_boost (NOT stat_boost)
     const newPowerUp: ActivePowerUp = {
         id: `elixir_${def.statTarget}_${Date.now()}`,
         name: def.name,
@@ -941,9 +1143,9 @@ useStatElixir: (itemId: string): boolean => {
             Date.now() + (def.realTimeDurationMinutes ?? 60) * 60 * 1000
         ).toISOString(),
         effect: {
-            type: 'stat_boost',
+            type: 'stat_percent_boost',
             stat: def.statTarget,
-            value: boostAmount,
+            value: 0.10,  // +10% of calculated stat (applied after gear bonuses)
         },
     };
 
@@ -961,17 +1163,25 @@ useStatElixir: (itemId: string): boolean => {
 
 3. **Usage location:** The stat elixirs will be usable from the Character Page consumable belt (already has the infrastructure from the Character Page feature). The `ConsumablesBelt.tsx` component should show stat elixirs and call `useStatElixir()` on click.
 
-### Session 3 Testing
+#### Tech Debt:
+- Phoenix Tear mana restoration uses `store.playerCurrentMana` which may already be at 0 when `handleDefeat` fires — need to verify pre-death mana is captured before HP drops to 0
+- ~~`tickConsumableBuffs` mutates state during filter~~ → **Fixed: now uses collect-then-apply pattern (see Phase 3A)**
+- Stat elixirs use `activePowerUps` with `stat_percent_boost` type (same as Iron Grip) — collision policy is `refresh` by default, which is correct for elixirs (re-drinking resets the timer)
+
+### Phase 3 Manual Testing
 
 - [ ] `npm run build` passes
 - [ ] `npm run deploy:test`
+- [ ] **Ironbark Ward:**
+  - [ ] Buy Ironbark Ward, use in combat — DEF stage increases, enemy hits for less damage
+  - [ ] After 4 turns, DEF boost reverses back to pre-ward value
 - [ ] **Enchantment Oils:**
-  - [ ] Buy Oil of Immolation, use in combat -- "attacks may inflict Burning" log appears
-  - [ ] Attack monster -- 20% chance to see "Burning proc'd!" and burn icon on monster
+  - [ ] Buy Oil of Immolation, use in combat — "attacks may inflict Burning" log appears
+  - [ ] Attack monster — 20% chance to see "Burning proc'd!" and burn icon on monster
   - [ ] After 5 turns, enchantment expires silently (no more procs)
   - [ ] Using a second oil replaces the first (only one active)
 - [ ] **Phoenix Tear:**
-  - [ ] Buy Phoenix Tear, die in combat -- "Phoenix Tear activates!" instead of defeat screen
+  - [ ] Buy Phoenix Tear, die in combat — "Phoenix Tear activates!" instead of defeat screen
   - [ ] HP is 30% of max after revival
   - [ ] Mana is at pre-death value (or 30% if pre-death was lower)
   - [ ] Battle continues from player input after revival
@@ -986,11 +1196,39 @@ useStatElixir: (itemId: string): boolean => {
 
 ---
 
-## Session 4: UI Polish & Loot Tables
+## 🔲 Phase 3.5: Tests — Complex Combat Consumables
 
+**Estimated Time:** 2-2.5 hours
+**Prerequisite:** Phase 3 manually verified
+**Goal:** Unit test enchantment proc system, Phoenix Tear intercept, Ironbark Ward expiry, and stat elixir integration. Target ≥80% coverage.
+
+### Test Files
+
+| Test File | Covers | Key Cases |
+|-----------|--------|-----------|
+| `test/services/ConsumableUsageService.test.ts` | Add Phase 3 handlers | Ironbark Ward applies +2 DEF stages, enchantment oil adds buff to store, enchantment oil replaces existing buff |
+| `test/store/battleStore.test.ts` | ConsumableBuff actions | `addConsumableBuff` adds/replaces, `tickConsumableBuffs` decrements, DEF_STAGE_BOOST reversal on expiry, enchantment removal on expiry |
+| `test/services/StatusEffectService.test.ts` | Proc system | `processConsumableBuffProcs` rolls correctly, applies status to monster, only one proc per attack, no proc on 0 damage |
+| `test/services/BattleService.test.ts` | Phoenix Tear | Tear consumed on death, HP restored to 30%, mana restored with floor, battle continues after revival, no tear = normal defeat |
+| `test/store/characterStore.test.ts` | Updated actions | `removeInventoryItem` returns false when item not found, returns true on success, `useStatElixir` creates correct `ActivePowerUp` |
+
+**Coverage target:** ≥80% line, ≥80% branch on `ConsumableUsageService.ts`, `battleStore.ts`
+
+**Store Mocking:** Same pattern as Phase 2.5 — use `useBattleStore.setState()` and `useCharacterStore.setState()` to seed state before each test. For `processConsumableBuffProcs`, seed `monster` and `player.consumableBuffs` in the store. For `removeInventoryItem` boolean return, seed `inventory` in `characterStore`. See Phase 2.5 for full pattern.
+
+**Command:** `npx vitest run test/services/ConsumableUsageService.test.ts test/store/battleStore.test.ts | Out-File -FilePath test-output.txt -Encoding utf8`
+
+---
+
+## 🔲 Phase 4: UI Polish & Loot Tables
+
+**Estimated Time:** 2-2.5 hours
+**Prerequisite:** Phase 3
 **Goal:** Polish the consumable picker UI with categories, expand the store with proper sections, update all loot tables, and do a final balance pass.
 
 ### Phase 4A: Categorized Consumable Picker
+
+**Goal:** Replace the flat item list with grouped sections (Potions, Cleansing, Enchantments, Tactical).
 
 **File: `src/components/BattleView.tsx`**
 
@@ -1124,6 +1362,8 @@ private rollCombatConsumable(
 
 ### Phase 4D: CSS for New Consumable Categories
 
+**Goal:** Add CSS styling for category sections, rarity borders, and enchantment glow effects.
+
 **File: `src/styles/combat.css`** (or `inventory.css`)
 
 Add styles for:
@@ -1133,7 +1373,12 @@ Add styles for:
 - Phoenix Tear should have epic rarity border color
 - Tactical items could have a distinct background tint
 
+> [!IMPORTANT]
+> **All visual differentiation must be via CSS class assignment only.** No `element.style.*` or inline styles — the codebase was just scrubbed of all `innerHTML` and inline styles for Obsidian guideline compliance. Use CSS classes from `combat.css` or `inventory.css` with CSS variables for theme compatibility.
+
 ### Phase 4E: Balance Verification Pass
+
+**Goal:** Log actual HP/MP values for multiple classes and validate potion healing percentages against the tuning tables.
 
 Before finalizing, log these values for a real character and compare against the tuning tables:
 
@@ -1152,7 +1397,11 @@ For a fresh L1 character:
 
 Adjust the flat values in `Consumable.ts` if the percentages are off. Target range: 45-60% at introduction level.
 
-### Session 4 Testing
+#### Tech Debt:
+- `rollCombatConsumable` uses `MonsterTier` type which may need importing (verify against existing type usage in `LootGenerationService`)
+- Potion tier smart display (±1 tier) may need edge-case handling at L1 (no tier below) and L40 (no tier above)
+
+### Phase 4 Manual Testing
 
 - [ ] `npm run build` passes
 - [ ] `npm run deploy:test`
@@ -1160,8 +1409,8 @@ Adjust the flat values in `Consumable.ts` if the percentages are off. Target ran
 - [ ] Empty categories don't show in picker
 - [ ] Store shows organized sections with level-gating
 - [ ] Potion tier filtering works (only shows relevant tiers)
-- [ ] Kill overworld monsters -- consumables occasionally drop
-- [ ] Kill bosses -- rare items (oils, elixirs, phoenix tear) can drop
+- [ ] Kill overworld monsters — consumables occasionally drop
+- [ ] Kill bosses — rare items (oils, elixirs, phoenix tear) can drop
 - [ ] Golden chests can drop cleansing/tactical items
 - [ ] Full regression: all existing functionality still works
   - [ ] Quest completion loot
@@ -1171,26 +1420,118 @@ Adjust the flat values in `Consumable.ts` if the percentages are off. Target ran
 
 ---
 
+## 🔲 Phase 4.5: Tests — UI Polish & Loot Tables
+
+**Estimated Time:** 1.5-2 hours
+**Prerequisite:** Phase 4 manually verified
+**Goal:** Unit test categorized picker grouping, store level-gating, and combat loot drops. Target ≥80% coverage.
+
+### Test Files
+
+| Test File | Covers | Key Cases |
+|-----------|--------|-----------|
+| `test/components/ConsumablePicker.test.ts` | Categorized picker | Items grouped correctly, empty categories hidden, enchantment items show glow styling |
+| `test/modals/StoreModal.test.ts` | Store categories | Level-gating at L1/L10/L15, smart tier display shows ±1, category sections render |
+| `test/services/LootGenerationService.test.ts` | Combat drops | `rollCombatConsumable` respects tier chances, boss-only items don't drop from overworld, HP/MP defaults to level-appropriate tier |
+
+**Coverage target:** ≥80% line, ≥80% branch on modified sections of `LootGenerationService.ts`
+
+**Command:** `npx vitest run test/services/LootGenerationService.test.ts | Out-File -FilePath test-output.txt -Encoding utf8`
+
+---
+
+## Verification Checklist
+
+| Test | Expected | Status |
+|------|----------|--------|
+| L1 Minor HP Potion heals ~54% | 130 / ~240 HP | 🔲 |
+| L8 Lesser HP Potion heals ~55% | 265 / ~480 HP | 🔲 |
+| L30 Superior HP Potion heals ~53% | 880 / ~1655 HP | 🔲 |
+| Firebomb at L30 deals ~280 dmg | 40 + 30*8 = 280 | 🔲 |
+| Ironbark Ward expires after 4 turns | DEF reverts | 🔲 |
+| Phoenix Tear revives at 30% HP | 30% of maxHP | 🔲 |
+| Stat Elixir lasts 1 real hour | Expires via activePowerUps | 🔲 |
+| `removeInventoryItem` returns boolean | `false` when not found | 🔲 |
+| Enchantment oil procs 20-25% of attacks | Over 20+ attacks | 🔲 |
+| Using second oil replaces first | Only one buff active | 🔲 |
+| All 168+ existing tests pass | `npx vitest run` | 🔲 |
+
+---
+
 ## File Change Summary
 
-| File | Session | Changes |
+| File | Phase | Changes |
 |------|---------|---------|
 | `src/models/Consumable.ts` | 1 | Rewrite: 6 potion tiers, expanded enum, ~25 item definitions, new fields |
-| `src/modals/StoreModal.ts` | 1, 4 | S1: new prices/items. S4: category sections, level-gating, smart tier display |
-| `src/services/LootGenerationService.ts` | 1, 4 | S1: verify imports. S4: combat consumable drops, expanded weights |
-| `src/services/ConsumableUsageService.ts` | 2, 3 | [NEW] S2: All consumable business logic. S3: Add enchantment oil handling |
-| `src/components/BattleView.tsx` | 2, 4 | S2: Thin wrapper calling ConsumableUsageService. S4: Categorized picker UI |
+| `src/modals/StoreModal.ts` | 1, 4 | P1: new prices/items. P4: category sections, level-gating, smart tier display |
+| `src/services/LootGenerationService.ts` | 1, 4 | P1: verify imports. P4: combat consumable drops, expanded weights |
+| `src/services/ConsumableUsageService.ts` | 2, 3 | [NEW] P2: HP/MP, cleanse, firebomb, smoke bomb handlers. P3: enchantment oil + Ironbark Ward |
+| `src/components/BattleView.tsx` | 2, 4 | P2: Thin wrapper calling ConsumableUsageService. P4: Categorized picker UI |
 | `src/store/battleStore.ts` | 3 | ConsumableBuff type (enchantments + stage boosts), add/tick actions with expiry |
-| `src/services/StatusEffectService.ts` | 3 | [MODIFY] Add processConsumableBuffProcs() for enchantment procs |
-| `src/services/BattleService.ts` | 3 | Phoenix Tear check in handleDefeat, call processConsumableBuffProcs() |
-| `src/store/characterStore.ts` | 3 | [MODIFY] removeInventoryItem returns boolean, add useStatElixir action |
+| `src/services/StatusEffectService.ts` | 3 | [MODIFY] Add `processConsumableBuffProcs()` for enchantment procs |
+| `src/services/BattleService.ts` | 3 | Phoenix Tear check in `handleDefeat`, call `processConsumableBuffProcs()` |
+| `src/store/characterStore.ts` | 3 | [MODIFY] `removeInventoryItem` returns boolean, add `useStatElixir` action |
 | `src/styles/combat.css` | 4 | Category picker styles, enchantment glow, rarity borders |
+
+### New Test Files
+
+| File | Phase | Covers |
+|------|-------|--------|
+| `test/models/Consumable.test.ts` | 1.5 | Model definitions, helper functions |
+| `test/services/ConsumableUsageService.test.ts` | 2.5, 3.5 | All consumable handlers |
+| `test/components/ConsumablePicker.test.ts` | 2.5, 4.5 | Picker UI, categories |
+| `test/modals/StoreModal.test.ts` | 1.5, 4.5 | Store level-gating, categories |
+| `test/store/battleStore.test.ts` | 3.5 | ConsumableBuff actions/expiry |
+| `test/services/StatusEffectService.test.ts` | 3.5 | Enchantment proc system |
+| `test/services/BattleService.test.ts` | 3.5 | Phoenix Tear intercept |
+| `test/store/characterStore.test.ts` | 3.5 | `removeInventoryItem` boolean, `useStatElixir` |
+| `test/services/LootGenerationService.test.ts` | 4.5 | Combat consumable drops |
 
 ### Files NOT Changed
 
-- `main.ts` -- no new commands or lifecycle changes needed
-- `src/config/combatConfig.ts` -- no balance constant changes
-- `src/models/StatusEffect.ts` -- existing types sufficient
+- `main.ts` — no new commands or lifecycle changes needed
+- `src/config/combatConfig.ts` — no balance constant changes
+- `src/models/StatusEffect.ts` — existing `isDoTEffect`, `isHardCC` types sufficient
+
+---
+
+## Security & Validation
+
+All consumable usage flows must guard against invalid input, since item IDs come from user-facing inventory state:
+
+| Check | Location | Behavior on Failure |
+|-------|----------|--------------------|
+| Unknown `itemId` | `executeConsumable` | Return `{ success: false, error: 'Unknown item' }` |
+| Missing `statTarget` | `useStatElixir` | Return `false` (no-op) |
+| Null `damageFormula.perLevel` | `handleDirectDamage` | `console.warn` + return failure |
+| Missing `stageChange` | `handleDefStageBoost` | Return `{ success: false, error: 'Invalid stage change' }` |
+| Invalid `statusType` on enchantment | `handleEnchantmentOil` | Non-null assertion (`!`) — safe because only called for enum-matched defs |
+| Insufficient inventory | `removeInventoryItem` | Returns `false` — caller must check |
+| Double-defeat race | `handleDefeat` Phoenix Tear | `removeInventoryItem` boolean guard prevents double-consumption |
+
+**No user-generated strings** are rendered via `innerHTML` — all log messages use string interpolation into React JSX or Obsidian DOM API calls.
+
+---
+
+## Performance Considerations
+
+| Concern | Impact | Mitigation |
+|---------|--------|------------|
+| `processConsumableBuffProcs` runs every attack | **Low** — filters 0-3 buffs, single RNG roll, early-exit on no procs | No optimization needed |
+| `tickConsumableBuffs` runs every turn | **Low** — map + filter over 0-3 buffs, single `set()` call | No optimization needed |
+| Deep-copy monster for proc handler | **Negligible** — shallow spread + array spread of ~0-5 status effects | Avoids Zustand mutation bug, worth the copy |
+| Store modal renders 25+ items | **Low** — smart tier display limits visible items to ~8-12 at any level | Already mitigated by design |
+| Stat elixir expiry check | **None** — handled by existing `activePowerUps` expiry system which already iterates power-ups periodically | No new timer needed |
+
+---
+
+## Rollback Plan
+
+If the potion rebalance feels wrong after testing:
+
+1. **Potion values only:** Revert just the `effectValue` numbers in `Consumable.ts` CONSUMABLES record. All other changes (new types, store categories, UI) are independent and can stay.
+2. **Individual consumable types:** Each consumable handler in `ConsumableUsageService` is self-contained. Remove any single type (e.g., enchantment oils) by removing the switch case and the store definition, without affecting other types.
+3. **Full rollback:** Revert from git. The feature is entirely additive — no destructive changes to existing data structures except `removeInventoryItem` return type (which is backward-compatible since `void` is falsy anyway).
 
 ---
 
@@ -1224,9 +1565,9 @@ All HP/MP potion values are estimates based on one data point (L30 Warrior = 165
 
 ### Known Compromises
 
-- **Ironbark Ward duration:** The +2 DEF stages don't auto-expire after 4 turns in V1. The stat stage system doesn't have turn-based expiry. Acceptable for now since battles are short. Could add a "ward" buff tracker later if needed.
+- **Ironbark Ward duration:** The +2 DEF stages auto-expire after 4 turns via the `ConsumableBuff` system added in Phase 3A. The `tickConsumableBuffs` action reverses the stage change on expiry.
 - **Enchantment oils are battle-scoped only:** Simpler than cross-battle real-time buffs. Can expand later if there's demand.
-- **Stat elixirs use activePowerUps:** The PowerUp system may need minor adaptation to support consumable-sourced buffs. Check the PowerUp interface shape during implementation.
+- **Stat elixirs use activePowerUps:** The `ActivePowerUp` interface in `Character.ts` already supports `{ type: 'stat_boost', stat: StatType, value: number }` via the `PowerUpEffect` union. The `triggeredBy: 'consumable'` field is a metadata string and not validated, so no interface changes needed.
 - **No consumable crafting:** Intentionally out of scope. Store + loot drops are the only acquisition paths for now.
 
 ### Price Economy Sanity Check
