@@ -6,8 +6,8 @@
  */
 
 import { ConsumableDefinition, ConsumableEffect, CONSUMABLES } from '../models/Consumable';
-import { isDoTEffect, isHardCC } from '../models/StatusEffect';
-import { useBattleStore } from '../store/battleStore';
+import { isDoTEffect, isHardCC, getStatusDisplayName } from '../models/StatusEffect';
+import { useBattleStore, ConsumableBuff } from '../store/battleStore';
 import { copyVolatileStatusToPersistent } from './BattleService';
 
 export interface ConsumableResult {
@@ -47,7 +47,12 @@ export function executeConsumable(
             return handleDirectDamage(def, characterLevel);
         case ConsumableEffect.GUARANTEED_RETREAT:
             return handleGuaranteedRetreat();
-        // DEF_STAGE_BOOST deferred to Phase 3A (needs ConsumableBuff from battleStore)
+        case ConsumableEffect.DEF_STAGE_BOOST:
+            return handleDefStageBoost(def);
+        case ConsumableEffect.ENCHANT_BURN:
+        case ConsumableEffect.ENCHANT_POISON:
+        case ConsumableEffect.ENCHANT_FREEZE:
+            return handleEnchantmentOil(def);
         default:
             return { success: false, logMessage: '', endsTurn: false, error: 'Effect not implemented' };
     }
@@ -158,5 +163,53 @@ function handleGuaranteedRetreat(): ConsumableResult {
     };
 }
 
-// handleDefStageBoost is implemented in Phase 3A alongside ConsumableBuff
-// (see Phase 3A section for full implementation)
+/**
+ * Handle Ironbark Ward — +DEF stages for N turns.
+ * Applies immediate stage boost and registers a ConsumableBuff
+ * so tickConsumableBuffs() reverses the boost on expiry.
+ */
+function handleDefStageBoost(def: ConsumableDefinition): ConsumableResult {
+    const store = useBattleStore.getState();
+    const player = store.player;
+    if (!player || !def.stageChange) {
+        return { success: false, logMessage: '', endsTurn: false, error: 'Invalid stage change' };
+    }
+
+    // Apply the DEF stage boost immediately (clamped to ±6)
+    const newDef = Math.min(6, Math.max(-6, player.statStages.def + def.stageChange.stages));
+    store.updatePlayer({ statStages: { ...player.statStages, def: newDef } });
+
+    // Register the buff so it auto-reverses on expiry
+    store.addConsumableBuff({
+        type: ConsumableEffect.DEF_STAGE_BOOST,
+        turnsRemaining: def.turnDuration ?? 4,
+        chance: 0,
+        statusType: null,
+        stageChange: def.stageChange.stages,
+    });
+
+    return { success: true, logMessage: 'Used Ironbark Ward: Defense rose!', endsTurn: true };
+}
+
+/**
+ * Handle enchantment oils (Oil of Immolation, Venom Coating, Frostbite Tincture).
+ * Registers a ConsumableBuff that has a chance to proc a status effect on each attack.
+ * Using a second oil replaces the first (only one enchantment active at a time).
+ */
+function handleEnchantmentOil(def: ConsumableDefinition): ConsumableResult {
+    const store = useBattleStore.getState();
+
+    const buff: ConsumableBuff = {
+        type: def.effect,
+        turnsRemaining: def.turnDuration ?? 5,
+        chance: def.statusChance ?? 20,
+        statusType: def.statusType!,
+    };
+    store.addConsumableBuff(buff);
+
+    return {
+        success: true,
+        logMessage: `Applied ${def.name}: attacks may inflict ${getStatusDisplayName(def.statusType!)}!`,
+        endsTurn: true,
+    };
+}

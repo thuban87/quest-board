@@ -18,6 +18,7 @@ import {
     CHARACTER_SCHEMA_VERSION,
 } from '../models';
 import { GearItem, GearSlot, EquippedGearMap, canEquipGear } from '../models/Gear';
+import { CONSUMABLES, ConsumableEffect } from '../models/Consumable';
 import { InventoryItem } from '../models/Consumable';
 import { Achievement } from '../models/Achievement';
 import { calculateTrainingLevel, calculateLevel, XP_THRESHOLDS } from '../services/XPSystem';
@@ -73,8 +74,8 @@ interface CharacterActions {
     /** Add item to inventory */
     addInventoryItem: (itemId: string, quantity?: number) => void;
 
-    /** Remove item from inventory */
-    removeInventoryItem: (itemId: string, quantity?: number) => void;
+    /** Remove item from inventory. Returns true if item was found and removed. */
+    removeInventoryItem: (itemId: string, quantity?: number) => boolean;
 
     /** Unlock achievement */
     unlockAchievement: (achievement: Partial<Achievement> & { id: string }) => void;
@@ -188,6 +189,9 @@ interface CharacterActions {
 
     /** Unlock new skills and auto-equip if < 5 equipped (Phase 7) */
     unlockSkills: (newSkillIds: string[]) => void;
+
+    /** Use a stat elixir: consume from inventory, add ActivePowerUp. Returns false if invalid/missing. */
+    useStatElixir: (itemId: string) => boolean;
 }
 
 type CharacterStore = CharacterState & CharacterActions;
@@ -478,7 +482,7 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         const { inventory } = get();
         const existing = inventory.find((i) => i.itemId === itemId);
 
-        if (!existing) return;
+        if (!existing || existing.quantity < quantity) return false;
 
         if (existing.quantity <= quantity) {
             set({ inventory: inventory.filter((i) => i.itemId !== itemId) });
@@ -491,6 +495,7 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 ),
             });
         }
+        return true;
     },
 
     unlockAchievement: (achievement) => {
@@ -1089,6 +1094,50 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 lastModified: new Date().toISOString(),
             },
         });
+    },
+
+    useStatElixir: (itemId: string) => {
+        const { character } = get();
+        if (!character) return false;
+
+        const def = CONSUMABLES[itemId];
+        if (!def || def.effect !== ConsumableEffect.STAT_BOOST || !def.statTarget) {
+            return false;
+        }
+
+        // Consume from inventory
+        const consumed = get().removeInventoryItem(itemId, 1);
+        if (!consumed) return false;
+
+        // Create ActivePowerUp with stat_percent_boost
+        const now = new Date();
+        const durationMs = (def.realTimeDurationMinutes ?? 60) * 60 * 1000;
+        const expiresAt = new Date(now.getTime() + durationMs).toISOString();
+
+        const powerUp: ActivePowerUp = {
+            id: `elixir_${def.statTarget}_${Date.now()}`,
+            name: def.name,
+            icon: def.emoji,
+            description: def.description,
+            triggeredBy: 'consumable',
+            startedAt: now.toISOString(),
+            expiresAt,
+            effect: {
+                type: 'stat_percent_boost',
+                stat: def.statTarget,
+                value: def.effectValue,
+            },
+        };
+
+        set({
+            character: {
+                ...character,
+                activePowerUps: [...character.activePowerUps, powerUp],
+                lastModified: now.toISOString(),
+            },
+        });
+
+        return true;
     },
 }));
 

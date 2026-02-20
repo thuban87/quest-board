@@ -718,7 +718,7 @@ No `vi.mock()` needed — Zustand stores work directly in tests.
 
 ---
 
-## 🔲 Phase 3: Complex Combat Consumables
+## ✅ Phase 3: Complex Combat Consumables — Complete (2026-02-20)
 
 **Estimated Time:** 2.5-3 hours
 **Prerequisite:** Phase 2

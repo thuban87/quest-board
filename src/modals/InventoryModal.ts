@@ -489,19 +489,26 @@ export class InventoryModal extends Modal {
         const isHpRestore = definition.effect === 'hp_restore';
         const isManaRestore = definition.effect === 'mana_restore';
         const isRevive = definition.effect === 'revive';
+        const isStatBoost = definition.effect === 'stat_boost';
 
-        if (isHpRestore || isManaRestore || isRevive) {
+        if (isHpRestore || isManaRestore || isRevive || isStatBoost) {
             // Use button
             const useBtn = actionsEl.createEl('button', {
                 cls: 'qb-consumable-btn qb-btn-use',
                 text: '✨ Use'
             });
             useBtn.addEventListener('click', () => this.useConsumable(item.itemId, definition));
-        } else {
-            // Other consumables (Streak restore, XP boost) - Coming Soon
+        } else if (definition.combatUsable) {
+            // Combat-only consumables
             actionsEl.createEl('span', {
                 cls: 'qb-consumable-coming-soon',
-                text: '🔜 Coming Soon'
+                text: '⚔️ Use in combat'
+            });
+        } else {
+            // Other consumables - Coming Soon
+            actionsEl.createEl('span', {
+                cls: 'qb-consumable-coming-soon',
+                text: '🔜 Coming soon'
             });
         }
     }
@@ -556,6 +563,18 @@ export class InventoryModal extends Modal {
                 new Notice('💫 Revived! You have 25% HP.', 3000);
             } else {
                 new Notice('❌ Failed to revive.', 2000);
+            }
+        } else if (definition.effect === 'stat_boost') {
+            const success = store.useStatElixir(itemId);
+            if (success) {
+                const statName = definition.statTarget
+                    ? definition.statTarget.charAt(0).toUpperCase() + definition.statTarget.slice(1)
+                    : 'Stat';
+                const duration = definition.realTimeDurationMinutes ?? 60;
+                new Notice(`💪 ${definition.name} active! ${statName} +${Math.round(definition.effectValue * 100)}% for ${duration} min.`, 4000);
+            } else {
+                new Notice('❌ Failed to use elixir.', 2000);
+                return; // Don't save if nothing happened
             }
         }
 

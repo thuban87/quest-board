@@ -15,7 +15,7 @@
 | 1.5: Tests — Potion Rework | ✅ | 2026-02-19 | 89 tests (62 model + 27 store), all passing |
 | 2: Simple Combat Consumables | ✅ | 2026-02-20 | ConsumableUsageService, BattleView integration, ConsumablePicker expansion |
 | 2.5: Tests — Simple Combat | ✅ | 2026-02-20 | 24 tests, all passing |
-| 3: Complex Combat Consumables | 🔲 | | |
+| 3: Complex Combat Consumables | ✅ | 2026-02-20 | Buff system, enchantment procs, Phoenix Tear, stat elixirs, + 2 bug fixes |
 | 3.5: Tests — Complex Combat | 🔲 | | |
 | 4: UI Polish & Loot Tables | 🔲 | | |
 | 4.5: Tests — UI Polish & Loot | 🔲 | | |
@@ -91,4 +91,41 @@ Continue with Phase 2: Simple Combat Consumables. This phase wires up the new co
 
 #### Next Session Prompt
 Continue with Phase 3: Complex Combat Consumables. This phase adds the buff system for Ironbark Ward (DEF stage boost) and enchantment oil procs (burn/poison/freeze on attack). Refer to the Expanded Consumables Implementation Guide Phase 3 section.
+
+### Session 3 — 2026-02-20
+
+**Phases completed:** 3 (Complex Combat Consumables) + 2 bug fixes
+
+#### Phase 3: Complex Combat Consumables
+
+**Files modified:**
+- `src/store/battleStore.ts` — Added `ConsumableBuff` interface, `consumableBuffs` field to `BattlePlayer`, and `addConsumableBuff`/`tickConsumableBuffs` actions
+- `src/services/ConsumableUsageService.ts` — Added `handleDefStageBoost` (Ironbark Ward) and `handleEnchantmentOil` handlers
+- `src/services/StatusEffectService.ts` — Added `processConsumableBuffProcs` pure function for enchantment oil procs
+- `src/services/BattleService.ts` — Initialized `consumableBuffs` in `hydrateBattlePlayer`, integrated `processConsumableBuffProcs` into `executePlayerAttack` and `executePlayerSkill`, added `tickConsumableBuffs` calls in both `checkBattleOutcome` paths, implemented Phoenix Tear logic in `handleDefeat`
+- `src/store/characterStore.ts` — Changed `removeInventoryItem` to return boolean, added `useStatElixir` action (creates `ActivePowerUp` with `stat_percent_boost` effect)
+- `src/components/BattleView.tsx` — Updated `ConsumablePicker` filter and `getEffectText` for new consumable types
+- `test/services/ConsumableUsageService.test.ts` — Added `consumableBuffs: []` to mock `BattlePlayer`
+
+#### Bug Fixes
+
+**🔴 Inventory wipe on restart (pre-existing bug):**
+- **Root cause:** `main.ts` InventoryModal `onSave` callback (command-palette route) only saved `character` to settings — did not save `inventory` or `achievements`. After any equip/sell/use action through the command-palette inventory, stale inventory data was persisted to disk.
+- **Fix:** Updated `main.ts` `onSave` to save all three fields (character, inventory, achievements), matching the correct pattern in `CharacterPage.tsx`.
+
+**🟡 Stat Elixirs showing "Coming soon":**
+- **Root cause:** `InventoryModal.ts` only recognized `hp_restore`, `mana_restore`, and `revive` for the Use button. `stat_boost` fell to generic "Coming soon".
+- **Fix:** Added `stat_boost` to usable effects, wired handler to `useStatElixir`, added feedback notice. Also: combat-only items now show "⚔️ Use in combat" instead of generic "Coming soon".
+
+**Manual testing results:**
+- ✅ Items persist after Obsidian restart
+- ✅ Stat elixirs show Use button in inventory
+- ✅ Stat elixir use shows correct notice with stat name, percentage, and duration
+- ✅ Combat-only items show "Use in combat" label
+
+#### Issues Discovered
+- None
+
+#### Next Session Prompt
+Continue with Phase 3.5: Tests for Complex Combat Consumables. Write tests covering `ConsumableBuff` system (`addConsumableBuff`, `tickConsumableBuffs`), `processConsumableBuffProcs`, Phoenix Tear logic in `handleDefeat`, `useStatElixir` action, and the InventoryModal stat_boost handler. Refer to the Implementation Guide Phase 3.5 section.
 

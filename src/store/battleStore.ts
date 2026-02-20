@@ -8,8 +8,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import { CombatStats } from '../services/CombatService';
-import { StatusEffect } from '../models/StatusEffect';
+import { StatusEffect, StatusEffectType } from '../models/StatusEffect';
 import { MonsterSkill } from '../models/Skill';
+import { ConsumableEffect } from '../models/Consumable';
 
 // =====================
 // COMBAT STATE MACHINE
@@ -78,6 +79,23 @@ export interface BattleMonster {
 }
 
 /**
+ * Buff granted by a consumable item during combat.
+ * Tracked separately from status effects (these are player buffs, not debuffs).
+ */
+export interface ConsumableBuff {
+    /** Buff type (enchantment or stage boost) */
+    type: ConsumableEffect;
+    /** Turns remaining in this battle */
+    turnsRemaining: number;
+    /** Proc chance per attack (0-100), 0 for non-proc effects */
+    chance: number;
+    /** What status effect to apply on proc (null for stage boosts) */
+    statusType: StatusEffectType | null;
+    /** For DEF_STAGE_BOOST: how many stages to reverse on expiry */
+    stageChange?: number;
+}
+
+/**
  * Player volatile battle state
  * Mirrors BattleMonster structure for consistent battle logic.
  * Created at battle start from Character + gear, not persisted to Character.
@@ -101,6 +119,9 @@ export interface BattlePlayer {
     volatileStatusEffects: StatusEffect[];  // Working copy from persistentStatusEffects
     skillsUsedThisBattle: string[];
     turnsInBattle: number;
+
+    /** Buffs granted by consumables (Ironbark Ward, enchantment oils) */
+    consumableBuffs: ConsumableBuff[];
 }
 
 // =====================
@@ -168,6 +189,10 @@ interface BattleActions {
     // Phase 5: Player battle state management
     setPlayer: (player: BattlePlayer) => void;
     updatePlayer: (updates: Partial<BattlePlayer>) => void;
+
+    // Consumable buff management
+    addConsumableBuff: (buff: ConsumableBuff) => void;
+    tickConsumableBuffs: () => void;
 
     // Combat log
     addLogEntry: (entry: Omit<CombatLogEntry, 'timestamp'>) => void;
@@ -369,6 +394,70 @@ export const useBattleStore = create<BattleStore>()(
                 if (!player) return;
                 set({
                     player: { ...player, ...updates },
+                    lastUpdated: Date.now(),
+                });
+            },
+
+            /**
+             * Add a consumable buff, replacing any existing buff of the same type.
+             * Only one enchantment oil can be active at a time.
+             */
+            addConsumableBuff: (buff) => {
+                const { player } = get();
+                if (!player) return;
+
+                // Replace existing buff of same type or add new one
+                const updatedBuffs = (player.consumableBuffs ?? []).filter(
+                    b => b.type !== buff.type
+                );
+                set({
+                    player: {
+                        ...player,
+                        consumableBuffs: [...updatedBuffs, buff],
+                    },
+                    lastUpdated: Date.now(),
+                });
+            },
+
+            /**
+             * Tick consumable buffs at end of player turn.
+             * Decrements turnsRemaining, handles expiry side effects:
+             * - DEF_STAGE_BOOST: reverses the stage change
+             * - Enchantment oils: simply removed
+             */
+            tickConsumableBuffs: () => {
+                const { player } = get();
+                if (!player || !player.consumableBuffs?.length) return;
+
+                // Collect side effects from expired buffs BEFORE filtering
+                let defAdjustment = 0;
+                for (const buff of player.consumableBuffs) {
+                    if (buff.turnsRemaining - 1 <= 0) {
+                        // This buff is expiring — collect side effects
+                        if (buff.type === ConsumableEffect.DEF_STAGE_BOOST && buff.stageChange) {
+                            defAdjustment -= buff.stageChange; // Reverse the stage boost
+                        }
+                    }
+                }
+
+                // Decrement and filter in a single pass
+                const updated = player.consumableBuffs
+                    .map(buff => ({ ...buff, turnsRemaining: buff.turnsRemaining - 1 }))
+                    .filter(buff => buff.turnsRemaining > 0);
+
+                // Apply everything in a single set() call
+                const newDef = defAdjustment !== 0
+                    ? Math.max(-6, player.statStages.def + defAdjustment)
+                    : player.statStages.def;
+
+                set({
+                    player: {
+                        ...player,
+                        consumableBuffs: updated,
+                        ...(defAdjustment !== 0 ? {
+                            statStages: { ...player.statStages, def: newDef },
+                        } : {}),
+                    },
                     lastUpdated: Date.now(),
                 });
             },

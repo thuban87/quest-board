@@ -384,8 +384,10 @@ function ConsumablePicker({ onSelect, onCancel }: ConsumablePickerProps) {
             ConsumableEffect.CLEANSE_CURSE_CC,
             ConsumableEffect.DIRECT_DAMAGE,
             ConsumableEffect.GUARANTEED_RETREAT,
-            // DEF_STAGE_BOOST deferred to Phase 3A — uncomment when handler exists
-            // ConsumableEffect.DEF_STAGE_BOOST,
+            ConsumableEffect.DEF_STAGE_BOOST,
+            ConsumableEffect.ENCHANT_BURN,
+            ConsumableEffect.ENCHANT_POISON,
+            ConsumableEffect.ENCHANT_FREEZE,
         ].includes(def.effect);
     });
 
@@ -399,6 +401,9 @@ function ConsumablePicker({ onSelect, onCancel }: ConsumablePickerProps) {
             case ConsumableEffect.DIRECT_DAMAGE: return `~${def.damageFormula!.base + def.damageFormula!.perLevel * (character?.level ?? 1)} dmg`;
             case ConsumableEffect.GUARANTEED_RETREAT: return 'Instant Escape';
             case ConsumableEffect.DEF_STAGE_BOOST: return `+${def.stageChange!.stages} DEF`;
+            case ConsumableEffect.ENCHANT_BURN: return `${def.statusChance}% Burn (${def.turnDuration}t)`;
+            case ConsumableEffect.ENCHANT_POISON: return `${def.statusChance}% Poison (${def.turnDuration}t)`;
+            case ConsumableEffect.ENCHANT_FREEZE: return `${def.statusChance}% Freeze (${def.turnDuration}t)`;
             default: return def.description;
         }
     };

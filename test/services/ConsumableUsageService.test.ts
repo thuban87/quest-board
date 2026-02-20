@@ -109,6 +109,7 @@ function setupBattleState(overrides: Record<string, any> = {}) {
             volatileStatusEffects: [],
             skillsUsedThisBattle: [],
             turnsInBattle: 0,
+            consumableBuffs: [],
         },
         turnNumber: 3,
         log: [],
