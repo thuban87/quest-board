@@ -253,7 +253,7 @@ export class LootGenerationService {
             itemId = getMpPotionForLevel(level);
         } else {
             // Revive potion (rare)
-            itemId = 'revive_potion';
+            itemId = 'revive-potion';
         }
 
         return {

@@ -176,8 +176,8 @@ This document reflects the **actual state of implementation** based on a deep co
 | Feature | Location | Notes |
 |---------|----------|-------|
 | Gold currency | `Character.gold` | Earned from quests/combat |
-| Store | `StoreModal.ts` | Buy consumables |
-| Consumables | `Consumable.ts` | HP/MP/revive potions |
+| Store | `StoreModal.ts` | Buy consumables (5 sections, level-gating, smart tier display) |
+| Consumables | `Consumable.ts` | 30 items: 6-tier HP/MP potions, stat elixirs, cleansing, enchantment oils, tactical, Phoenix Tear |
 
 ---
 
@@ -396,6 +396,20 @@ Pre-BRAT release audit addressing all community plugin guideline requirements. C
 
 **Docs:** [Alignment Plan](launch-considerations/01%20-%20Obsidian%20guidelines%20alignment%20plan.md) | [Session Log](launch-considerations/Obsidian%20Alignment%20Session%20Log.md)
 
+## 🔄 Expanded Consumables — In Progress (started 2026-02-19)
+
+Overhaul of the consumable system from 11 items to 30+, adding stat elixirs, cleansing items, enchantment oils, tactical consumables, and Phoenix Tear.
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| 1: Potion Rework + Model Foundation | ✅ Complete | 30 items, 6-tier potions, store rewrite, revive_potion bugfix |
+| 1.5: Tests — Potion Rework | ✅ Complete | 89 tests (62 model + 27 store) |
+| 2: Simple Combat Consumables | 🔲 Pending | Wire effects in BattleService |
+| 3: Complex Combat Consumables | 🔲 Pending | Buff system, enchantment procs |
+| 4: UI Polish & Loot Tables | 🔲 Pending | Inventory tooltips, loot rebalance |
+
+**Docs:** [Implementation Guide](feature-planning/in-review/Expanded%20Consumables%20Implementation%20Guide.md) | [Session Log](Expanded%20Consumables%20Session%20Log.md)
+
 ---
 
 ## Architecture Notes
@@ -417,4 +431,4 @@ Pre-BRAT release audit addressing all community plugin guideline requirements. C
 
 ---
 
-**Last Updated:** 2026-02-19 (Obsidian Guidelines Alignment project COMPLETE — all 13 phases finished, Phase 2 deferred until public release)
+**Last Updated:** 2026-02-19 (Expanded Consumables Phase 1 + 1.5 complete)

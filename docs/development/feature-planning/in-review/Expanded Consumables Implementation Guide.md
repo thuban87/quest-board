@@ -211,7 +211,7 @@ Battle-scoped buffs. Last 5 turns in current battle. One active at a time. Avail
 
 ---
 
-## 🔲 Phase 1: Potion Rework + Model Foundation
+## ✅ Phase 1: Potion Rework + Model Foundation — Complete (2026-02-19)
 
 **Estimated Time:** 2-2.5 hours
 **Prerequisite:** —
@@ -380,7 +380,7 @@ The new `hp-potion-major` and `hp-potion-supreme` (and MP equivalents) are new I
 
 ---
 
-## 🔲 Phase 1.5: Tests — Potion Rework + Model Foundation
+## ✅ Phase 1.5: Tests — Potion Rework + Model Foundation — Complete (2026-02-19)
 
 **Estimated Time:** 1.5-2 hours
 **Prerequisite:** Phase 1 manually verified

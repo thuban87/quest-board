@@ -2,8 +2,8 @@
 
 **Feature:** Expanded Consumables System
 **Plan:** [Expanded Consumables Implementation Guide](../feature-planning/in-review/Expanded%20Consumables%20Implementation%20Guide.md)
-**Started:** TBD
-**Status:** Not Started
+**Started:** 2026-02-19
+**Status:** In Progress
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Phase | Status | Date | Notes |
 |-------|--------|------|-------|
-| 1: Potion Rework + Model Foundation | 🔲 | | |
-| 1.5: Tests — Potion Rework | 🔲 | | |
+| 1: Potion Rework + Model Foundation | ✅ | 2026-02-19 | All 30 items, 6-tier potions, store rewrite, revive_potion bugfix |
+| 1.5: Tests — Potion Rework | ✅ | 2026-02-19 | 89 tests (62 model + 27 store), all passing |
 | 2: Simple Combat Consumables | 🔲 | | |
 | 2.5: Tests — Simple Combat | 🔲 | | |
 | 3: Complex Combat Consumables | 🔲 | | |
@@ -24,4 +24,36 @@
 
 ## Session Entries
 
-_No sessions yet. Entries will be added as work begins._
+### Session 1 — 2026-02-19
+
+**Phases completed:** 1 (Potion Rework + Model Foundation) and 1.5 (Tests)
+
+#### Phase 1: Potion Rework + Model Foundation
+
+**Files changed:**
+- `src/models/Consumable.ts` — Full rewrite: expanded ConsumableEffect enum with 10 new types, added 8 optional fields to ConsumableDefinition interface, rewrote CONSUMABLES record from 11 to 30 items (6 HP tiers, 6 MP tiers, 6 stat elixirs, 2 cleansing, 3 enchantment oils, 3 tactical, 1 Phoenix Tear, 3 existing utility), updated getHpPotionForLevel/getMpPotionForLevel to 6-tier breakpoints, added new helper arrays
+- `src/modals/StoreModal.ts` — Full rewrite: 5 sections (Health/Mana Potions, Stat Elixirs, Battle Supplies, Rare Items), smart potion tier display (current ±1), level-gating with "Requires level X", simplified StoreItem to pull display info from CONSUMABLES, removed emojis from section headers
+- `src/services/LootGenerationService.ts` — Fixed pre-existing `revive_potion` → `revive-potion` typo (revive potions can now drop from quest loot)
+
+**Manual testing results:**
+- ✅ Store shows 5 sections with correct items and prices
+- ✅ Smart tier display shows current ±1 potion tiers
+- ✅ Level-gated items show "Requires level X" and are greyed out
+- ✅ Buying potions deducts gold and adds to inventory
+- ✅ New HP potion values work in combat (after full Obsidian restart — hot reload didn't clear JS cache)
+- ✅ Revive Potion, Scroll of Pardon, Elixir of Experience all appear in Rare Items
+
+#### Phase 1.5: Tests — Potion Rework
+
+**Files created:**
+- `test/models/Consumable.test.ts` — 62 tests covering data integrity, potion values, tier helpers at every breakpoint, stat elixirs, enchantment oils, tactical items, special items, drop rates
+- `test/modals/StoreModal.test.ts` — 27 tests covering store coverage, level-gating logic, smart tier display algorithm, store section organization
+
+**Test results:** 89/89 passing. Full suite: 478 passed, 1 pre-existing flaky failure in `monster.test.ts` (randomness-based assertion, unrelated)
+
+#### Issues Discovered
+- **Obsidian JS cache:** After deploy:test, Obsidian reload doesn't always clear the JS cache. A full quit + relaunch was required to pick up the new potion values. This isn't a code bug — it's an Obsidian behavior worth noting for future sessions.
+- **Pre-existing flaky test:** `test/monster.test.ts` "should apply fierce prefix (+10% attack)" fails intermittently due to randomness in the assertion. Not related to consumables.
+
+#### Next Session Prompt
+Continue with Phase 2: Simple Combat Consumables. This phase wires up the new consumable effects in BattleService (cleansing, enchantment oils, tactical items) and adds the ConsumablePicker filter expansion. Refer to the Expanded Consumables Implementation Guide Phase 2 section.

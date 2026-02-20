@@ -1,13 +1,24 @@
 /**
  * Store Modal
- * 
- * Phase 3B: Shop for consumables using gold.
- * Simple modal UI with potion tiers and buy buttons.
+ *
+ * Shop for consumables using gold.
+ * Organized into 5 sections with level-gating and smart potion tier display.
  */
 
 import { App, Modal, Notice } from 'obsidian';
 import { useCharacterStore } from '../store/characterStore';
-import { CONSUMABLES, ConsumableDefinition, ConsumableRarity } from '../models/Consumable';
+import {
+    CONSUMABLES,
+    ConsumableRarity,
+    HP_POTION_IDS,
+    MP_POTION_IDS,
+    STAT_ELIXIR_IDS,
+    CLEANSING_IDS,
+    ENCHANTMENT_IDS,
+    TACTICAL_IDS,
+    getHpPotionForLevel,
+    getMpPotionForLevel,
+} from '../models/Consumable';
 
 // =====================
 // STORE ITEM DEFINITIONS
@@ -16,103 +27,53 @@ import { CONSUMABLES, ConsumableDefinition, ConsumableRarity } from '../models/C
 interface StoreItem {
     consumableId: string;
     price: number;
-    displayName: string;
-    description: string;
-    emoji: string;
-    rarity: ConsumableRarity;
 }
 
 /**
  * Items available for purchase in the store.
- * Prices based on Fight System design doc.
+ * Display info (name, description, emoji, rarity) is pulled from CONSUMABLES.
  */
 const STORE_ITEMS: StoreItem[] = [
-    // HP Potions
-    {
-        consumableId: 'hp-potion-minor',
-        price: 50,
-        displayName: 'Minor Health Potion',
-        description: 'Restores 50 HP. For early adventurers.',
-        emoji: '🧪',
-        rarity: ConsumableRarity.COMMON,
-    },
-    {
-        consumableId: 'hp-potion-lesser',
-        price: 150,
-        displayName: 'Lesser Health Potion',
-        description: 'Restores 120 HP. For seasoned heroes.',
-        emoji: '🧪',
-        rarity: ConsumableRarity.ADEPT,
-    },
-    {
-        consumableId: 'hp-potion-greater',
-        price: 350,
-        displayName: 'Greater Health Potion',
-        description: 'Restores 250 HP. For veterans.',
-        emoji: '❤️‍🔥',
-        rarity: ConsumableRarity.MASTER,
-    },
-    {
-        consumableId: 'hp-potion-superior',
-        price: 700,
-        displayName: 'Superior Health Potion',
-        description: 'Restores 500 HP. Legendary brew.',
-        emoji: '💖',
-        rarity: ConsumableRarity.EPIC,
-    },
-    // Mana Potions
-    {
-        consumableId: 'mp-potion-minor',
-        price: 40,
-        displayName: 'Minor Mana Potion',
-        description: 'Restores 30 MP. For budding casters.',
-        emoji: '🔮',
-        rarity: ConsumableRarity.COMMON,
-    },
-    {
-        consumableId: 'mp-potion-lesser',
-        price: 120,
-        displayName: 'Lesser Mana Potion',
-        description: 'Restores 75 MP. For adept wizards.',
-        emoji: '🔮',
-        rarity: ConsumableRarity.ADEPT,
-    },
-    {
-        consumableId: 'mp-potion-greater',
-        price: 280,
-        displayName: 'Greater Mana Potion',
-        description: 'Restores 150 MP. For archmages.',
-        emoji: '💎',
-        rarity: ConsumableRarity.MASTER,
-    },
-    {
-        consumableId: 'mp-potion-superior',
-        price: 550,
-        displayName: 'Superior Mana Potion',
-        description: 'Restores 300 MP. Arcane elixir.',
-        emoji: '✨',
-        rarity: ConsumableRarity.EPIC,
-    },
-    // Special Items
-    {
-        consumableId: 'scroll-of-pardon',
-        price: 500,
-        displayName: 'Scroll of Pardon',
-        description: 'Restore a broken daily streak.',
-        emoji: '📜',
-        rarity: ConsumableRarity.MASTER,
-    },
-    {
-        consumableId: 'revive-potion',
-        price: 200,
-        displayName: 'Revive Potion',
-        description: 'Revives from unconscious state.',
-        emoji: '💫',
-        rarity: ConsumableRarity.MASTER,
-    },
+    // HP Potions (6 tiers)
+    { consumableId: 'hp-potion-minor', price: 40 },
+    { consumableId: 'hp-potion-lesser', price: 100 },
+    { consumableId: 'hp-potion-major', price: 200 },
+    { consumableId: 'hp-potion-greater', price: 350 },
+    { consumableId: 'hp-potion-superior', price: 550 },
+    { consumableId: 'hp-potion-supreme', price: 850 },
+    // Mana Potions (6 tiers)
+    { consumableId: 'mp-potion-minor', price: 30 },
+    { consumableId: 'mp-potion-lesser', price: 80 },
+    { consumableId: 'mp-potion-major', price: 160 },
+    { consumableId: 'mp-potion-greater', price: 280 },
+    { consumableId: 'mp-potion-superior', price: 440 },
+    { consumableId: 'mp-potion-supreme', price: 680 },
+    // Stat Elixirs (L10+)
+    { consumableId: 'elixir-bull', price: 400 },
+    { consumableId: 'elixir-fox', price: 400 },
+    { consumableId: 'elixir-bear', price: 400 },
+    { consumableId: 'elixir-owl', price: 400 },
+    { consumableId: 'elixir-sage', price: 400 },
+    { consumableId: 'elixir-serpent', price: 400 },
+    // Cleansing Items
+    { consumableId: 'purifying-salve', price: 150 },
+    { consumableId: 'sacred-water', price: 350 },
+    // Enchantment Oils (L8+)
+    { consumableId: 'oil-immolation', price: 300 },
+    { consumableId: 'venom-coating', price: 300 },
+    { consumableId: 'frostbite-tincture', price: 350 },
+    // Tactical Consumables
+    { consumableId: 'firebomb', price: 200 },
+    { consumableId: 'smoke-bomb', price: 150 },
+    { consumableId: 'ironbark-ward', price: 300 },
+    // Rare Items
+    { consumableId: 'phoenix-tear', price: 2000 },
+    { consumableId: 'scroll-of-pardon', price: 500 },
+    { consumableId: 'revive-potion', price: 200 },
+    { consumableId: 'elixir-of-experience', price: 800 },
 ];
 
-// Rarity colors for styling
+/** Rarity colors for styling */
 const RARITY_COLORS: Record<ConsumableRarity, string> = {
     [ConsumableRarity.COMMON]: '#9e9e9e',
     [ConsumableRarity.ADEPT]: '#4caf50',
@@ -151,10 +112,11 @@ export class StoreModal extends Modal {
         const character = useCharacterStore.getState().character;
         const inventory = useCharacterStore.getState().inventory;
         const gold = character?.gold ?? 0;
+        const level = character?.level ?? 1;
 
         // Header
         const header = contentEl.createDiv('qb-store-header');
-        header.createEl('h2', { text: '🏪 Adventurer\'s Store' });
+        header.createEl('h2', { text: 'Adventurer\'s Store' });
 
         const goldDisplay = header.createDiv('qb-store-gold');
         goldDisplay.createSpan({ text: '💰 ' });
@@ -164,18 +126,53 @@ export class StoreModal extends Modal {
         // Items grid
         const grid = contentEl.createDiv('qb-store-grid');
 
-        // HP Potions Section
-        this.renderSection(grid, '❤️ Health Potions', STORE_ITEMS.filter(i => i.consumableId.startsWith('hp-')), gold, inventory);
+        // 1. Health Potions (smart tier display: current ±1)
+        const visibleHpIds = this.getVisiblePotionIds(HP_POTION_IDS, level, getHpPotionForLevel);
+        const hpItems = STORE_ITEMS.filter(i => visibleHpIds.includes(i.consumableId));
+        this.renderSection(grid, 'Health Potions', hpItems, gold, inventory, level);
 
-        // Mana Potions Section  
-        this.renderSection(grid, '💙 Mana Potions', STORE_ITEMS.filter(i => i.consumableId.startsWith('mp-')), gold, inventory);
+        // 2. Mana Potions (smart tier display: current ±1)
+        const visibleMpIds = this.getVisiblePotionIds(MP_POTION_IDS, level, getMpPotionForLevel);
+        const mpItems = STORE_ITEMS.filter(i => visibleMpIds.includes(i.consumableId));
+        this.renderSection(grid, 'Mana Potions', mpItems, gold, inventory, level);
 
-        // Special Items Section
-        this.renderSection(grid, '✨ Special Items', STORE_ITEMS.filter(i => !i.consumableId.startsWith('hp-') && !i.consumableId.startsWith('mp-')), gold, inventory);
+        // 3. Stat Elixirs
+        const elixirItems = STORE_ITEMS.filter(i => STAT_ELIXIR_IDS.includes(i.consumableId));
+        this.renderSection(grid, 'Stat Elixirs', elixirItems, gold, inventory, level);
+
+        // 4. Battle Supplies (cleansing + enchantment + tactical)
+        const battleIds = [...CLEANSING_IDS, ...ENCHANTMENT_IDS, ...TACTICAL_IDS];
+        const battleItems = STORE_ITEMS.filter(i => battleIds.includes(i.consumableId));
+        this.renderSection(grid, 'Battle Supplies', battleItems, gold, inventory, level);
+
+        // 5. Rare Items
+        const rareIds = ['phoenix-tear', 'scroll-of-pardon', 'revive-potion', 'elixir-of-experience'];
+        const rareItems = STORE_ITEMS.filter(i => rareIds.includes(i.consumableId));
+        this.renderSection(grid, 'Rare Items', rareItems, gold, inventory, level);
 
         // Footer
         const footer = contentEl.createDiv('qb-store-footer');
         footer.createEl('p', { text: 'Complete quests to earn gold!' });
+    }
+
+    /**
+     * Get visible potion tier IDs for smart tier display.
+     * Shows: one tier below (if exists), current tier, one tier above (if exists).
+     */
+    private getVisiblePotionIds(
+        potionIds: string[],
+        level: number,
+        getPotionFn: (level: number) => string,
+    ): string[] {
+        const currentId = getPotionFn(level);
+        const currentIndex = potionIds.indexOf(currentId);
+        const result: string[] = [];
+
+        if (currentIndex > 0) result.push(potionIds[currentIndex - 1]);
+        result.push(potionIds[currentIndex]);
+        if (currentIndex < potionIds.length - 1) result.push(potionIds[currentIndex + 1]);
+
+        return result;
     }
 
     private renderSection(
@@ -183,44 +180,69 @@ export class StoreModal extends Modal {
         title: string,
         items: StoreItem[],
         gold: number,
-        inventory: { itemId: string; quantity: number }[]
+        inventory: { itemId: string; quantity: number }[],
+        characterLevel: number,
     ) {
+        if (items.length === 0) return;
+
         const section = container.createDiv('qb-store-section');
         section.createEl('h3', { text: title });
 
         const itemsRow = section.createDiv('qb-store-items-row');
 
         for (const item of items) {
+            const def = CONSUMABLES[item.consumableId];
+            if (!def) continue;
+
             const owned = inventory.find(i => i.itemId === item.consumableId)?.quantity ?? 0;
-            const canAfford = gold >= item.price;
+            const isLocked = def.minLevel !== undefined && characterLevel < def.minLevel;
+            const canAfford = !isLocked && gold >= item.price;
 
             const card = itemsRow.createDiv('qb-store-item');
-            card.style.borderColor = RARITY_COLORS[item.rarity];
+            card.style.borderColor = RARITY_COLORS[def.rarity];
+            if (isLocked) {
+                card.addClass('qb-store-item-locked');
+            }
 
             // Emoji
-            card.createDiv({ cls: 'qb-store-item-icon', text: item.emoji });
+            card.createDiv({ cls: 'qb-store-item-icon', text: def.emoji });
 
             // Name + description
             const info = card.createDiv('qb-store-item-info');
-            info.createEl('span', { text: item.displayName, cls: 'qb-store-item-name' });
-            info.createEl('span', { text: item.description, cls: 'qb-store-item-desc' });
+            info.createEl('span', { text: def.name, cls: 'qb-store-item-name' });
+            info.createEl('span', { text: def.description, cls: 'qb-store-item-desc' });
 
-            // Price + owned
+            // Price + owned (or level requirement)
             const priceRow = card.createDiv('qb-store-item-price-row');
-            priceRow.createEl('span', { text: `💰 ${item.price}`, cls: 'qb-store-item-price' });
-            if (owned > 0) {
-                priceRow.createEl('span', { text: `Owned: ${owned}`, cls: 'qb-store-item-owned' });
+            if (isLocked) {
+                priceRow.createEl('span', {
+                    text: `Requires level ${def.minLevel}`,
+                    cls: 'qb-store-item-locked-text',
+                });
+            } else {
+                priceRow.createEl('span', { text: `💰 ${item.price}`, cls: 'qb-store-item-price' });
+                if (owned > 0) {
+                    priceRow.createEl('span', { text: `Owned: ${owned}`, cls: 'qb-store-item-owned' });
+                }
             }
 
             // Buy button
-            const buyBtn = card.createEl('button', {
-                text: canAfford ? 'Buy' : 'Not enough gold',
-                cls: `qb-store-buy-btn ${canAfford ? '' : 'qb-store-buy-disabled'}`,
-            });
-            buyBtn.disabled = !canAfford;
+            if (isLocked) {
+                const lockedBtn = card.createEl('button', {
+                    text: 'Locked',
+                    cls: 'qb-store-buy-btn qb-store-buy-disabled',
+                });
+                lockedBtn.disabled = true;
+            } else {
+                const buyBtn = card.createEl('button', {
+                    text: canAfford ? 'Buy' : 'Not enough gold',
+                    cls: `qb-store-buy-btn ${canAfford ? '' : 'qb-store-buy-disabled'}`,
+                });
+                buyBtn.disabled = !canAfford;
 
-            if (canAfford) {
-                buyBtn.onclick = () => this.buyItem(item);
+                if (canAfford) {
+                    buyBtn.onclick = () => this.buyItem(item);
+                }
             }
         }
     }
@@ -228,6 +250,7 @@ export class StoreModal extends Modal {
     private async buyItem(item: StoreItem) {
         const store = useCharacterStore.getState();
         const gold = store.character?.gold ?? 0;
+        const def = CONSUMABLES[item.consumableId];
 
         if (gold < item.price) {
             new Notice('❌ Not enough gold!', 2000);
@@ -241,7 +264,8 @@ export class StoreModal extends Modal {
         store.addInventoryItem(item.consumableId, 1);
 
         // Success feedback
-        new Notice(`✅ Purchased ${item.emoji} ${item.displayName}!`, 2000);
+        const displayName = def ? `${def.emoji} ${def.name}` : item.consumableId;
+        new Notice(`✅ Purchased ${displayName}!`, 2000);
 
         // Persist purchase to storage
         if (this.options.onSave) {
