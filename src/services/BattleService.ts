@@ -1033,7 +1033,7 @@ export function handleVictory(): void {
 /**
  * Handle player defeat
  */
-function handleDefeat(): void {
+export function handleDefeat(): void {
     const store = useBattleStore.getState();
     const characterStore = useCharacterStore.getState();
     const character = characterStore.character;

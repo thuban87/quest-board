@@ -439,3 +439,100 @@ describe('ConsumableResult structure', () => {
         expect(result.logMessage).toBe('');
     });
 });
+
+// =====================
+// DEF STAGE BOOST (IRONBARK WARD) — Phase 3
+// =====================
+
+describe('executeConsumable — DEF_STAGE_BOOST', () => {
+    it('applies +2 DEF stages immediately', () => {
+        const result = executeConsumable('ironbark-ward', 10);
+
+        expect(result.success).toBe(true);
+        expect(result.endsTurn).toBe(true);
+        expect(result.logMessage).toContain('Defense rose');
+
+        const player = useBattleStore.getState().player!;
+        expect(player.statStages.def).toBe(2);
+    });
+
+    it('registers ConsumableBuff with correct fields', () => {
+        executeConsumable('ironbark-ward', 10);
+
+        const player = useBattleStore.getState().player!;
+        expect(player.consumableBuffs).toHaveLength(1);
+        expect(player.consumableBuffs[0].type).toBe(ConsumableEffect.DEF_STAGE_BOOST);
+        expect(player.consumableBuffs[0].turnsRemaining).toBe(4);
+        expect(player.consumableBuffs[0].stageChange).toBe(2);
+        expect(player.consumableBuffs[0].chance).toBe(0);
+        expect(player.consumableBuffs[0].statusType).toBeNull();
+    });
+
+    it('clamps DEF stage to +6 maximum', () => {
+        // Set DEF stage to 5, applying +2 should clamp to 6
+        useBattleStore.setState({
+            player: {
+                ...useBattleStore.getState().player!,
+                statStages: { atk: 0, def: 5, speed: 0 },
+            },
+        });
+
+        executeConsumable('ironbark-ward', 10);
+
+        const player = useBattleStore.getState().player!;
+        expect(player.statStages.def).toBe(6); // Clamped to max
+    });
+
+    it('returns error when no player exists', () => {
+        useBattleStore.setState({ player: null });
+        const result = executeConsumable('ironbark-ward', 10);
+        expect(result.success).toBe(false);
+        expect(result.error).toBe('Invalid stage change');
+    });
+});
+
+// =====================
+// ENCHANTMENT OIL — Phase 3
+// =====================
+
+describe('executeConsumable — ENCHANT_*', () => {
+    it('adds enchantment buff to store (Oil of Immolation)', () => {
+        const result = executeConsumable('oil-immolation', 10);
+
+        expect(result.success).toBe(true);
+        expect(result.endsTurn).toBe(true);
+
+        const player = useBattleStore.getState().player!;
+        expect(player.consumableBuffs).toHaveLength(1);
+        expect(player.consumableBuffs[0].type).toBe(ConsumableEffect.ENCHANT_BURN);
+        expect(player.consumableBuffs[0].turnsRemaining).toBe(5);
+        expect(player.consumableBuffs[0].chance).toBe(20);
+        expect(player.consumableBuffs[0].statusType).toBe('burn');
+    });
+
+    it('replaces existing buff of same type', () => {
+        // Apply first oil
+        executeConsumable('oil-immolation', 10);
+        expect(useBattleStore.getState().player!.consumableBuffs).toHaveLength(1);
+
+        // Apply same type again — should replace, not stack
+        executeConsumable('oil-immolation', 10);
+        const player = useBattleStore.getState().player!;
+        expect(player.consumableBuffs).toHaveLength(1);
+        expect(player.consumableBuffs[0].turnsRemaining).toBe(5); // Fresh duration
+    });
+
+    it('log message includes item name and status name', () => {
+        const result = executeConsumable('oil-immolation', 10);
+        expect(result.logMessage).toContain('Oil of Immolation');
+        expect(result.logMessage).toContain('Burning');
+    });
+
+    it('allows different enchantment types to coexist', () => {
+        executeConsumable('oil-immolation', 10);   // ENCHANT_BURN
+        executeConsumable('venom-coating', 10);     // ENCHANT_POISON
+
+        const player = useBattleStore.getState().player!;
+        expect(player.consumableBuffs).toHaveLength(2);
+    });
+});

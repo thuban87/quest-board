@@ -1196,7 +1196,7 @@ useStatElixir: (itemId: string): boolean => {
 
 ---
 
-## 🔲 Phase 3.5: Tests — Complex Combat Consumables
+## ✅ Phase 3.5: Tests — Complex Combat Consumables *(completed 2026-02-20)*
 
 **Estimated Time:** 2-2.5 hours
 **Prerequisite:** Phase 3 manually verified
