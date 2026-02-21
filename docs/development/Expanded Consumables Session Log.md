@@ -18,7 +18,7 @@
 | 3: Complex Combat Consumables | ✅ | 2026-02-20 | Buff system, enchantment procs, Phoenix Tear, stat elixirs, + 2 bug fixes |
 | 3.5: Tests — Complex Combat | ✅ | 2026-02-20 | 77 tests (12 battleStore + 11 StatusEffect + 8 BattleService + 14 characterStore + 10 ConsumableUsage additions + 22 existing), + flaky monster test fix |
 | 4: UI Polish & Loot Tables | ✅ | 2026-02-21 | Categorized picker, HP/MP bars, expanded loot tables, per-tier consumable drops |
-| 4.5: Tests — UI Polish & Loot | 🔲 | | |
+| 4.5: Tests — UI Polish & Loot | ✅ | 2026-02-21 | 48 new tests (30 LootGen + 13 ConsumablePicker + 5 StoreModal), 604 total passing |
 
 ---
 
@@ -203,3 +203,53 @@ Continue with Phase 4: UI Polish & Loot Tables. This phase adds inventory toolti
 
 #### Next Session Prompt
 Continue with Phase 4.5: Tests for UI Polish & Loot Tables. Write tests covering `rollCombatConsumable()` (drop chance by tier, rare item cascades, Phoenix Tear boss-only), updated `rollQuestConsumable()` (cleansing/tactical weight distribution), and updated `generateChestLoot()` (golden chest 30% cleansing/tactical branch). Refer to the Implementation Guide Phase 4.5 section.
+
+---
+
+### Session 5 — 2026-02-21
+
+**Phases completed:** 4.5 (Tests — UI Polish & Loot Tables)
+
+#### Phase 4.5: Tests — UI Polish & Loot Tables
+
+**Source changes:**
+- `src/services/LootGenerationService.ts` — Made `rollCombatConsumable` public for direct testability; corrected `QUEST_CONSUMABLE_WEIGHTS` comment total from 140 to 135
+
+**Files created:**
+- `test/services/LootGenerationService.test.ts` — 30 tests covering:
+  - `rollCombatConsumable` direct tests: base drop chance by tier (overworld 25%, dungeon 40%, boss 85%, raid_boss 95%), HP/MP potion default (60/40 split), level-appropriate potion selection, Phoenix Tear boss-only (1%), enchantment oil per-tier thresholds (4-8%), stat elixir per-tier thresholds (2-5%), result structure (always type=consumable, quantity=1)
+  - `generateCombatLoot` integration: consumable included/excluded in loot array, gold always present
+  - `generateChestLoot`: golden chest 30% cleansing/tactical branch, HP/MP potion fallback with quantity 2, wooden/iron chests have no consumables
+  - `rollQuestConsumable` via `generateQuestLoot`: cumulative weight bands — HP (0–70), MP (70–110), revive (110–120), cleansing (120–130), tactical (130–135)
+  - Uses `Math.random` spying with `mockReturnValueOnce` chains for deterministic RNG control
+  - `asConsumable()` helper for type-safe discriminated union narrowing
+- `test/components/ConsumablePicker.test.ts` — 13 tests covering:
+  - Re-implementation of pure categorization logic (ConsumablePicker is non-exported local component)
+  - Category grouping: Potions, Cleansing, Enchantments, Tactical
+  - Empty category filtering, non-combat item exclusion
+  - CSS type class assignment (`qb-type-enchantment`, `qb-type-tactical`)
+  - Combat-usable filtering (only items with `combatUsable !== false` and valid `ConsumableEffect`)
+  - Complete coverage of all consumable ID arrays
+
+**Files modified:**
+- `test/modals/StoreModal.test.ts` — Extended with 5 new tests (27 → 32 total):
+  - Store has exactly 5 section groups
+  - HP Potions section: 6 items, all `hp-potion-*` prefixed
+  - Mana Potions section: 6 items, all `mp-potion-*` prefixed
+  - Stat Elixirs section: 6 items
+  - Battle Supplies section: 8 items (2 cleansing + 3 enchantment + 3 tactical)
+
+**Test results:**
+- ✅ 3 test files: 75/75 tests pass (30 + 13 + 32)
+- ✅ Full suite: 604/604 tests pass across 22 files, 0 regressions
+- ✅ Duration: 1.93s
+
+#### Issues Discovered
+- None
+
+#### Final Status
+
+All 9 phases of the Expanded Consumables feature are complete. The consumable system went from 11 items to 30, with full combat integration, categorized UI, loot table support, and comprehensive testing. See the [Implementation Guide](../feature-planning/in-review/Expanded%20Consumables%20Implementation%20Guide.md) for full technical details.
+
+**Total tests written across all phases:** 291 new tests
+

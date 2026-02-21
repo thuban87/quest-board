@@ -1420,7 +1420,7 @@ Adjust the flat values in `Consumable.ts` if the percentages are off. Target ran
 
 ---
 
-## 🔲 Phase 4.5: Tests — UI Polish & Loot Tables
+## ✅ Phase 4.5: Tests — UI Polish & Loot Tables — Completed 2026-02-21
 
 **Estimated Time:** 1.5-2 hours
 **Prerequisite:** Phase 4 manually verified

@@ -396,9 +396,9 @@ Pre-BRAT release audit addressing all community plugin guideline requirements. C
 
 **Docs:** [Alignment Plan](launch-considerations/01%20-%20Obsidian%20guidelines%20alignment%20plan.md) | [Session Log](launch-considerations/Obsidian%20Alignment%20Session%20Log.md)
 
-## 🔄 Expanded Consumables — In Progress (started 2026-02-19)
+## ✅ Expanded Consumables — Complete (2026-02-19 → 2026-02-21)
 
-Overhaul of the consumable system from 11 items to 30+, adding stat elixirs, cleansing items, enchantment oils, tactical consumables, and Phoenix Tear.
+Overhaul of the consumable system from 11 items to 30, adding stat elixirs, cleansing items, enchantment oils, tactical consumables, and Phoenix Tear. 291 new tests written across 5 sessions.
 
 | Phase | Status | Notes |
 |-------|--------|-------|
@@ -409,6 +409,7 @@ Overhaul of the consumable system from 11 items to 30+, adding stat elixirs, cle
 | 3: Complex Combat Consumables | ✅ Complete | Buff system, enchantment procs, Phoenix Tear, stat elixirs, 2 bug fixes |
 | 3.5: Tests — Complex Combat | ✅ Complete | 77 tests across 5 files, flaky monster test fix |
 | 4: UI Polish & Loot Tables | ✅ Complete | Categorized picker, HP/MP bars in inventory, expanded loot tables with per-tier consumable drops |
+| 4.5: Tests — UI Polish & Loot | ✅ Complete | 48 tests (30 LootGen + 13 ConsumablePicker + 5 StoreModal), 604 total suite |
 
 **Docs:** [Implementation Guide](feature-planning/in-review/Expanded%20Consumables%20Implementation%20Guide.md) | [Session Log](Expanded%20Consumables%20Session%20Log.md)
 
@@ -433,4 +434,4 @@ Overhaul of the consumable system from 11 items to 30+, adding stat elixirs, cle
 
 ---
 
-**Last Updated:** 2026-02-21 (Phase 4 UI Polish & Loot Tables complete)
+**Last Updated:** 2026-02-21 (Expanded Consumables feature complete — all 9 phases done, 604 tests passing)

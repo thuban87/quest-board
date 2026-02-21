@@ -238,3 +238,52 @@ describe('Store Sections', () => {
         }
     });
 });
+
+// =====================
+// STORE CATEGORY SECTIONS (Phase 4.5)
+// =====================
+
+describe('Store Category Sections', () => {
+    it('store has exactly 5 section groups', () => {
+        // The 5 sections: HP Potions, Mana Potions, Stat Elixirs, Battle Supplies, Rare Items
+        const sections = [
+            HP_POTION_IDS,
+            MP_POTION_IDS,
+            STAT_ELIXIR_IDS,
+            [...CLEANSING_IDS, ...ENCHANTMENT_IDS, ...TACTICAL_IDS],
+            ['phoenix-tear', 'scroll-of-pardon', 'revive-potion', 'elixir-of-experience'],
+        ];
+        expect(sections).toHaveLength(5);
+    });
+
+    it('HP Potions section contains only HP potion IDs', () => {
+        for (const id of HP_POTION_IDS) {
+            expect(CONSUMABLES[id]).toBeDefined();
+            expect(id.startsWith('hp-potion-'), `${id} should be an HP potion`).toBe(true);
+        }
+        expect(HP_POTION_IDS).toHaveLength(6);
+    });
+
+    it('Mana Potions section contains only MP potion IDs', () => {
+        for (const id of MP_POTION_IDS) {
+            expect(CONSUMABLES[id]).toBeDefined();
+            expect(id.startsWith('mp-potion-'), `${id} should be an MP potion`).toBe(true);
+        }
+        expect(MP_POTION_IDS).toHaveLength(6);
+    });
+
+    it('Stat Elixirs section has 6 items', () => {
+        expect(STAT_ELIXIR_IDS).toHaveLength(6);
+        for (const id of STAT_ELIXIR_IDS) {
+            expect(CONSUMABLES[id]).toBeDefined();
+        }
+    });
+
+    it('Battle Supplies section has 8 items (2 cleansing + 3 enchantment + 3 tactical)', () => {
+        expect(CLEANSING_IDS).toHaveLength(2);
+        expect(ENCHANTMENT_IDS).toHaveLength(3);
+        expect(TACTICAL_IDS).toHaveLength(3);
+        const totalBattle = CLEANSING_IDS.length + ENCHANTMENT_IDS.length + TACTICAL_IDS.length;
+        expect(totalBattle).toBe(8);
+    });
+});

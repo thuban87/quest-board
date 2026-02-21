@@ -2300,3 +2300,87 @@ CreateQuestModal Enhancement:
 Files: main.ts, CreateQuestModal.ts, CreateQuestFromFileModal.ts (new), QuestService.ts
 ```
 
+---
+
+## 2026-02-21 - Expanded Consumables Complete & Project Status
+
+**Focus:** Completed Phase 4.5 (Expanded Consumables final test phase) and overall project status summary
+
+### Completed:
+
+#### Phase 4.5 Tests — UI Polish & Loot Tables
+- ✅ Created `test/services/LootGenerationService.test.ts` — 30 tests covering combat consumable drops, quest consumable weights, chest loot, and boss-only items
+- ✅ Created `test/components/ConsumablePicker.test.ts` — 13 tests verifying categorization logic
+- ✅ Extended `test/modals/StoreModal.test.ts` with 5 new tests for category sections (27 → 32 total)
+- ✅ Made `rollCombatConsumable` public for testability
+- ✅ Fixed `QUEST_CONSUMABLE_WEIGHTS` comment (135, not 140)
+- ✅ Full suite: 604/604 tests pass, 0 regressions
+
+### Expanded Consumables Feature — Final Summary
+
+The entire Expanded Consumables feature is now complete across 9 phases (4 implementation + 4.5 test phases + Phase 4). This was the most comprehensive feature addition since the Skills/Combat system.
+
+| Metric | Value |
+|--------|-------|
+| Phases | 9 (4 implementation + 4 test + 1 combined) |
+| Sessions | 5 (2026-02-19 through 2026-02-21) |
+| New tests | 291 |
+| Total test suite | 604 tests across 22 files |
+| Items added | 19 new consumables (11 → 30 total) |
+| Files created | 6 source + 6 test files |
+| Files modified | ~15 source files |
+
+For detailed session-by-session breakdown, see [Expanded Consumables Session Log](Expanded%20Consumables%20Session%20Log.md).
+
+### Overall Project Status
+
+As of 2026-02-21, the Quest Board plugin has completed all major Phase 4 features:
+
+**Phase 4 Complete Features (Tier 1-2):**
+- AI Quest Generation, Daily Note Integration, Progress Dashboard, Quest Templates (Scrivener's Desk), Folder Watchers, Remote Asset Delivery, Power-Up System (18 triggers), Achievement System, Gear Comparison Tooltips, Balance Testing Infrastructure, Create Quest from File, Expanded Consumables
+
+**Remaining Phase 4 Work (Tier 3-4):**
+- Accessory Special Abilities, Character Titles, Tier Sprite Choices, Class Change Modal, Dual-Class Unlock UI, Smelting Gold Cost, Cross-Class Gear Drops, Enrage System, Export Stats, Character Edit Modal
+
+**Infrastructure Milestones:**
+- Obsidian Guidelines alignment complete (13 phases)
+- 604 unit tests across 22 files
+- PostCSS modular CSS with 17 modules
+- 36 services, 37 modals, 11 components, 8 stores
+
+### Files Changed:
+
+- `src/services/LootGenerationService.ts` — Made `rollCombatConsumable` public, fixed comment
+- `test/services/LootGenerationService.test.ts` — New (30 tests)
+- `test/components/ConsumablePicker.test.ts` — New (13 tests)
+- `test/modals/StoreModal.test.ts` — Extended (+5 tests)
+
+### Testing Notes:
+- ✅ 604/604 tests pass
+- ✅ 0 regressions
+- ✅ No build required (test-only changes)
+
+### Next Steps:
+- Pick next feature from Phase 4 Tier 3-4 priorities in [Feature Roadmap v2](Feature%20Roadmap%20v2.md)
+- Consider Phase 5 planning if Tier 3-4 items are deferred
+
+---
+
+## Next Session Prompt
+
+```
+Expanded Consumables feature is COMPLETE (all 9 phases done).
+
+What was done this session:
+- ✅ Phase 4.5: 48 new tests for loot generation, consumable picker, and store categories
+- ✅ Full test suite: 604 tests, 0 regressions
+- ✅ All documentation updated
+
+The project has 604 tests, 36 services, 37 modals, and 17 CSS modules.
+Phase 4 Tier 1-2 is fully complete. Remaining work is Tier 3-4 (polish features).
+
+Key files to reference:
+- docs/development/Feature Roadmap v2.md - Current priorities (Tier 3-4)
+- docs/development/Phase 4 Implementation Session Log.md - Full development history
+```
+

@@ -94,8 +94,8 @@ const QUEST_LOOT_RATES = {
 
 /**
  * Consumable drop weights for quest completion
- * Normalized during selection (total = 140)
- * HP ~50%, MP ~29%, Revive ~7%, Cleansing ~7%, Tactical ~4%
+ * Normalized during selection (total = 135)
+ * HP ~52%, MP ~30%, Revive ~7%, Cleansing ~7%, Tactical ~4%
  */
 const QUEST_CONSUMABLE_WEIGHTS = {
     hp: 70,
@@ -420,7 +420,7 @@ export class LootGenerationService {
      * Roll a consumable for combat encounters.
      * Drop chance and rarity scale with monster tier.
      */
-    private rollCombatConsumable(monsterTier: MonsterTier, monsterLevel: number): LootReward | null {
+    rollCombatConsumable(monsterTier: MonsterTier, monsterLevel: number): LootReward | null {
         // Base drop chance by tier
         const dropChance: Record<MonsterTier, number> = {
             overworld: 0.25,
