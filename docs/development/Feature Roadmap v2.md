@@ -421,7 +421,8 @@ Phase 4 expansion adding 52 curated accessories with passive abilities, boss-spe
 |-------|--------|-------|
 | 1: Data Foundation & Models | ✅ Complete | 52 templates, schema v6 migration, model updates |
 | 1.5: Tests — Data Foundation | ✅ Complete | 60 tests, 664 total suite (0 regressions) |
-| 2: AccessoryEffectService | 📋 Next | Effect handler registry + resolution methods |
+| 2: AccessoryEffectService | ✅ Complete | 9 grouped methods, pure function resolver |
+| 2.5: Tests — AccessoryEffectService | ✅ Complete | 68 tests, 732 total suite (0 regressions) |
 | 3: Drop Integration | 📋 Planned | LootGenerationService + smelting integration |
 | 4a: UI — Equip & Tooltips | 📋 Planned | Accessory slots, comparison tooltips |
 | 4b: Combat & Dungeon Wiring | 📋 Planned | Wire all effect types into game systems |
@@ -453,4 +454,4 @@ Phase 4 expansion adding 52 curated accessories with passive abilities, boss-spe
 
 ---
 
-**Last Updated:** 2026-02-21 (Accessories Phase 1 & 1.5 complete — 664 tests passing)
+**Last Updated:** 2026-02-21 (Accessories Phase 2 & 2.5 complete — 732 tests passing)

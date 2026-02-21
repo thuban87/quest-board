@@ -96,3 +96,39 @@ Each session entry includes:
 
 ### Next Session Prompt
 > Start Phase 2 of the Accessories & Special Abilities implementation. The data foundation is complete in `src/data/accessories.ts`. Create `src/services/AccessoryEffectService.ts` with the effect handler registry and all resolution methods (getGoldMultiplier, getXPMultiplier, getCombatBonus, etc.). Reference the implementation plan starting at Phase 2 in the brainstorm document.
+
+---
+
+## Session 3 — 2026-02-21 — Phase 2: AccessoryEffectService + Phase 2.5: Tests
+
+**Focus:** Build the central effect resolver service and comprehensive test suite
+
+**Completed:**
+- [x] Created `src/services/AccessoryEffectService.ts` — 9 grouped pure-function methods (~250 lines)
+- [x] Implemented explicit effect type maps (no string concatenation) for all 37 effect types
+- [x] Shared `getEquippedAccessoryEffects()` helper for slot iteration + template lookup
+- [x] `source: 'all'` matching for gold and XP multipliers
+- [x] Conditional HP-threshold bonuses with division-by-zero guard
+- [x] Boolean return types for map reveal and auto-revive (non-stacking)
+- [x] Created `test/accessory-effect-service.test.ts` — 68 tests covering all 11 test groups from plan
+- [x] Full regression suite: 732 tests passed, 0 failures
+
+**Files Changed:**
+- `src/services/AccessoryEffectService.ts` — **[NEW]** 9 grouped methods, pure function resolver
+- `test/accessory-effect-service.test.ts` — **[NEW]** 68 tests
+
+**Testing Notes:**
+- 68/68 accessory effect service tests pass (7ms)
+- 732/732 total suite tests pass (0 regressions, up from 664)
+- Clean build, deployed to test vault
+
+**Blockers/Issues:**
+- No new bugs discovered
+- No deviations from the plan
+
+**Next Steps:**
+- Begin Phase 3: Loot Integration
+- Implement `pickWeightedSlot()`, boss loot tables, smelting block, quest tier gating
+
+### Next Session Prompt
+> Start Phase 3 of the Accessories & Special Abilities implementation. The AccessoryEffectService is complete. Implement loot integration: add `pickWeightedSlot()` to `LootGenerationService.ts`, add `bossLootTable` data to `monsters.ts`, add smelting block to `SmeltingService.ts`, consolidate accessory checkboxes in `GearSlotMappingModal.ts`, and update `settings.ts` defaults. Reference the implementation plan starting at Phase 3 in the brainstorm document.

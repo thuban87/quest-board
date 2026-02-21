@@ -397,11 +397,12 @@ Pattern: `[Prefix] [Base Name] [Suffix?]` → "Iron Band of Precision", "Cracked
 
 ---
 
-## Phase 2: AccessoryEffectService
+## Phase 2: AccessoryEffectService ✅ Complete (2026-02-21)
 
 **Estimated Time:** 2–2.5 hours  
 **Prerequisite:** Phase 1  
-**Goal:** Build the central resolver with grouped/parameterized API. Pure functions only.
+**Goal:** Build the central resolver with grouped/parameterized API. Pure functions only.  
+**Results:** 9 grouped methods, ~250 lines, 68 tests (732 total), 0 regressions.
 
 ### Tasks
 
