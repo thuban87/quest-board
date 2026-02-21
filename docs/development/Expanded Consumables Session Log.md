@@ -17,7 +17,7 @@
 | 2.5: Tests — Simple Combat | ✅ | 2026-02-20 | 24 tests, all passing |
 | 3: Complex Combat Consumables | ✅ | 2026-02-20 | Buff system, enchantment procs, Phoenix Tear, stat elixirs, + 2 bug fixes |
 | 3.5: Tests — Complex Combat | ✅ | 2026-02-20 | 77 tests (12 battleStore + 11 StatusEffect + 8 BattleService + 14 characterStore + 10 ConsumableUsage additions + 22 existing), + flaky monster test fix |
-| 4: UI Polish & Loot Tables | 🔲 | | |
+| 4: UI Polish & Loot Tables | ✅ | 2026-02-21 | Categorized picker, HP/MP bars, expanded loot tables, per-tier consumable drops |
 | 4.5: Tests — UI Polish & Loot | 🔲 | | |
 
 ---
@@ -166,3 +166,40 @@ Continue with Phase 3.5: Tests for Complex Combat Consumables. Write tests cover
 
 #### Next Session Prompt
 Continue with Phase 4: UI Polish & Loot Tables. This phase adds inventory tooltips for consumables, loot table rebalancing for new items, and any remaining UI polish. Refer to the Implementation Guide Phase 4 section.
+
+### Session 5 — 2026-02-21
+
+**Phases completed:** 4 (UI Polish & Loot Tables)
+
+#### Phase 4: UI Polish & Loot Tables
+
+**Files modified:**
+- `src/components/BattleView.tsx` — Refactored `ConsumablePicker` to group items into 4 categories (Potions, Cleansing, Enchantments, Tactical) with section headers. Empty categories hidden. Added enchantment (purple border) and tactical (orange border) visual distinction. Removed emojis from headers after user feedback.
+- `src/modals/InventoryModal.ts` — Added status row to consumables tab with gold (left half) and HP/MP resource bars (right half). Stored `goldDisplay` reference to hide the full-width gold banner when consumables tab is active (avoiding duplicate display).
+- `src/services/LootGenerationService.ts` — Imported `MonsterTier` type to replace inline string union. Expanded `QUEST_CONSUMABLE_WEIGHTS` with cleansing (10) and tactical (5). Rewrote `rollQuestConsumable()` with cumulative weight system. Added `rollCombatConsumable()` method with per-tier drop chances and rare item cascades. Updated `generateCombatLoot()` to call it. Updated golden chest loot in `generateChestLoot()` (30% cleansing/tactical).
+- `src/styles/combat.css` — Added `.qb-consumable-section`, `.qb-consumable-section-title`, `.qb-type-enchantment`, `.qb-type-tactical` styles.
+- `src/styles/inventory.css` — Added `.qb-consumables-status-row`, `.qb-consumables-gold`, `.qb-consumables-bars`, resource bar styles with HP (red gradient) and mana (blue gradient).
+
+**Combat consumable drop rates (final):**
+
+| Monster Tier | Base Drop % | Enchantment Oil % | Stat Elixir % | Phoenix Tear % |
+|---|---|---|---|---|
+| Overworld | 25% | 4% | 2% | — |
+| Dungeon | 40% | 6% | 3% | — |
+| Elite | 55% | 8% | 5% | — |
+| Boss | 85% | 8% | 5% | 1% |
+| Raid Boss | 95% | 8% | 5% | 1% |
+
+**Manual testing results:**
+- ✅ Combat picker shows categorized items with section headers (no emojis)
+- ✅ Enchantment items have purple left border, tactical items have orange left border
+- ✅ Inventory consumables tab shows gold + HP/MP bars in compact two-column layout
+- ✅ Original gold banner hidden on consumables tab, visible on gear tab
+- ✅ Ironbark potion dropped from dungeon chest (Phase 4C golden chest loot working)
+- ✅ Combat consumable drops verified with increased rates
+
+#### Issues Discovered
+- None
+
+#### Next Session Prompt
+Continue with Phase 4.5: Tests for UI Polish & Loot Tables. Write tests covering `rollCombatConsumable()` (drop chance by tier, rare item cascades, Phoenix Tear boss-only), updated `rollQuestConsumable()` (cleansing/tactical weight distribution), and updated `generateChestLoot()` (golden chest 30% cleansing/tactical branch). Refer to the Implementation Guide Phase 4.5 section.

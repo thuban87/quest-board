@@ -408,7 +408,7 @@ Overhaul of the consumable system from 11 items to 30+, adding stat elixirs, cle
 | 2.5: Tests — Simple Combat | ✅ Complete | 24 tests, all passing |
 | 3: Complex Combat Consumables | ✅ Complete | Buff system, enchantment procs, Phoenix Tear, stat elixirs, 2 bug fixes |
 | 3.5: Tests — Complex Combat | ✅ Complete | 77 tests across 5 files, flaky monster test fix |
-| 4: UI Polish & Loot Tables | 🔲 Pending | Inventory tooltips, loot rebalance |
+| 4: UI Polish & Loot Tables | ✅ Complete | Categorized picker, HP/MP bars in inventory, expanded loot tables with per-tier consumable drops |
 
 **Docs:** [Implementation Guide](feature-planning/in-review/Expanded%20Consumables%20Implementation%20Guide.md) | [Session Log](Expanded%20Consumables%20Session%20Log.md)
 
@@ -433,4 +433,4 @@ Overhaul of the consumable system from 11 items to 30+, adding stat elixirs, cle
 
 ---
 
-**Last Updated:** 2026-02-20 (Phase 3.5 tests complete, flaky monster test fix)
+**Last Updated:** 2026-02-21 (Phase 4 UI Polish & Loot Tables complete)

@@ -2117,3 +2117,34 @@
   font-size: 3rem;
   margin-bottom: var(--qb-spacing-md);
 }
+
+/* ===========================================
+   Consumable Picker Categories (Phase 4A)
+   =========================================== */
+
+.qb-consumable-section {
+  margin-bottom: var(--qb-spacing-sm);
+}
+
+.qb-consumable-section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+
+/* Enchantment items: subtle magical glow */
+.qb-picker-item.qb-type-enchantment {
+  border-left: 3px solid #a855f7;
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.08) 0%, transparent 30%);
+}
+
+/* Tactical items: subtle orange-red tint */
+.qb-picker-item.qb-type-tactical {
+  border-left: 3px solid #f97316;
+  background: linear-gradient(90deg, rgba(249, 115, 22, 0.08) 0%, transparent 30%);
+}

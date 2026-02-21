@@ -10,7 +10,7 @@ import { Platform } from 'obsidian';
 import { useBattleStore, CombatLogEntry, PlayerAction } from '../store/battleStore';
 import { useCharacterStore } from '../store/characterStore';
 import { CLASS_INFO } from '../models/Character';
-import { CONSUMABLES, ConsumableDefinition, ConsumableEffect } from '../models/Consumable';
+import { CONSUMABLES, ConsumableDefinition, ConsumableEffect, HP_POTION_IDS, MP_POTION_IDS, CLEANSING_IDS, ENCHANTMENT_IDS, TACTICAL_IDS } from '../models/Consumable';
 import { battleService } from '../services/BattleService';
 import { executeConsumable } from '../services/ConsumableUsageService';
 import { finalizeBattle, updateTurnCount } from '../services/BalanceTestingService';
@@ -369,27 +369,41 @@ interface ConsumablePickerProps {
 
 function ConsumablePicker({ onSelect, onCancel }: ConsumablePickerProps) {
     const inventory = useCharacterStore(state => state.inventory);
-
     const character = useCharacterStore(state => state.character);
+
+    // All combat-usable effect types
+    const combatEffects = [
+        ConsumableEffect.HP_RESTORE,
+        ConsumableEffect.MANA_RESTORE,
+        ConsumableEffect.CLEANSE_DOT,
+        ConsumableEffect.CLEANSE_CURSE_CC,
+        ConsumableEffect.DIRECT_DAMAGE,
+        ConsumableEffect.GUARANTEED_RETREAT,
+        ConsumableEffect.DEF_STAGE_BOOST,
+        ConsumableEffect.ENCHANT_BURN,
+        ConsumableEffect.ENCHANT_POISON,
+        ConsumableEffect.ENCHANT_FREEZE,
+    ];
 
     // Filter to combat-usable consumables
     const availableConsumables = inventory.filter(item => {
         const def = CONSUMABLES[item.itemId];
         if (!def) return false;
-        // Show all combat-usable consumables
-        return def.combatUsable !== false && [
-            ConsumableEffect.HP_RESTORE,
-            ConsumableEffect.MANA_RESTORE,
-            ConsumableEffect.CLEANSE_DOT,
-            ConsumableEffect.CLEANSE_CURSE_CC,
-            ConsumableEffect.DIRECT_DAMAGE,
-            ConsumableEffect.GUARANTEED_RETREAT,
-            ConsumableEffect.DEF_STAGE_BOOST,
-            ConsumableEffect.ENCHANT_BURN,
-            ConsumableEffect.ENCHANT_POISON,
-            ConsumableEffect.ENCHANT_FREEZE,
-        ].includes(def.effect);
+        return def.combatUsable !== false && combatEffects.includes(def.effect);
     });
+
+    // Categorize items
+    const potionIds = new Set([...HP_POTION_IDS, ...MP_POTION_IDS]);
+    const cleansingIds = new Set(CLEANSING_IDS);
+    const enchantmentIds = new Set(ENCHANTMENT_IDS);
+    const tacticalIds = new Set(TACTICAL_IDS);
+
+    const categories: { label: string; items: typeof availableConsumables }[] = [
+        { label: 'Potions', items: availableConsumables.filter(i => potionIds.has(i.itemId)) },
+        { label: 'Cleansing', items: availableConsumables.filter(i => cleansingIds.has(i.itemId)) },
+        { label: 'Enchantments', items: availableConsumables.filter(i => enchantmentIds.has(i.itemId)) },
+        { label: 'Tactical', items: availableConsumables.filter(i => tacticalIds.has(i.itemId)) },
+    ].filter(cat => cat.items.length > 0);
 
     /** Get display text for a consumable's effect */
     const getEffectText = (def: ConsumableDefinition): string => {
@@ -429,23 +443,32 @@ function ConsumablePicker({ onSelect, onCancel }: ConsumablePickerProps) {
                 <button className="qb-picker-close" onClick={onCancel}>✕</button>
             </div>
             <div className="qb-picker-items">
-                {availableConsumables.map(item => {
-                    const def = CONSUMABLES[item.itemId];
-                    if (!def) return null;
-
-                    return (
-                        <button
-                            key={item.itemId}
-                            className="qb-picker-item"
-                            onClick={() => onSelect(item.itemId)}
-                        >
-                            <span className="qb-item-emoji">{def.emoji}</span>
-                            <span className="qb-item-name">{def.name}</span>
-                            <span className="qb-item-effect">{getEffectText(def)}</span>
-                            <span className="qb-item-qty">x{item.quantity}</span>
-                        </button>
-                    );
-                })}
+                {categories.map(cat => (
+                    <div key={cat.label} className="qb-consumable-section">
+                        <div className="qb-consumable-section-title">
+                            {cat.label}
+                        </div>
+                        {cat.items.map(item => {
+                            const def = CONSUMABLES[item.itemId];
+                            if (!def) return null;
+                            const typeClass =
+                                enchantmentIds.has(item.itemId) ? 'qb-type-enchantment' :
+                                    tacticalIds.has(item.itemId) ? 'qb-type-tactical' : '';
+                            return (
+                                <button
+                                    key={item.itemId}
+                                    className={`qb-picker-item ${typeClass}`}
+                                    onClick={() => onSelect(item.itemId)}
+                                >
+                                    <span className="qb-item-emoji">{def.emoji}</span>
+                                    <span className="qb-item-name">{def.name}</span>
+                                    <span className="qb-item-effect">{getEffectText(def)}</span>
+                                    <span className="qb-item-qty">x{item.quantity}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                ))}
             </div>
         </div>
     );

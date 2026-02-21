@@ -2317,3 +2317,78 @@
   background: var(--background-modifier-hover);
   transform: scale(0.95);
 }
+
+/* ===========================================
+   Consumables Tab Status Row (Phase 4A+)
+   =========================================== */
+
+.qb-consumables-status-row {
+  display: flex;
+  gap: var(--qb-spacing-md);
+  align-items: stretch;
+  margin-bottom: var(--qb-spacing-md);
+}
+
+.qb-consumables-gold {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--qb-spacing-sm);
+  padding: var(--qb-spacing-sm);
+  background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(255, 215, 0, 0.1) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: var(--qb-radius-md);
+  font-weight: 700;
+}
+
+.qb-consumables-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+}
+
+.qb-consumables-bars .qb-resource-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qb-consumables-bars .qb-resource-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.qb-consumables-bars .qb-resource-label {
+  font-weight: 600;
+}
+
+.qb-consumables-bars .qb-resource-values {
+  font-weight: 500;
+}
+
+.qb-consumables-bars .qb-resource-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--background-modifier-border);
+  overflow: hidden;
+}
+
+.qb-consumables-bars .qb-resource-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.qb-consumables-bars .qb-bar-hp .qb-resource-fill {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.qb-consumables-bars .qb-bar-mana .qb-resource-fill {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
