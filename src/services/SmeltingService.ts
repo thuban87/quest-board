@@ -59,6 +59,11 @@ export class SmeltingService {
             return { valid: false, error: 'One or more items are already being smelted' };
         }
 
+        // Accessories cannot be smelted
+        if (items.some(item => item.slot.startsWith('accessory'))) {
+            return { valid: false, error: 'Accessories cannot be smelted' };
+        }
+
         // Check for all-legendary (special refinement case)
         const allLegendary = items.every(item => item.tier === 'legendary');
         if (allLegendary) {
@@ -153,9 +158,10 @@ export class SmeltingService {
      * 6. On failure: rollback pending status
      * 
      * @param items Exactly 3 items of same tier to smelt
+     * @param doubleTierChance Optional chance (0-1) to jump an extra tier (from Blacksmith's Favor accessory)
      * @returns Result with output item or error
      */
-    async smelt(items: [GearItem, GearItem, GearItem]): Promise<SmeltResult> {
+    async smelt(items: [GearItem, GearItem, GearItem], doubleTierChance?: number): Promise<SmeltResult> {
         // Validate first
         const validation = this.canSmelt(items);
         if (!validation.valid) {
@@ -171,7 +177,16 @@ export class SmeltingService {
             charStore.markGearPendingSmelt(itemIds);
 
             // Step 2: Calculate output parameters
-            const outputTier = this.getOutputTier(items);
+            let outputTier = this.getOutputTier(items);
+
+            // Blacksmith's Favor: chance to jump an extra tier
+            if (doubleTierChance && doubleTierChance > 0 && Math.random() < doubleTierChance) {
+                const extraTier = getNextTier(outputTier);
+                if (extraTier) {
+                    outputTier = extraTier;
+                }
+            }
+
             const outputSlot = this.getOutputSlot(items);
             const outputLevel = this.getOutputLevel(items);
 

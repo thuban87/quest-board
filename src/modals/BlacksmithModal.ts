@@ -162,7 +162,9 @@ export class BlacksmithModal extends Modal {
         }
 
         // Get available items (not pending smelt, not equipped)
-        let items = character.gearInventory.filter(item => item.status !== 'pending_smelt');
+        let items = character.gearInventory.filter(
+            item => item.status !== 'pending_smelt' && !item.slot.startsWith('accessory')
+        );
 
         // Apply tier filter
         if (this.tierFilter !== 'all') {

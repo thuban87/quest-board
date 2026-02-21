@@ -39,9 +39,9 @@ export const GEAR_SLOT_NAMES: Record<GearSlot, string> = {
     boots: 'Boots',
     weapon: 'Weapon',
     shield: 'Shield',
-    accessory1: 'Accessory 1',
-    accessory2: 'Accessory 2',
-    accessory3: 'Accessory 3',
+    accessory1: 'Accessory',
+    accessory2: 'Accessory',
+    accessory3: 'Accessory',
 };
 
 /** Emoji icons for gear slots */

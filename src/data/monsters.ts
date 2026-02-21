@@ -491,6 +491,10 @@ const alphaWolf: MonsterTemplate = {
     baseXP: 20,
     emoji: '🐺👑',
     skillPool: ['gen_bite', 'gen_rend', 'gen_howl', 'boss_alpha_howl'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['fang_of_pack_leader'],
+    },
 };
 
 const grizzledAncient: MonsterTemplate = {
@@ -514,6 +518,10 @@ const grizzledAncient: MonsterTemplate = {
     baseXP: 22,
     emoji: '🐻‍❄️',
     skillPool: ['gen_maul', 'gen_harden', 'gen_enrage', 'boss_hibernate'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['hibernation_stone'],
+    },
 };
 
 const ratKing: MonsterTemplate = {
@@ -538,6 +546,10 @@ const ratKing: MonsterTemplate = {
     emoji: '👑🐀',
     lootTierBonus: 2,
     skillPool: ['gen_bite', 'gen_poison_fang', 'gen_frenzy', 'boss_swarm'],
+    bossLootTable: {
+        dropChance: 0.90,
+        items: ['crown_of_the_swarm'],
+    },
 };
 
 // === UNDEAD BOSSES ===
@@ -562,6 +574,10 @@ const boneCollector: MonsterTemplate = {
     baseXP: 22,
     emoji: '☠💀',
     skillPool: ['dark_shadow_strike', 'gen_bash', 'gen_armor_break', 'boss_reaper_strike'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['scythe_fragment_pendant'],
+    },
 };
 
 const lich: MonsterTemplate = {
@@ -586,6 +602,10 @@ const lich: MonsterTemplate = {
     emoji: '🧙‍♂️💀',
     lootTierBonus: 2,
     skillPool: ['dark_shadow_bolt', 'dark_life_drain', 'dark_curse', 'boss_death_grasp'],
+    bossLootTable: {
+        dropChance: 0.90,
+        items: ['phylactery_shard'],
+    },
 };
 
 const wraithLord: MonsterTemplate = {
@@ -609,6 +629,10 @@ const wraithLord: MonsterTemplate = {
     baseXP: 22,
     emoji: '👻⚔️',
     skillPool: ['dark_shadow_strike', 'dark_fear', 'gen_charge', 'boss_spectral_slash'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['spectral_oath_ring'],
+    },
 };
 
 // === GOBLIN BOSSES ===
@@ -633,6 +657,10 @@ const goblinWarlord: MonsterTemplate = {
     baseXP: 22,
     emoji: '👺⚔️',
     skillPool: ['gen_slam', 'gen_armor_break', 'gen_weaken', 'boss_war_cry'],
+    bossLootTable: {
+        dropChance: 0.80,
+        items: ['warlords_war_band'],
+    },
 };
 
 const bugbearTyrant: MonsterTemplate = {
@@ -657,6 +685,10 @@ const bugbearTyrant: MonsterTemplate = {
     emoji: '🦍👑',
     lootTierBonus: 1,
     skillPool: ['gen_maul', 'gen_crushing_blow', 'gen_enrage', 'boss_earthquake_slam'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['tyrants_knuckle_ring'],
+    },
 };
 
 // === TROLL BOSSES ===
@@ -681,6 +713,10 @@ const mountainTroll: MonsterTemplate = {
     baseXP: 22,
     emoji: '🧌⛰️',
     skillPool: ['gen_slam', 'gen_harden', 'gen_bash', 'boss_regenerate'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['stoneblood_amulet'],
+    },
 };
 
 const swampHorror: MonsterTemplate = {
@@ -705,6 +741,10 @@ const swampHorror: MonsterTemplate = {
     emoji: '🧌🌿',
     lootTierBonus: 1,
     skillPool: ['gen_poison_fang', 'gen_slam', 'gen_rend', 'boss_toxic_cloud'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['toxic_fang_charm'],
+    },
 };
 
 // === NIGHT ELF BOSSES ===
@@ -730,6 +770,10 @@ const shadowAssassin: MonsterTemplate = {
     emoji: '🗡️🌑',
     lootTierBonus: 1,
     skillPool: ['dark_shadow_strike', 'gen_poison_fang', 'gen_slow', 'boss_vanish_strike'],
+    bossLootTable: {
+        dropChance: 0.90,
+        items: ['shades_step_anklet'],
+    },
 };
 
 const darkMatriarch: MonsterTemplate = {
@@ -754,6 +798,10 @@ const darkMatriarch: MonsterTemplate = {
     emoji: '👸🌑',
     lootTierBonus: 2,
     skillPool: ['dark_shadow_bolt', 'dark_curse', 'dark_life_drain', 'boss_void_rift'],
+    bossLootTable: {
+        dropChance: 0.90,
+        items: ['matriarchs_dark_sigil'],
+    },
 };
 
 // === DWARF BOSSES ===
@@ -778,6 +826,10 @@ const ironforgeChampion: MonsterTemplate = {
     baseXP: 22,
     emoji: '⚒️🛡️',
     skillPool: ['earth_boulder_slam', 'earth_rock_shield', 'gen_bash', 'boss_hammer_fall'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['ironforge_seal'],
+    },
 };
 
 const runeBerserker: MonsterTemplate = {
@@ -802,6 +854,10 @@ const runeBerserker: MonsterTemplate = {
     emoji: '🪓⚡',
     lootTierBonus: 1,
     skillPool: ['earth_seismic_strike', 'earth_boulder_slam', 'gen_enrage', 'boss_rune_rage'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['runestone_pendant'],
+    },
 };
 
 // === DRAGONKIN BOSSES ===
@@ -827,6 +883,10 @@ const elderDrake: MonsterTemplate = {
     emoji: '🐲',
     lootTierBonus: 1,
     skillPool: ['fire_breath', 'fire_flame_burst', 'gen_claw', 'boss_dragon_roar'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['molten_scale_charm'],
+    },
 };
 
 const wyvernMatriarch: MonsterTemplate = {
@@ -851,6 +911,10 @@ const wyvernMatriarch: MonsterTemplate = {
     emoji: '🐉👑',
     lootTierBonus: 1,
     skillPool: ['fire_inferno', 'gen_poison_fang', 'fire_burning_claw', 'boss_tail_whip'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['venomtip_fang_ring'],
+    },
 };
 
 const ancientDragon: MonsterTemplate = {
@@ -875,6 +939,10 @@ const ancientDragon: MonsterTemplate = {
     emoji: '🐉💎',
     lootTierBonus: 2,
     skillPool: ['fire_inferno', 'fire_breath', 'gen_enrage', 'boss_apocalypse_flame'],
+    bossLootTable: {
+        dropChance: 0.90,
+        items: ['heart_of_the_wyrm'],
+    },
 };
 
 // === ABERRATION BOSSES ===
@@ -900,6 +968,10 @@ const theDevourer: MonsterTemplate = {
     emoji: '🎁👁️',
     lootTierBonus: 2,
     skillPool: ['gen_bash', 'arcane_blast', 'gen_harden', 'boss_consume'],
+    bossLootTable: {
+        dropChance: 0.85,
+        items: ['greedy_maw_token'],
+    },
 };
 
 const beholder: MonsterTemplate = {
@@ -924,6 +996,10 @@ const beholder: MonsterTemplate = {
     emoji: '👁️👁️👁️',
     lootTierBonus: 2,
     skillPool: ['arcane_mind_spike', 'arcane_reality_warp', 'arcane_nullify', 'boss_disintegration_ray'],
+    bossLootTable: {
+        dropChance: 0.90,
+        items: ['all_seeing_eye'],
+    },
 };
 
 const voidSpawn: MonsterTemplate = {
@@ -948,6 +1024,10 @@ const voidSpawn: MonsterTemplate = {
     emoji: '🌌',
     lootTierBonus: 1,
     skillPool: ['arcane_blast', 'arcane_mind_spike', 'dark_curse', 'boss_void_grasp'],
+    bossLootTable: {
+        dropChance: 0.90,
+        items: ['void_shard'],
+    },
 };
 
 // =====================

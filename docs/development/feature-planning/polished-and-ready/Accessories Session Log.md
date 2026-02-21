@@ -132,3 +132,54 @@ Each session entry includes:
 
 ### Next Session Prompt
 > Start Phase 3 of the Accessories & Special Abilities implementation. The AccessoryEffectService is complete. Implement loot integration: add `pickWeightedSlot()` to `LootGenerationService.ts`, add `bossLootTable` data to `monsters.ts`, add smelting block to `SmeltingService.ts`, consolidate accessory checkboxes in `GearSlotMappingModal.ts`, and update `settings.ts` defaults. Reference the implementation plan starting at Phase 3 in the brainstorm document.
+
+---
+
+## Session 4 — 2026-02-21 — Phase 3: Loot Integration + Phase 3.5: Tests
+
+**Focus:** Wire accessories into the existing gear drop pool, implement boss loot tables, smelting guards, and comprehensive tests
+
+**Completed:**
+- [x] Added `pickWeightedSlot()` to `LootGenerationService.ts` — weighted slot selection (primary 1.0, accessory 0.4)
+- [x] Added `rollAccessoryTier()` — level-gated tier selection from `ACCESSORY_TIER_POOLS`
+- [x] Added `generateAccessoryForSlot()` — T1 procedural generation + T2+ curated template resolution
+- [x] Added `generateT1Accessory()` and `generateCuratedAccessory()` helper methods
+- [x] Added `rollBossLootTable()` — uniqueness check against inventory/equipped, extra gold on duplicate
+- [x] Added training mode guard to exclude accessory slots
+- [x] Added quest loot tier gating for accessory slots
+- [x] Added `bossLootTable` to all 20 boss templates in `monsters.ts` (1:1 boss→accessory mapping, 80-90% drop chance)
+- [x] Added accessory smelting block in `SmeltingService.ts` + `doubleTierChance` parameter
+- [x] Consolidated accessory checkboxes to single "Accessories" toggle in `GearSlotMappingModal.ts`
+- [x] Updated `DEFAULT_QUEST_SLOT_MAPPING` in `settings.ts` with accessory defaults
+- [x] Fixed feedback: removed ring emoji, changed "Accessory 2" → "Accessory", excluded accessories from smelting page
+- [x] Created `test/accessory-drops.test.ts` — 40 tests
+- [x] Created `test/boss-loot-table.test.ts` — 24 tests
+- [x] Full regression suite: 796 tests passed, 0 failures
+
+**Files Changed:**
+- `src/services/LootGenerationService.ts` — ~290 new lines (weighted slots, accessory generation, boss loot tables)
+- `src/data/monsters.ts` — `bossLootTable` on all 20 bosses (~60 lines)
+- `src/services/SmeltingService.ts` — Accessory smelting block + `doubleTierChance` (~15 lines)
+- `src/modals/GearSlotMappingModal.ts` — Consolidated accessory checkbox (~30 lines)
+- `src/settings.ts` — Updated default quest slot mapping
+- `src/models/Gear.ts` — Accessory slot display names → "Accessory"
+- `src/modals/BlacksmithModal.ts` — Excluded accessories from smelting inventory grid
+- `test/accessory-drops.test.ts` — **[NEW]** 40 tests
+- `test/boss-loot-table.test.ts` — **[NEW]** 24 tests
+
+**Testing Notes:**
+- 40/40 accessory drops tests pass (15ms)
+- 24/24 boss loot table tests pass (11ms)
+- 796/796 total suite tests pass (0 regressions, up from 732)
+- Clean build, deployed to test vault, manually verified by Brad
+
+**Blockers/Issues:**
+- Boss loot tables will not fire in combat until Phase 4a wires `monsterTemplateId` through `BattleService.generateVictoryLoot()`
+- Existing settings won't auto-migrate to include accessory slots — users must toggle manually in Gear Slot Mapping modal (note for BRAT rollout)
+
+**Next Steps:**
+- Begin Phase 4a: UI — Equip & Tooltips
+- Add accessory slots to character sheet, comparison tooltips, and wire `BattleService.generateVictoryLoot()` to pass `monsterTemplateId`
+
+### Next Session Prompt
+> Start Phase 4a of the Accessories & Special Abilities implementation. Phase 3 loot integration is complete (weighted drops, boss loot tables, smelting guard). The critical next step is wiring `BattleService.generateVictoryLoot()` to pass `monsterTemplateId` to `generateCombatLoot()` so boss accessories actually drop. Then add accessory equip slots to the character sheet UI and implement comparison tooltips. Reference the implementation plan starting at Phase 4a in the brainstorm document.
