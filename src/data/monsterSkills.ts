@@ -526,11 +526,11 @@ export const BOSS_SIGNATURE_SKILLS: Record<string, MonsterSkill> = {
         elementalType: 'Physical',
         power: 0,
         damageType: 'physical',
-        weight: 40,
+        weight: 20,
         category: 'utility',
         useCondition: 'low_hp',
         selfCure: true,
-        healPercent: 0.20, // 20% HP heal (nerfed from 40%)
+        healPercent: 0.10, // 10% HP heal (nerfed from 40%)
     },
     boss_swarm: {
         id: 'boss_swarm',

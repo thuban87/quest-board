@@ -6,7 +6,7 @@
  */
 
 /** Current character schema version */
-export const CHARACTER_SCHEMA_VERSION = 5;
+export const CHARACTER_SCHEMA_VERSION = 6;
 
 /**
  * Character class types
@@ -434,8 +434,8 @@ export interface Character {
     /** Last date a quest was completed (ISO date string, date only) */
     lastQuestCompletionDate: string | null;
 
-    /** Paladin shield used this week (resets Monday) */
-    shieldUsedThisWeek: boolean;
+    /** Number of streak shields used this week (resets Monday). Supports Paladin + accessory stacking. */
+    totalShieldsUsedThisWeek: number;
 
     /** ISO 8601 date string */
     createdDate: string;
@@ -594,7 +594,7 @@ export function createCharacter(
         currentStreak: 0,
         highestStreak: 0,
         lastQuestCompletionDate: null,
-        shieldUsedThisWeek: false,
+        totalShieldsUsedThisWeek: 0,
         createdDate: now,
         lastModified: now,
         tasksCompletedToday: 0,
@@ -858,9 +858,9 @@ export function migrateCharacterV3toV4(oldData: Record<string, unknown>): Charac
  * @returns Migrated character data conforming to schema v5
  */
 export function migrateCharacterV4toV5(oldData: Record<string, unknown>): Character {
-    // Already v5 or higher? Return as-is
+    // Already v5 or higher? Chain to next migration
     if ((oldData.schemaVersion as number) >= 5) {
-        return oldData as unknown as Character;
+        return migrateCharacterV5toV6(oldData);
     }
 
     // Import skills lazily to avoid circular dependencies
@@ -893,9 +893,9 @@ export function migrateCharacterV4toV5(oldData: Record<string, unknown>): Charac
 
         // Persistent status effects (empty for fresh migration)
         persistentStatusEffects: [],
-    } as unknown as Character;
+    } as unknown as Record<string, unknown>;
 
-    return migrated;
+    return migrateCharacterV5toV6(migrated);
 }
 
 /**
@@ -953,5 +953,35 @@ function getDefaultSkillLoadout(skills: import('./Skill').Skill[], slots: number
     }
 
     return result;
+}
+
+/**
+ * Migrate character data from schema v5 to schema v6.
+ * Converts shieldUsedThisWeek boolean → totalShieldsUsedThisWeek number
+ * to support Paladin + accessory streak shield stacking.
+ * 
+ * @param oldData - Character data at schema v5
+ * @returns Migrated character data conforming to schema v6
+ */
+export function migrateCharacterV5toV6(oldData: Record<string, unknown>): Character {
+    // Already v6 or higher? Return as-is
+    if ((oldData.schemaVersion as number) >= 6) {
+        return oldData as unknown as Character;
+    }
+
+    // Convert boolean → number: true = 1 shield used, false = 0
+    const shieldUsed = (oldData as Record<string, unknown>).shieldUsedThisWeek;
+    const totalShields = shieldUsed ? 1 : 0;
+
+    const migrated = {
+        ...oldData,
+        schemaVersion: 6,
+        totalShieldsUsedThisWeek: totalShields,
+    } as Record<string, unknown>;
+
+    // Remove old boolean field
+    delete migrated.shieldUsedThisWeek;
+
+    return migrated as unknown as Character;
 }
 

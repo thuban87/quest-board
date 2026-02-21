@@ -387,6 +387,9 @@ export interface GearItem {
 
     /** Whether this is a unique (non-procedural) item */
     isUnique?: boolean;
+
+    /** Template ID for curated accessories (T2+) and unique items. T1 auto-generated items omit this. */
+    templateId?: string;
 }
 
 // ============================================

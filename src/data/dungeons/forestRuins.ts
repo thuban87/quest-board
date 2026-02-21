@@ -56,7 +56,7 @@ export const FOREST_RUINS: DungeonTemplate = {
                 '#####.#####',
                 '#....M....#',
                 '#.........#',
-                '.....M.....',
+                '.....M....#',
                 '#.........#',
                 '#....M....#',
                 '#####.#####',
@@ -219,7 +219,7 @@ export const FOREST_RUINS: DungeonTemplate = {
                 { position: [7, 4], tier: 'master' },
             ],
             monsters: [
-                { position: [5, 2], pool: ['cave-troll'], isBoss: true },
+                { position: [5, 2], pool: ['boss-grizzled-ancient'], isBoss: true },
             ],
         },
     ],

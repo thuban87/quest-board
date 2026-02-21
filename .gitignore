@@ -34,3 +34,4 @@ deprecated-code/
 
 build-output.txt
 tsc-output.txt
+deploy-output.txt

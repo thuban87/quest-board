@@ -286,7 +286,7 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             currentStreak: 0,
             highestStreak: 0,
             lastQuestCompletionDate: null,
-            shieldUsedThisWeek: false,
+            totalShieldsUsedThisWeek: 0,
             createdDate: now,
             lastModified: now,
             tasksCompletedToday: 0,

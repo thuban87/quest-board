@@ -1007,7 +1007,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         this.plugin.settings.character.currentStreak = 0;
                         this.plugin.settings.character.highestStreak = 0;
                         this.plugin.settings.character.lastQuestCompletionDate = null;
-                        this.plugin.settings.character.shieldUsedThisWeek = false;
+                        this.plugin.settings.character.totalShieldsUsedThisWeek = 0;
                         await this.plugin.saveSettings();
                         new Notice('✓ Stats and streak reset');
                         this.display(); // Refresh settings
