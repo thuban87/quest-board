@@ -42,6 +42,7 @@ export class InventoryModal extends Modal {
     private options: InventoryModalOptions;
     private currentTab: InventoryTab = 'gear';
     private contentContainer: HTMLElement | null = null;
+    private goldDisplay: HTMLElement | null = null;
 
     // Sorting state
     private sortBy: SortField = 'tier';
@@ -91,6 +92,12 @@ export class InventoryModal extends Modal {
         const goldDisplay = contentEl.createEl('div', { cls: 'qb-inventory-gold' });
         goldDisplay.createEl('span', { cls: 'qb-gold-icon', text: '🪙' });
         goldDisplay.createEl('span', { cls: 'qb-gold-amount', text: `${character?.gold || 0} Gold` });
+        this.goldDisplay = goldDisplay;
+
+        // Hide gold banner if starting on consumables tab
+        if (this.currentTab === 'consumables') {
+            goldDisplay.style.display = 'none';
+        }
 
         // Content container
         this.contentContainer = contentEl.createEl('div', { cls: 'qb-inventory-content' });
@@ -117,6 +124,12 @@ export class InventoryModal extends Modal {
         const tabs = this.contentEl.querySelectorAll('.qb-inventory-tab');
         tabs.forEach(t => t.removeClass('active'));
         tabs[tab === 'gear' ? 0 : 1].addClass('active');
+
+        // Hide full-width gold banner on consumables tab (status row has its own)
+        if (this.goldDisplay) {
+            this.goldDisplay.style.display = tab === 'consumables' ? 'none' : '';
+        }
+
         this.renderContent();
     }
 
@@ -441,6 +454,44 @@ export class InventoryModal extends Modal {
 
     private renderConsumablesTab() {
         if (!this.contentContainer) return;
+        const character = useCharacterStore.getState().character;
+
+        // Status row: Gold (left) + HP/MP bars (right)
+        if (character) {
+            const statusRow = this.contentContainer.createEl('div', { cls: 'qb-consumables-status-row' });
+
+            // Gold display (left half)
+            const goldEl = statusRow.createEl('div', { cls: 'qb-consumables-gold' });
+            goldEl.createEl('span', { cls: 'qb-gold-icon', text: '🪙' });
+            goldEl.createEl('span', { cls: 'qb-gold-amount', text: `${character.gold || 0} Gold` });
+
+            // HP/MP bars (right half)
+            const barsEl = statusRow.createEl('div', { cls: 'qb-consumables-bars' });
+
+            // HP bar
+            const hpPercent = character.maxHP > 0
+                ? Math.max(0, Math.min(100, (character.currentHP / character.maxHP) * 100))
+                : 0;
+            const hpRow = barsEl.createEl('div', { cls: 'qb-resource-item' });
+            const hpHeader = hpRow.createEl('div', { cls: 'qb-resource-header' });
+            hpHeader.createEl('span', { cls: 'qb-resource-label', text: '❤️ HP' });
+            hpHeader.createEl('span', { cls: 'qb-resource-values', text: `${character.currentHP} / ${character.maxHP}` });
+            const hpBar = hpRow.createEl('div', { cls: 'qb-resource-bar qb-bar-hp' });
+            const hpFill = hpBar.createEl('div', { cls: 'qb-resource-fill' });
+            hpFill.style.width = `${hpPercent}%`;
+
+            // Mana bar
+            const manaPercent = character.maxMana > 0
+                ? Math.max(0, Math.min(100, (character.currentMana / character.maxMana) * 100))
+                : 0;
+            const manaRow = barsEl.createEl('div', { cls: 'qb-resource-item' });
+            const manaHeader = manaRow.createEl('div', { cls: 'qb-resource-header' });
+            manaHeader.createEl('span', { cls: 'qb-resource-label', text: '💧 Mana' });
+            manaHeader.createEl('span', { cls: 'qb-resource-values', text: `${character.currentMana} / ${character.maxMana}` });
+            const manaBar = manaRow.createEl('div', { cls: 'qb-resource-bar qb-bar-mana' });
+            const manaFill = manaBar.createEl('div', { cls: 'qb-resource-fill' });
+            manaFill.style.width = `${manaPercent}%`;
+        }
 
         const inventory = useCharacterStore.getState().inventory;
 
@@ -489,19 +540,26 @@ export class InventoryModal extends Modal {
         const isHpRestore = definition.effect === 'hp_restore';
         const isManaRestore = definition.effect === 'mana_restore';
         const isRevive = definition.effect === 'revive';
+        const isStatBoost = definition.effect === 'stat_boost';
 
-        if (isHpRestore || isManaRestore || isRevive) {
+        if (isHpRestore || isManaRestore || isRevive || isStatBoost) {
             // Use button
             const useBtn = actionsEl.createEl('button', {
                 cls: 'qb-consumable-btn qb-btn-use',
                 text: '✨ Use'
             });
             useBtn.addEventListener('click', () => this.useConsumable(item.itemId, definition));
-        } else {
-            // Other consumables (Streak restore, XP boost) - Coming Soon
+        } else if (definition.combatUsable) {
+            // Combat-only consumables
             actionsEl.createEl('span', {
                 cls: 'qb-consumable-coming-soon',
-                text: '🔜 Coming Soon'
+                text: '⚔️ Use in combat'
+            });
+        } else {
+            // Other consumables - Coming Soon
+            actionsEl.createEl('span', {
+                cls: 'qb-consumable-coming-soon',
+                text: '🔜 Coming soon'
             });
         }
     }
@@ -556,6 +614,18 @@ export class InventoryModal extends Modal {
                 new Notice('💫 Revived! You have 25% HP.', 3000);
             } else {
                 new Notice('❌ Failed to revive.', 2000);
+            }
+        } else if (definition.effect === 'stat_boost') {
+            const success = store.useStatElixir(itemId);
+            if (success) {
+                const statName = definition.statTarget
+                    ? definition.statTarget.charAt(0).toUpperCase() + definition.statTarget.slice(1)
+                    : 'Stat';
+                const duration = definition.realTimeDurationMinutes ?? 60;
+                new Notice(`💪 ${definition.name} active! ${statName} +${Math.round(definition.effectValue * 100)}% for ${duration} min.`, 4000);
+            } else {
+                new Notice('❌ Failed to use elixir.', 2000);
+                return; // Don't save if nothing happened
             }
         }
 

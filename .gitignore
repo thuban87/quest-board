@@ -31,3 +31,6 @@ assets/sprites/archive/
 
 # Deprecated code archive (dead code preserved for reference)
 deprecated-code/
+
+build-output.txt
+tsc-output.txt

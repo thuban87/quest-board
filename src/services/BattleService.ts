@@ -304,6 +304,7 @@ function hydrateBattlePlayer(character: Character, stats: CombatStats): import('
         volatileStatusEffects: [...(character.persistentStatusEffects || [])], // Copy in
         skillsUsedThisBattle: [],
         turnsInBattle: 0,
+        consumableBuffs: [],
     };
 }
 
@@ -311,7 +312,7 @@ function hydrateBattlePlayer(character: Character, stats: CombatStats): import('
  * Copy volatile status effects back to persistent storage.
  * Called on battle end (victory, defeat, retreat) to persist status effects between battles.
  */
-function copyVolatileStatusToPersistent(): void {
+export function copyVolatileStatusToPersistent(): void {
     const player = useBattleStore.getState().player;
     if (!player) return;
 
@@ -436,6 +437,22 @@ function executePlayerAttack(): void {
     // Apply damage
     const newMonsterHP = Math.max(0, monster.currentHP - damage);
     store.updateMonsterHP(newMonsterHP);
+
+    // Check for enchantment oil procs
+    const procResult = processConsumableBuffProcs(
+        damage,
+        store.monster!,
+        store.player?.consumableBuffs ?? []
+    );
+    if (procResult.procOccurred) {
+        store.updateMonster(procResult.updatedMonster!);
+        store.addLogEntry({
+            turn: store.turnNumber,
+            actor: 'player',
+            action: procResult.logMessage!,
+            result: 'hit',
+        });
+    }
 
     // Log the attack
     store.addLogEntry({
@@ -929,7 +946,8 @@ function checkBattleOutcome(): void {
     } else if (store.playerCurrentHP <= 0) {
         handleDefeat();
     } else {
-        // Continue battle - monster's turn
+        // Continue battle — tick consumable buffs, then monster's turn
+        store.tickConsumableBuffs();
         store.advanceState('ENEMY_TURN');
         executeMonsterTurn();
     }
@@ -938,7 +956,7 @@ function checkBattleOutcome(): void {
 /**
  * Handle player victory
  */
-function handleVictory(): void {
+export function handleVictory(): void {
     const store = useBattleStore.getState();
     const characterStore = useCharacterStore.getState();
     const { monster, lootBonus } = store;
@@ -1015,12 +1033,59 @@ function handleVictory(): void {
 /**
  * Handle player defeat
  */
-function handleDefeat(): void {
+export function handleDefeat(): void {
     const store = useBattleStore.getState();
     const characterStore = useCharacterStore.getState();
     const character = characterStore.character;
 
     if (!character) return;
+
+    // === PHOENIX TEAR CHECK ===
+    const inventory = characterStore.inventory;
+    const hasPhoenixTear = inventory.find(
+        i => i.itemId === 'phoenix-tear' && i.quantity > 0
+    );
+
+    if (hasPhoenixTear) {
+        // Try to consume the tear — use boolean return to guard against double-defeat
+        const consumed = characterStore.removeInventoryItem('phoenix-tear', 1);
+        if (consumed) {
+            // Calculate revival HP: 30% of max
+            const maxHP = store.playerStats?.maxHP ?? character.maxHP;
+            const reviveHP = Math.floor(maxHP * 0.30);
+
+            // Calculate revival mana: restore to pre-death value, 30% floor
+            const maxMana = store.playerStats?.maxMana ?? character.maxMana;
+            const preDeathMana = store.playerCurrentMana;
+            const manaFloor = Math.floor(maxMana * 0.30);
+            const reviveMana = Math.max(manaFloor, preDeathMana);
+
+            // Revive the player
+            store.updatePlayerHP(reviveHP);
+            store.updatePlayerMana(reviveMana);
+
+            // Log the revival
+            store.addLogEntry({
+                turn: store.turnNumber,
+                actor: 'player',
+                action: '🔥 Phoenix Tear activates! You rise from the ashes!',
+                result: 'heal',
+            });
+
+            // Continue battle — back to player input
+            store.incrementTurn();
+            store.advanceState('PLAYER_INPUT');
+
+            // Save the inventory change
+            if (saveCallback) {
+                void saveCallback().catch(err =>
+                    console.error('[BattleService] Save failed:', err)
+                );
+            }
+
+            return; // Don't proceed with normal defeat
+        }
+    }
 
     // Calculate 10% gold penalty (applied in setCharacter below)
     const goldLost = Math.floor(character.gold * DEFEAT_GOLD_PENALTY);
@@ -1154,6 +1219,7 @@ import {
     SkillExecutionContext,
 } from './SkillService';
 import { tickStatusEffects, wakeFromSleep, breakFreeze, shouldSkipTurn, applyStatus } from './StatusEffectService';
+import { processConsumableBuffProcs } from './StatusEffectService';
 import { ElementalType, CLASS_ELEMENTAL_TYPES } from '../models/Skill';
 
 /**
@@ -1278,6 +1344,22 @@ export function executePlayerSkill(): void {
         // Fire breaks freeze
         if (skill.elementalType === 'Fire') {
             breakFreeze(monster as any, 'Fire');
+        }
+
+        // Check for enchantment oil procs
+        const procResult = processConsumableBuffProcs(
+            result.damage,
+            store.monster!,
+            store.player?.consumableBuffs ?? []
+        );
+        if (procResult.procOccurred) {
+            store.updateMonster(procResult.updatedMonster!);
+            store.addLogEntry({
+                turn: store.turnNumber,
+                actor: 'player',
+                action: procResult.logMessage!,
+                result: 'hit',
+            });
         }
     }
 
@@ -1414,7 +1496,8 @@ function checkBattleOutcomeWithStatusTick(): void {
         store.updatePlayer({ volatileStatusEffects: [...player.volatileStatusEffects] });
     }
 
-    // Continue battle - monster's turn
+    // Continue battle — tick consumable buffs, then monster's turn
+    store.tickConsumableBuffs();
     store.advanceState('ENEMY_TURN');
     executeMonsterTurn();
 }
@@ -1438,4 +1521,5 @@ export const battleService = {
     setSelectedSkill,
     getSelectedSkill,
     clearSelectedSkill,
+    handleVictory,
 };

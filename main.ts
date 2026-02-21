@@ -421,6 +421,8 @@ export default class QuestBoardPlugin extends Plugin {
                 showInventoryModal(this.app, {
                     onSave: async () => {
                         this.settings.character = useCharacterStore.getState().character;
+                        this.settings.inventory = useCharacterStore.getState().inventory;
+                        this.settings.achievements = useCharacterStore.getState().achievements;
                         await this.saveSettings();
                     }
                 });

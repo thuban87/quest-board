@@ -10,8 +10,10 @@ import { Platform } from 'obsidian';
 import { useBattleStore, CombatLogEntry, PlayerAction } from '../store/battleStore';
 import { useCharacterStore } from '../store/characterStore';
 import { CLASS_INFO } from '../models/Character';
-import { CONSUMABLES, ConsumableEffect } from '../models/Consumable';
+import { CONSUMABLES, ConsumableDefinition, ConsumableEffect, HP_POTION_IDS, MP_POTION_IDS, CLEANSING_IDS, ENCHANTMENT_IDS, TACTICAL_IDS } from '../models/Consumable';
 import { battleService } from '../services/BattleService';
+import { executeConsumable } from '../services/ConsumableUsageService';
+import { finalizeBattle, updateTurnCount } from '../services/BalanceTestingService';
 import { LootDrop } from '../models/Gear';
 import { getSkillById } from '../data/skills';
 import { Skill } from '../models/Skill';
@@ -367,15 +369,58 @@ interface ConsumablePickerProps {
 
 function ConsumablePicker({ onSelect, onCancel }: ConsumablePickerProps) {
     const inventory = useCharacterStore(state => state.inventory);
+    const character = useCharacterStore(state => state.character);
 
-    // Filter to only HP/Mana potions that player has
+    // All combat-usable effect types
+    const combatEffects = [
+        ConsumableEffect.HP_RESTORE,
+        ConsumableEffect.MANA_RESTORE,
+        ConsumableEffect.CLEANSE_DOT,
+        ConsumableEffect.CLEANSE_CURSE_CC,
+        ConsumableEffect.DIRECT_DAMAGE,
+        ConsumableEffect.GUARANTEED_RETREAT,
+        ConsumableEffect.DEF_STAGE_BOOST,
+        ConsumableEffect.ENCHANT_BURN,
+        ConsumableEffect.ENCHANT_POISON,
+        ConsumableEffect.ENCHANT_FREEZE,
+    ];
+
+    // Filter to combat-usable consumables
     const availableConsumables = inventory.filter(item => {
         const def = CONSUMABLES[item.itemId];
-        return def && (
-            def.effect === ConsumableEffect.HP_RESTORE ||
-            def.effect === ConsumableEffect.MANA_RESTORE
-        );
+        if (!def) return false;
+        return def.combatUsable !== false && combatEffects.includes(def.effect);
     });
+
+    // Categorize items
+    const potionIds = new Set([...HP_POTION_IDS, ...MP_POTION_IDS]);
+    const cleansingIds = new Set(CLEANSING_IDS);
+    const enchantmentIds = new Set(ENCHANTMENT_IDS);
+    const tacticalIds = new Set(TACTICAL_IDS);
+
+    const categories: { label: string; items: typeof availableConsumables }[] = [
+        { label: 'Potions', items: availableConsumables.filter(i => potionIds.has(i.itemId)) },
+        { label: 'Cleansing', items: availableConsumables.filter(i => cleansingIds.has(i.itemId)) },
+        { label: 'Enchantments', items: availableConsumables.filter(i => enchantmentIds.has(i.itemId)) },
+        { label: 'Tactical', items: availableConsumables.filter(i => tacticalIds.has(i.itemId)) },
+    ].filter(cat => cat.items.length > 0);
+
+    /** Get display text for a consumable's effect */
+    const getEffectText = (def: ConsumableDefinition): string => {
+        switch (def.effect) {
+            case ConsumableEffect.HP_RESTORE: return `+${def.effectValue} HP`;
+            case ConsumableEffect.MANA_RESTORE: return `+${def.effectValue} MP`;
+            case ConsumableEffect.CLEANSE_DOT: return 'Cure Burns/Poison/Bleed';
+            case ConsumableEffect.CLEANSE_CURSE_CC: return 'Cure Curse & CC';
+            case ConsumableEffect.DIRECT_DAMAGE: return `~${def.damageFormula!.base + def.damageFormula!.perLevel * (character?.level ?? 1)} dmg`;
+            case ConsumableEffect.GUARANTEED_RETREAT: return 'Instant Escape';
+            case ConsumableEffect.DEF_STAGE_BOOST: return `+${def.stageChange!.stages} DEF`;
+            case ConsumableEffect.ENCHANT_BURN: return `${def.statusChance}% Burn (${def.turnDuration}t)`;
+            case ConsumableEffect.ENCHANT_POISON: return `${def.statusChance}% Poison (${def.turnDuration}t)`;
+            case ConsumableEffect.ENCHANT_FREEZE: return `${def.statusChance}% Freeze (${def.turnDuration}t)`;
+            default: return def.description;
+        }
+    };
 
     if (availableConsumables.length === 0) {
         return (
@@ -385,7 +430,7 @@ function ConsumablePicker({ onSelect, onCancel }: ConsumablePickerProps) {
                     <button className="qb-picker-close" onClick={onCancel}>✕</button>
                 </div>
                 <div className="qb-picker-empty">
-                    No potions available!
+                    No items available!
                 </div>
             </div>
         );
@@ -398,27 +443,32 @@ function ConsumablePicker({ onSelect, onCancel }: ConsumablePickerProps) {
                 <button className="qb-picker-close" onClick={onCancel}>✕</button>
             </div>
             <div className="qb-picker-items">
-                {availableConsumables.map(item => {
-                    const def = CONSUMABLES[item.itemId];
-                    if (!def) return null;
-
-                    const effectText = def.effect === ConsumableEffect.HP_RESTORE
-                        ? `+${def.effectValue} HP`
-                        : `+${def.effectValue} MP`;
-
-                    return (
-                        <button
-                            key={item.itemId}
-                            className="qb-picker-item"
-                            onClick={() => onSelect(item.itemId)}
-                        >
-                            <span className="qb-item-emoji">{def.emoji}</span>
-                            <span className="qb-item-name">{def.name}</span>
-                            <span className="qb-item-effect">{effectText}</span>
-                            <span className="qb-item-qty">x{item.quantity}</span>
-                        </button>
-                    );
-                })}
+                {categories.map(cat => (
+                    <div key={cat.label} className="qb-consumable-section">
+                        <div className="qb-consumable-section-title">
+                            {cat.label}
+                        </div>
+                        {cat.items.map(item => {
+                            const def = CONSUMABLES[item.itemId];
+                            if (!def) return null;
+                            const typeClass =
+                                enchantmentIds.has(item.itemId) ? 'qb-type-enchantment' :
+                                    tacticalIds.has(item.itemId) ? 'qb-type-tactical' : '';
+                            return (
+                                <button
+                                    key={item.itemId}
+                                    className={`qb-picker-item ${typeClass}`}
+                                    onClick={() => onSelect(item.itemId)}
+                                >
+                                    <span className="qb-item-emoji">{def.emoji}</span>
+                                    <span className="qb-item-name">{def.name}</span>
+                                    <span className="qb-item-effect">{getEffectText(def)}</span>
+                                    <span className="qb-item-qty">x{item.quantity}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -670,15 +720,11 @@ export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot,
     const isInCombat = useBattleStore(state => state.isInCombat);
     const resetBattle = useBattleStore(state => state.resetBattle);
     const addLogEntry = useBattleStore(state => state.addLogEntry);
-    const updatePlayerHP = useBattleStore(state => state.updatePlayerHP);
-    const updatePlayerMana = useBattleStore(state => state.updatePlayerMana);
     const advanceState = useBattleStore(state => state.advanceState);
-    const playerHP = useBattleStore(state => state.playerCurrentHP);
-    const playerMana = useBattleStore(state => state.playerCurrentMana);
-    const playerMaxHP = useBattleStore(state => state.playerStats?.maxHP ?? 1);
-    const playerMaxMana = useBattleStore(state => state.playerStats?.maxMana ?? 1);
+    const endBattle = useBattleStore(state => state.endBattle);
     const turnNumber = useBattleStore(state => state.turnNumber);
 
+    const character = useCharacterStore(state => state.character);
     const removeInventoryItem = useCharacterStore(state => state.removeInventoryItem);
 
     const [showItemPicker, setShowItemPicker] = useState(false);
@@ -755,43 +801,44 @@ export const BattleView: React.FC<BattleViewProps> = ({ onBattleEnd, onShowLoot,
         }
     };
 
-    // Handle item usage
+    // Handle item usage via ConsumableUsageService
     const handleItemUse = (itemId: string) => {
-        const def = CONSUMABLES[itemId];
-        if (!def) return;
+        const result = executeConsumable(itemId, character?.level ?? 1);
 
-        // Apply effect
-        if (def.effect === ConsumableEffect.HP_RESTORE) {
-            const newHP = Math.min(playerMaxHP, playerHP + def.effectValue);
-            updatePlayerHP(newHP);
-            addLogEntry({
-                turn: turnNumber,
-                actor: 'player',
-                action: `Used ${def.name}: +${def.effectValue} HP`,
-                result: 'heal',
-            });
-        } else if (def.effect === ConsumableEffect.MANA_RESTORE) {
-            const newMana = Math.min(playerMaxMana, playerMana + def.effectValue);
-            updatePlayerMana(newMana);
-            addLogEntry({
-                turn: turnNumber,
-                actor: 'player',
-                action: `Used ${def.name}: +${def.effectValue} MP`,
-                result: 'heal',
-            });
+        if (!result.success) {
+            console.error('[BattleView] Consumable failed:', result.error);
+            return;
         }
+
+        // Log the action
+        addLogEntry({
+            turn: turnNumber,
+            actor: 'player',
+            action: result.logMessage,
+            result: 'heal',
+        });
 
         // Remove from inventory
         removeInventoryItem(itemId, 1);
-
-        // Close picker
         setShowItemPicker(false);
 
-        // Using item costs your turn - advance to enemy turn
-        advanceState('ENEMY_TURN');
+        // Handle battle-ending effects
+        if (result.endsBattle === 'retreat') {
+            updateTurnCount(turnNumber);
+            finalizeBattle('retreat', useBattleStore.getState().log, useBattleStore.getState().playerCurrentHP, useBattleStore.getState().playerCurrentMana);
+            endBattle('retreat');
+            return;
+        }
+        if (result.endsBattle === 'victory') {
+            battleService.handleVictory();
+            return;
+        }
 
-        // Call monster turn
-        battleService.executeMonsterTurn();
+        // Advance to enemy turn if this consumes the turn
+        if (result.endsTurn) {
+            advanceState('ENEMY_TURN');
+            battleService.executeMonsterTurn();
+        }
     };
 
     // Handle victory rewards collection

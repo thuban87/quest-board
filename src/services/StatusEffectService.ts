@@ -8,6 +8,7 @@
 
 import { StatusEffect, StatusEffectType, isDoTEffect, isHardCC, StatusSeverity, getStatusDisplayName } from '../models/StatusEffect';
 import { ElementalType } from '../models/Skill';
+import { BattleMonster, ConsumableBuff } from '../store/battleStore';
 import {
     STATUS_DOT_PERCENT,
     PARALYZE_SKIP_CHANCE,
@@ -423,6 +424,68 @@ function getStatusVerb(statusType: StatusEffectType): string {
         confusion: 'confused',
     };
     return verbs[statusType] || statusType;
+}
+
+// =====================
+// CONSUMABLE BUFF PROCS
+// =====================
+
+/**
+ * Process consumable buff procs after player deals damage.
+ * Called from BattleService after damage is dealt in attacks/skills.
+ * 
+ * This is a PURE function — it takes data in and returns data out.
+ * BattleService owns the store writes, keeping StatusEffectService
+ * free of store dependencies (easier to test, no circular imports).
+ * 
+ * BattleMonster has `statusEffects` (not `volatileStatusEffects`),
+ * so applyStatus writes to `combatant.statusEffects` for monsters.
+ * 
+ * @param damage Damage dealt (no procs if 0)
+ * @param monster The target monster (read from store by caller)
+ * @param consumableBuffs The player's active consumable buffs
+ * @returns Object with procOccurred flag, updated monster data, and log message
+ */
+export function processConsumableBuffProcs(
+    damage: number,
+    monster: BattleMonster,
+    consumableBuffs: ConsumableBuff[]
+): { procOccurred: boolean; updatedMonster?: Partial<BattleMonster>; logMessage?: string } {
+    if (damage <= 0 || !consumableBuffs?.length) {
+        return { procOccurred: false };
+    }
+
+    // Only check enchantment-type buffs (not stage boosts)
+    const enchantmentBuffs = consumableBuffs.filter(
+        b => b.statusType !== null && b.chance > 0
+    );
+
+    for (const buff of enchantmentBuffs) {
+        if (Math.random() * 100 < buff.chance) {
+            // Deep-copy monster with fresh statusEffects to avoid mutating caller's reference
+            const monsterCopy: BattleMonster = {
+                ...monster,
+                statusEffects: [...(monster.statusEffects ?? [])],
+            };
+
+            // Apply status to the copy (applyStatus mutates in-place)
+            applyStatus(
+                monsterCopy,
+                buff.statusType!,
+                3, // 3 turns duration for consumable-applied effects
+                'player',
+                'minor',
+                'enchant_oil'
+            );
+
+            return {
+                procOccurred: true,
+                updatedMonster: { statusEffects: monsterCopy.statusEffects },
+                logMessage: `${getStatusDisplayName(buff.statusType!)} proc'd from enchantment!`,
+            };
+        }
+    }
+    return { procOccurred: false };
 }
 
 // =====================

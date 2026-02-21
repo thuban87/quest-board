@@ -176,8 +176,8 @@ This document reflects the **actual state of implementation** based on a deep co
 | Feature | Location | Notes |
 |---------|----------|-------|
 | Gold currency | `Character.gold` | Earned from quests/combat |
-| Store | `StoreModal.ts` | Buy consumables |
-| Consumables | `Consumable.ts` | HP/MP/revive potions |
+| Store | `StoreModal.ts` | Buy consumables (5 sections, level-gating, smart tier display) |
+| Consumables | `Consumable.ts` | 30 items: 6-tier HP/MP potions, stat elixirs, cleansing, enchantment oils, tactical, Phoenix Tear |
 
 ---
 
@@ -396,6 +396,23 @@ Pre-BRAT release audit addressing all community plugin guideline requirements. C
 
 **Docs:** [Alignment Plan](launch-considerations/01%20-%20Obsidian%20guidelines%20alignment%20plan.md) | [Session Log](launch-considerations/Obsidian%20Alignment%20Session%20Log.md)
 
+## ✅ Expanded Consumables — Complete (2026-02-19 → 2026-02-21)
+
+Overhaul of the consumable system from 11 items to 30, adding stat elixirs, cleansing items, enchantment oils, tactical consumables, and Phoenix Tear. 291 new tests written across 5 sessions.
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| 1: Potion Rework + Model Foundation | ✅ Complete | 30 items, 6-tier potions, store rewrite, revive_potion bugfix |
+| 1.5: Tests — Potion Rework | ✅ Complete | 89 tests (62 model + 27 store) |
+| 2: Simple Combat Consumables | ✅ Complete | ConsumableUsageService, BattleView integration, ConsumablePicker expansion |
+| 2.5: Tests — Simple Combat | ✅ Complete | 24 tests, all passing |
+| 3: Complex Combat Consumables | ✅ Complete | Buff system, enchantment procs, Phoenix Tear, stat elixirs, 2 bug fixes |
+| 3.5: Tests — Complex Combat | ✅ Complete | 77 tests across 5 files, flaky monster test fix |
+| 4: UI Polish & Loot Tables | ✅ Complete | Categorized picker, HP/MP bars in inventory, expanded loot tables with per-tier consumable drops |
+| 4.5: Tests — UI Polish & Loot | ✅ Complete | 48 tests (30 LootGen + 13 ConsumablePicker + 5 StoreModal), 604 total suite |
+
+**Docs:** [Implementation Guide](feature-planning/in-review/Expanded%20Consumables%20Implementation%20Guide.md) | [Session Log](Expanded%20Consumables%20Session%20Log.md)
+
 ---
 
 ## Architecture Notes
@@ -417,4 +434,4 @@ Pre-BRAT release audit addressing all community plugin guideline requirements. C
 
 ---
 
-**Last Updated:** 2026-02-19 (Obsidian Guidelines Alignment project COMPLETE — all 13 phases finished, Phase 2 deferred until public release)
+**Last Updated:** 2026-02-21 (Expanded Consumables feature complete — all 9 phases done, 604 tests passing)

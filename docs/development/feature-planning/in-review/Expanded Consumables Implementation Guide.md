@@ -211,7 +211,7 @@ Battle-scoped buffs. Last 5 turns in current battle. One active at a time. Avail
 
 ---
 
-## 🔲 Phase 1: Potion Rework + Model Foundation
+## ✅ Phase 1: Potion Rework + Model Foundation — Complete (2026-02-19)
 
 **Estimated Time:** 2-2.5 hours
 **Prerequisite:** —
@@ -380,7 +380,7 @@ The new `hp-potion-major` and `hp-potion-supreme` (and MP equivalents) are new I
 
 ---
 
-## 🔲 Phase 1.5: Tests — Potion Rework + Model Foundation
+## ✅ Phase 1.5: Tests — Potion Rework + Model Foundation — Complete (2026-02-19)
 
 **Estimated Time:** 1.5-2 hours
 **Prerequisite:** Phase 1 manually verified
@@ -399,7 +399,7 @@ The new `hp-potion-major` and `hp-potion-supreme` (and MP equivalents) are new I
 
 ---
 
-## 🔲 Phase 2: Simple Combat Consumables
+## ✅ Phase 2: Simple Combat Consumables — Completed 2026-02-20
 
 **Estimated Time:** 2-2.5 hours
 **Prerequisite:** Phase 1
@@ -682,7 +682,7 @@ const getEffectText = (def: ConsumableDefinition): string => {
 
 ---
 
-## 🔲 Phase 2.5: Tests — Simple Combat Consumables
+## ✅ Phase 2.5: Tests — Simple Combat Consumables — Completed 2026-02-20
 
 **Estimated Time:** 2-2.5 hours
 **Prerequisite:** Phase 2 manually verified
@@ -718,7 +718,7 @@ No `vi.mock()` needed — Zustand stores work directly in tests.
 
 ---
 
-## 🔲 Phase 3: Complex Combat Consumables
+## ✅ Phase 3: Complex Combat Consumables — Complete (2026-02-20)
 
 **Estimated Time:** 2.5-3 hours
 **Prerequisite:** Phase 2
@@ -1196,7 +1196,7 @@ useStatElixir: (itemId: string): boolean => {
 
 ---
 
-## 🔲 Phase 3.5: Tests — Complex Combat Consumables
+## ✅ Phase 3.5: Tests — Complex Combat Consumables *(completed 2026-02-20)*
 
 **Estimated Time:** 2-2.5 hours
 **Prerequisite:** Phase 3 manually verified
@@ -1220,7 +1220,7 @@ useStatElixir: (itemId: string): boolean => {
 
 ---
 
-## 🔲 Phase 4: UI Polish & Loot Tables
+## ✅ Phase 4: UI Polish & Loot Tables — Completed (2026-02-21)
 
 **Estimated Time:** 2-2.5 hours
 **Prerequisite:** Phase 3
@@ -1420,7 +1420,7 @@ Adjust the flat values in `Consumable.ts` if the percentages are off. Target ran
 
 ---
 
-## 🔲 Phase 4.5: Tests — UI Polish & Loot Tables
+## ✅ Phase 4.5: Tests — UI Polish & Loot Tables — Completed 2026-02-21
 
 **Estimated Time:** 1.5-2 hours
 **Prerequisite:** Phase 4 manually verified

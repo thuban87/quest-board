@@ -83,7 +83,7 @@ describe('Monster Creation', () => {
     it('should apply tier multipliers', () => {
         // Use averaged samples to eliminate flakiness from stat variance
         // (skeleton has ±15% variance which can overwhelm the small tier multipliers)
-        const samples = 20;
+        const samples = 50;
         let owSum = 0, dungeonSum = 0, bossSum = 0, raidSum = 0;
 
         for (let i = 0; i < samples; i++) {
@@ -112,20 +112,40 @@ describe('Monster Creation', () => {
 
 describe('Prefix System', () => {
     it('should apply fierce prefix (+10% attack)', () => {
-        const normal = createMonster('bear', 20, 'overworld', { forcePrefix: 'none' });
-        const fierce = createMonster('bear', 20, 'overworld', { forcePrefix: 'fierce' });
+        // Use averaged samples to eliminate flakiness from ±15% stat variance
+        const samples = 20;
+        let normalAtkSum = 0, fierceAtkSum = 0;
 
+        for (let i = 0; i < samples; i++) {
+            normalAtkSum += createMonster('bear', 20, 'overworld', { forcePrefix: 'none' })!.attack;
+            fierceAtkSum += createMonster('bear', 20, 'overworld', { forcePrefix: 'fierce' })!.attack;
+        }
+
+        // Fierce average should be higher (+10% attack)
+        expect(fierceAtkSum / samples).toBeGreaterThan(normalAtkSum / samples);
+
+        // Single instance check for name and prefix
+        const fierce = createMonster('bear', 20, 'overworld', { forcePrefix: 'fierce' });
         expect(fierce!.name).toContain('Fierce');
-        expect(fierce!.attack).toBeGreaterThan(normal!.attack);
         expect(fierce!.prefix).toBe('fierce');
     });
 
     it('should apply sturdy prefix (+10% HP)', () => {
-        const normal = createMonster('bear', 20, 'overworld', { forcePrefix: 'none' });
-        const sturdy = createMonster('bear', 20, 'overworld', { forcePrefix: 'sturdy' });
+        // Use averaged samples to eliminate flakiness from ±15% stat variance
+        const samples = 20;
+        let normalHPSum = 0, sturdyHPSum = 0;
 
+        for (let i = 0; i < samples; i++) {
+            normalHPSum += createMonster('bear', 20, 'overworld', { forcePrefix: 'none' })!.maxHP;
+            sturdyHPSum += createMonster('bear', 20, 'overworld', { forcePrefix: 'sturdy' })!.maxHP;
+        }
+
+        // Sturdy average should be higher (+10% HP)
+        expect(sturdyHPSum / samples).toBeGreaterThan(normalHPSum / samples);
+
+        // Single instance check for name and prefix
+        const sturdy = createMonster('bear', 20, 'overworld', { forcePrefix: 'sturdy' });
         expect(sturdy!.name).toContain('Sturdy');
-        expect(sturdy!.maxHP).toBeGreaterThan(normal!.maxHP);
         expect(sturdy!.prefix).toBe('sturdy');
     });
 

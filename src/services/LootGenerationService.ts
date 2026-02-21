@@ -28,7 +28,8 @@ import {
 } from '../models/Gear';
 import { createUniqueItem, UniqueItemTemplate } from '../data/uniqueItems';
 import { setBonusService } from './SetBonusService';
-import { getHpPotionForLevel, getMpPotionForLevel } from '../models/Consumable';
+import { getHpPotionForLevel, getMpPotionForLevel, CLEANSING_IDS, TACTICAL_IDS, STAT_ELIXIR_IDS, ENCHANTMENT_IDS } from '../models/Consumable';
+import { MonsterTier } from '../config/combatConfig';
 import { getGoldMultiplierFromPowerUps, expirePowerUps } from './PowerUpService';
 
 // ============================================
@@ -93,12 +94,15 @@ const QUEST_LOOT_RATES = {
 
 /**
  * Consumable drop weights for quest completion
- * Normalized during selection (total = 120, so: HP 58%, MP 33%, Revive 8%)
+ * Normalized during selection (total = 135)
+ * HP ~52%, MP ~30%, Revive ~7%, Cleansing ~7%, Tactical ~4%
  */
 const QUEST_CONSUMABLE_WEIGHTS = {
     hp: 70,
     mp: 40,
     revive: 10,
+    cleansing: 10,
+    tactical: 5,
 };
 
 /**
@@ -241,19 +245,35 @@ export class LootGenerationService {
      * Roll a consumable for quest completion using weighted table
      */
     private rollQuestConsumable(level: number): LootReward {
-        const totalWeight = QUEST_CONSUMABLE_WEIGHTS.hp + QUEST_CONSUMABLE_WEIGHTS.mp + QUEST_CONSUMABLE_WEIGHTS.revive;
+        const totalWeight = QUEST_CONSUMABLE_WEIGHTS.hp + QUEST_CONSUMABLE_WEIGHTS.mp
+            + QUEST_CONSUMABLE_WEIGHTS.revive + QUEST_CONSUMABLE_WEIGHTS.cleansing
+            + QUEST_CONSUMABLE_WEIGHTS.tactical;
         const roll = Math.random() * totalWeight;
 
         let itemId: string;
-        if (roll < QUEST_CONSUMABLE_WEIGHTS.hp) {
-            // HP potion (most common)
+        let cumulative = 0;
+
+        cumulative += QUEST_CONSUMABLE_WEIGHTS.hp;
+        if (roll < cumulative) {
             itemId = getHpPotionForLevel(level);
-        } else if (roll < QUEST_CONSUMABLE_WEIGHTS.hp + QUEST_CONSUMABLE_WEIGHTS.mp) {
-            // MP potion
-            itemId = getMpPotionForLevel(level);
         } else {
-            // Revive potion (rare)
-            itemId = 'revive_potion';
+            cumulative += QUEST_CONSUMABLE_WEIGHTS.mp;
+            if (roll < cumulative) {
+                itemId = getMpPotionForLevel(level);
+            } else {
+                cumulative += QUEST_CONSUMABLE_WEIGHTS.revive;
+                if (roll < cumulative) {
+                    itemId = 'revive-potion';
+                } else {
+                    cumulative += QUEST_CONSUMABLE_WEIGHTS.cleansing;
+                    if (roll < cumulative) {
+                        itemId = this.pickRandom(CLEANSING_IDS);
+                    } else {
+                        // Tactical (rarest from quests)
+                        itemId = this.pickRandom(TACTICAL_IDS);
+                    }
+                }
+            }
         }
 
         return {
@@ -268,7 +288,7 @@ export class LootGenerationService {
      * Uses actual monster tier names from the combat system
      */
     generateCombatLoot(
-        monsterTier: 'overworld' | 'elite' | 'dungeon' | 'boss' | 'raid_boss',
+        monsterTier: MonsterTier,
         monsterLevel: number,
         character: Character,
         uniqueDropId?: string
@@ -322,6 +342,12 @@ export class LootGenerationService {
             rewards.push({ type: 'gear', item: gearItem });
         }
 
+        // Consumable drop from combat
+        const consumableDrop = this.rollCombatConsumable(monsterTier, monsterLevel);
+        if (consumableDrop) {
+            rewards.push(consumableDrop);
+        }
+
         return rewards;
     }
 
@@ -366,18 +392,80 @@ export class LootGenerationService {
 
         // Golden chests always have a consumable too
         if (chestTier === 'golden') {
-            // Pick appropriate potion tier based on room level
-            const potionId = Math.random() < 0.5
-                ? getHpPotionForLevel(roomLevel)
-                : getMpPotionForLevel(roomLevel);
-            rewards.push({
-                type: 'consumable',
-                itemId: potionId,
-                quantity: 2,
-            });
+            // 30% chance for cleansing/tactical item, otherwise HP/MP potion
+            if (Math.random() < 0.3) {
+                const pool = [...CLEANSING_IDS, ...TACTICAL_IDS];
+                const itemId = this.pickRandom(pool);
+                rewards.push({
+                    type: 'consumable',
+                    itemId,
+                    quantity: 1,
+                });
+            } else {
+                const potionId = Math.random() < 0.5
+                    ? getHpPotionForLevel(roomLevel)
+                    : getMpPotionForLevel(roomLevel);
+                rewards.push({
+                    type: 'consumable',
+                    itemId: potionId,
+                    quantity: 2,
+                });
+            }
         }
 
         return rewards;
+    }
+
+    /**
+     * Roll a consumable for combat encounters.
+     * Drop chance and rarity scale with monster tier.
+     */
+    rollCombatConsumable(monsterTier: MonsterTier, monsterLevel: number): LootReward | null {
+        // Base drop chance by tier
+        const dropChance: Record<MonsterTier, number> = {
+            overworld: 0.25,
+            dungeon: 0.40,
+            elite: 0.55,
+            boss: 0.85,
+            raid_boss: 0.95,
+        };
+
+        if (Math.random() >= dropChance[monsterTier]) {
+            return null; // No consumable this time
+        }
+
+        // Higher tiers can drop rare consumables
+        const isHighTier = monsterTier === 'boss' || monsterTier === 'raid_boss';
+
+        // Phoenix Tear: 1% from bosses only
+        if (isHighTier && Math.random() < 0.01) {
+            return { type: 'consumable', itemId: 'phoenix-tear', quantity: 1 };
+        }
+
+        // Enchantment oils: chance scales by tier
+        const oilChance: Record<MonsterTier, number> = {
+            overworld: 0.04, dungeon: 0.06, elite: 0.08, boss: 0.08, raid_boss: 0.08,
+        };
+        if (Math.random() < oilChance[monsterTier]) {
+            const oilId = this.pickRandom(ENCHANTMENT_IDS);
+            return { type: 'consumable', itemId: oilId, quantity: 1 };
+        }
+
+        // Stat elixirs: chance scales by tier
+        const elixirChance: Record<MonsterTier, number> = {
+            overworld: 0.02, dungeon: 0.03, elite: 0.05, boss: 0.05, raid_boss: 0.05,
+        };
+        if (Math.random() < elixirChance[monsterTier]) {
+            const elixirId = this.pickRandom(STAT_ELIXIR_IDS);
+            return { type: 'consumable', itemId: elixirId, quantity: 1 };
+        }
+
+        // Default: HP or MP potion (60/40 split)
+        const potionId = Math.random() < 0.6
+            ? getHpPotionForLevel(monsterLevel)
+            : getMpPotionForLevel(monsterLevel);
+
+        return { type: 'consumable', itemId: potionId, quantity: 1 };
     }
 
     /**
