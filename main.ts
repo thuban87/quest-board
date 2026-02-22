@@ -173,7 +173,7 @@ export default class QuestBoardPlugin extends Plugin {
         // Check and update streak on load (reset if missed days, reset shield weekly)
         if (this.settings.character) {
             const isPaladin = this.settings.character.class === 'paladin';
-            const streakResult = checkStreakOnLoad(this.settings.character, isPaladin);
+            const streakResult = checkStreakOnLoad(this.settings.character, isPaladin, this.settings.character.equippedGear);
 
             if (streakResult.changed) {
                 this.settings.character = streakResult.character;

@@ -164,7 +164,7 @@ export function generateTestCharacter(
         currentStreak: existingCharacter?.currentStreak || 0,
         highestStreak: existingCharacter?.highestStreak || 0,
         lastQuestCompletionDate: existingCharacter?.lastQuestCompletionDate || null,
-        shieldUsedThisWeek: false,
+        totalShieldsUsedThisWeek: 0,
         createdDate: existingCharacter?.createdDate || now,
         lastModified: now,
         tasksCompletedToday: 0,

@@ -174,47 +174,6 @@ const LEGGUARDS_OF_ENDURANCE: UniqueItemTemplate = {
 };
 
 // ============================================
-// Achievement Uniques
-// ============================================
-
-/**
- * Ring of the Completionist - Reward for 100 quests completed
- */
-const RING_OF_THE_COMPLETIONIST: UniqueItemTemplate = {
-    templateId: 'ring_of_completionist',
-    name: 'Ring of the Completionist',
-    description: 'Awarded to those who have completed 100 quests. It glows brighter with each new accomplishment.',
-    slot: 'accessory1',
-    tier: 'legendary',
-    level: 15,
-    primaryStat: 'wisdom',
-    primaryValue: 20,
-    secondaryStats: {
-        intelligence: 10,
-        charisma: 10,
-    },
-    iconEmoji: '💫',
-};
-
-/**
- * Amulet of Dedication - Reward for 30-day streak
- */
-const AMULET_OF_DEDICATION: UniqueItemTemplate = {
-    templateId: 'amulet_of_dedication',
-    name: 'Amulet of Dedication',
-    description: 'Forged from crystallized willpower. Proof of 30 days of unwavering commitment.',
-    slot: 'accessory2',
-    tier: 'epic',
-    level: 10,
-    primaryStat: 'constitution',
-    primaryValue: 18,
-    secondaryStats: {
-        wisdom: 12,
-    },
-    iconEmoji: '📿',
-};
-
-// ============================================
 // Registry
 // ============================================
 
@@ -229,10 +188,6 @@ export const UNIQUE_ITEMS: Record<string, UniqueItemTemplate> = {
     [SHADOWSTEP_BOOTS.templateId]: SHADOWSTEP_BOOTS,
     [PLATE_OF_THE_FALLEN_HERO.templateId]: PLATE_OF_THE_FALLEN_HERO,
     [LEGGUARDS_OF_ENDURANCE.templateId]: LEGGUARDS_OF_ENDURANCE,
-
-    // Achievement rewards
-    [RING_OF_THE_COMPLETIONIST.templateId]: RING_OF_THE_COMPLETIONIST,
-    [AMULET_OF_DEDICATION.templateId]: AMULET_OF_DEDICATION,
 };
 
 /**
@@ -259,6 +214,7 @@ export function createUniqueItem(
 
     return {
         id: generateGearId(),
+        templateId: template.templateId,
         name: template.name,
         description: template.description,
         slot: template.slot,

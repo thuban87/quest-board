@@ -18,6 +18,7 @@ import { getDungeonTemplate } from '../data/dungeons';
 import { findSpawnPosition } from '../data/TileRegistry';
 import type { RoomTemplate } from '../models/Dungeon';
 import { useCharacterStore } from './characterStore';
+import { getDungeonBonus } from '../services/AccessoryEffectService';
 
 // ============================================
 // Store Interface
@@ -54,6 +55,9 @@ interface DungeonState {
 
     // State machine
     explorationState: ExplorationState;
+
+    // Accessory tracking
+    phoenixFeatherUsedThisDungeon: boolean;
 
     // Actions
     enterDungeon: (templateId: string, playerLevel: number, isPreview?: boolean) => boolean;
@@ -158,6 +162,7 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
     sessionXP: 0,
     bossDefeated: false,
     explorationState: 'LOADING',
+    phoenixFeatherUsedThisDungeon: false,
 
     // Actions
     enterDungeon: (templateId: string, playerLevel: number, isPreview = false) => {
@@ -172,7 +177,14 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
 
         // Load prior exploration history for this dungeon template (for map fog of war)
         const priorExploration = useCharacterStore.getState().getDungeonExploration(templateId);
-        const combinedRooms = [...new Set([firstRoom.id, ...priorExploration])];
+        const initialRooms = [firstRoom.id, ...priorExploration];
+
+        // Map reveal: if equipped accessory grants mapReveal, fog-of-war all rooms
+        const character = useCharacterStore.getState().character;
+        if (character && getDungeonBonus(character.equippedGear, 'mapReveal')) {
+            initialRooms.push(...template.rooms.map(r => r.id));
+        }
+        const combinedRooms = [...new Set(initialRooms)];
 
         set({
             isInDungeon: true,
@@ -190,6 +202,7 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             sessionXP: 0,
             bossDefeated: false,
             explorationState: 'EXPLORING',
+            phoenixFeatherUsedThisDungeon: false,
         });
 
         return true;

@@ -99,6 +99,21 @@ export const PREFIX_DROP_RATES: Record<MonsterPrefix, number> = {
 };
 
 // =====================
+// BOSS LOOT TABLE
+// =====================
+
+/**
+ * Boss loot table for thematic boss drops.
+ * Each boss can have a curated list of items that only drop from that boss.
+ */
+export interface BossLootTable {
+    /** Drop chance (0.0–1.0) */
+    dropChance: number;
+    /** Template IDs — any gear slot, not just accessories */
+    items: string[];
+}
+
+// =====================
 // MONSTER TEMPLATE
 // =====================
 
@@ -149,6 +164,9 @@ export interface MonsterTemplate {
     // Boss System
     /** If true, this is a boss template with signature skills and special UI */
     isBoss?: boolean;
+
+    /** Boss-specific loot table for thematic drops */
+    bossLootTable?: BossLootTable;
 }
 
 // =====================

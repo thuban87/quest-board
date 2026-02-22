@@ -33,11 +33,10 @@ export class GearSlotMappingModal extends Modal {
         });
 
         const questTypes = Object.keys(this.mapping);
-        const availableSlots: GearSlot[] = [
-            'head', 'chest', 'legs', 'boots',
-            'weapon', 'shield',
-            'accessory1', 'accessory2', 'accessory3'
-        ];
+
+        // Display slots: primary slots individually, accessories as a single toggle
+        const primarySlots: GearSlot[] = ['head', 'chest', 'legs', 'boots', 'weapon', 'shield'];
+        const accessorySlots: GearSlot[] = ['accessory1', 'accessory2', 'accessory3'];
 
         // Existing mappings
         if (questTypes.length === 0) {
@@ -66,7 +65,8 @@ export class GearSlotMappingModal extends Modal {
                 // Slot checkboxes grid
                 const slotsGrid = section.createDiv({ cls: 'qb-slots-grid' });
 
-                for (const slot of availableSlots) {
+                // Primary slots (individual checkboxes)
+                for (const slot of primarySlots) {
                     const slotDiv = slotsGrid.createDiv({ cls: 'qb-slot-checkbox' });
 
                     const checkbox = slotDiv.createEl('input', { type: 'checkbox' });
@@ -87,11 +87,43 @@ export class GearSlotMappingModal extends Modal {
                         }
                     });
 
-                    const label = slotDiv.createEl('label', {
+                    slotDiv.createEl('label', {
                         text: this.formatSlotName(slot),
                         attr: { for: `slot-${questType}-${slot}` }
                     });
                 }
+
+                // Accessories (consolidated single checkbox)
+                const accDiv = slotsGrid.createDiv({ cls: 'qb-slot-checkbox' });
+                const accCheckbox = accDiv.createEl('input', { type: 'checkbox' });
+                accCheckbox.id = `slot-${questType}-accessories`;
+                const currentSlots = this.mapping[questType] || [];
+                accCheckbox.checked = accessorySlots.some(s => currentSlots.includes(s));
+
+                accCheckbox.addEventListener('change', () => {
+                    if (!this.mapping[questType]) {
+                        this.mapping[questType] = [];
+                    }
+
+                    if (accCheckbox.checked) {
+                        // Add all 3 accessory slots
+                        for (const accSlot of accessorySlots) {
+                            if (!this.mapping[questType].includes(accSlot)) {
+                                this.mapping[questType].push(accSlot);
+                            }
+                        }
+                    } else {
+                        // Remove all 3 accessory slots
+                        this.mapping[questType] = this.mapping[questType].filter(
+                            s => !accessorySlots.includes(s as GearSlot)
+                        );
+                    }
+                });
+
+                accDiv.createEl('label', {
+                    text: 'Accessories',
+                    attr: { for: `slot-${questType}-accessories` }
+                });
             }
         }
 

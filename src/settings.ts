@@ -160,11 +160,11 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     dailyNoteHeading: '## Quest Board Activity',
     createDailyNoteIfMissing: false,
     questSlotMapping: {
-        main: ['chest', 'weapon', 'head'],
-        side: ['legs', 'boots', 'shield'],
+        main: ['chest', 'weapon', 'head', 'accessory1', 'accessory2', 'accessory3'],
+        side: ['legs', 'boots', 'shield', 'accessory1', 'accessory2', 'accessory3'],
         training: ['head', 'shield'],
-        guild: ['chest', 'legs'],
-        recurring: ['boots', 'accessory1'],
+        guild: ['chest', 'legs', 'accessory1', 'accessory2', 'accessory3'],
+        recurring: ['boots', 'accessory1', 'accessory2', 'accessory3'],
         daily: [],
     },
     excludedSetFolders: ['main', 'side', 'training', 'recurring', 'daily'],
@@ -861,14 +861,18 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 new Setting(advancedContent)
                     .setName('Test Level')
                     .setDesc('Character level (1-40)')
-                    .addDropdown(dropdown => {
-                        // Add common test levels
-                        const levels = [1, 5, 10, 15, 20, 25, 30, 35, 40];
-                        levels.forEach(l => dropdown.addOption(l.toString(), `Level ${l}`));
-                        dropdown.setValue('20');
-                        dropdown.onChange((value) => {
-                            selectedLevel = parseInt(value, 10);
-                        });
+                    .addText(text => {
+                        text.setPlaceholder('20')
+                            .setValue('20')
+                            .onChange((value) => {
+                                const parsed = parseInt(value, 10);
+                                if (!isNaN(parsed) && parsed >= 1 && parsed <= 40) {
+                                    selectedLevel = parsed;
+                                }
+                            });
+                        text.inputEl.type = 'number';
+                        text.inputEl.min = '1';
+                        text.inputEl.max = '40';
                     });
 
                 new Setting(advancedContent)
@@ -1007,7 +1011,7 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                         this.plugin.settings.character.currentStreak = 0;
                         this.plugin.settings.character.highestStreak = 0;
                         this.plugin.settings.character.lastQuestCompletionDate = null;
-                        this.plugin.settings.character.shieldUsedThisWeek = false;
+                        this.plugin.settings.character.totalShieldsUsedThisWeek = 0;
                         await this.plugin.saveSettings();
                         new Notice('✓ Stats and streak reset');
                         this.display(); // Refresh settings

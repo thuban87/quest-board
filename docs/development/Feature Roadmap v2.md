@@ -245,7 +245,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | Feature | Description | Effort |
 |---------|-------------|--------|
 | **AI Dungeon Generation** | Create dungeons from text prompts via Gemini | High | ✅ Complete
-| **Accessory Special Abilities** | Unique effects: sneak past monsters, reset rest timer (cooldown), etc. | High |
+| **Accessory Special Abilities** | Unique effects: sneak past monsters, reset rest timer (cooldown), etc. | High | 🔄 Phase 1 Complete |
 | **Character Titles** | Ecosystem of titles earned from various activities | Medium |
 | **Dungeon Bosses** | Boss monsters at dungeon end | Medium | ✅ Complete
 | **Skills/Abilities** | Class-specific moves using mana (Pokemon Gen 1 style) | ✅ Complete (Phase 9 Done, Deploy Pending) |
@@ -413,6 +413,27 @@ Overhaul of the consumable system from 11 items to 30, adding stat elixirs, clea
 
 **Docs:** [Implementation Guide](feature-planning/in-review/Expanded%20Consumables%20Implementation%20Guide.md) | [Session Log](Expanded%20Consumables%20Session%20Log.md)
 
+## 🔄 Accessories & Special Abilities — In Progress (2026-02-21 → present)
+
+Phase 4 expansion adding 52 curated accessories with passive abilities, boss-specific drops, and a tiered drop system.
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| 1: Data Foundation & Models | ✅ Complete | 52 templates, schema v6 migration, model updates |
+| 1.5: Tests — Data Foundation | ✅ Complete | 60 tests, 664 total suite (0 regressions) |
+| 2: AccessoryEffectService | ✅ Complete | 9 grouped methods, pure function resolver |
+| 2.5: Tests — AccessoryEffectService | ✅ Complete | 68 tests, 732 total suite (0 regressions) |
+| 3: Drop Integration | ✅ Complete | Weighted slot selection, boss loot tables (20 bosses), smelting guard, quest tier gating, 3 feedback fixes |
+| 3.5: Tests — Drop Integration | ✅ Complete | 64 tests (40 accessory-drops + 24 boss-loot-table), 796 total suite |
+| 4a: Combat & Loot Integration | ✅ Complete | CombatService, BattleService, LootGen, StatsService, tooltips, smelting, consumable healing, inventory UX |
+| 4b: Meta-Game Integration | ✅ Complete | XP multipliers, streak shields, HP/Mana clamping, stamina cap, sell multiplier, dungeon map reveal, settings number input |
+| 5: Boss Loot Tables | ✅ Complete | Merged into Phase 3 — all 20 boss loot tables implemented |
+| 6: Achievement Accessory Migration | 📋 Planned | Wire achievement rewards |
+| 7: AI Generation | 📋 Planned | Gemini-powered accessory generation |
+| 8+: Polish & Balance | 📋 Planned | Settings UI, balance tuning |
+
+**Docs:** [Implementation Plan](feature-planning/polished-and-ready/Accessories%20%26%20Special%20Abilities%20Brainstorm.md) | [Session Log](feature-planning/polished-and-ready/Accessories%20Session%20Log.md)
+
 ---
 
 ## Architecture Notes
@@ -434,4 +455,4 @@ Overhaul of the consumable system from 11 items to 30, adding stat elixirs, clea
 
 ---
 
-**Last Updated:** 2026-02-21 (Expanded Consumables feature complete — all 9 phases done, 604 tests passing)
+**Last Updated:** 2026-02-21 (Accessories Phase 4b complete — all meta-game integrations live: XP, streak, HP/Mana, stamina, sell, dungeon)

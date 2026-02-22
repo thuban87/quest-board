@@ -15,6 +15,7 @@ import {
     LootReward,
     LootDrop,
     PRIMARY_GEAR_SLOTS,
+    ALL_GEAR_SLOTS,
     GEAR_SLOT_ICONS,
     TIER_INFO,
     GEAR_TIERS,
@@ -25,12 +26,24 @@ import {
     calculateBaseStatValue,
     calculateSellValue,
     generateGearId,
+    getNextTier,
+    EquippedGearMap,
 } from '../models/Gear';
-import { createUniqueItem, UniqueItemTemplate } from '../data/uniqueItems';
+import { createUniqueItem } from '../data/uniqueItems';
 import { setBonusService } from './SetBonusService';
 import { getHpPotionForLevel, getMpPotionForLevel, CLEANSING_IDS, TACTICAL_IDS, STAT_ELIXIR_IDS, ENCHANTMENT_IDS } from '../models/Consumable';
 import { MonsterTier } from '../config/combatConfig';
 import { getGoldMultiplierFromPowerUps, expirePowerUps } from './PowerUpService';
+import { getGoldMultiplier, getLootBonus, getUtilityBonus } from './AccessoryEffectService';
+import {
+    ACCESSORY_TIER_POOLS,
+    AccessoryTier,
+    AccessoryType,
+    getAccessoryTemplate,
+    getAccessoryTemplatesByTier,
+    generateT1AccessoryName,
+} from '../data/accessories';
+import { getMonsterTemplate } from '../data/monsters';
 
 // ============================================
 // Configuration
@@ -41,12 +54,29 @@ import { getGoldMultiplierFromPowerUps, expirePowerUps } from './PowerUpService'
  * Users can override this in settings.
  */
 const DEFAULT_QUEST_SLOT_MAPPING: Record<string, GearSlot[]> = {
-    main: ['chest', 'weapon', 'head'],
-    side: ['legs', 'boots', 'shield'],
+    main: ['chest', 'weapon', 'head', 'accessory1', 'accessory2', 'accessory3'],
+    side: ['legs', 'boots', 'shield', 'accessory1', 'accessory2', 'accessory3'],
     training: ['head', 'shield'],
-    guild: ['chest', 'legs'],
-    recurring: ['boots', 'accessory1'],
+    guild: ['chest', 'legs', 'accessory1', 'accessory2', 'accessory3'],
+    recurring: ['boots', 'accessory1', 'accessory2', 'accessory3'],
     daily: [], // Daily quests give consumables, not gear
+};
+
+/**
+ * Weighted slot selection for combat and chest loot.
+ * Primary slots (head, chest, legs, boots, weapon, shield) have weight 1.0.
+ * Accessory slots have weight 0.4 each.
+ */
+export const GEAR_SLOT_WEIGHTS: Record<GearSlot, number> = {
+    head: 1.0,
+    chest: 1.0,
+    legs: 1.0,
+    boots: 1.0,
+    weapon: 1.0,
+    shield: 1.0,
+    accessory1: 0.4,
+    accessory2: 0.4,
+    accessory3: 0.4,
 };
 
 /**
@@ -176,16 +206,18 @@ export class LootGenerationService {
      */
     generateQuestLoot(quest: Quest, character: Character): LootDrop {
         const rewards: LootReward[] = [];
+        const gear = character.equippedGear;
 
-        // 1. Always give gold (based on priority/urgency), boosted by active power-ups
+        // 1. Always give gold (based on priority/urgency), boosted by active power-ups + accessories
         const baseGoldAmount = this.calculateQuestGold(quest.priority);
         const activePowerUps = expirePowerUps(character.activePowerUps || []);
         const goldMultiplier = getGoldMultiplierFromPowerUps(activePowerUps);
-        const goldAmount = Math.floor(baseGoldAmount * goldMultiplier);
-        rewards.push({ type: 'gold', amount: goldAmount });
-
-        // 2. Check if this quest type rewards gear
         const questType = quest.questType?.toLowerCase() || 'main';
+        // Phase 4a: Daily quests use 'daily' gold source, other quests use 'quest'
+        const accGoldSource = questType === 'daily' ? 'daily' : 'quest';
+        const accGoldMult = 1 + getGoldMultiplier(gear, accGoldSource as any);
+        const goldAmount = Math.floor(baseGoldAmount * goldMultiplier * accGoldMult);
+        rewards.push({ type: 'gold', amount: goldAmount });
         const isTraining = questType === 'training' || character.isTrainingMode;
 
         // Daily quests: guaranteed consumable + 25% chance for gear
@@ -219,17 +251,24 @@ export class LootGenerationService {
         // Get drop rates based on mode
         const dropRates = isTraining ? QUEST_LOOT_RATES.training : QUEST_LOOT_RATES.normal;
 
-        // 3. Roll for gear (RNG gated)
+        // 3. Roll for gear (RNG gated) — boost with accessory loot bonuses
+        const accGearDropBonus = getLootBonus(gear, 'gearDrop');
         const possibleSlots = this.getSlotsForQuestType(questType);
-        if (possibleSlots.length > 0 && Math.random() < dropRates.gear) {
+        if (possibleSlots.length > 0 && Math.random() < (dropRates.gear + accGearDropBonus)) {
             const slot = this.pickRandom(possibleSlots);
-            // Use quest.difficulty for tier, defaulting to 'medium' for old quests without the field
-            const difficulty = (quest as any).difficulty || 'medium';
-            const tier = this.rollTier(difficulty, isTraining);
-            const level = this.rollGearLevel(character.level);
 
-            const gearItem = this.generateGearItem(slot, tier, level, 'quest', quest.questId, character.class, quest.path);
-            rewards.push({ type: 'gear', item: gearItem });
+            // Accessory slot picked from quest mapping → apply tier gating
+            if (slot.startsWith('accessory')) {
+                const accessory = this.generateAccessoryForSlot(slot, character.level, 'quest', quest.questId);
+                rewards.push({ type: 'gear', item: accessory });
+            } else {
+                // Use quest.difficulty for tier, defaulting to 'medium' for old quests without the field
+                const difficulty = (quest as any).difficulty || 'medium';
+                const tier = this.rollTier(difficulty, isTraining);
+                const level = this.rollGearLevel(character.level);
+                const gearItem = this.generateGearItem(slot, tier, level, 'quest', quest.questId, character.class, quest.path);
+                rewards.push({ type: 'gear', item: gearItem });
+            }
         }
 
         // 4. Roll for consumable (RNG gated, separate from gear)
@@ -284,18 +323,21 @@ export class LootGenerationService {
     }
 
     /**
-     * Generate loot from combat victory
-     * Uses actual monster tier names from the combat system
+     * Generate loot from combat victory.
+     * Uses actual monster tier names from the combat system.
+     * @param monsterTemplateId - Optional monster template ID for boss loot table lookup
      */
     generateCombatLoot(
         monsterTier: MonsterTier,
         monsterLevel: number,
         character: Character,
-        uniqueDropId?: string
+        uniqueDropId?: string,
+        monsterTemplateId?: string
     ): LootDrop {
         const rewards: LootReward[] = [];
+        const gear = character.equippedGear;
 
-        // Gold based on monster tier
+        // Gold based on monster tier, boosted by power-ups + accessories
         const goldMultiplier: Record<typeof monsterTier, number> = {
             overworld: 1.0,
             dungeon: 1.5,
@@ -306,7 +348,8 @@ export class LootGenerationService {
         const baseGold = 10 + monsterLevel * 2;
         const combatActivePowerUps = expirePowerUps(character.activePowerUps || []);
         const combatGoldMultiplier = getGoldMultiplierFromPowerUps(combatActivePowerUps);
-        const goldAmount = Math.floor(baseGold * goldMultiplier[monsterTier] * combatGoldMultiplier);
+        const accCombatGoldMult = 1 + getGoldMultiplier(gear, 'combat');
+        const goldAmount = Math.floor(baseGold * goldMultiplier[monsterTier] * combatGoldMultiplier * accCombatGoldMult);
         rewards.push({ type: 'gold', amount: goldAmount });
 
         // Gear drop chance based on tier
@@ -324,28 +367,53 @@ export class LootGenerationService {
                 const uniqueItem = createUniqueItem(uniqueDropId, 'combat');
                 if (uniqueItem) {
                     rewards.push({ type: 'gear', item: uniqueItem });
-                    return rewards; // Unique replaces normal drop
+                    // Don't return early — boss loot table is a separate roll below
                 }
             }
 
-            // Normal procedural gear - map tier to difficulty for quality roll
-            const slot = this.pickRandom(PRIMARY_GEAR_SLOTS);
-            const difficulty = (monsterTier === 'boss' || monsterTier === 'raid_boss')
-                ? 'epic'
-                : monsterTier === 'elite'
-                    ? 'hard'
-                    : 'medium';
-            const tier = this.rollTier(difficulty, false);
-            const level = this.rollGearLevel(monsterLevel);
+            // Normal procedural gear (only if no unique dropped)
+            if (!uniqueDropId || !rewards.some(r => r.type === 'gear')) {
+                const slot = this.pickWeightedSlot(character.isTrainingMode);
+                if (slot.startsWith('accessory')) {
+                    const accessory = this.generateAccessoryForSlot(slot as GearSlot, character.level, 'combat');
+                    rewards.push({ type: 'gear', item: accessory });
+                } else {
+                    const difficulty = (monsterTier === 'boss' || monsterTier === 'raid_boss')
+                        ? 'epic'
+                        : monsterTier === 'elite'
+                            ? 'hard'
+                            : 'medium';
+                    const tier = this.rollTier(difficulty, false);
+                    const level = this.rollGearLevel(monsterLevel);
+                    const gearItem = this.generateGearItem(slot as GearSlot, tier, level, 'combat', undefined, character.class);
+                    rewards.push({ type: 'gear', item: gearItem });
+                }
+            }
+        }
 
-            const gearItem = this.generateGearItem(slot, tier, level, 'combat', undefined, character.class);
-            rewards.push({ type: 'gear', item: gearItem });
+        // Boss loot table handling (separate from normal gear drop)
+        if (monsterTemplateId) {
+            const bossLoot = this.rollBossLootTable(monsterTemplateId, character);
+            if (bossLoot) {
+                rewards.push(bossLoot);
+            }
         }
 
         // Consumable drop from combat
         const consumableDrop = this.rollCombatConsumable(monsterTier, monsterLevel);
         if (consumableDrop) {
             rewards.push(consumableDrop);
+        }
+
+        // Phase 4a: Boss consumable guarantee from accessories
+        if ((monsterTier === 'boss' || monsterTier === 'raid_boss') && !consumableDrop) {
+            const bossConsumableChance = getUtilityBonus(gear, 'bossConsumable');
+            if (bossConsumableChance > 0) {
+                const guaranteedConsumable = this.rollCombatConsumable(monsterTier, monsterLevel);
+                if (guaranteedConsumable) {
+                    rewards.push(guaranteedConsumable);
+                }
+            }
         }
 
         return rewards;
@@ -360,8 +428,9 @@ export class LootGenerationService {
         character: Character
     ): LootDrop {
         const rewards: LootReward[] = [];
+        const gear = character.equippedGear;
 
-        // Gold amount by chest tier
+        // Gold amount by chest tier, boosted by accessories
         const goldRanges = {
             wooden: { min: 10, max: 30 },
             iron: { min: 25, max: 60 },
@@ -370,7 +439,8 @@ export class LootGenerationService {
         const range = goldRanges[chestTier];
         const chestActivePowerUps = expirePowerUps(character.activePowerUps || []);
         const chestGoldMultiplier = getGoldMultiplierFromPowerUps(chestActivePowerUps);
-        const goldAmount = Math.floor(this.randomRange(range.min, range.max) * chestGoldMultiplier);
+        const accDungeonGoldMult = 1 + getGoldMultiplier(gear, 'dungeon');
+        const goldAmount = Math.floor(this.randomRange(range.min, range.max) * chestGoldMultiplier * accDungeonGoldMult);
         rewards.push({ type: 'gold', amount: goldAmount });
 
         // Gear chance by tier
@@ -381,13 +451,17 @@ export class LootGenerationService {
         };
 
         if (Math.random() < gearChance[chestTier]) {
-            const slot = this.pickRandom(PRIMARY_GEAR_SLOTS);
-            const difficulty = chestTier === 'golden' ? 'hard' : chestTier === 'iron' ? 'medium' : 'easy';
-            const tier = this.rollTier(difficulty, false);
-            const level = this.rollGearLevel(roomLevel);
-
-            const gearItem = this.generateGearItem(slot, tier, level, 'exploration', undefined, character.class);
-            rewards.push({ type: 'gear', item: gearItem });
+            const slot = this.pickWeightedSlot(character.isTrainingMode);
+            if (slot.startsWith('accessory')) {
+                const accessory = this.generateAccessoryForSlot(slot as GearSlot, roomLevel, 'exploration');
+                rewards.push({ type: 'gear', item: accessory });
+            } else {
+                const difficulty = chestTier === 'golden' ? 'hard' : chestTier === 'iron' ? 'medium' : 'easy';
+                const tier = this.rollTier(difficulty, false);
+                const level = this.rollGearLevel(roomLevel);
+                const gearItem = this.generateGearItem(slot as GearSlot, tier, level, 'exploration', undefined, character.class);
+                rewards.push({ type: 'gear', item: gearItem });
+            }
         }
 
         // Golden chests always have a consumable too
@@ -729,10 +803,299 @@ export class LootGenerationService {
         return this.pickRandom(descriptions[tier]);
     }
 
+    // ============================================
+    // Accessory Generation Methods
+    // ============================================
+
+    /**
+     * Pick a weighted random gear slot.
+     * Primary slots have weight 1.0, accessory slots 0.4.
+     * When excludeAccessories is true (training mode), only primary slots are used.
+     */
+    pickWeightedSlot(excludeAccessories: boolean = false): GearSlot {
+        const slots = excludeAccessories ? PRIMARY_GEAR_SLOTS : ALL_GEAR_SLOTS;
+        const weights = slots.map(s => GEAR_SLOT_WEIGHTS[s]);
+        const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+        let roll = Math.random() * totalWeight;
+
+        for (let i = 0; i < slots.length; i++) {
+            roll -= weights[i];
+            if (roll < 0) {
+                return slots[i];
+            }
+        }
+
+        return slots[slots.length - 1]; // Fallback
+    }
+
+    /**
+     * Roll an accessory tier based on character level.
+     * Uses ACCESSORY_TIER_POOLS for level-gated weights.
+     */
+    rollAccessoryTier(level: number): AccessoryTier {
+        // Find the matching level bracket
+        const pool = ACCESSORY_TIER_POOLS.find(p => level <= p.maxLevel)
+            || ACCESSORY_TIER_POOLS[ACCESSORY_TIER_POOLS.length - 1];
+
+        const tiers: AccessoryTier[] = ['T1', 'T2', 'T3', 'T4'];
+        const totalWeight = tiers.reduce((sum, t) => sum + pool.weights[t], 0);
+        let roll = Math.random() * totalWeight;
+
+        for (const tier of tiers) {
+            roll -= pool.weights[tier];
+            if (roll < 0) {
+                return tier;
+            }
+        }
+
+        return 'T1'; // Fallback
+    }
+
+    /**
+     * Generate an accessory item for a specific slot.
+     * Handles both T1 (procedural) and T2+ (curated template) paths.
+     */
+    generateAccessoryForSlot(
+        slot: GearSlot,
+        level: number,
+        source: 'quest' | 'combat' | 'exploration' | 'shop' | 'smelt' = 'quest',
+        sourceId?: string
+    ): GearItem {
+        const accessoryTier = this.rollAccessoryTier(level);
+        const gearLevel = this.rollGearLevel(level);
+
+        if (accessoryTier === 'T1') {
+            return this.generateT1Accessory(slot, gearLevel, source, sourceId);
+        } else {
+            return this.generateCuratedAccessory(slot, accessoryTier, gearLevel, source, sourceId);
+        }
+    }
+
+    /**
+     * Generate a procedural T1 accessory with no special abilities.
+     * Stats are ~65% of normal gear stats.
+     */
+    private generateT1Accessory(
+        slot: GearSlot,
+        level: number,
+        source: 'quest' | 'combat' | 'exploration' | 'shop' | 'smelt',
+        sourceId?: string
+    ): GearItem {
+        // Pick a cosmetic accessory type based on slot
+        const typeMap: Record<string, AccessoryType> = {
+            accessory1: 'ring',
+            accessory2: 'amulet',
+            accessory3: 'charm',
+        };
+        const accessoryType = typeMap[slot] || this.pickRandom(['ring', 'amulet', 'charm'] as AccessoryType[]);
+        const name = generateT1AccessoryName(accessoryType);
+
+        // T1 stats are ~65% of normal
+        const stats = this.generateGearStats(slot, 'common', level);
+        stats.primaryValue = Math.floor(stats.primaryValue * 0.65);
+        const sellValue = calculateSellValue(level, 'common');
+
+        return {
+            id: generateGearId(),
+            name,
+            description: 'A simple accessory with no special properties.',
+            slot,
+            tier: 'common',
+            level,
+            stats,
+            sellValue,
+            iconEmoji: GEAR_SLOT_ICONS[slot],
+            source,
+            sourceId,
+            acquiredAt: new Date().toISOString(),
+            // No templateId for T1 items
+        };
+    }
+
+    /**
+     * Generate a curated T2+ accessory from a template.
+     * Resolves a random template for the given tier.
+     */
+    private generateCuratedAccessory(
+        slot: GearSlot,
+        accessoryTier: AccessoryTier,
+        level: number,
+        source: 'quest' | 'combat' | 'exploration' | 'shop' | 'smelt',
+        sourceId?: string
+    ): GearItem {
+        // Get all non-boss templates for this tier
+        const templates = getAccessoryTemplatesByTier(accessoryTier)
+            .filter(t => !t.bossTemplateId);
+
+        if (templates.length === 0) {
+            // Fallback to T1 if no templates available for tier
+            return this.generateT1Accessory(slot, level, source, sourceId);
+        }
+
+        const template = this.pickRandom(templates);
+
+        // Map accessory tier to gear tier
+        const tierMap: Record<AccessoryTier, GearTier> = {
+            T1: 'common',
+            T2: 'journeyman',
+            T3: 'master',
+            T4: 'legendary',
+        };
+        const gearTier = tierMap[accessoryTier];
+
+        // Build stats from template
+        const primaryStats = Object.entries(template.stats);
+        const primaryStat: StatType = primaryStats.length > 0
+            ? primaryStats[0][0] as StatType
+            : 'wisdom';
+        const primaryValue = primaryStats.length > 0
+            ? primaryStats[0][1] as number
+            : 0;
+
+        const secondaryStats: Partial<Record<StatType, number>> = {};
+        for (let i = 1; i < primaryStats.length; i++) {
+            secondaryStats[primaryStats[i][0] as StatType] = primaryStats[i][1] as number;
+        }
+
+        const stats: GearStats = {
+            primaryStat,
+            primaryValue,
+            ...(Object.keys(secondaryStats).length > 0 ? { secondaryStats } : {}),
+        };
+
+        const sellValue = calculateSellValue(level, gearTier);
+
+        return {
+            id: generateGearId(),
+            name: template.name,
+            description: `A ${accessoryTier} ${template.accessoryType} with special properties.`,
+            slot,
+            tier: gearTier,
+            level,
+            stats,
+            sellValue,
+            iconEmoji: GEAR_SLOT_ICONS[slot],
+            source,
+            sourceId,
+            acquiredAt: new Date().toISOString(),
+            templateId: template.templateId,
+        };
+    }
+
+    /**
+     * Roll against a boss's loot table for a unique accessory drop.
+     * Performs uniqueness check — if the character already owns the item,
+     * awards extra gold instead.
+     */
+    rollBossLootTable(
+        monsterTemplateId: string,
+        character: Character
+    ): LootReward | null {
+        const monster = getMonsterTemplate(monsterTemplateId);
+        if (!monster?.bossLootTable) {
+            return null;
+        }
+
+        const { dropChance, items } = monster.bossLootTable;
+
+        // Roll against drop chance
+        if (Math.random() >= dropChance) {
+            return null;
+        }
+
+        if (items.length === 0) {
+            return null;
+        }
+
+        // Select random item from loot table
+        const templateId = this.pickRandom(items);
+
+        // Uniqueness check: does character already own this item?
+        const ownsInInventory = (character.gearInventory || []).some(
+            (item: GearItem) => item.templateId === templateId
+        );
+        const ownsEquipped = character.equippedGear
+            ? Object.values(character.equippedGear as EquippedGearMap).some(
+                (item: GearItem | null) => item?.templateId === templateId
+            )
+            : false;
+
+        if (ownsInInventory || ownsEquipped) {
+            // Already owns — award extra gold instead
+            const extraGold = 50 + (character.level * 3);
+            return { type: 'gold', amount: extraGold };
+        }
+
+        // Resolve template — try accessory first, then unique items
+        const accessoryTemplate = getAccessoryTemplate(templateId);
+        if (accessoryTemplate) {
+            // Map accessory tier to gear tier
+            const tierMap: Record<AccessoryTier, GearTier> = {
+                T1: 'common',
+                T2: 'journeyman',
+                T3: 'master',
+                T4: 'legendary',
+            };
+            const gearTier = tierMap[accessoryTemplate.tier];
+            const level = character.level;
+
+            // Build stats from template
+            const primaryStats = Object.entries(accessoryTemplate.stats);
+            const primaryStat: StatType = primaryStats.length > 0
+                ? primaryStats[0][0] as StatType
+                : 'wisdom';
+            const primaryValue = primaryStats.length > 0
+                ? primaryStats[0][1] as number
+                : 0;
+
+            const secondaryStats: Partial<Record<StatType, number>> = {};
+            for (let i = 1; i < primaryStats.length; i++) {
+                secondaryStats[primaryStats[i][0] as StatType] = primaryStats[i][1] as number;
+            }
+
+            const stats: GearStats = {
+                primaryStat,
+                primaryValue,
+                ...(Object.keys(secondaryStats).length > 0 ? { secondaryStats } : {}),
+            };
+
+            // Assign to a random accessory slot
+            const slotOptions: GearSlot[] = ['accessory1', 'accessory2', 'accessory3'];
+            const slot = this.pickRandom(slotOptions);
+            const sellValue = calculateSellValue(level, gearTier);
+
+            return {
+                type: 'gear',
+                item: {
+                    id: generateGearId(),
+                    name: accessoryTemplate.name,
+                    description: `A boss-exclusive ${accessoryTemplate.tier} ${accessoryTemplate.accessoryType}.`,
+                    slot,
+                    tier: gearTier,
+                    level,
+                    stats,
+                    sellValue,
+                    iconEmoji: GEAR_SLOT_ICONS[slot],
+                    source: 'combat',
+                    acquiredAt: new Date().toISOString(),
+                    templateId: accessoryTemplate.templateId,
+                },
+            };
+        }
+
+        // Try unique items as fallback
+        const uniqueItem = createUniqueItem(templateId, 'combat');
+        if (uniqueItem) {
+            return { type: 'gear', item: uniqueItem };
+        }
+
+        return null;
+    }
+
     /**
      * Pick a random element from an array
      */
-    private pickRandom<T>(arr: T[]): T {
+    pickRandom<T>(arr: T[]): T {
         return arr[Math.floor(Math.random() * arr.length)];
     }
 

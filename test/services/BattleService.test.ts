@@ -213,6 +213,8 @@ beforeEach(() => {
             critChance: 10,
             dodgeChance: 5,
             blockChance: 0,
+            fireResist: 0,
+            critDamageBonus: 0,
             attackStyle: 'physical',
             damageModifier: 1.0,
             attackName: 'Attack',

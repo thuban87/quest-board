@@ -7,6 +7,7 @@
 
 import { Character, CharacterStats, CharacterClass } from '../models/Character';
 import { GearItem, EquippedGearMap, ALL_GEAR_SLOTS, GearSlot } from '../models/Gear';
+import { getCombatBonus, getStatMultiplier } from './AccessoryEffectService';
 import {
     CLASS_COMBAT_CONFIG,
     getLevelModifier,
@@ -53,6 +54,10 @@ export interface CombatStats {
     magicDefense: number;
     dodgeChance: number;
     blockChance: number;
+
+    // Accessory bonuses (precomputed at battle start)
+    fireResist: number;
+    critDamageBonus: number;
 
     // Metadata
     attackStyle: AttackStyle;
@@ -162,59 +167,65 @@ export function deriveCombatStats(character: Character): CombatStats {
     const levelMod = getLevelModifier(cls, level);
 
     // Get total stats (base + bonuses + gear)
-    const gearStats = aggregateGearStats(character.equippedGear);
+    const gear = character.equippedGear;
+    const gearStats = aggregateGearStats(gear);
 
-    const totalStats: CharacterStats = {
-        strength: character.baseStats.strength +
-            (character.statBonuses?.strength || 0) +
-            (gearStats.statBonuses.strength || 0),
-        intelligence: character.baseStats.intelligence +
-            (character.statBonuses?.intelligence || 0) +
-            (gearStats.statBonuses.intelligence || 0),
-        wisdom: character.baseStats.wisdom +
-            (character.statBonuses?.wisdom || 0) +
-            (gearStats.statBonuses.wisdom || 0),
-        constitution: character.baseStats.constitution +
-            (character.statBonuses?.constitution || 0) +
-            (gearStats.statBonuses.constitution || 0),
-        dexterity: character.baseStats.dexterity +
-            (character.statBonuses?.dexterity || 0) +
-            (gearStats.statBonuses.dexterity || 0),
-        charisma: character.baseStats.charisma +
-            (character.statBonuses?.charisma || 0) +
-            (gearStats.statBonuses.charisma || 0),
+    // Compute flat stats, then apply accessory stat multiplier (Heart of the Wyrm: +10% ALL)
+    const computeStat = (stat: keyof CharacterStats): number => {
+        const flat = (character.baseStats[stat] || 0) +
+            (character.statBonuses?.[stat] || 0) +
+            (gearStats.statBonuses[stat] || 0);
+        const accMult = getStatMultiplier(gear, stat);
+        return Math.floor(flat * (1 + accMult));
     };
 
-    // HP: BASE + (CON * multiplier) + (Level * 10) + gear bonus, * class modifier
+    const totalStats: CharacterStats = {
+        strength: computeStat('strength'),
+        intelligence: computeStat('intelligence'),
+        wisdom: computeStat('wisdom'),
+        constitution: computeStat('constitution'),
+        dexterity: computeStat('dexterity'),
+        charisma: computeStat('charisma'),
+    };
+
+    // HP: BASE + (CON * multiplier) + (Level * 10) + gear bonus, * class modifier, * accessory % bonus
     // Tanks (Warrior/Cleric) use reduced CON scaling to balance their high CON stats
     const isTank = cls === 'warrior' || cls === 'cleric';
     const conMultiplier = isTank ? HP_PER_CON_TANK : HP_PER_CON;
     const baseHP = HP_BASE + (totalStats.constitution * conMultiplier) + (level * HP_PER_LEVEL) + gearStats.hpBonus;
-    const maxHP = Math.floor(baseHP * classConfig.hpModifier * levelMod.hp);
+    const accMaxHpBonus = getCombatBonus(gear, 'maxHp');
+    const maxHP = Math.floor(baseHP * classConfig.hpModifier * levelMod.hp * (1 + accMaxHpBonus));
 
-    // Mana: 20 + (INT * 3) + (Level * 5) + gear bonus
-    const maxMana = 20 + (totalStats.intelligence * 3) + (level * 5) + gearStats.manaBonus;
+    // Mana: 20 + (INT * 3) + (Level * 5) + gear bonus, * accessory % bonus
+    const baseMana = 20 + (totalStats.intelligence * 3) + (level * 5) + gearStats.manaBonus;
+    const accMaxManaBonus = getCombatBonus(gear, 'maxMana');
+    const maxMana = Math.floor(baseMana * (1 + accMaxManaBonus));
 
-    // Physical Attack: max(STR, DEX) + gear attack power
-    const physicalAttack = Math.max(totalStats.strength, totalStats.dexterity) + gearStats.physicalAttack;
+    // Physical Attack: max(STR, DEX) + gear attack power + accessory attack bonus
+    const accAttack = getCombatBonus(gear, 'attack');
+    const physicalAttack = Math.max(totalStats.strength, totalStats.dexterity) + gearStats.physicalAttack + accAttack;
 
-    // Magic Attack: max(INT, WIS, CHA) + gear magic attack
-    const magicAttack = Math.max(totalStats.intelligence, totalStats.wisdom, totalStats.charisma) + gearStats.magicAttack;
+    // Magic Attack: max(INT, WIS, CHA) + gear magic attack + accessory attack bonus
+    const magicAttack = Math.max(totalStats.intelligence, totalStats.wisdom, totalStats.charisma) + gearStats.magicAttack + accAttack;
 
-    // Defense: CON/2 + gear defense * 1.5 (multiplier tuned from simulation v25)
-    const defense = Math.floor(totalStats.constitution / 2) + Math.floor(gearStats.defense * 1.5);
+    // Defense: CON/2 + gear defense * 1.5 + accessory physical defense
+    const defense = Math.floor(totalStats.constitution / 2) + Math.floor(gearStats.defense * 1.5) + getCombatBonus(gear, 'physDef');
 
-    // Magic Defense: WIS/2 + gear magic defense * 1.5
-    const magicDefense = Math.floor(totalStats.wisdom / 2) + Math.floor(gearStats.magicDefense * 1.5);
+    // Magic Defense: WIS/2 + gear magic defense * 1.5 + accessory magic defense
+    const magicDefense = Math.floor(totalStats.wisdom / 2) + Math.floor(gearStats.magicDefense * 1.5) + getCombatBonus(gear, 'magDef');
 
-    // Crit Chance: DEX * 0.5% + gear bonus
-    const critChance = (totalStats.dexterity * CRIT_PER_DEX) + gearStats.critChance;
+    // Crit Chance: DEX * 0.5% + gear bonus + accessory crit
+    const critChance = (totalStats.dexterity * CRIT_PER_DEX) + gearStats.critChance + getCombatBonus(gear, 'crit');
 
-    // Dodge Chance: DEX * 0.5% + gear bonus, capped at 25%
-    const dodgeChance = Math.min(DODGE_CAP, (totalStats.dexterity * DODGE_PER_DEX) + gearStats.dodgeChance);
+    // Dodge Chance: DEX * 0.5% + gear bonus + accessory dodge, capped at 25%
+    const dodgeChance = Math.min(DODGE_CAP, (totalStats.dexterity * DODGE_PER_DEX) + gearStats.dodgeChance + getCombatBonus(gear, 'dodge'));
 
-    // Block Chance: from shield only
-    const blockChance = gearStats.blockChance;
+    // Block Chance: from shield + accessory block
+    const blockChance = gearStats.blockChance + getCombatBonus(gear, 'block');
+
+    // Accessory bonuses stored for downstream use
+    const fireResist = getCombatBonus(gear, 'fire_resist');
+    const critDamageBonus = getCombatBonus(gear, 'critDamage');
 
     // Damage modifier: class base * level modifier
     const damageModifier = classConfig.damageModifier * levelMod.damage;
@@ -253,6 +264,8 @@ export function deriveCombatStats(character: Character): CombatStats {
         magicDefense,
         dodgeChance,
         blockChance,
+        fireResist,
+        critDamageBonus,
         attackStyle: classConfig.attackStyle,
         damageModifier,
         attackName: classConfig.attackName,

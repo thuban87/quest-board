@@ -137,6 +137,8 @@ describe('Attack Style Logic', () => {
         magicDefense: 40,
         dodgeChance: 10,
         blockChance: 0,
+        fireResist: 0,
+        critDamageBonus: 0,
         attackName: 'Attack',
     };
 

@@ -9,6 +9,8 @@ import { ConsumableDefinition, ConsumableEffect, CONSUMABLES } from '../models/C
 import { isDoTEffect, isHardCC, getStatusDisplayName } from '../models/StatusEffect';
 import { useBattleStore, ConsumableBuff } from '../store/battleStore';
 import { copyVolatileStatusToPersistent } from './BattleService';
+import { getUtilityBonus } from './AccessoryEffectService';
+import { useCharacterStore } from '../store/characterStore';
 
 export interface ConsumableResult {
     success: boolean;
@@ -63,11 +65,21 @@ function handleHpRestore(def: ConsumableDefinition): ConsumableResult {
     const store = useBattleStore.getState();
     const maxHP = store.playerStats?.maxHP ?? 0;
     const currentHP = store.playerCurrentHP;
-    const newHP = Math.min(maxHP, currentHP + def.effectValue);
+
+    // Phase 4a: Apply accessory potion healing bonus
+    const character = useCharacterStore.getState().character;
+    const potionBonus = character?.equippedGear
+        ? getUtilityBonus(character.equippedGear, 'potionHealing')
+        : 0;
+    const healAmount = Math.floor(def.effectValue * (1 + potionBonus));
+
+    const newHP = Math.min(maxHP, currentHP + healAmount);
     store.updatePlayerHP(newHP);
     return {
         success: true,
-        logMessage: `Used ${def.name}: +${def.effectValue} HP!`,
+        logMessage: potionBonus > 0
+            ? `Used ${def.name}: +${healAmount} HP! (${Math.round(potionBonus * 100)}% bonus)`
+            : `Used ${def.name}: +${def.effectValue} HP!`,
         endsTurn: true,
     };
 }
@@ -77,11 +89,21 @@ function handleManaRestore(def: ConsumableDefinition): ConsumableResult {
     const store = useBattleStore.getState();
     const maxMana = store.playerStats?.maxMana ?? 0;
     const currentMana = store.playerCurrentMana;
-    const newMana = Math.min(maxMana, currentMana + def.effectValue);
+
+    // Phase 4a: Apply accessory potion healing bonus to mana too
+    const character = useCharacterStore.getState().character;
+    const potionBonus = character?.equippedGear
+        ? getUtilityBonus(character.equippedGear, 'potionHealing')
+        : 0;
+    const restoreAmount = Math.floor(def.effectValue * (1 + potionBonus));
+
+    const newMana = Math.min(maxMana, currentMana + restoreAmount);
     store.updatePlayerMana(newMana);
     return {
         success: true,
-        logMessage: `Used ${def.name}: +${def.effectValue} MP!`,
+        logMessage: potionBonus > 0
+            ? `Used ${def.name}: +${restoreAmount} MP! (${Math.round(potionBonus * 100)}% bonus)`
+            : `Used ${def.name}: +${def.effectValue} MP!`,
         endsTurn: true,
     };
 }
