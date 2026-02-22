@@ -295,3 +295,50 @@ Each session entry includes:
 
 ### Next Session Prompt
 > Phase 4b (Meta-Game Integration) is complete. Begin Phase 4c: unit and integration tests for all Phase 4a/4b consumer integrations. Key areas to test: XP multiplier stacking in useXPAward, streak shield generalization in StreakService, HP/Mana clamping in characterStore, dynamic stamina cap, sell gold multiplier in InventoryModal.sellItem, and dungeon map reveal in dungeonStore.
+
+---
+
+## Session 7 — 2026-02-22 — Phase 4c: Tests — Consumer Integration ✅
+
+**Focus:** Integration tests for all Phase 4a/4b consumer integrations, plus React testing infrastructure setup
+
+**Completed:**
+- [x] Installed `@testing-library/react` + `jsdom` for React hook/component testing
+- [x] Updated `vitest.config.ts` environment from `node` → `jsdom`
+- [x] Cleaned up `test/setup.ts` — removed manual DOM mock (jsdom provides it)
+- [x] Wrote `test/accessory-integration.test.ts` — 33 tests across 8 describe blocks
+- [x] Fixed pre-existing import path bugs in `accessory-drops.test.ts` and `boss-loot-table.test.ts`
+
+**Files Changed:**
+- `test/accessory-integration.test.ts` — **[NEW]** 33 integration tests covering 8 consumer systems
+- `vitest.config.ts` — Environment change (`node` → `jsdom`)
+- `test/setup.ts` — Removed manual DOM mock
+- `test/accessory-drops.test.ts` — Fixed import paths (`../../src/` → `../src/`)
+- `test/boss-loot-table.test.ts` — Fixed import paths (`../../src/` → `../src/`)
+- `package.json` — Added `@testing-library/react`, `jsdom` devDependencies
+- `package-lock.json` — Updated lockfile
+
+**Testing Notes:**
+- 829 tests pass (0 failures), up from 765
+  - +33 new integration tests
+  - +31 recovered tests from path fix (accessory-drops + boss-loot-table)
+- Test coverage across 8 describe blocks:
+  - `deriveCombatStats` (5) — crit/dodge/block, HP/Mana%, stat multiplier, loot tier, fire resist
+  - `handleVictory` (3) — XP multiplier, gold multiplier, boss loot templating
+  - `LootGenerationService` (5) — quest gold, daily gold, set chance, tier upgrade, boss consumable
+  - `StreakService` (4) — shield counts, weekly reset, streak preservation
+  - `characterStore` (6) — HP/Mana clamping, stamina cap, sell value, rapid equip
+  - `dungeonStore` (2) — map reveal, golden chest
+  - `useXPAward` (4) — quest/recurring/first-daily XP, additive stacking
+  - `gearFormatters` (4) — tooltip abilities, T1 omission, lifesteal proc, stat gain
+
+**Bugs Found & Fixed:**
+- **Pre-existing path bug:** `accessory-drops.test.ts` and `boss-loot-table.test.ts` used `../../src/` imports but live directly in `test/` (1 level deep). Fixed to `../src/`, recovering 31 tests that were silently failing.
+
+**Next Steps:**
+- Phase 6: Achievement Accessory Migration
+- Phase 7: AI Generation
+- Future: Title System implementation
+
+### Next Session Prompt
+> Phase 4c (Consumer Integration Tests) is complete — 33 tests verifying all accessory consumer integrations. React testing infrastructure (`@testing-library/react` + jsdom) is now installed and ready for future component/hook testing. The full test suite is at 829 tests with 0 failures. Next priorities: Phase 6 (Achievement Accessory Migration) or Title System implementation.

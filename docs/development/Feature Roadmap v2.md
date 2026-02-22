@@ -427,6 +427,7 @@ Phase 4 expansion adding 52 curated accessories with passive abilities, boss-spe
 | 3.5: Tests — Drop Integration | ✅ Complete | 64 tests (40 accessory-drops + 24 boss-loot-table), 796 total suite |
 | 4a: Combat & Loot Integration | ✅ Complete | CombatService, BattleService, LootGen, StatsService, tooltips, smelting, consumable healing, inventory UX |
 | 4b: Meta-Game Integration | ✅ Complete | XP multipliers, streak shields, HP/Mana clamping, stamina cap, sell multiplier, dungeon map reveal, settings number input |
+| 4c: Tests — Consumer Integration | ✅ Complete | 33 integration tests, React testing infra (@testing-library/react + jsdom), 829 total suite |
 | 5: Boss Loot Tables | ✅ Complete | Merged into Phase 3 — all 20 boss loot tables implemented |
 | 6: Achievement Accessory Migration | 📋 Planned | Wire achievement rewards |
 | 7: AI Generation | 📋 Planned | Gemini-powered accessory generation |
@@ -455,4 +456,4 @@ Phase 4 expansion adding 52 curated accessories with passive abilities, boss-spe
 
 ---
 
-**Last Updated:** 2026-02-21 (Accessories Phase 4b complete — all meta-game integrations live: XP, streak, HP/Mana, stamina, sell, dungeon)
+**Last Updated:** 2026-02-22 (Accessories Phase 4c complete — 33 integration tests, React testing infrastructure installed, 829 total tests passing)
