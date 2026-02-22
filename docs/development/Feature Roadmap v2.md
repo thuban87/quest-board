@@ -426,7 +426,7 @@ Phase 4 expansion adding 52 curated accessories with passive abilities, boss-spe
 | 3: Drop Integration | ✅ Complete | Weighted slot selection, boss loot tables (20 bosses), smelting guard, quest tier gating, 3 feedback fixes |
 | 3.5: Tests — Drop Integration | ✅ Complete | 64 tests (40 accessory-drops + 24 boss-loot-table), 796 total suite |
 | 4a: Combat & Loot Integration | ✅ Complete | CombatService, BattleService, LootGen, StatsService, tooltips, smelting, consumable healing, inventory UX |
-| 4b: Streak, Dungeon & Stamina Wiring | 📋 Planned | StreakService shield, DungeonStore bonuses, stamina cap |
+| 4b: Meta-Game Integration | ✅ Complete | XP multipliers, streak shields, HP/Mana clamping, stamina cap, sell multiplier, dungeon map reveal, settings number input |
 | 5: Boss Loot Tables | ✅ Complete | Merged into Phase 3 — all 20 boss loot tables implemented |
 | 6: Achievement Accessory Migration | 📋 Planned | Wire achievement rewards |
 | 7: AI Generation | 📋 Planned | Gemini-powered accessory generation |
@@ -455,4 +455,4 @@ Phase 4 expansion adding 52 curated accessories with passive abilities, boss-spe
 
 ---
 
-**Last Updated:** 2026-02-21 (Accessories Phase 4a complete — all combat, loot, tooltip, and UX integrations live)
+**Last Updated:** 2026-02-21 (Accessories Phase 4b complete — all meta-game integrations live: XP, streak, HP/Mana, stamina, sell, dungeon)

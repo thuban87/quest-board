@@ -243,3 +243,55 @@ Each session entry includes:
 
 ### Next Session Prompt
 > Start Phase 4b of the Accessories & Special Abilities implementation. Phase 4a (Combat & Loot Integration) is fully complete and tested. Remaining Phase 4b items: (1) StreakService — wire streak shield bonus into `updateStreak()`/`checkStreakOnLoad()`, (2) DungeonStore — map reveal via `dungeon_map_reveal`, golden chest chance via `dungeon_golden_chest`, Phoenix Feather auto-revive via `dungeon_auto_revive`, (3) Stamina cap bonus via `utility_stamina_cap` in `awardStamina()`. Reference the brainstorm document Phase 4b section.
+
+---
+
+## Session 6 — 2026-02-21 — Phase 4b: Consumer Integration — Meta-Game ✅
+
+**Focus:** Wire accessory effects into XP awards, streak shields, character stats, stamina caps, dungeon map reveal, and sell gold multiplier
+
+**Completed:**
+- [x] `useXPAward.ts` — Accessory XP multipliers for quest, recurring, and first-daily tasks (additive with class bonus)
+- [x] `StreakService.ts` — Generalized shield logic: Paladin base + accessory `streakShield` bonus stacking
+- [x] `QuestActionsService.ts` — Pass `equippedGear` to `updateStreak()`
+- [x] `main.ts` — Pass `equippedGear` to `checkStreakOnLoad()`
+- [x] `characterStore.ts` — HP/Mana clamping on equip/unequip, dynamic stamina cap, sell gold multiplier in `bulkRemoveGear`, accessory bonuses in `recalculateMaxHPMana`
+- [x] `dungeonStore.ts` — `phoenixFeatherUsedThisDungeon` flag, map reveal from `dungeon_map_reveal` on dungeon entry
+- [x] `useDungeonBonuses.ts` **[NEW]** — Memoized hook for dungeon accessory bonuses
+- [x] `DungeonView.tsx` — Wired `useDungeonBonuses` hook
+- [x] `settings.ts` — Replaced test level dropdown with number input (1-40)
+- [x] `InventoryModal.ts` — Fixed sell multiplier: moved from `bulkRemoveGear` to actual `sellItem()` path, added bonus Notice text
+
+**Files Changed:**
+- `src/hooks/useXPAward.ts` — XP multiplier integration (~20 lines)
+- `src/services/StreakService.ts` — Shield stacking logic (~30 lines)
+- `src/services/QuestActionsService.ts` — Callsite update (1 line)
+- `main.ts` — Callsite update (1 line)
+- `src/store/characterStore.ts` — HP/Mana clamping, stamina cap, sell multiplier, recalculateMaxHPMana (~50 lines)
+- `src/store/dungeonStore.ts` — Phoenix Feather flag, map reveal (~25 lines)
+- `src/hooks/useDungeonBonuses.ts` — **[NEW]** Dungeon bonus hook (~45 lines)
+- `src/components/DungeonView.tsx` — Hook wiring (~5 lines)
+- `src/settings.ts` — Number input for test level (~10 lines)
+- `src/modals/InventoryModal.ts` — Sell multiplier fix (~15 lines)
+
+**Testing Notes:**
+- All 796 tests pass (0 regressions)
+- Manual testing confirmed 5/6 features in Obsidian:
+  - ✅ Scholar's Monocle: quest XP bonus applied
+  - ✅ Stamina Sash: stamina cap increased
+  - ✅ Stoneblood Amulet: maxHP increase on equip, clamp on unequip
+  - ✅ Mana Wellspring Ring: maxMana increase on equip
+  - ✅ Cartographer's Lens: full dungeon map revealed on entry
+  - ⚠️ Miser's Pendant: initially no effect (sell multiplier was in wrong code path — fixed)
+- Streak shield stacking deferred to unit/integration tests (Phase 4c)
+
+**Bugs Found & Fixed:**
+- **Sell multiplier in wrong location:** Was in `bulkRemoveGear()` (used for smelting cleanup, not selling). Actual sell path is `InventoryModal.sellItem()` → `removeGear()` + `updateGold()`. Moved multiplier there.
+- **No bulk sell feature exists:** `bulkRemoveGear()` has no UI caller for selling — only used by QuestActionsService for smelting. Keeping the multiplier there too for future-proofing.
+
+**Next Steps:**
+- Phase 4c: Unit and integration tests for all Phase 4b integrations
+- Phase 6: Achievement Accessory Migration
+
+### Next Session Prompt
+> Phase 4b (Meta-Game Integration) is complete. Begin Phase 4c: unit and integration tests for all Phase 4a/4b consumer integrations. Key areas to test: XP multiplier stacking in useXPAward, streak shield generalization in StreakService, HP/Mana clamping in characterStore, dynamic stamina cap, sell gold multiplier in InventoryModal.sellItem, and dungeon map reveal in dungeonStore.

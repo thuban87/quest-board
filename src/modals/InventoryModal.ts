@@ -27,7 +27,7 @@ import { CONSUMABLES, ConsumableDefinition, InventoryItem } from '../models/Cons
 import { useCharacterStore } from '../store/characterStore';
 import { formatGearTooltip, isSetItem, attachGearTooltip } from '../utils/gearFormatters';
 import { getAccessoryTemplate } from '../data/accessories';
-import { formatEffectLabel } from '../services/AccessoryEffectService';
+import { formatEffectLabel, getGoldMultiplier } from '../services/AccessoryEffectService';
 
 interface InventoryModalOptions {
     /** Callback when character data changes */
@@ -532,10 +532,17 @@ export class InventoryModal extends Modal {
 
     private async sellItem(item: GearItem, goldValue: number) {
         const charStore = useCharacterStore.getState();
-        charStore.removeGear(item.id);
-        charStore.updateGold(goldValue);
+        const character = charStore.character;
 
-        new Notice(`🪙 Sold ${item.name} for ${goldValue} gold!`, 2000);
+        // Apply Miser's Pendant sell multiplier
+        const sellMultiplier = 1 + getGoldMultiplier(character?.equippedGear ?? {} as any, 'sell');
+        const adjustedGold = Math.floor(goldValue * sellMultiplier);
+
+        charStore.removeGear(item.id);
+        charStore.updateGold(adjustedGold);
+
+        const bonusText = sellMultiplier > 1 ? ` (+${Math.floor((sellMultiplier - 1) * 100)}% bonus!)` : '';
+        new Notice(`🪙 Sold ${item.name} for ${adjustedGold} gold!${bonusText}`, 2000);
 
         if (this.options.onSave) {
             await this.options.onSave();

@@ -118,7 +118,7 @@ export async function moveQuest(
         const currentChar = useCharacterStore.getState().character;
         if (currentChar) {
             const isPaladin = currentChar.class === 'paladin';
-            streakResult = updateStreak(currentChar, isPaladin);
+            streakResult = updateStreak(currentChar, isPaladin, currentChar.equippedGear);
 
             useCharacterStore.getState().setCharacter(streakResult.character);
 

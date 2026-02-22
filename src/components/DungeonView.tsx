@@ -10,6 +10,7 @@ import { Platform, DataAdapter, Notice, App } from 'obsidian';
 import { useDungeonStore } from '../store/dungeonStore';
 import { useCharacterStore } from '../store/characterStore';
 import { useBattleStore } from '../store/battleStore';
+import { useDungeonBonuses } from '../hooks/useDungeonBonuses';
 import { getDungeonTemplate } from '../data/dungeons';
 import { getTileDefinition, LAYOUT_CHARS, getChestSpritePath } from '../data/TileRegistry';
 import { findPath, getFacingDirection, getStepPosition, canWalkTo } from '../utils/pathfinding';
@@ -653,6 +654,9 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ assetFolder, adapter, 
     const character = useCharacterStore(state => state.character);
     const combatState = useBattleStore(state => state.state);
     const resetBattle = useBattleStore(state => state.resetBattle);
+
+    // Accessory dungeon bonuses (gold/XP multipliers, map reveal, auto-revive, etc.)
+    const dungeonBonuses = useDungeonBonuses(character?.equippedGear ?? {} as any);
 
     const isMobile = Platform.isMobile;
 

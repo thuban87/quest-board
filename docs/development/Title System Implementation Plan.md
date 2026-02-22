@@ -1,9 +1,9 @@
 # Title System Implementation Plan
 
 > **Status:** 🔲 TODO
-> **Estimated Sessions:** 6-8 (including test phases)
+> **Estimated Sessions:** 7-9 (including test phases)
 > **Created:** 2026-02-21
-> **Last Updated:** 2026-02-21
+> **Last Updated:** 2026-02-22
 > **Companion Log:** [[Title System Session Log]]
 
 ---
@@ -21,13 +21,14 @@
 9. [Phase 3: Buff Engine (PowerUp Integration)](#phase-3-buff-engine-powerup-integration)
 10. [Phase 3.5: Tests — Buff Engine](#phase-35-tests--buff-engine)
 11. [Phase 4: UI — Character Identity & Title Selection Modal](#phase-4-ui--character-identity--title-selection-modal)
-12. [Phase 5: UI — Character Export](#phase-5-ui--character-export)
-13. [Phase 5.5: Tests — Export](#phase-55-tests--export)
-14. [Phase 6: CSS & Polish](#phase-6-css--polish)
-15. [Plan Summary](#plan-summary)
-16. [Verification Checklist](#verification-checklist)
-17. [File Change Summary](#file-change-summary)
-18. [Key References](#key-references)
+12. [Phase 4.5: Tests — UI](#phase-45-tests--ui)
+13. [Phase 5: UI — Progress Dashboard Report Generator](#phase-5-ui--progress-dashboard-report-generator)
+14. [Phase 5.5: Tests — Export](#phase-55-tests--export)
+15. [Phase 6: CSS & Polish](#phase-6-css--polish)
+16. [Plan Summary](#plan-summary)
+17. [Verification Checklist](#verification-checklist)
+18. [File Change Summary](#file-change-summary)
+19. [Key References](#key-references)
 
 ---
 
@@ -43,7 +44,8 @@ Players earn achievements but get no lasting cosmetic or mechanical reward beyon
 - **Two categories:** Cosmetic-only titles (prestige/flavor) and buff titles (cosmetic + passive micro-buff)
 - **Buff titles** inject as passive `ActivePowerUp` entries, piggybacking on the existing power-up system with zero new calculation wiring
 - **Mixed unlock sources:** Most titles unlock via achievements (existing and new), some via level milestones, streaks, and combat stats — all funneled through the achievement pipeline
-- **Character export:** Copy-to-clipboard button on character sheet + markdown note generation command, both including the equipped title. Export also available on the Progress Dashboard modal.
+- **Lifetime stats tracking:** Running counters for all-time gold, battles, bosses, dungeons, quests — used by achievement checks and the analytics dashboard
+- **Progress Dashboard report generator:** Export character summary + date-filtered activity stats as clipboard copy or vault note, with preset time ranges (1 week, 4 weeks, 3 months, all time, custom date picker)
 
 ### Goals
 
@@ -71,15 +73,18 @@ Players earn achievements but get no lasting cosmetic or mechanical reward beyon
 
 **Decision:** Every title is tied to an achievement. For titles that unlock via level milestones or combat stats, we create new achievements with those triggers.
 
-**Why:** The `AchievementService` already handles level, streak, quest count, and category count trigger types. Rather than building a parallel unlock system, we add a `grantedTitleId?: string` field to the `Achievement` interface. When an achievement unlocks and has this field, the title unlocks too.
+**Why:** The `AchievementService` already handles level, streak, quest count, and category count trigger types. Rather than building a parallel unlock system, we add a `grantedTitleId?: string` field to the `Achievement` interface. When an achievement unlocks and has this field, the title unlocks too. The grant is handled **caller-side** — after any `check*Achievements()` call returns `newlyUnlocked`, the caller checks `grantedTitleId` and calls `TitleService.grantTitle()`. This keeps `AchievementService` stateless.
 
-**Tradeoff:** This means you can't have a title without an associated achievement. Acceptable — achievements are cheap to create and provide additional XP rewards.
+**Tradeoff:** This means you can't have a title without an associated achievement. Acceptable — achievements are cheap to create and provide additional XP rewards. The caller-side pattern requires wiring at 4+ call sites but preserves the functional architecture.
 
 ### 3. Schema v7 Migration (v6 → v7)
 
-**Decision:** Add `equippedTitle: string | null` and `unlockedTitles: string[]` to the Character interface. Increment schema to v7.
+**Decision:** Add `equippedTitle: string | null`, `unlockedTitles: string[]`, and `lifetimeStats: LifetimeStats` to the Character interface. Increment schema to v7.
 
-**Why:** Current schema is v6. The migration chain (v1→v2→v3→v4→v5→v6) is well-established. The v6→v7 migration provides safe defaults (`null` and `[]`).
+**Why:** Current schema is v6. The migration chain (v1→v2→v3→v4→v5→v6) is well-established. The v6→v7 migration provides safe defaults (`null`, `[]`, and backfilled counters from `activityHistory`). Lifetime stats enable O(1) achievement checks and feed the Progress Dashboard analytics.
+
+> [!IMPORTANT]
+> The existing `migrateCharacterV5toV6()` returns early for schemas ≥6 — it must be updated to chain to `migrateCharacterV6toV7()` instead.
 
 ### 4. Rarity Tiers Drive Visual Treatment Only
 
@@ -101,11 +106,15 @@ Players earn achievements but get no lasting cosmetic or mechanical reward beyon
 
 **Why:** Keeps the header compact. The title is visually distinct via rarity color/glow. The em-dash separator and angle brackets frame it as a title rather than a subtitle.
 
-### 6. Export Generates a Clean Markdown Summary
+### 6. Export Lives on the Progress Dashboard
 
-**Decision:** Two export triggers:
-1. Clipboard copy button (character sheet header + progress dashboard header)
-2. Command palette command that creates a `.md` file in the vault
+**Decision:** Two export triggers on the Progress Dashboard modal:
+1. Clipboard copy button (copies character summary + filtered stats)
+2. "Save to vault" button that creates a timestamped `.md` file in a configurable export folder (defaults to user's quest folder)
+
+**Export folder:** Configurable via a new `exportFolder` setting with folder autocomplete, located in the collapsed path settings section at the top of the settings panel. Defaults to `settings.questFolder`.
+
+**Date filtering:** Uses the existing `ProgressStatsService` date range infrastructure. The export includes whatever date range is currently selected on the dashboard (presets: today, this week, last 7 days, this month, last 30 days, all time, or custom date picker).
 
 **Format:**
 ```markdown
@@ -124,7 +133,14 @@ STR: 18 | DEX: 14 | CON: 16 | INT: 12 | WIS: 10 | CHA: 8
 - Weapon: Iron Sword (+5 ATK)
 - Armor: Chain Mail (+8 DEF)
 ...
+
+## Progress (Last 30 Days)
+Quests: 24 | Bounties Won: 12 | Dungeons: 3
+XP Earned: 4,200 | Gold Earned: 850
+Best Day: Feb 15 (8 completions)
 ```
+
+**File naming:** `{CharacterName} Export {YYYY-MM-DD}.md` — timestamps prevent collisions and enable historical record.
 
 ---
 
@@ -183,10 +199,19 @@ export interface Achievement {
 
 ```typescript
 // Added to Character interface
+export interface LifetimeStats {
+    questsCompleted: number;
+    battlesWon: number;
+    bossesDefeated: number;
+    dungeonsCompleted: number;
+    goldEarned: number;
+}
+
 export interface Character {
     // ... existing fields ...
     equippedTitle: string | null;    // Title ID or null
     unlockedTitles: string[];        // Array of unlocked Title IDs
+    lifetimeStats: LifetimeStats;    // Running counters (backfilled from activityHistory on migration)
 }
 ```
 
@@ -202,13 +227,15 @@ export interface Character {
 | `the-scholar` | The Scholar | Rare | +3% XP (all sources) | Complete 50 quests | Yes: `quests-50` |
 | `fortune-favored` | Fortune's Favorite | Epic | +5% Gold (all sources) | Earn 1000 total gold | Yes: `gold-1000` |
 | `eagle-eye` | Eagle Eye | Epic | +2% Crit Chance | Win 25 battles | Yes: `battles-25` |
-| `the-tempered` | The Tempered | Epic | +1 All Stats | Reach Level 20 | No (maps to existing `level-21` — closest) |
-| `the-focused` | The Focused | Epic | +3% to primary stat | Reach Level 25 | No (maps to `level-25`) |
+| `the-tempered` | The Tempered | Epic | +1 All Stats | Reach Level 20 | Yes: `level-20` |
+| `the-focused` | The Focused | Epic | +3% to both primary stats | Reach Level 25 | No (maps to `level-25`) |
 | `slayer-of-the-void` | Slayer of the Void | Legendary | +5% Boss Damage | Defeat 10 bosses | Yes: `bosses-10` |
 | `the-relentless` | The Relentless | Legendary | +1 All Stats, +2% XP | 30-day streak | No (maps to `streak-30`) |
 
 > [!NOTE]
-> "The Focused" grants a `stat_percent_boost` keyed to the character's primary class stat (e.g., STR for Warrior, INT for Technomancer). This is resolved at equip time when creating the `ActivePowerUp`.
+> **"The Focused"** grants `stat_percent_boost` to **both** of the character's primary class stats (from `ClassInfo.primaryStats` tuple). For example, Warrior gets +3% STR and +3% CON. This is resolved at equip time when creating the `ActivePowerUp[]` array (two entries).
+>
+> **"Slayer of the Void"** does NOT use a `PowerUpEffect` — `BattleService.calculateDamage()` directly checks for the equipped title ID and applies the 5% boss damage bonus. This avoids expanding the `PowerUpEffect` union for a single title.
 
 ### New Achievements Needed
 
@@ -216,13 +243,14 @@ export interface Character {
 |----|------|-------------|--------|----------|
 | `quests-10` | Adventurer's Start | `quest_count` | 10 | `quest_count` |
 | `quests-50` | Seasoned Adventurer | `quest_count` | 50 | `quest_count` |
+| `level-20` | Veteran Adventurer | `level` | 20 | `level` |
 | `dungeons-3` | Dungeon Explorer | `manual` | 1 | `special` |
 | `gold-1000` | Fortune Seeker | `manual` | 1 | `special` |
 | `battles-25` | Veteran Fighter | `manual` | 1 | `special` |
 | `bosses-10` | Boss Hunter | `manual` | 1 | `special` |
 
 > [!IMPORTANT]
-> The `manual` trigger achievements (dungeons, gold, battles, bosses) need their check calls wired into the appropriate service methods. `dungeons-3` checked after dungeon completion, `gold-1000` checked after gold awards, `battles-25` and `bosses-10` checked after battle victory. These are new check sites in the respective services.
+> The `manual` trigger achievements (dungeons, gold, battles, bosses) use `lifetimeStats` counters for O(1) checks instead of scanning `activityHistory`. Each counter is incremented at the appropriate service call site (dungeon completion, gold award, battle victory) and the achievement threshold is checked against the counter.
 
 ### Component Diagram
 
@@ -237,33 +265,36 @@ export interface Character {
          ▼                         │
 ┌─────────────────────┐   ┌───────────────────┐
 │ TitleSelectionModal │   │  characterStore   │
-│ - List unlocked     │──▶│ equippedTitle     │
-│ - Show locked       │   │ unlockedTitles    │
+│ - List unlocked     │──▶│ setEquippedTitle  │   ← simple setters
+│ - Show locked       │   │ addUnlockedTitle  │
 │ - Equip/unequip     │   │ activePowerUps    │
 └─────────────────────┘   └───────────────────┘
                                    ▲
-                                   │ on equip/unequip
+                                   │ all business logic
                           ┌────────────────┐
                           │  TitleService  │
-                          │ equipTitle()   │
-                          │ unequipTitle() │
+                          │ equipTitle()   │  ← manages PowerUp lifecycle
                           │ grantTitle()   │
                           └────────────────┘
                                    ▲
-                                   │ on achievement unlock
-                          ┌────────────────────┐
-                          │ AchievementService │
-                          │ (grantedTitleId)   │
-                          └────────────────────┘
+                                   │ caller-side hook
+              ┌────────────────────────────────────┐
+              │    Call sites (after achievement   │
+              │    check returns newlyUnlocked):    │
+              │  • QuestService                    │
+              │  • BattleService                   │
+              │  • DungeonService                  │
+              │  • GoldAwardHandler                │
+              └────────────────────────────────────┘
 ```
 
 ---
 
 ## Phase 1: Data Models & Schema Migration
 
-**Effort:** Small
-**Estimated Time:** 1-1.5 hours
-**Goal:** Create the Title model, title registry data, update Achievement and Character interfaces, write v6→v7 migration.
+**Effort:** Medium
+**Estimated Time:** 1.5-2 hours
+**Goal:** Create the Title model, title registry data, update Achievement and Character interfaces, write v6→v7 migration with lifetimeStats backfill.
 **Prerequisites:** None
 
 ### Tasks
@@ -284,24 +315,35 @@ export interface Character {
    - Add `grantedTitleId?: string` to the `Achievement` interface
 
 4. **Update `src/data/achievements.ts`**
-   - Add 6 new achievements from the "New Achievements Needed" table
+   - Add 7 new achievements from the "New Achievements Needed" table (including `level-20`)
    - Add `grantedTitleId` to all 12 achievements that map to titles (both existing and new)
 
 5. **Update `src/models/Character.ts`**
-   - Add `equippedTitle: string | null` and `unlockedTitles: string[]` to the `Character` interface
+   - Add `LifetimeStats` interface: `{ questsCompleted, battlesWon, bossesDefeated, dungeonsCompleted, goldEarned }`
+   - Add `equippedTitle: string | null`, `unlockedTitles: string[]`, and `lifetimeStats: LifetimeStats` to the `Character` interface
    - Increment `CHARACTER_SCHEMA_VERSION` to 7
+   - **Fix `migrateCharacterV5toV6()`:** Change the `>= 6` early return to `>= 7`, add chain call to `migrateCharacterV6toV7()`
    - Create `migrateCharacterV6toV7()` function:
      - Default `equippedTitle: null`
      - Default `unlockedTitles: ['the-novice']` (everyone starts with The Novice)
-   - Chain from `migrateCharacterV5toV6()`
+     - Backfill `lifetimeStats` from `activityHistory` (scan once during migration):
+       - `questsCompleted` = count of `quest_complete` events
+       - `battlesWon` = count of `bounty_victory` events
+       - `bossesDefeated` = 0 (cannot determine from existing data without monster lookup)
+       - `dungeonsCompleted` = count of `dungeon_complete` events
+       - `goldEarned` = sum of `goldGained` across all events
+   - **Update `createCharacter()`:** Add `equippedTitle: null`, `unlockedTitles: ['the-novice']`, `lifetimeStats: { questsCompleted: 0, battlesWon: 0, bossesDefeated: 0, dungeonsCompleted: 0, goldEarned: 0 }`
 
 6. **Update `src/store/characterStore.ts`**
-   - Add store actions: `equipTitle(titleId: string | null)`, `unlockTitle(titleId: string)`
-   - `equipTitle` sets `character.equippedTitle` and manages the title's passive `ActivePowerUp` (add on equip, remove on unequip)
-   - `unlockTitle` adds to `unlockedTitles[]` if not already present, prevents duplicates
+   - Add **simple setter** store actions (no business logic):
+     - `setEquippedTitle(titleId: string | null)`: Sets `character.equippedTitle`
+     - `addUnlockedTitle(titleId: string)`: Adds to `unlockedTitles[]` if not already present
+     - `incrementLifetimeStat(stat: keyof LifetimeStats, amount: number)`: Increments a counter
+   - **No PowerUp lifecycle logic here** — that lives in `TitleService` (Phase 2)
 
 #### Tech Debt:
-- The 6 new "manual" trigger achievements need check calls wired in Phase 2 — they won't auto-trigger until then
+- `bossesDefeated` starts at 0 for migrated characters (can't retroactively determine from history). Future boss kills will be counted correctly.
+- The 7 new "manual" trigger achievements need check calls wired in Phase 2 — they won't auto-trigger until then
 
 ---
 
@@ -330,17 +372,19 @@ export interface Character {
 - No duplicate `grantedTitleId` across achievements (1:1 mapping)
 
 **Schema Migration (`test/store/characterStore.test.ts`):**
-- v6 payload migrates to v7 with `equippedTitle: null`, `unlockedTitles: ['the-novice']`
+- v6 payload migrates to v7 with `equippedTitle: null`, `unlockedTitles: ['the-novice']`, `lifetimeStats` all zeros
 - v7 payload passes through untouched
-- v5 payload chains through v5→v6→v7
+- v5 payload chains through v5→v6→7
+- Backfill: v6 payload with 5 quest_complete + 3 bounty_victory + 2 dungeon_complete events backfills correctly
+- Backfill: v6 payload with no activityHistory gets all-zero lifetimeStats
 
 **Store Actions:**
-- `unlockTitle('eagle-eye')` adds to array
-- `unlockTitle('eagle-eye')` twice doesn't duplicate
-- `equipTitle('eagle-eye')` sets `equippedTitle`
-- `equipTitle(null)` clears it
-- `equipTitle` with a buff title adds passive `ActivePowerUp`
-- `equipTitle(null)` removes the title `ActivePowerUp`
+- `addUnlockedTitle('eagle-eye')` adds to array
+- `addUnlockedTitle('eagle-eye')` twice doesn't duplicate
+- `setEquippedTitle('eagle-eye')` sets `equippedTitle`
+- `setEquippedTitle(null)` clears it
+- `incrementLifetimeStat('battlesWon', 1)` increments correctly
+- Store actions do NOT manage PowerUp lifecycle (that's TitleService)
 
 #### Tech Debt:
 - None expected
@@ -357,30 +401,35 @@ export interface Character {
 ### Tasks
 
 1. **Create `src/services/TitleService.ts`**
-   - `grantTitle(titleId: string): void` — Calls `characterStore.unlockTitle()`, shows Obsidian `Notice`
-   - `equipTitle(titleId: string | null): void` — Calls `characterStore.equipTitle()`, manages passive power-up lifecycle
+   - `grantTitle(titleId: string): void` — Calls `characterStore.addUnlockedTitle()`, shows Obsidian `Notice`
+   - `equipTitle(titleId: string | null): void` — Validates title ID against `TITLES` registry, calls `characterStore.setEquippedTitle()`, manages passive power-up lifecycle (adds/removes `ActivePowerUp` entries via `characterStore.setPowerUps()`)
    - `getUnlockedTitles(character: Character): Title[]` — Maps `unlockedTitles` IDs to Title objects
    - `getEquippedTitle(character: Character): Title | null` — Resolves `equippedTitle` ID to Title
-   - `createTitlePowerUp(title: Title): ActivePowerUp | null` — Builds the passive power-up for a buff title
-   - `checkCombatTitleAchievements(character: Character, achievements: Achievement[]): AchievementCheckResult` — Checks boss kills, battle wins against character's `activityHistory`
-   - `checkResourceTitleAchievements(character: Character, achievements: Achievement[]): AchievementCheckResult` — Checks gold earned, dungeons completed
+   - `createTitlePowerUps(title: Title, character: Character): ActivePowerUp[]` — Returns empty array for cosmetic titles, 1-2 entries for buff titles. Handles "The Focused" (both primary stats) and "The Relentless" (dual buff) at build time.
 
-2. **Update `src/services/AchievementService.ts`**
-   - In each `check*Achievements()` method: after unlocking an achievement, check `if (achievement.grantedTitleId)` and call `TitleService.grantTitle(achievement.grantedTitleId)`
-   - Add to `unlockAchievement()` (manual unlock path) as well
+2. **Wire caller-side title grants at achievement check call sites**
+   - **Do NOT modify `AchievementService`** — it remains stateless
+   - After each `check*Achievements()` call returns `newlyUnlocked`, the caller:
+     1. Loops through `newlyUnlocked`
+     2. Checks `if (achievement.grantedTitleId)`
+     3. Calls `TitleService.grantTitle(achievement.grantedTitleId)`
+   - Call sites to wire:
+     - `QuestService` / quest completion handler (already calls `checkQuestCountAchievements`)
+     - `BattleService` / battle victory handler (already calls `checkLevelAchievements`)
+     - Dungeon completion handler
+     - Streak update handler (already calls `checkStreakAchievements`)
 
-3. **Wire new achievement checks**
-   - `BattleService` — After battle victory: check `battles-25` and `bosses-10` achievements
-   - Dungeon completion handler — Check `dungeons-3` achievement
-   - Gold award handler — Check `gold-1000` achievement
-   - Quest completion handler — Ensure `quests-10` and `quests-50` are checked (these use `quest_count` trigger which is already checked, just need the achievements to exist)
+3. **Wire lifetime stat increments + manual achievement checks**
+   - `BattleService` — After battle victory: `incrementLifetimeStat('battlesWon', 1)`, check `battles-25`. If boss: `incrementLifetimeStat('bossesDefeated', 1)`, check `bosses-10`.
+   - Dungeon completion handler — `incrementLifetimeStat('dungeonsCompleted', 1)`, check `dungeons-3`
+   - Gold award handler — `incrementLifetimeStat('goldEarned', amount)`, check `gold-1000`
+   - Quest completion handler — `incrementLifetimeStat('questsCompleted', 1)` (quests-10/50 use `quest_count` trigger which is already wired)
 
 > [!IMPORTANT]
-> The combat/resource achievements use `manual` trigger type because the existing trigger types don't cover "total battles won" or "total gold earned." The `TitleService.checkCombatTitleAchievements()` method manually counts from `activityHistory` and unlocks when thresholds are met.
+> The `manual` trigger achievements (dungeons, gold, battles, bosses) check against `lifetimeStats` counters for O(1) lookups. No `activityHistory` scanning required.
 
 #### Tech Debt:
-- `activityHistory` may not track boss kills distinctly — verify and add `isBoss` flag to `ActivityEvent` if needed
-- Gold tracking: need to verify `activityHistory` stores cumulative gold or if we need to sum it
+- None — `lifetimeStats` counters handle all tracking needs
 
 ---
 
@@ -405,17 +454,25 @@ export interface Character {
 - `getEquippedTitle()` returns null when no title equipped
 
 **PowerUp Lifecycle:**
-- `createTitlePowerUp()` returns null for cosmetic titles
-- `createTitlePowerUp()` returns valid `ActivePowerUp` for buff titles
-- Power-up has `triggeredBy: 'title'`, `expiresAt: null`
-- Equipping a buff title adds exactly one power-up with `triggeredBy: 'title'`
-- Unequipping removes the title power-up
-- Swapping titles removes old power-up and adds new one
+- `createTitlePowerUps()` returns empty array for cosmetic titles
+- `createTitlePowerUps()` returns valid `ActivePowerUp[]` for buff titles
+- Power-ups have `triggeredBy: 'title'`, `expiresAt: null`
+- Equipping a buff title calls `setPowerUps()` with title power-up(s) added
+- Unequipping removes all power-ups with `triggeredBy: 'title'`
+- Swapping titles removes old title power-ups and adds new ones
+- "The Focused" (Warrior) creates two entries: STR +3% and CON +3%
+- "The Relentless" creates two entries: all_stats_boost +1 and xp_multiplier +2%
 
-**Achievement Integration:**
-- Unlocking achievement with `grantedTitleId` also unlocks the title
+**Caller-Side Achievement Integration:**
+- After `checkQuestCountAchievements()` returns, caller checks `grantedTitleId` on unlocked achievements
+- Title grant is called for each achievement with a `grantedTitleId`
 - Unlocking achievement without `grantedTitleId` does not affect titles
-- Manual achievement checks correctly count from activity history
+- `AchievementService` itself is NOT modified (remains stateless)
+
+**Lifetime Stats + Manual Achievements:**
+- `incrementLifetimeStat('battlesWon', 1)` correctly increments counter
+- `battles-25` achievement unlocks when `lifetimeStats.battlesWon >= 25`
+- `gold-1000` achievement unlocks when `lifetimeStats.goldEarned >= 1000`
 
 #### Tech Debt:
 - None expected
@@ -441,29 +498,30 @@ export interface Character {
      - `gold_multiplier` → used by "Fortune's Favorite" (+5% gold)
      - `crit_chance` → used by "Eagle Eye" (+2% crit)
      - `all_stats_boost` → used by "The Tempered" (+1 all stats) and "The Relentless" (+1 all stats)
-     - `stat_percent_boost` → used by "The Focused" (+3% primary stat)
+     - `stat_percent_boost` → used by "The Focused" (+3% to both primary stats)
 
-2. **Handle "The Focused" class-stat resolution**
-   - When equipping "The Focused," resolve the character's primary class stat:
-     - Warrior → STR, Paladin → CON, Technomancer → INT, Scholar → WIS, Rogue → DEX, Cleric → WIS, Bard → CHA
-   - Build the `stat_percent_boost` effect with the resolved stat at equip time
+2. **Handle "The Focused" dual primary stat resolution**
+   - When equipping "The Focused," resolve the character's **both** primary class stats from `ClassInfo.primaryStats` tuple:
+     - Warrior → STR + CON, Paladin → STR + WIS, Technomancer → INT + DEX, Scholar → INT + WIS, Rogue → DEX + CHA, Cleric → WIS + CON, Bard → CHA + DEX
+   - `createTitlePowerUps()` builds **two** `stat_percent_boost` entries, one per primary stat
 
-3. **Handle "Slayer of the Void" boss damage**
-   - This needs a new `PowerUpEffect` type: `{ type: 'boss_damage_multiplier', value: number }`
-   - Add to `PowerUpEffect` union in `Character.ts`
-   - Add handling in `BattleService.calculateDamage()` — check for this effect type on attacker's power-ups when defender is a boss
+3. **Handle "Slayer of the Void" boss damage (direct check)**
+   - **No new `PowerUpEffect` type needed** — avoids expanding the `PowerUpEffect` union
+   - Add a direct check in `BattleService.calculateDamage()`: if attacker's `equippedTitle === 'slayer-of-the-void'` and defender `isBoss`, apply 1.05x damage multiplier
+   - Simple 3-line `if` check in one location
 
 4. **Handle "The Relentless" dual buff**
    - This title grants two effects (+1 all stats AND +2% XP)
-   - `createTitlePowerUp()` should return **two** `ActivePowerUp` entries for this title, or we add support for compound effects
-   - Simplest: return an array from `createTitlePowerUp()` and the store action adds all of them
+   - `createTitlePowerUps()` returns **two** `ActivePowerUp` entries for this title
+   - Each entry gets a unique ID: `title-buff-{titleId}-0`, `title-buff-{titleId}-1`
 
-5. **Ensure title power-ups don't collide with existing power-ups**
-   - Title power-ups use unique IDs: `title-buff-{titleId}`
-   - `PowerUpService.cleanupExpiredPowerUps()` should skip `triggeredBy: 'title'` entries (they never expire)
+5. **Verify title power-ups are safe from expiration sweep**
+   - Title power-ups use unique IDs: `title-buff-{titleId}` (or `title-buff-{titleId}-{index}` for multi-buff)
+   - `expirePowerUps()` already handles this correctly — line 786 skips `expiresAt === null` entries
+   - **No code change needed** — just a test to confirm existing behavior
 
 #### Tech Debt:
-- `boss_damage_multiplier` is a new effect type — only one title uses it currently. If no more are planned, consider simplifying to a flat damage bonus in the title service instead.
+- "Slayer of the Void" boss damage check is hardcoded to a specific title ID. If more boss-damage titles are added later, refactor to a `PowerUpEffect` type at that point.
 
 ---
 
@@ -486,13 +544,15 @@ export interface Character {
 
 **Stat Integration:**
 - Character with "The Tempered" has +1 to all 6 stats
-- Character with "The Focused" (Warrior) has +3% STR only
+- Character with "The Focused" (Warrior) has +3% STR AND +3% CON (both primary stats)
+- Character with "The Focused" (Rogue) has +3% DEX AND +3% CHA
 - Title stat buffs stack with gear and power-up stat boosts
 
 **Combat Integration:**
 - Character with "Eagle Eye" has +2% crit chance in `deriveCombatStats()`
-- Character with "Slayer of the Void" deals +5% damage to bosses
-- Boss damage buff does NOT apply to non-boss enemies
+- Character with `equippedTitle: 'slayer-of-the-void'` deals +5% damage to bosses (direct check in `calculateDamage()`)
+- Boss damage bonus does NOT apply to non-boss enemies
+- Boss damage bonus does NOT go through `PowerUpEffect` system
 
 **Gold Integration:**
 - Character with "Fortune's Favorite" gold multiplier is applied
@@ -501,8 +561,8 @@ export interface Character {
 - "The Relentless" correctly applies both +1 all stats AND +2% XP
 - Both effects show as separate buff icons
 
-**Cleanup Safety:**
-- `cleanupExpiredPowerUps()` does not remove title power-ups
+**Expiration Safety:**
+- `expirePowerUps()` does not remove title power-ups (they have `expiresAt: null`)
 - Equipping new title correctly replaces old title power-ups
 
 #### Tech Debt:
@@ -526,6 +586,7 @@ export interface Character {
    - Apply rarity CSS class: `qb-title-common`, `qb-title-rare`, `qb-title-epic`, `qb-title-legendary`
    - If no title equipped, render `⟨ No Title ⟩` in muted style with tooltip "Click to select a title"
    - Wrap title in clickable container that opens `TitleSelectionModal`
+   - **Mobile:** Title wraps below the character name on narrow screens (not truncated)
 
 2. **Create `src/modals/TitleSelectionModal.ts`**
    - Extends Obsidian `Modal`
@@ -575,35 +636,68 @@ export interface Character {
 
 ---
 
-## Phase 5: UI — Character Export
+## Phase 4.5: Tests — UI
+
+**Effort:** Small
+**Estimated Time:** 1 hour
+**Goal:** Test TitleSelectionModal logic and CharacterIdentity title rendering.
+**Prerequisites:** Phase 4
+**Coverage Target:** ≥80% line, ≥80% branch
+**Test File:** `test/modals/TitleSelectionModal.test.ts`
+**Command:** `npx vitest run test/modals/TitleSelectionModal.test.ts | Out-File -FilePath test-output.txt -Encoding utf8`
+
+### Key Test Cases
+
+**Modal Logic:**
+- Modal displays all unlocked titles with correct rarity labels
+- Modal displays locked titles greyed out with unlock conditions
+- Selecting a title calls `TitleService.equipTitle()` with correct ID
+- Clicking active title unequips (calls `equipTitle(null)`)
+- "None" option clears equipped title
+- Buff titles show their buff label below description
+- Modal uses DOM API only (no `innerHTML`)
+
+#### Tech Debt:
+- None expected
+
+---
+
+## Phase 5: UI — Progress Dashboard Report Generator
 
 **Effort:** Medium
-**Estimated Time:** 1.5-2 hours
-**Goal:** Add character export functionality to character sheet and progress dashboard.
+**Estimated Time:** 2-2.5 hours
+**Goal:** Add character export/report generation to the Progress Dashboard with date-range filtering.
 **Prerequisites:** Phase 2
 
 ### Tasks
 
 1. **Create `src/services/CharacterExportService.ts`**
-   - `generateCharacterSummary(character: Character): string` — Produces the markdown summary text including equipped title, level, class, stats, active buffs, equipped gear
-   - `copyToClipboard(text: string): void` — Copies text and shows Obsidian `Notice`
-   - `createExportNote(app: App, character: Character): Promise<void>` — Creates a `.md` file in `Quest Board/exports/` with the summary
+   - `generateCharacterSummary(character: Character): string` — Produces the character header markdown: name, title, level, class, stats, active buffs, equipped gear
+   - `generateProgressReport(character: Character, stats: ProgressStats, dateRange: DateRange): string` — Combines character summary with filtered activity stats (quests, bounties, dungeons, XP, gold, best day)
+   - `copyToClipboard(text: string): void` — Uses `navigator.clipboard.writeText()` with `try/catch` fallback to `document.execCommand('copy')` via temporary textarea. Shows Obsidian `Notice`.
+   - `createExportNote(app: App, character: Character, content: string, exportFolder: string): Promise<void>` — Creates `{CharacterName} Export {YYYY-MM-DD}.md` in the configured export folder using `vault.create()` with `normalizePath()`. Checks for existing file and appends timestamp suffix if needed.
 
-2. **Update `src/components/character/CharacterIdentity.tsx`**
-   - Add a small clipboard icon button in the header area
-   - On click: call `CharacterExportService.generateCharacterSummary()` → `copyToClipboard()`
+2. **Update `src/modals/ProgressDashboardModal.ts`**
+   - Add export buttons to the header area:
+     - 📋 "Copy Report" button → `generateProgressReport()` + `copyToClipboard()`
+     - 💾 "Save to Vault" button → `generateProgressReport()` + `createExportNote()`
+   - Both use the currently selected date range from the dashboard's existing date picker
+   - Reuse existing `ProgressStatsService.getProgressStatsForRange()` for the filtered data
 
-3. **Update `src/modals/ProgressDashboardModal.ts`**
-   - Add export buttons to the header (copy + save note)
-   - "Copy Summary" button → clipboard
-   - "Save to Vault" button → creates export note
+3. **Add `exportFolder` setting**
+   - Add `exportFolder: string` field to settings (default: `settings.questFolder`)
+   - Add folder autocomplete input in the collapsed path settings section at the top of `SettingsTab.ts`
+   - Settings label: "Export folder" / description: "Folder where character exports are saved"
 
 4. **Register command**
    - Add `quest-board:export-character` command in `main.ts`
-   - Opens a small confirmation then generates the note
+   - Opens the Progress Dashboard modal (reuses existing infrastructure) with export buttons visible
+
+> [!NOTE]
+> Character page clipboard button is **deferred** to a future phase. All export functionality lives on the Progress Dashboard for now.
 
 #### Tech Debt:
-- Export format is v1 — may want to add more sections (achievements, activity history) later
+- Export format is v1 — may want to add more sections (achievements, activity breakdown) later
 
 ---
 
@@ -619,13 +713,18 @@ export interface Character {
 
 ### Key Test Cases
 
-- Summary includes character name and equipped title
-- Summary includes "No title equipped" when no title
-- Summary includes level, class, secondary class
-- Summary includes all 6 stats with correct values
-- Summary includes active buff titles with labels
-- Summary includes equipped gear names
-- Summary handles null/empty gear gracefully
+- Character summary includes character name and equipped title
+- Character summary includes "No title equipped" when no title
+- Character summary includes level, class, secondary class
+- Character summary includes all 6 stats with correct values
+- Character summary includes active buff titles with labels
+- Character summary includes equipped gear names
+- Character summary handles null/empty gear gracefully
+- Progress report includes date range label
+- Progress report includes quests completed, bounties won, dungeons completed
+- Progress report includes total XP and gold for the period
+- Export file naming uses `{CharacterName} Export {YYYY-MM-DD}.md` format
+- Clipboard fallback to `execCommand('copy')` when `navigator.clipboard` unavailable
 
 #### Tech Debt:
 - None expected
@@ -647,7 +746,7 @@ export interface Character {
    - `.qb-title-common` — `color: var(--text-muted)`
    - `.qb-title-rare` — `color: var(--color-blue)` with subtle text-shadow
    - `.qb-title-epic` — `color: var(--color-purple)` with text-shadow
-   - `.qb-title-legendary` — Gold gradient with `-webkit-background-clip: text`
+   - `.qb-title-legendary` — Gold gradient with `background-clip: text` and `-webkit-background-clip: text` (both standard and vendor)
    - `.qb-title-brackets` — Angle brackets in muted color
    - `.qb-title-empty` — Muted italic for "No Title"
    - Export button styles (small, unobtrusive clipboard icon)
@@ -662,7 +761,7 @@ export interface Character {
    - Section headers for "Unlocked" and "Locked" groups
 
 3. **Mobile considerations**
-   - Title text truncation on narrow screens
+   - Title wraps below character name on narrow screens (not truncated)
    - Modal scrollable on mobile
    - Touch targets ≥44px for title rows
    - No hover-dependent interactions (click/tap only)
@@ -676,23 +775,25 @@ export interface Character {
 
 | Phase | Title | Effort | Depends On | Est. Time |
 |-------|-------|--------|------------|-----------|
-| 1 | Data Models & Schema Migration | Small | — | 1-1.5h |
+| 1 | Data Models & Schema Migration | Medium | — | 1.5-2h |
 | 1.5 | Tests: Data Layer | Small | Phase 1 | 1-1.5h |
 | 2 | Title Service & Achievement Integration | Medium | Phase 1 | 1.5-2h |
 | 2.5 | Tests: Service Layer | Medium | Phase 2 | 1.5-2h |
 | 3 | Buff Engine (PowerUp Integration) | Small | Phase 2 | 0.5-1h |
 | 3.5 | Tests: Buff Engine | Medium | Phase 3 | 1-1.5h |
 | 4 | UI: Character Identity & Title Modal | Medium | Phase 2 | 2-2.5h |
-| 5 | UI: Character Export | Medium | Phase 2 | 1.5-2h |
+| 4.5 | Tests: UI | Small | Phase 4 | 1h |
+| 5 | UI: Progress Dashboard Report Generator | Medium | Phase 2 | 2-2.5h |
 | 5.5 | Tests: Export | Small | Phase 5 | 1h |
 | 6 | CSS & Polish | Small | Phase 4 | 1-1.5h |
 
-**Total Estimated Time:** ~13-17 hours across 6-8 sessions
+**Total Estimated Time:** ~15-20 hours across 7-9 sessions
 
 **Execution Order:**
 - Phases 1 → 1.5 → 2 → 2.5 (strictly sequential)
 - After Phase 2: Phases 3, 4, and 5 can be done in **any order** (all depend only on Phase 2)
 - Phase 3.5 after Phase 3
+- Phase 4.5 after Phase 4
 - Phase 5.5 after Phase 5
 - Phase 6 after Phase 4
 
@@ -706,17 +807,22 @@ export interface Character {
 |------|----------|--------|
 | Title data integrity (all 12 titles valid) | Pass | |
 | Achievement→title reference integrity | Pass | |
-| Schema v6→v7 migration | Pass, defaults applied | |
-| Store: unlock/equip/unequip actions | Pass | |
+| Schema v6→v7 migration + lifetimeStats backfill | Pass, defaults applied | |
+| Store: simple setter actions | Pass | |
 | TitleService: grant, equip, unequip | Pass | |
-| Achievement integration: unlock → title grant | Pass | |
+| Caller-side achievement integration | Pass | |
+| Lifetime stat increment + manual achievement check | Pass | |
 | Buff: XP multiplier flows through | Pass, ±0.01 tolerance | |
 | Buff: All stats boost applies | Pass, +1 each | |
 | Buff: Crit chance applies | Pass, +2% | |
 | Buff: Gold multiplier applies | Pass, +5% | |
-| Buff: Boss damage applies to bosses only | Pass | |
+| Buff: "The Focused" boosts both primary stats | Pass | |
+| Boss damage (direct check, not PowerUpEffect) | Pass, +5% to bosses only | |
 | Buff: Compound buff (The Relentless) | Pass, both effects | |
-| Export: summary content correct | Pass | |
+| `expirePowerUps()` skips title power-ups | Pass | |
+| TitleSelectionModal logic + DOM API | Pass | |
+| Export: summary + progress report content | Pass | |
+| Clipboard fallback | Pass | |
 
 ### Manual Testing
 
@@ -724,17 +830,18 @@ export interface Character {
 |------|----------|--------|
 | Build passes (`npm run build`) | No errors | |
 | Deploy to test vault (`npm run deploy:test`) | Files copied | |
-| Existing character loads without crash | v7 migration runs | |
+| Existing character loads without crash | v7 migration runs, lifetimeStats backfilled | |
 | "The Novice" auto-unlocked | Shows in title list | |
 | Click title area → modal opens | Modal displays | |
 | Equip title → name updates | Title appears inline | |
 | Equip buff title → buff icon appears | In buff row | |
 | Unequip title → cleared | "No Title" shown | |
 | Unlock achievement with title → title unlocks | Notice shown | |
-| Copy button → clipboard has summary | Paste to verify | |
-| Export command → note created in vault | Check file content | |
 | Progress Dashboard → export buttons work | Both copy + save | |
-| Mobile: title display + modal work | Tap targets, scroll | |
+| Export note created in configured folder | Timestamped `.md` file | |
+| Export folder setting with autocomplete | Works in settings panel | |
+| Mobile: title wraps below name | No truncation | |
+| Mobile: modal scrolls, tap targets ≥44px | Usable on mobile | |
 
 ---
 
@@ -745,26 +852,26 @@ export interface Character {
 | 1 | `src/models/Title.ts` | [NEW] | Title interface, helpers |
 | 1 | `src/data/titles.ts` | [NEW] | 12 title definitions |
 | 1 | `src/models/Achievement.ts` | [MODIFY] | Add `grantedTitleId` |
-| 1 | `src/data/achievements.ts` | [MODIFY] | 6 new achievements, title mappings |
-| 1 | `src/models/Character.ts` | [MODIFY] | Schema v7, `equippedTitle`, `unlockedTitles` |
-| 1 | `src/store/characterStore.ts` | [MODIFY] | `equipTitle`, `unlockTitle` actions |
-| 1.5 | `test/models/title.test.ts` | [NEW] | Data integrity + migration tests |
+| 1 | `src/data/achievements.ts` | [MODIFY] | 7 new achievements, title mappings |
+| 1 | `src/models/Character.ts` | [MODIFY] | Schema v7, `equippedTitle`, `unlockedTitles`, `LifetimeStats`, migration chain fix |
+| 1 | `src/store/characterStore.ts` | [MODIFY] | Simple setters: `setEquippedTitle`, `addUnlockedTitle`, `incrementLifetimeStat` |
+| 1.5 | `test/models/title.test.ts` | [NEW] | Data integrity + migration + backfill tests |
 | 1.5 | `test/store/characterStore.test.ts` | [MODIFY] | Migration + store action tests |
-| 2 | `src/services/TitleService.ts` | [NEW] | Title business logic |
-| 2 | `src/services/AchievementService.ts` | [MODIFY] | Title grant on achievement unlock |
-| 2 | `src/services/BattleService.ts` | [MODIFY] | Check combat title achievements |
+| 2 | `src/services/TitleService.ts` | [NEW] | Title business logic + PowerUp lifecycle |
+| 2 | Various services | [MODIFY] | Caller-side title grant hooks + lifetime stat increments |
 | 2.5 | `test/services/TitleService.test.ts` | [NEW] | Service layer tests |
-| 3 | `src/models/Character.ts` | [MODIFY] | Add `boss_damage_multiplier` to `PowerUpEffect` |
-| 3 | `src/services/BattleService.ts` | [MODIFY] | Handle `boss_damage_multiplier` effect |
-| 3 | `src/services/PowerUpService.ts` | [MODIFY] | Skip title power-ups in cleanup |
+| 3 | `src/services/BattleService.ts` | [MODIFY] | Direct `slayer-of-the-void` boss damage check |
 | 3.5 | `test/services/TitleBuffIntegration.test.ts` | [NEW] | Buff calculation tests |
-| 4 | `src/components/character/CharacterIdentity.tsx` | [MODIFY] | Title display + click handler |
+| 4 | `src/components/character/CharacterIdentity.tsx` | [MODIFY] | Title display + click handler + mobile wrap |
 | 4 | `src/modals/TitleSelectionModal.ts` | [NEW] | Title picker modal |
-| 5 | `src/services/CharacterExportService.ts` | [NEW] | Export summary + clipboard + note |
+| 4.5 | `test/modals/TitleSelectionModal.test.ts` | [NEW] | Modal logic tests |
+| 5 | `src/services/CharacterExportService.ts` | [NEW] | Report generator + clipboard + vault note |
 | 5 | `src/modals/ProgressDashboardModal.ts` | [MODIFY] | Export buttons |
+| 5 | `src/settings.ts` | [MODIFY] | Add `exportFolder` setting |
+| 5 | `src/SettingsTab.ts` | [MODIFY] | Export folder autocomplete input |
 | 5 | `main.ts` | [MODIFY] | Register export command |
-| 5.5 | `test/services/CharacterExportService.test.ts` | [NEW] | Export tests |
-| 6 | `src/styles/character.css` | [MODIFY] | Title display styles |
+| 5.5 | `test/services/CharacterExportService.test.ts` | [NEW] | Export + report tests |
+| 6 | `src/styles/character.css` | [MODIFY] | Title display styles + mobile wrap |
 | 6 | `src/styles/modals.css` | [MODIFY] | Title modal styles |
 
 ---
@@ -774,16 +881,17 @@ export interface Character {
 | Reference | Location | Notes |
 |-----------|----------|-------|
 | Character model + schema migrations | `src/models/Character.ts` | Schema v6, migration chain pattern |
-| PowerUp effect types | `src/models/Character.ts:312` | `PowerUpEffect` union type |
-| Achievement model + service | `src/models/Achievement.ts`, `src/services/AchievementService.ts` | Trigger types, unlock flow |
+| PowerUp effect types | `src/models/Character.ts:312` | `PowerUpEffect` union type (NOT modified for boss damage) |
+| Achievement model + service | `src/models/Achievement.ts`, `src/services/AchievementService.ts` | Trigger types, stateless check methods |
 | Achievement data | `src/data/achievements.ts` | Existing achievements |
-| PowerUp service + cleanup | `src/services/PowerUpService.ts` | `cleanupExpiredPowerUps()` |
+| PowerUp service + expiration | `src/services/PowerUpService.ts` | `expirePowerUps()` already safe for null expiration |
 | CharacterIdentity component | `src/components/character/CharacterIdentity.tsx` | Name/level/buff display |
-| Progress Dashboard modal | `src/modals/ProgressDashboardModal.ts` | Export button location |
+| Progress Dashboard modal | `src/modals/ProgressDashboardModal.ts` | Report generator + export location |
+| Progress Stats Service | `src/services/ProgressStatsService.ts` | Date ranges, stats calculation |
 | XP calculation | `src/services/XPSystem.ts` | `calculateXPWithBonus()` |
 | Stats calculation | `src/services/StatsService.ts` | `getTotalStat()` |
 | Combat stats derivation | `src/services/CombatService.ts` | `deriveCombatStats()` |
-| Battle damage calculation | `src/services/BattleService.ts` | `calculateDamage()` |
+| Battle damage calculation | `src/services/BattleService.ts` | `calculateDamage()` — Slayer of the Void check goes here |
 | Accessory effect pattern | `src/services/AccessoryEffectService.ts` | Pure function pattern reference |
 | CSS modules | `src/styles/character.css`, `src/styles/modals.css` | Edit these, not root `styles.css` |
 | Obsidian plugin guidelines | `.agent/rules/obsidian-plugin-guidelines.md` | Security, API, CSS rules |
@@ -793,12 +901,14 @@ export interface Character {
 ## Migration Strategy
 
 **Automatic migration on load.** When the character store loads a v6 character:
-1. `migrateCharacterV6toV7()` detects `schemaVersion < 7`
-2. Adds `equippedTitle: null` and `unlockedTitles: ['the-novice']`
-3. Sets `schemaVersion: 7`
-4. Chains to the next migration (future-proofed)
+1. `migrateCharacterV5toV6()` chains to `migrateCharacterV6toV7()` (fix: was returning early for v6+)
+2. `migrateCharacterV6toV7()` detects `schemaVersion < 7`
+3. Adds `equippedTitle: null`, `unlockedTitles: ['the-novice']`
+4. Backfills `lifetimeStats` from `activityHistory` (one-time scan)
+5. Sets `schemaVersion: 7`
+6. Chains to the next migration (future-proofed)
 
-**Rollback:** Delete the title fields and revert schema version. No data loss — titles don't modify existing fields.
+**Rollback:** Delete the title and lifetimeStats fields and revert schema version. No data loss — titles don't modify existing fields.
 
 ---
 
@@ -807,6 +917,8 @@ export interface Character {
 - Title IDs validated against `TITLES` registry before equipping (prevents stale/invalid IDs)
 - `TitleSelectionModal` uses Obsidian DOM API (`createEl`, `createDiv`) — no `innerHTML`
 - Export uses `Vault.create()` for file creation — path validated with `normalizePath()`
+- Export checks for existing file before `vault.create()` (throws on collision — handled with timestamp suffix)
+- Clipboard uses `navigator.clipboard.writeText()` with `try/catch` fallback to `document.execCommand('copy')`
 - No network requests, no external data, no user-generated title content
 
 ---
@@ -817,3 +929,4 @@ export interface Character {
 2. The v7 migration is additive-only (new fields with defaults) — reverting to v6 code will simply ignore the extra fields on next load
 3. No existing data is modified or deleted by this feature
 4. Active title power-ups use `triggeredBy: 'title'` — easy to filter out if needed
+5. `lifetimeStats` counters are additive and independent — safe to drop

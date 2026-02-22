@@ -861,14 +861,18 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                 new Setting(advancedContent)
                     .setName('Test Level')
                     .setDesc('Character level (1-40)')
-                    .addDropdown(dropdown => {
-                        // Add common test levels
-                        const levels = [1, 5, 10, 15, 20, 25, 30, 35, 40];
-                        levels.forEach(l => dropdown.addOption(l.toString(), `Level ${l}`));
-                        dropdown.setValue('20');
-                        dropdown.onChange((value) => {
-                            selectedLevel = parseInt(value, 10);
-                        });
+                    .addText(text => {
+                        text.setPlaceholder('20')
+                            .setValue('20')
+                            .onChange((value) => {
+                                const parsed = parseInt(value, 10);
+                                if (!isNaN(parsed) && parsed >= 1 && parsed <= 40) {
+                                    selectedLevel = parsed;
+                                }
+                            });
+                        text.inputEl.type = 'number';
+                        text.inputEl.min = '1';
+                        text.inputEl.max = '40';
                     });
 
                 new Setting(advancedContent)

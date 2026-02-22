@@ -20,6 +20,7 @@ import { AchievementService } from '../services/AchievementService';
 import { showAchievementUnlock } from '../modals/AchievementUnlockModal';
 import { LevelUpModal } from '../modals/LevelUpModal';
 import { checkAndUnlockSkills } from '../services/SkillService';
+import { getXPMultiplier } from '../services/AccessoryEffectService';
 import {
     evaluateTriggers,
     grantPowerUp,
@@ -205,9 +206,18 @@ export function useXPAward({ app, vault, plugin, customStatMappings, onCategoryU
             useCharacterStore.getState().setTriggerCooldowns(cooldowns ?? {});
         }
 
-        // Calculate XP with class bonus
+        // Calculate XP with class + accessory bonuses
         const baseXP = quest.xpPerTask * newlyCompleted;
-        const totalXP = calculateXPWithBonus(baseXP, quest.category, character);
+
+        // Accessory XP multipliers (additive with class bonus)
+        const accQuestXP = getXPMultiplier(character.equippedGear, 'quest');
+        const isRecurring = isManualQuest(quest) && (!!quest.recurringTemplateId || quest.questType?.toLowerCase() === 'recurring');
+        const accRecurringXP = isRecurring ? getXPMultiplier(character.equippedGear, 'recurring') : 0;
+        const accFirstDailyXP = isFirstTaskOfDay ? getXPMultiplier(character.equippedGear, 'first_daily') : 0;
+        const accXPBonus = accQuestXP + accRecurringXP + accFirstDailyXP;
+        const adjustedXP = Math.floor(baseXP * (1 + accXPBonus));
+
+        const totalXP = calculateXPWithBonus(adjustedXP, quest.category, character);
 
         // Track old level for level-up detection
         const oldXP = character.isTrainingMode ? character.trainingXP : character.totalXP;

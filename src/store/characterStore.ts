@@ -17,6 +17,7 @@ import {
     migrateCharacterV1toV2,
     CHARACTER_SCHEMA_VERSION,
 } from '../models';
+import { getUtilityBonus, getGoldMultiplier, getCombatBonus } from '../services/AccessoryEffectService';
 import { GearItem, GearSlot, EquippedGearMap, canEquipGear } from '../models/Gear';
 import { CONSUMABLES, ConsumableEffect } from '../models/Consumable';
 import { InventoryItem } from '../models/Consumable';
@@ -653,6 +654,12 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 lastModified: new Date().toISOString(),
             },
         });
+
+        // Recalculate HP/Mana if accessory equipped (may increase max values)
+        if (slot.startsWith('accessory') && item.templateId) {
+            get().recalculateMaxHPMana();
+        }
+
         return true;
     },
 
@@ -682,6 +689,12 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 lastModified: new Date().toISOString(),
             },
         });
+
+        // Clamp HP/Mana if accessory unequipped (may reduce max values)
+        if (slot.startsWith('accessory') && item.templateId) {
+            get().recalculateMaxHPMana();
+        }
+
         return item;
     },
 
@@ -703,16 +716,20 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             return true;
         });
 
+        // Apply Miser's Pendant sell value bonus
+        const sellMultiplier = 1 + getGoldMultiplier(character.equippedGear, 'sell');
+        const adjustedGold = Math.floor(totalGold * sellMultiplier);
+
         set({
             character: {
                 ...character,
                 gearInventory: newInventory,
-                gold: character.gold + totalGold,
+                gold: character.gold + adjustedGold,
                 lastModified: new Date().toISOString(),
             },
         });
 
-        return { removed, totalGold };
+        return { removed, totalGold: adjustedGold };
     },
 
     bulkAddGear: (items) => {
@@ -827,11 +844,13 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             todayGained = 0;
         }
 
-        // Check daily cap
-        if (todayGained >= MAX_DAILY_STAMINA) return;
+        // Check daily cap (with accessory bonus)
+        const staminaCapBonus = getUtilityBonus(character.equippedGear, 'staminaCap');
+        const effectiveDailyCap = MAX_DAILY_STAMINA + staminaCapBonus;
+        if (todayGained >= effectiveDailyCap) return;
 
         // Grant up to daily cap, respecting max current stamina
-        const granted = Math.min(amount, MAX_DAILY_STAMINA - todayGained);
+        const granted = Math.min(amount, effectiveDailyCap - todayGained);
         const newStamina = Math.min(character.stamina + granted, MAX_STAMINA);
 
         set({
@@ -909,10 +928,16 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         const int = character.baseStats.intelligence + (character.statBonuses?.intelligence || 0);
         const level = character.level;
 
-        const newMaxHP = 50 + (con * 5) + (level * 10);
-        const newMaxMana = 20 + (int * 3) + (level * 5);
+        const newBaseHP = 50 + (con * 5) + (level * 10);
+        const newBaseMana = 20 + (int * 3) + (level * 5);
 
-        // Also clamp current values if they exceed new max
+        // Apply accessory multipliers (e.g. +10% maxHP from Ring of Vitality)
+        const hpMultiplier = 1 + getCombatBonus(character.equippedGear, 'maxHp');
+        const manaMultiplier = 1 + getCombatBonus(character.equippedGear, 'maxMana');
+        const newMaxHP = Math.floor(newBaseHP * hpMultiplier);
+        const newMaxMana = Math.floor(newBaseMana * manaMultiplier);
+
+        // Clamp current values if they exceed new max
         const newCurrentHP = Math.min(character.currentHP, newMaxHP);
         const newCurrentMana = Math.min(character.currentMana, newMaxMana);
 

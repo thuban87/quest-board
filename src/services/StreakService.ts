@@ -5,6 +5,8 @@
  */
 
 import { Character } from '../models/Character';
+import { EquippedGearMap } from '../models/Gear';
+import { getUtilityBonus } from './AccessoryEffectService';
 
 /**
  * Result of updating a streak
@@ -89,7 +91,8 @@ function isMoreThanOneDayAgo(dateString: string): boolean {
  */
 export function updateStreak(
     character: Character,
-    isPaladin: boolean = false
+    isPaladin: boolean = false,
+    equippedGear: EquippedGearMap = {} as EquippedGearMap
 ): StreakUpdateResult {
     const today = getTodayDateString();
     const lastDate = character.lastQuestCompletionDate;
@@ -121,9 +124,11 @@ export function updateStreak(
         newStreak = character.currentStreak + 1;
         streakContinued = true;
     } else if (isMoreThanOneDayAgo(lastDate)) {
-        // Missed day(s)
-        if (isPaladin && totalShieldsUsedThisWeek < 1) {
-            // Paladin shield protects one miss per week
+        // Missed day(s) — check for shield protection (Paladin + accessories)
+        const accessoryShields = getUtilityBonus(equippedGear, 'streakShield');
+        const maxShieldsPerWeek = (isPaladin ? 1 : 0) + accessoryShields;
+        if (totalShieldsUsedThisWeek < maxShieldsPerWeek) {
+            // Shield protects one miss per week
             // Check if we only missed ONE day (2 days ago)
             const twoDaysAgo = new Date();
             twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
@@ -186,7 +191,11 @@ export interface CheckStreakResult {
     shieldWasReset: boolean;
 }
 
-export function checkStreakOnLoad(character: Character, isPaladin: boolean = false): CheckStreakResult {
+export function checkStreakOnLoad(
+    character: Character,
+    isPaladin: boolean = false,
+    equippedGear: EquippedGearMap = {} as EquippedGearMap
+): CheckStreakResult {
     const lastDate = character.lastQuestCompletionDate;
     let changed = false;
     let streakWasReset = false;
@@ -220,8 +229,10 @@ export function checkStreakOnLoad(character: Character, isPaladin: boolean = fal
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
     const twoDaysAgoStr = twoDaysAgo.toISOString().split('T')[0];
 
-    if (isPaladin && updatedCharacter.totalShieldsUsedThisWeek < 1 && lastDate >= twoDaysAgoStr) {
-        // Paladin with shield, only missed one day - streak is still protected
+    const accessoryShields = getUtilityBonus(equippedGear, 'streakShield');
+    const maxShieldsPerWeek = (isPaladin ? 1 : 0) + accessoryShields;
+    if (updatedCharacter.totalShieldsUsedThisWeek < maxShieldsPerWeek && lastDate >= twoDaysAgoStr) {
+        // Shield available, only missed one day - streak is still protected
         // Don't break it yet, shield will be used when they complete next quest
         return { character: updatedCharacter, changed, streakWasReset, shieldWasReset };
     }
