@@ -34,6 +34,7 @@ import { setBonusService } from './SetBonusService';
 import { getHpPotionForLevel, getMpPotionForLevel, CLEANSING_IDS, TACTICAL_IDS, STAT_ELIXIR_IDS, ENCHANTMENT_IDS } from '../models/Consumable';
 import { MonsterTier } from '../config/combatConfig';
 import { getGoldMultiplierFromPowerUps, expirePowerUps } from './PowerUpService';
+import { getGoldMultiplier, getLootBonus, getUtilityBonus } from './AccessoryEffectService';
 import {
     ACCESSORY_TIER_POOLS,
     AccessoryTier,
@@ -205,16 +206,18 @@ export class LootGenerationService {
      */
     generateQuestLoot(quest: Quest, character: Character): LootDrop {
         const rewards: LootReward[] = [];
+        const gear = character.equippedGear;
 
-        // 1. Always give gold (based on priority/urgency), boosted by active power-ups
+        // 1. Always give gold (based on priority/urgency), boosted by active power-ups + accessories
         const baseGoldAmount = this.calculateQuestGold(quest.priority);
         const activePowerUps = expirePowerUps(character.activePowerUps || []);
         const goldMultiplier = getGoldMultiplierFromPowerUps(activePowerUps);
-        const goldAmount = Math.floor(baseGoldAmount * goldMultiplier);
-        rewards.push({ type: 'gold', amount: goldAmount });
-
-        // 2. Check if this quest type rewards gear
         const questType = quest.questType?.toLowerCase() || 'main';
+        // Phase 4a: Daily quests use 'daily' gold source, other quests use 'quest'
+        const accGoldSource = questType === 'daily' ? 'daily' : 'quest';
+        const accGoldMult = 1 + getGoldMultiplier(gear, accGoldSource as any);
+        const goldAmount = Math.floor(baseGoldAmount * goldMultiplier * accGoldMult);
+        rewards.push({ type: 'gold', amount: goldAmount });
         const isTraining = questType === 'training' || character.isTrainingMode;
 
         // Daily quests: guaranteed consumable + 25% chance for gear
@@ -248,9 +251,10 @@ export class LootGenerationService {
         // Get drop rates based on mode
         const dropRates = isTraining ? QUEST_LOOT_RATES.training : QUEST_LOOT_RATES.normal;
 
-        // 3. Roll for gear (RNG gated)
+        // 3. Roll for gear (RNG gated) — boost with accessory loot bonuses
+        const accGearDropBonus = getLootBonus(gear, 'gearDrop');
         const possibleSlots = this.getSlotsForQuestType(questType);
-        if (possibleSlots.length > 0 && Math.random() < dropRates.gear) {
+        if (possibleSlots.length > 0 && Math.random() < (dropRates.gear + accGearDropBonus)) {
             const slot = this.pickRandom(possibleSlots);
 
             // Accessory slot picked from quest mapping → apply tier gating
@@ -331,8 +335,9 @@ export class LootGenerationService {
         monsterTemplateId?: string
     ): LootDrop {
         const rewards: LootReward[] = [];
+        const gear = character.equippedGear;
 
-        // Gold based on monster tier
+        // Gold based on monster tier, boosted by power-ups + accessories
         const goldMultiplier: Record<typeof monsterTier, number> = {
             overworld: 1.0,
             dungeon: 1.5,
@@ -343,7 +348,8 @@ export class LootGenerationService {
         const baseGold = 10 + monsterLevel * 2;
         const combatActivePowerUps = expirePowerUps(character.activePowerUps || []);
         const combatGoldMultiplier = getGoldMultiplierFromPowerUps(combatActivePowerUps);
-        const goldAmount = Math.floor(baseGold * goldMultiplier[monsterTier] * combatGoldMultiplier);
+        const accCombatGoldMult = 1 + getGoldMultiplier(gear, 'combat');
+        const goldAmount = Math.floor(baseGold * goldMultiplier[monsterTier] * combatGoldMultiplier * accCombatGoldMult);
         rewards.push({ type: 'gold', amount: goldAmount });
 
         // Gear drop chance based on tier
@@ -399,6 +405,17 @@ export class LootGenerationService {
             rewards.push(consumableDrop);
         }
 
+        // Phase 4a: Boss consumable guarantee from accessories
+        if ((monsterTier === 'boss' || monsterTier === 'raid_boss') && !consumableDrop) {
+            const bossConsumableChance = getUtilityBonus(gear, 'bossConsumable');
+            if (bossConsumableChance > 0) {
+                const guaranteedConsumable = this.rollCombatConsumable(monsterTier, monsterLevel);
+                if (guaranteedConsumable) {
+                    rewards.push(guaranteedConsumable);
+                }
+            }
+        }
+
         return rewards;
     }
 
@@ -411,8 +428,9 @@ export class LootGenerationService {
         character: Character
     ): LootDrop {
         const rewards: LootReward[] = [];
+        const gear = character.equippedGear;
 
-        // Gold amount by chest tier
+        // Gold amount by chest tier, boosted by accessories
         const goldRanges = {
             wooden: { min: 10, max: 30 },
             iron: { min: 25, max: 60 },
@@ -421,7 +439,8 @@ export class LootGenerationService {
         const range = goldRanges[chestTier];
         const chestActivePowerUps = expirePowerUps(character.activePowerUps || []);
         const chestGoldMultiplier = getGoldMultiplierFromPowerUps(chestActivePowerUps);
-        const goldAmount = Math.floor(this.randomRange(range.min, range.max) * chestGoldMultiplier);
+        const accDungeonGoldMult = 1 + getGoldMultiplier(gear, 'dungeon');
+        const goldAmount = Math.floor(this.randomRange(range.min, range.max) * chestGoldMultiplier * accDungeonGoldMult);
         rewards.push({ type: 'gold', amount: goldAmount });
 
         // Gear chance by tier

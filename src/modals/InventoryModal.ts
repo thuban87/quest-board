@@ -17,7 +17,7 @@ import {
     TIER_INFO,
     GEAR_SLOT_NAMES,
     GEAR_TIERS,
-    PRIMARY_GEAR_SLOTS,
+    ALL_GEAR_SLOTS,
     calculateSellValue,
     ARMOR_TYPE_NAMES,
     WEAPON_TYPE_NAMES,
@@ -26,6 +26,8 @@ import {
 import { CONSUMABLES, ConsumableDefinition, InventoryItem } from '../models/Consumable';
 import { useCharacterStore } from '../store/characterStore';
 import { formatGearTooltip, isSetItem, attachGearTooltip } from '../utils/gearFormatters';
+import { getAccessoryTemplate } from '../data/accessories';
+import { formatEffectLabel } from '../services/AccessoryEffectService';
 
 interface InventoryModalOptions {
     /** Callback when character data changes */
@@ -220,13 +222,32 @@ export class InventoryModal extends Modal {
         const slotFilterRow = filterSection.createEl('div', { cls: 'qb-inventory-filter-row' });
         slotFilterRow.createEl('span', { cls: 'qb-inventory-controls-label', text: 'Slot:' });
 
-        for (const slot of PRIMARY_GEAR_SLOTS) {
-            const isActive = this.slotFilters.has(slot);
+        // Slot filter buttons — consolidate 3 accessory slots into one button
+        const DISPLAY_SLOTS: { key: string; label: string; slots: GearSlot[] }[] = [
+            { key: 'head', label: GEAR_SLOT_NAMES.head, slots: ['head'] },
+            { key: 'chest', label: GEAR_SLOT_NAMES.chest, slots: ['chest'] },
+            { key: 'legs', label: GEAR_SLOT_NAMES.legs, slots: ['legs'] },
+            { key: 'boots', label: GEAR_SLOT_NAMES.boots, slots: ['boots'] },
+            { key: 'shield', label: GEAR_SLOT_NAMES.shield, slots: ['shield'] },
+            { key: 'weapon', label: GEAR_SLOT_NAMES.weapon, slots: ['weapon'] },
+            { key: 'accessory', label: 'Accessory', slots: ['accessory1', 'accessory2', 'accessory3'] },
+        ];
+
+        for (const group of DISPLAY_SLOTS) {
+            const isActive = group.slots.some(s => this.slotFilters.has(s));
             const btn = slotFilterRow.createEl('button', {
                 cls: `qb-inventory-filter-btn ${isActive ? 'active' : ''}`,
-                text: GEAR_SLOT_NAMES[slot]
+                text: group.label
             });
-            btn.addEventListener('click', () => this.toggleSlotFilter(slot));
+            btn.addEventListener('click', () => {
+                // Toggle all slots in this group together
+                if (isActive) {
+                    group.slots.forEach(s => this.slotFilters.delete(s));
+                } else {
+                    group.slots.forEach(s => this.slotFilters.add(s));
+                }
+                this.renderContent();
+            });
         }
 
         // Tier filters
@@ -293,8 +314,17 @@ export class InventoryModal extends Modal {
     private applyFilters(gear: GearItem[]): GearItem[] {
         return gear.filter(item => {
             // Slot filter (empty = show all)
-            if (this.slotFilters.size > 0 && !this.slotFilters.has(item.slot)) {
-                return false;
+            // Accessories: if any accessory filter is active, match any accessory slot
+            if (this.slotFilters.size > 0) {
+                if (item.slot.startsWith('accessory')) {
+                    // Check if any accessory filter is active
+                    const accFilterActive = ['accessory1', 'accessory2', 'accessory3'].some(
+                        s => this.slotFilters.has(s as GearSlot)
+                    );
+                    if (!accFilterActive) return false;
+                } else if (!this.slotFilters.has(item.slot)) {
+                    return false;
+                }
             }
             // Tier filter (empty = show all)
             if (this.tierFilters.size > 0 && !this.tierFilters.has(item.tier)) {
@@ -306,7 +336,7 @@ export class InventoryModal extends Modal {
 
     private applySorting(gear: GearItem[]): GearItem[] {
         const tierOrder = GEAR_TIERS;
-        const slotOrder = PRIMARY_GEAR_SLOTS;
+        const slotOrder = ALL_GEAR_SLOTS;
 
         return [...gear].sort((a, b) => {
             let comparison = 0;
@@ -385,8 +415,41 @@ export class InventoryModal extends Modal {
             });
         }
 
+        // Phase 4a: Show ability text for accessories with templateId
+        if (item.templateId && item.slot.startsWith('accessory')) {
+            const template = getAccessoryTemplate(item.templateId);
+            if (template) {
+                const abilityEl = infoEl.createEl('div', {
+                    cls: 'qb-inventory-item-ability',
+                });
+                abilityEl.createEl('span', {
+                    cls: 'qb-ability-name',
+                    text: `🔮 ${template.name}`,
+                });
+                for (const effect of template.effects) {
+                    abilityEl.createEl('div', {
+                        cls: 'qb-ability-effect',
+                        text: formatEffectLabel(effect),
+                    });
+                }
+            }
+        }
+
         // Rich comparison tooltip (WoW-style dual-panel)
-        const currentlyEquipped = character?.equippedGear?.[item.slot];
+        // For accessories, compare against the slot that would actually be targeted
+        let comparisonSlot = item.slot;
+        if (item.slot.startsWith('accessory') && character) {
+            const clickedSlot = this.options.initialSlotFilter;
+            if (clickedSlot && clickedSlot.startsWith('accessory')) {
+                comparisonSlot = clickedSlot;
+            } else {
+                const emptySlot = (['accessory1', 'accessory2', 'accessory3'] as const).find(
+                    s => !character.equippedGear?.[s]
+                );
+                comparisonSlot = emptySlot || 'accessory1';
+            }
+        }
+        const currentlyEquipped = character?.equippedGear?.[comparisonSlot as keyof typeof character.equippedGear];
         attachGearTooltip(itemEl, item, currentlyEquipped);
 
         // Check if class can equip this item
@@ -395,10 +458,19 @@ export class InventoryModal extends Modal {
         // Actions
         const actionsEl = itemEl.createEl('div', { cls: 'qb-inventory-item-actions' });
 
-        // Equip button (disabled if can't equip)
+        // For accessories, check if ANY accessory slot is free for Equip vs Swap text
+        const isAccessoryItem = item.slot.startsWith('accessory');
+        let showSwap = !!currentlyEquipped;
+        if (isAccessoryItem) {
+            const hasEmptySlot = ['accessory1', 'accessory2', 'accessory3'].some(
+                s => !character?.equippedGear?.[s as keyof typeof character.equippedGear]
+            );
+            showSwap = !hasEmptySlot;
+        }
+
         const equipBtn = actionsEl.createEl('button', {
             cls: `qb-inventory-btn qb-btn-equip ${!canEquip ? 'qb-btn-disabled' : ''}`,
-            text: currentlyEquipped ? '🔄 Swap' : '⬆️ Equip'
+            text: showSwap ? '🔄 Swap' : '⬆️ Equip'
         });
         if (!canEquip) {
             equipBtn.setAttribute('title', `Your class cannot equip this item type`);
@@ -418,12 +490,32 @@ export class InventoryModal extends Modal {
 
     private async equipItem(item: GearItem) {
         const charStore = useCharacterStore.getState();
+        const character = charStore.character;
+
+        // For accessories, determine the target slot:
+        // 1. If opened from a specific accessory slot click, target THAT slot
+        // 2. Otherwise, find the first empty accessory slot
+        // 3. If all slots occupied, default to accessory1
+        let targetSlot = item.slot;
+        if (item.slot.startsWith('accessory') && character) {
+            const clickedSlot = this.options.initialSlotFilter;
+            if (clickedSlot && clickedSlot.startsWith('accessory')) {
+                // Opened by clicking a specific accessory slot — target that slot
+                targetSlot = clickedSlot;
+            } else {
+                // Opened by other means — find first empty slot
+                const emptySlot = (['accessory1', 'accessory2', 'accessory3'] as const).find(
+                    s => !character.equippedGear?.[s]
+                );
+                targetSlot = emptySlot || 'accessory1';
+            }
+        }
 
         // Get currently equipped item first for notification
-        const currentItem = charStore.character?.equippedGear?.[item.slot];
+        const currentItem = character?.equippedGear?.[targetSlot as keyof typeof character.equippedGear];
 
-        // Call equipGear with slot and item ID
-        const success = charStore.equipGear(item.slot, item.id);
+        // Call equipGear with target slot and item ID
+        const success = charStore.equipGear(targetSlot as any, item.id);
 
         if (success) {
             new Notice(`✅ Equipped ${item.name}!`, 2000);

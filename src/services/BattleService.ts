@@ -18,6 +18,12 @@ import { Monster } from '../models/Monster';
 import { createRandomMonster, createMonster } from './MonsterService';
 import { lootGenerationService } from './LootGenerationService';
 import {
+    getXPMultiplier,
+    getGoldMultiplier,
+    getPassiveProc,
+    getConditionalBonus,
+} from './AccessoryEffectService';
+import {
     DEFEAT_GOLD_PENALTY,
     MonsterTier,
     CRIT_MULTIPLIER,
@@ -454,6 +460,51 @@ function executePlayerAttack(): void {
         });
     }
 
+    // Phase 4a: Accessory passive procs (once per attack action)
+    if (damage > 0 && store.player) {
+        const character = useCharacterStore.getState().character;
+        const equippedGear = character?.equippedGear;
+        if (equippedGear) {
+            // Lifesteal proc: heal for % of damage dealt
+            const lifestealRate = getPassiveProc(equippedGear, 'lifesteal');
+            if (lifestealRate > 0) {
+                const healAmount = Math.floor(damage * lifestealRate);
+                if (healAmount > 0) {
+                    const currHP = store.playerCurrentHP;
+                    const newHP = Math.min(playerStats.maxHP, currHP + healAmount);
+                    store.updatePlayerHP(newHP);
+                    store.addLogEntry({
+                        turn: store.turnNumber,
+                        actor: 'player',
+                        action: `🩸 Lifesteal heals ${healAmount} HP!`,
+                        result: 'heal',
+                    });
+                }
+            }
+
+            // Poison proc: chance to apply poison (3% max HP/turn, 2 turns)
+            const poisonChance = getPassiveProc(equippedGear, 'poisonChance');
+            if (poisonChance > 0 && Math.random() < poisonChance) {
+                const currentMonster = store.monster!;
+                applyStatus(
+                    currentMonster as any,
+                    'poison',
+                    2,
+                    'player',
+                    'minor',
+                    'accessory_poison'
+                );
+                store.updateMonster({ statusEffects: [...(currentMonster.statusEffects ?? [])] });
+                store.addLogEntry({
+                    turn: store.turnNumber,
+                    actor: 'player',
+                    action: '☠️ Poison proc! Enemy is poisoned!',
+                    result: 'hit',
+                });
+            }
+        }
+    }
+
     // Log the attack
     store.addLogEntry({
         turn: store.turnNumber,
@@ -514,15 +565,42 @@ function calculatePlayerDamage(
     // Apply class damage modifier
     attackPower = Math.floor(attackPower * player.damageModifier);
 
+    // Phase 4a: Apply conditional attack bonus (e.g., +15% attack below 50% HP)
+    const store = useBattleStore.getState();
+    const character = useCharacterStore.getState().character;
+    if (character?.equippedGear) {
+        const atkBonus = getConditionalBonus(
+            character.equippedGear,
+            'attack_below_50',
+            store.playerCurrentHP,
+            player.maxHP
+        );
+        if (atkBonus > 0) {
+            attackPower = Math.floor(attackPower * (1 + atkBonus));
+        }
+    }
+
     // Phase 5: Get stat stages from BattlePlayer and BattleMonster
-    const battlePlayer = useBattleStore.getState().player;
+    const battlePlayer = store.player;
     const playerAtkStage = battlePlayer?.statStages.atk ?? 0;
     const monsterDefStage = monster.statStages?.def ?? 0;
+
+    // Phase 4a: Apply conditional crit bonus (e.g., +10% crit above 75% HP)
+    let effectiveCrit = player.critChance;
+    if (character?.equippedGear) {
+        const critBonus = getConditionalBonus(
+            character.equippedGear,
+            'crit_above_75',
+            store.playerCurrentHP,
+            player.maxHP
+        );
+        effectiveCrit += critBonus;
+    }
 
     // Calculate with dodge, crit, variance, and stat stages
     const damageResult = calculateDamage(
         attackPower,
-        player.critChance,
+        effectiveCrit,
         defenderDef,
         monster.dodgeChance,
         0, // Monsters don't have block
@@ -530,8 +608,17 @@ function calculatePlayerDamage(
         monsterDefStage
     );
 
+    // Phase 4a: Apply crit damage bonus from accessories
+    let finalDamage = damageResult.damage;
+    if (damageResult.result === 'critical' && player.critDamageBonus > 0) {
+        // critDamageBonus is additive to base CRIT_MULTIPLIER (already applied in calculateDamage)
+        // We need to add the bonus portion: damage * (bonus / baseCritMultiplier)
+        const bonusDamage = Math.floor((damageResult.damage / CRIT_MULTIPLIER) * player.critDamageBonus);
+        finalDamage += bonusDamage;
+    }
+
     return {
-        damage: damageResult.damage,
+        damage: finalDamage,
         attackPower,
         defenderDef,
         result: damageResult.result,
@@ -954,7 +1041,9 @@ function checkBattleOutcome(): void {
 }
 
 /**
- * Handle player victory
+ * Handle player victory.
+ * Phase 4a refactor: reads character state once, applies accessory multipliers,
+ * writes back once via setCharacter.
  */
 export function handleVictory(): void {
     const store = useBattleStore.getState();
@@ -968,25 +1057,28 @@ export function handleVictory(): void {
     const oldXP = character.isTrainingMode ? character.trainingXP : character.totalXP;
     const isTrainingMode = character.isTrainingMode;
 
-    // Award XP
-    characterStore.addXP(monster.xpReward);
+    // Phase 4a: Apply accessory multipliers to rewards
+    const gear = character.equippedGear;
+    const xpMult = 1 + getXPMultiplier(gear, 'combat');
+    const goldMult = 1 + getGoldMultiplier(gear, 'combat');
+    const adjustedXP = Math.floor(monster.xpReward * xpMult);
+    const adjustedGold = Math.floor(monster.goldReward * goldMult);
+
+    // Award XP (uses store action for level-up checks)
+    characterStore.addXP(adjustedXP);
 
     // Get new XP after award
     const updatedChar = useCharacterStore.getState().character;
     const newXP = updatedChar?.isTrainingMode ? updatedChar.trainingXP : updatedChar?.totalXP ?? 0;
 
-    // Award gold
-    characterStore.updateGold(monster.goldReward);
-
-    // Sync HP/Mana to character (battle damage persists)
-    // Need to set absolute values, not delta, and update stored maxHP to derived value
-    // IMPORTANT: Get fresh character AFTER addXP/updateGold to preserve those changes
-    const updatedCharacter = useCharacterStore.getState().character;
-    if (updatedCharacter && store.playerStats) {
+    // Write back gold, HP/Mana, maxHP/maxMana in a single setCharacter call
+    const freshCharacter = useCharacterStore.getState().character;
+    if (freshCharacter && store.playerStats) {
         useCharacterStore.getState().setCharacter({
-            ...updatedCharacter,
+            ...freshCharacter,
+            gold: freshCharacter.gold + adjustedGold,
             currentHP: store.playerCurrentHP,
-            maxHP: store.playerStats.maxHP, // Store derived maxHP so comparisons work next time
+            maxHP: store.playerStats.maxHP,
             currentMana: store.playerCurrentMana,
             maxMana: store.playerStats.maxMana,
             lastModified: new Date().toISOString(),
@@ -1000,21 +1092,19 @@ export function handleVictory(): void {
     copyVolatileStatusToPersistent();
 
     // === ACTIVITY LOGGING (Phase 4) ===
-    // Log combat victory for progress tracking (all fights, not just bounties)
-    // IMPORTANT: This must happen BEFORE saveCallback so activity history is persisted
     const today = new Date();
     const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     useCharacterStore.getState().logActivity({
         type: 'bounty_victory',
         date: dateString,
-        xpGained: monster.xpReward,
-        goldGained: monster.goldReward,
+        xpGained: adjustedXP,
+        goldGained: adjustedGold,
         monsterId: monster.templateId || monster.id,
         details: `Defeated ${monster.name}`,
     });
 
-    // Persist character data (XP, gold, HP, activity history)
+    // Persist character data
     if (saveCallback) {
         saveCallback().catch(err => console.error('[BattleService] Save failed:', err));
     }
@@ -1025,9 +1115,6 @@ export function handleVictory(): void {
     // Phase 8: Finalize balance testing log
     updateTurnCount(store.turnNumber);
     finalizeBattle('victory', store.log, store.playerCurrentHP, store.playerCurrentMana);
-
-    // Loot is generated separately when victory modal is shown
-    // The lootBonus is stored for the modal to use
 }
 
 /**
@@ -1146,6 +1233,7 @@ export function handleDefeat(): void {
 /**
  * Generate loot after victory.
  * Called when showing victory rewards.
+ * Phase 4a CRITICAL FIX: Now passes monster.templateId for boss loot table lookup.
  */
 export function generateVictoryLoot(): ReturnType<typeof lootGenerationService.generateCombatLoot> {
     const store = useBattleStore.getState();
@@ -1154,12 +1242,13 @@ export function generateVictoryLoot(): ReturnType<typeof lootGenerationService.g
 
     if (!monster || !character) return [];
 
-    // Pass actual monster tier directly to loot service
+    // Pass actual monster tier + templateId to loot service
     const loot = lootGenerationService.generateCombatLoot(
         monster.tier,
         monster.level,
         character,
-        undefined // No unique drop ID for random fights
+        undefined, // No unique drop ID for random fights
+        monster.templateId // CRITICAL: Boss loot table lookup
     );
 
     return loot;
@@ -1360,6 +1449,49 @@ export function executePlayerSkill(): void {
                 action: procResult.logMessage!,
                 result: 'hit',
             });
+        }
+
+        // Phase 4a: Accessory passive procs (once per skill use, damage-dealing only)
+        const skillChar = useCharacterStore.getState().character;
+        const skillGear = skillChar?.equippedGear;
+        if (skillGear) {
+            // Lifesteal proc
+            const skillLifesteal = getPassiveProc(skillGear, 'lifesteal');
+            if (skillLifesteal > 0) {
+                const healAmt = Math.floor(result.damage * skillLifesteal);
+                if (healAmt > 0) {
+                    const hp = store.playerCurrentHP;
+                    const newHp = Math.min(player.maxHP, hp + healAmt);
+                    store.updatePlayerHP(newHp);
+                    store.addLogEntry({
+                        turn: store.turnNumber,
+                        actor: 'player',
+                        action: `🩸 Lifesteal heals ${healAmt} HP!`,
+                        result: 'heal',
+                    });
+                }
+            }
+
+            // Poison proc
+            const skillPoison = getPassiveProc(skillGear, 'poisonChance');
+            if (skillPoison > 0 && Math.random() < skillPoison) {
+                const curMonster = store.monster!;
+                applyStatus(
+                    curMonster as any,
+                    'poison',
+                    2,
+                    'player',
+                    'minor',
+                    'accessory_poison'
+                );
+                store.updateMonster({ statusEffects: [...(curMonster.statusEffects ?? [])] });
+                store.addLogEntry({
+                    turn: store.turnNumber,
+                    actor: 'player',
+                    action: '☠️ Poison proc! Enemy is poisoned!',
+                    result: 'hit',
+                });
+            }
         }
     }
 

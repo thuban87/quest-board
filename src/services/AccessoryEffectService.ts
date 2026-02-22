@@ -330,3 +330,75 @@ export function getStatMultiplier(gear: EquippedGearMap, _stat: StatType): numbe
     const effects = getEquippedAccessoryEffects(gear);
     return sumEffects(effects, 'stat_multiplier_all');
 }
+
+// ============================================
+// Human-Readable Effect Labels
+// ============================================
+
+/**
+ * Human-readable display labels for every AccessoryEffectType.
+ * Used by tooltips and inventory modals instead of stripping prefixes.
+ */
+export const EFFECT_DISPLAY_LABELS: Record<string, string> = {
+    // Gold
+    gold_quest: 'quest gold',
+    gold_combat: 'combat gold',
+    gold_dungeon: 'dungeon gold',
+    gold_daily: 'daily quest gold',
+    gold_sell: 'sell value',
+    gold_all: 'all gold',
+    // XP
+    xp_quest: 'quest XP',
+    xp_combat: 'combat XP',
+    xp_dungeon: 'dungeon XP',
+    xp_recurring: 'recurring quest XP',
+    xp_first_daily: 'first daily XP',
+    xp_stat_gain: 'stat gain XP',
+    xp_all: 'all XP',
+    // Combat
+    combat_crit: 'crit chance',
+    combat_dodge: 'dodge chance',
+    combat_block: 'block chance',
+    combat_phys_def: 'physical defense',
+    combat_mag_def: 'magic defense',
+    combat_max_hp: 'max HP',
+    combat_max_mana: 'max mana',
+    combat_crit_damage: 'crit damage',
+    combat_attack: 'attack power',
+    combat_fire_resist: 'fire resistance',
+    // Conditional
+    conditional_crit_above_75: 'crit chance (above 75% HP)',
+    conditional_attack_below_50: 'attack power (below 50% HP)',
+    // Procs
+    proc_lifesteal: 'lifesteal on hit',
+    proc_poison_chance: 'poison chance on hit',
+    // Loot
+    loot_gear_tier: 'gear tier upgrade chance',
+    loot_gear_drop: 'gear drop rate',
+    loot_set_chance: 'set piece chance',
+    loot_smelt_double: 'smelting double-tier chance',
+    // Utility
+    utility_stamina_cap: 'daily stamina cap',
+    utility_potion_healing: 'potion healing',
+    utility_streak_shield: 'streak shields per week',
+    utility_boss_consumable: 'boss consumable drop',
+    // Dungeon
+    dungeon_map_reveal: 'dungeon map reveal',
+    dungeon_golden_chest: 'golden chest chance',
+    dungeon_auto_revive: 'auto-revive on death',
+    // Stat multiplier
+    stat_multiplier_all: 'all stats',
+};
+
+/**
+ * Format an accessory effect as a human-readable string.
+ * Example: { type: 'gold_quest', value: 0.10 } → "+10% quest gold"
+ */
+export function formatEffectLabel(effect: AccessoryEffect): string {
+    const sign = effect.value >= 0 ? '+' : '';
+    const pct = Math.abs(effect.value) < 1
+        ? `${sign}${Math.round(effect.value * 100)}%`
+        : `${sign}${effect.value}`;
+    const label = EFFECT_DISPLAY_LABELS[effect.type] || effect.type.replace(/_/g, ' ');
+    return `${pct} ${label}`;
+}

@@ -14,6 +14,8 @@ import {
     WEAPON_TYPE_NAMES,
 } from '../models/Gear';
 import { setBonusService } from '../services/SetBonusService';
+import { getAccessoryTemplate } from '../data/accessories';
+import { formatEffectLabel } from '../services/AccessoryEffectService';
 
 // Local stat names lookup
 const STAT_NAMES: Record<string, string> = {
@@ -94,6 +96,18 @@ export function formatGearTooltip(item: GearItem, comparison?: GearItem | null):
     } else if (item.setName) {
         lines.push('');
         lines.push(`⚔️ Set: ${item.setName}`);
+    }
+
+    // Phase 4a: Accessory ability text
+    if (item.templateId && item.slot.startsWith('accessory')) {
+        const accTemplate = getAccessoryTemplate(item.templateId);
+        if (accTemplate) {
+            lines.push('');
+            lines.push(`🔮 ${accTemplate.name}`);
+            for (const effect of accTemplate.effects) {
+                lines.push(`  ${formatEffectLabel(effect)}`);
+            }
+        }
     }
 
     // Comparison if provided
@@ -255,6 +269,18 @@ function buildGearStats(parent: HTMLElement, item: GearItem): void {
     if (item.setName) {
         addDiv('qb-tt-divider', '');
         addDiv('qb-tt-set', `⚔️ ${item.setName} Set`);
+    }
+
+    // Phase 4a: Accessory ability text in DOM tooltip
+    if (item.templateId && item.slot.startsWith('accessory')) {
+        const accTemplate = getAccessoryTemplate(item.templateId);
+        if (accTemplate) {
+            addDiv('qb-tt-divider', '');
+            addDiv('qb-tt-ability-name', `🔮 ${accTemplate.name}`);
+            for (const effect of accTemplate.effects) {
+                addDiv('qb-tt-ability-effect', formatEffectLabel(effect));
+            }
+        }
     }
 
     // Sell value

@@ -25,6 +25,7 @@ import {
     LEGENDARY_REFINEMENT_COST,
 } from '../services/SmeltingService';
 import { showLootModal } from './LootModal';
+import { getLootBonus } from '../services/AccessoryEffectService';
 
 // ============================================
 // Types
@@ -348,8 +349,14 @@ export class BlacksmithModal extends Modal {
         }
 
         try {
+            // Phase 4a: Pass accessory double-tier chance to smelting
+            const character = useCharacterStore.getState().character;
+            const doubleTierChance = character?.equippedGear
+                ? getLootBonus(character.equippedGear, 'smeltDouble')
+                : 0;
             const result = await smeltingService.smelt(
-                this.selectedItems as [GearItem, GearItem, GearItem]
+                this.selectedItems as [GearItem, GearItem, GearItem],
+                doubleTierChance
             );
 
             if (result.success && result.outputItem) {

@@ -14,6 +14,7 @@ import {
 } from '../models/Character';
 import { getStatBoostFromPowerUps, getPercentStatBoostFromPowerUps, expirePowerUps } from './PowerUpService';
 import { aggregateGearStats } from './CombatService';
+import { getStatMultiplier, getXPMultiplier } from './AccessoryEffectService';
 
 /**
  * Derived stats calculated from primary stats
@@ -60,9 +61,10 @@ export function getTotalStat(character: Character, stat: StatType): number {
     // Flat total before percentage boosts
     const flatTotal = base + questBonus + powerUpBoost + gearBonus;
 
-    // Apply percentage-based boosts (e.g., Iron Grip +10% STR)
+    // Apply percentage-based boosts (e.g., Iron Grip +10% STR) + accessory stat multiplier
     const percentBoost = getPercentStatBoostFromPowerUps(activePowerUps, stat);
-    return Math.floor(flatTotal * (1 + percentBoost));
+    const accStatMult = getStatMultiplier(character.equippedGear, stat);
+    return Math.floor(flatTotal * (1 + percentBoost + accStatMult));
 }
 
 /**
@@ -150,7 +152,10 @@ export function processXPForStats(
     // Get current accumulator for this category
     const accumulator = { ...(character.categoryXPAccumulator || {}) };
     const currentAccum = accumulator[category] || 0;
-    const newAccum = currentAccum + xpGained;
+    // Phase 4a: Apply accessory XP multiplier for stat gains (Apprentice's Loop)
+    const accXPMult = 1 + getXPMultiplier(character.equippedGear, 'stat_gain');
+    const adjustedXP = Math.floor(xpGained * accXPMult);
+    const newAccum = currentAccum + adjustedXP;
 
     // Check if we've hit the threshold
     if (newAccum >= XP_PER_STAT_POINT) {

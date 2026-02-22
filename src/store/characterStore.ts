@@ -617,8 +617,11 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         const item = character.gearInventory.find(i => i.id === itemId);
         if (!item) return false;
 
-        // Check slot matches
-        if (item.slot !== slot) return false;
+        // Check slot matches — accessories can go in ANY accessory slot
+        const isAccessory = item.slot.startsWith('accessory');
+        const targetIsAccessory = slot.startsWith('accessory');
+        if (isAccessory && !targetIsAccessory) return false;
+        if (!isAccessory && item.slot !== slot) return false;
 
         // Check class can equip this item type
         if (!canEquipGear(character.class, item)) {
