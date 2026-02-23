@@ -2384,3 +2384,62 @@ Key files to reference:
 - docs/development/Phase 4 Implementation Session Log.md - Full development history
 ```
 
+---
+
+## 2026-02-21 → 2026-02-22 - Accessories & Special Abilities (Feature Project) ✅
+
+**Focus:** Complete feature project adding 52 curated accessories with passive abilities, boss-specific drops, tiered drop system, context-aware tooltips, and rich character sheet tooltips.
+
+**Duration:** 8 sessions across 2 days
+
+> **Detailed session log:** [Accessories Session Log](feature-planning/polished-and-ready/Accessories%20Session%20Log.md)
+> **Implementation plan:** [Accessories & Special Abilities Brainstorm](feature-planning/polished-and-ready/Accessories%20%26%20Special%20Abilities%20Brainstorm.md)
+
+### Summary of Phases:
+
+| Phase | Focus | Key Deliverables |
+|-------|-------|-----------------|
+| 1 | Data Foundation & Models | 52 accessory templates, schema v6 migration, `accessories.ts` |
+| 1.5 | Tests — Data Foundation | 60 tests for template integrity and handler cross-refs |
+| 2 | AccessoryEffectService | 9 grouped methods for combat, utility, resource, proc effects |
+| 2.5 | Tests — Service | 68 tests for effect aggregation, procs, stacking |
+| 3 | Drop Integration | Weighted slot selection, 20 boss loot tables, smelting guard, tier gating |
+| 3.5 | Tests — Drops | 64 tests for drop pools, boss loot, uniqueness |
+| 4a | Combat & Loot Integration | CombatService, BattleService, LootGen, StatsService, tooltips |
+| 4b | Meta-Game Integration | XP/gold multipliers, streak shields, HP/Mana clamping, stamina cap, dungeon bonuses |
+| 4c | Tests — Consumer Integration | 33 integration tests, React testing infra installed |
+| 5 | Manual Testing & Fixes | Phoenix Feather revive, context-aware tooltips, rich character sheet tooltips |
+
+### Key Stats:
+
+- **Tests:** 829 total (225 new for accessories), 0 failures
+- **Files changed:** 30+ across services, components, modals, stores, utils, styles, data
+- **New files:** `AccessoryEffectService.ts`, `accessories.ts`, `useDungeonBonuses.ts`, 6 test files
+- **Accessory types:** 30 general + 20 boss + 2 achievement = 52 curated templates
+- **Effect types:** 38 distinct effects across combat, utility, resource, and proc categories
+
+### Bugs Found & Fixed:
+
+- Phoenix Feather dungeon revive was never wired up (store flag existed but no logic)
+- Accessory tooltip showed 1x1 in all contexts instead of context-aware 1x3/1x1
+- Pre-existing import path bugs in 2 test files (recovered 31 silently failing tests)
+- Schema migration not persisting on first load (explicit save added)
+
+---
+
+## Next Session Prompt
+
+```
+Accessories & Special Abilities feature is COMPLETE (all phases done).
+
+The project has 829 tests, 36+ services, 37+ modals, and 17 CSS modules.
+Phase 4 Tier 3 Accessories is complete. Remaining Tier 3-4 items:
+- Character Titles (implementation plan exists)
+- Tier Sprite Choices
+- Class Change Modal
+- Dual-Class Unlock UI
+
+Key files to reference:
+- docs/development/Feature Roadmap v2.md - Current priorities
+- docs/development/feature-planning/polished-and-ready/Accessories Session Log.md - Detailed session history
+```

@@ -79,6 +79,22 @@ export default class QuestBoardPlugin extends Plugin {
         // Load settings
         await this.loadSettings();
 
+        // Run character schema migration on load and persist immediately.
+        // This ensures data.json is always up-to-date — the migration in
+        // characterStore.setCharacter() only runs in-memory and never saves.
+        if (this.settings.character) {
+            const { CHARACTER_SCHEMA_VERSION, migrateCharacterV1toV2 } = await import('./src/models/Character');
+            if (this.settings.character.schemaVersion !== CHARACTER_SCHEMA_VERSION) {
+                console.warn(
+                    `[QuestBoard] Migrating character schema v${this.settings.character.schemaVersion} → v${CHARACTER_SCHEMA_VERSION}`
+                );
+                this.settings.character = migrateCharacterV1toV2(
+                    this.settings.character as unknown as Record<string, unknown>
+                );
+                await this.saveSettings();
+            }
+        }
+
         // Migration: existing users who have already downloaded assets but don't have the new flag
         if (!this.settings.assetConfigured && this.settings.lastAssetCheck > 0) {
             this.settings.assetConfigured = true;

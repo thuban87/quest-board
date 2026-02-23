@@ -25,7 +25,7 @@ import {
 } from '../models/Gear';
 import { CONSUMABLES, ConsumableDefinition, InventoryItem } from '../models/Consumable';
 import { useCharacterStore } from '../store/characterStore';
-import { formatGearTooltip, isSetItem, attachGearTooltip } from '../utils/gearFormatters';
+import { formatGearTooltip, isSetItem, attachGearTooltip, attachAccessoryTooltip } from '../utils/gearFormatters';
 import { getAccessoryTemplate } from '../data/accessories';
 import { formatEffectLabel, getGoldMultiplier } from '../services/AccessoryEffectService';
 
@@ -436,21 +436,17 @@ export class InventoryModal extends Modal {
         }
 
         // Rich comparison tooltip (WoW-style dual-panel)
-        // For accessories, compare against the slot that would actually be targeted
-        let comparisonSlot = item.slot;
+        // For accessories, use context-aware tooltip showing all 3 slots (browse) or 1 slot (slot-click)
         if (item.slot.startsWith('accessory') && character) {
             const clickedSlot = this.options.initialSlotFilter;
-            if (clickedSlot && clickedSlot.startsWith('accessory')) {
-                comparisonSlot = clickedSlot;
-            } else {
-                const emptySlot = (['accessory1', 'accessory2', 'accessory3'] as const).find(
-                    s => !character.equippedGear?.[s]
-                );
-                comparisonSlot = emptySlot || 'accessory1';
-            }
+            const targetSlot = (clickedSlot && clickedSlot.startsWith('accessory'))
+                ? clickedSlot  // Slot-click: compare against clicked slot only
+                : undefined;   // Browse: show all 3 equipped accessories
+            attachAccessoryTooltip(itemEl, item, character.equippedGear as Record<string, GearItem | null>, targetSlot);
+        } else {
+            const currentlyEquipped = character?.equippedGear?.[item.slot as keyof typeof character.equippedGear];
+            attachGearTooltip(itemEl, item, currentlyEquipped);
         }
-        const currentlyEquipped = character?.equippedGear?.[comparisonSlot as keyof typeof character.equippedGear];
-        attachGearTooltip(itemEl, item, currentlyEquipped);
 
         // Check if class can equip this item
         const canEquip = character ? canEquipGear(character.class, item) : true;
@@ -460,12 +456,14 @@ export class InventoryModal extends Modal {
 
         // For accessories, check if ANY accessory slot is free for Equip vs Swap text
         const isAccessoryItem = item.slot.startsWith('accessory');
-        let showSwap = !!currentlyEquipped;
+        let showSwap = false;
         if (isAccessoryItem) {
             const hasEmptySlot = ['accessory1', 'accessory2', 'accessory3'].some(
                 s => !character?.equippedGear?.[s as keyof typeof character.equippedGear]
             );
             showSwap = !hasEmptySlot;
+        } else {
+            showSwap = !!character?.equippedGear?.[item.slot as GearSlot];
         }
 
         const equipBtn = actionsEl.createEl('button', {

@@ -1163,6 +1163,39 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ assetFolder, adapter, 
      * Called by BattleView via onDefeat prop
      */
     const handleDefeat = useCallback(() => {
+        // === PHOENIX FEATHER AUTO-REVIVE CHECK ===
+        // Priority: Phoenix Tear (consumable, handled by BattleService) > Phoenix Feather (accessory)
+        // If we reach here, the Tear was already consumed or unavailable.
+        const featherAvailable = dungeonBonuses.hasAutoRevive &&
+            !useDungeonStore.getState().phoenixFeatherUsedThisDungeon;
+
+        if (featherAvailable) {
+            // Revive at 25% HP
+            const char = useCharacterStore.getState().character;
+            if (char) {
+                const targetHP = Math.ceil(char.maxHP * 0.25);
+                const delta = targetHP - (char.currentHP ?? 0);
+                useCharacterStore.getState().updateHP(delta);
+            }
+
+            // Mark feather as consumed for this dungeon run
+            useDungeonStore.getState().markPhoenixFeatherUsed();
+
+            // Reset battle and return to exploring
+            resetBattle();
+            endCombat();
+
+            new Notice('🔥 Phoenix Feather activates! You rise from the ashes at 25% HP!', 4000);
+
+
+            // Save the HP change
+            if (onSave) {
+                onSave();
+            }
+            return; // Skip death modal
+        }
+
+        // No revive available — show death modal
         new DungeonDeathModal(app, {
             onRestart: () => {
                 resetBattle();
@@ -1197,7 +1230,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ assetFolder, adapter, 
                 onClose();
             },
         }).open();
-    }, [app, endCombat, exitDungeon, onClose, resetBattle, restartDungeonMonsters]);
+    }, [app, dungeonBonuses.hasAutoRevive, endCombat, exitDungeon, onClose, onSave, resetBattle, restartDungeonMonsters]);
 
     /**
      * Handle showing loot from battle victory

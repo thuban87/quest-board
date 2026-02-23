@@ -440,7 +440,8 @@ export class LootGenerationService {
         const chestActivePowerUps = expirePowerUps(character.activePowerUps || []);
         const chestGoldMultiplier = getGoldMultiplierFromPowerUps(chestActivePowerUps);
         const accDungeonGoldMult = 1 + getGoldMultiplier(gear, 'dungeon');
-        const goldAmount = Math.floor(this.randomRange(range.min, range.max) * chestGoldMultiplier * accDungeonGoldMult);
+        const rawChestGold = this.randomRange(range.min, range.max);
+        const goldAmount = Math.floor(rawChestGold * chestGoldMultiplier * accDungeonGoldMult);
         rewards.push({ type: 'gold', amount: goldAmount });
 
         // Gear chance by tier

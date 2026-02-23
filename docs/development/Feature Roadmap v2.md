@@ -413,9 +413,9 @@ Overhaul of the consumable system from 11 items to 30, adding stat elixirs, clea
 
 **Docs:** [Implementation Guide](feature-planning/in-review/Expanded%20Consumables%20Implementation%20Guide.md) | [Session Log](Expanded%20Consumables%20Session%20Log.md)
 
-## 🔄 Accessories & Special Abilities — In Progress (2026-02-21 → present)
+## ✅ Accessories & Special Abilities — Complete (2026-02-21 → 2026-02-22)
 
-Phase 4 expansion adding 52 curated accessories with passive abilities, boss-specific drops, and a tiered drop system.
+Phase 4 expansion adding 52 curated accessories with passive abilities, boss-specific drops, tiered drop system, and rich tooltip comparisons. 8 sessions across 2 days.
 
 | Phase | Status | Notes |
 |-------|--------|-------|
@@ -427,10 +427,8 @@ Phase 4 expansion adding 52 curated accessories with passive abilities, boss-spe
 | 3.5: Tests — Drop Integration | ✅ Complete | 64 tests (40 accessory-drops + 24 boss-loot-table), 796 total suite |
 | 4a: Combat & Loot Integration | ✅ Complete | CombatService, BattleService, LootGen, StatsService, tooltips, smelting, consumable healing, inventory UX |
 | 4b: Meta-Game Integration | ✅ Complete | XP multipliers, streak shields, HP/Mana clamping, stamina cap, sell multiplier, dungeon map reveal, settings number input |
-| 5: Boss Loot Tables | ✅ Complete | Merged into Phase 3 — all 20 boss loot tables implemented |
-| 6: Achievement Accessory Migration | 📋 Planned | Wire achievement rewards |
-| 7: AI Generation | 📋 Planned | Gemini-powered accessory generation |
-| 8+: Polish & Balance | 📋 Planned | Settings UI, balance tuning |
+| 4c: Tests — Consumer Integration | ✅ Complete | 33 integration tests, React testing infra (@testing-library/react + jsdom), 829 total suite |
+| 5: Manual Testing & Fixes | ✅ Complete | Phoenix Feather revive, context-aware tooltips, rich character sheet tooltips, all 25 test matrix items passed |
 
 **Docs:** [Implementation Plan](feature-planning/polished-and-ready/Accessories%20%26%20Special%20Abilities%20Brainstorm.md) | [Session Log](feature-planning/polished-and-ready/Accessories%20Session%20Log.md)
 
@@ -455,4 +453,4 @@ Phase 4 expansion adding 52 curated accessories with passive abilities, boss-spe
 
 ---
 
-**Last Updated:** 2026-02-21 (Accessories Phase 4b complete — all meta-game integrations live: XP, streak, HP/Mana, stamina, sell, dungeon)
+**Last Updated:** 2026-02-22 (Accessories Phase 5 complete — manual testing passed, Phoenix Feather revive, rich tooltips on character sheet, all debug logs cleaned)

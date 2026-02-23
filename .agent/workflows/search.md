@@ -4,7 +4,10 @@ description: Search the codebase using ripgrep or Select-String when grep_search
 
 # Codebase Search Workflow
 
-The `grep_search` tool can be unreliable in this repository. Use these commands instead to search the codebase.
+The `grep_search` tool can be unreliable in this repository. Use these commands instead to search the codebase. Commands that are known to not work:
+
+-rg "pattern" path --no-heading
+-rg "pattern" path --line-number
 
 ## Search by Pattern
 

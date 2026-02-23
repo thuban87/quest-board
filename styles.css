@@ -6321,6 +6321,55 @@
   background: linear-gradient(90deg, #3b82f6, #60a5fa);
 }
 /* ===========================================
+   Multi-Accessory Comparison Tooltip
+   Shows inventory item + all 3 equipped accessory slots
+   =========================================== */
+.qb-tt-accessory-multi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qb-spacing-sm);
+  max-width: 700px;
+}
+.qb-tt-divider-label {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: var(--qb-spacing-xs) 0;
+}
+.qb-tt-equipped-row {
+  display: flex;
+  gap: var(--qb-spacing-xs);
+}
+.qb-tt-mini {
+  min-width: 130px;
+  flex: 1;
+  font-size: 0.78rem;
+}
+.qb-tt-mini .qb-tt-name {
+  font-size: 0.85rem;
+}
+.qb-tt-mini .qb-tt-panel-header {
+  font-size: 0.65rem;
+}
+.qb-tt-empty {
+  color: var(--text-faint);
+  font-style: italic;
+  padding: var(--qb-spacing-sm);
+  text-align: center;
+}
+/* Accessory ability text in tooltips */
+.qb-tt-ability-name {
+  font-weight: 700;
+  color: #bb77ff;
+  margin-top: var(--qb-spacing-xs);
+}
+.qb-tt-ability-effect {
+  font-size: 0.78rem;
+  color: #bb77ff;
+  padding-left: var(--qb-spacing-sm);
+}
+/* ===========================================
    Combat CSS Module
    =========================================== */
 /* Consumable button continuation */

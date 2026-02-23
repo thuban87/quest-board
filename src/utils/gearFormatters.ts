@@ -490,3 +490,117 @@ export function attachGearTooltip(
     // Also remove on scroll to prevent orphaned tooltips
     element.addEventListener('scroll', hideTooltip, { capture: true });
 }
+
+/**
+ * Create a multi-slot accessory comparison tooltip.
+ * Shows the inventory item on the left, and all 3 equipped accessory slots on the right.
+ * Used when browsing accessories from the inventory button (not slot-click).
+ */
+export function createAccessoryMultiTooltip(
+    container: HTMLElement,
+    item: GearItem,
+    equippedSlots: { slot: string; item: GearItem | null }[]
+): HTMLElement {
+    const tooltip = container.createEl('div', { cls: 'qb-gear-tooltip qb-tt-accessory-multi' });
+
+    // Top panel: The inventory item
+    const itemPanel = tooltip.createEl('div', { cls: 'qb-tt-panel qb-tt-new' });
+    itemPanel.createEl('div', { cls: 'qb-tt-panel-header', text: '📦 In Inventory' });
+    const itemContent = itemPanel.createEl('div', { cls: 'qb-tt-panel-content' });
+    buildGearStats(itemContent, item);
+
+    // Divider
+    tooltip.createEl('div', { cls: 'qb-tt-divider-label', text: '⬇️ Would replace one of:' });
+
+    // Bottom: equipped accessory slots in a row
+    const equippedRow = tooltip.createEl('div', { cls: 'qb-tt-equipped-row' });
+    for (const { slot, item: equipped } of equippedSlots) {
+        const slotLabel = GEAR_SLOT_NAMES[slot as keyof typeof GEAR_SLOT_NAMES] || slot;
+        const slotPanel = equippedRow.createEl('div', { cls: 'qb-tt-panel qb-tt-equipped qb-tt-mini' });
+        slotPanel.createEl('div', { cls: 'qb-tt-panel-header', text: `⚔️ ${slotLabel}` });
+        const slotContent = slotPanel.createEl('div', { cls: 'qb-tt-panel-content' });
+        if (equipped) {
+            buildGearStats(slotContent, equipped);
+        } else {
+            slotContent.createEl('div', { cls: 'qb-tt-empty', text: 'Empty slot' });
+        }
+    }
+
+    return tooltip;
+}
+
+/**
+ * Attach an accessory-aware tooltip to an element.
+ * In slot-click mode (targetSlot specified): shows item vs that one slot (standard 2-panel).
+ * In browse mode (targetSlot not specified): shows item + all 3 equipped accessory slots.
+ */
+export function attachAccessoryTooltip(
+    element: HTMLElement,
+    item: GearItem,
+    equippedGear: Record<string, GearItem | null>,
+    targetSlot?: string
+): void {
+    let tooltip: HTMLElement | null = null;
+
+    const showTooltip = () => {
+        document.querySelectorAll('.qb-gear-tooltip-wrapper').forEach(el => el.remove());
+        if (tooltip) tooltip.remove();
+
+        tooltip = document.body.createEl('div', { cls: 'qb-gear-tooltip-wrapper' });
+
+        if (Platform.isMobile) {
+            tooltip.addClass('qb-gear-tooltip-mobile');
+            const closeBtn = tooltip.createEl('button', { cls: 'qb-tooltip-close-btn', text: '✕' });
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (tooltip) { tooltip.remove(); tooltip = null; }
+            });
+        }
+
+        if (targetSlot) {
+            // Slot-click mode: standard 2-panel comparison
+            const equipped = equippedGear[targetSlot] || null;
+            createGearComparisonTooltip(tooltip, item, equipped);
+        } else {
+            // Browse mode: multi-slot comparison
+            const slots = [
+                { slot: 'accessory1', item: equippedGear['accessory1'] || null },
+                { slot: 'accessory2', item: equippedGear['accessory2'] || null },
+                { slot: 'accessory3', item: equippedGear['accessory3'] || null },
+            ];
+            createAccessoryMultiTooltip(tooltip, item, slots);
+        }
+
+        // Position
+        const rect = element.getBoundingClientRect();
+        tooltip.style.position = 'fixed';
+        tooltip.style.zIndex = '10000';
+        const tooltipHeight = 300;
+        if (rect.top > tooltipHeight + 20) {
+            tooltip.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+            tooltip.style.top = 'auto';
+        } else {
+            tooltip.style.top = `${rect.bottom + 8}px`;
+            tooltip.style.bottom = 'auto';
+        }
+        const left = Math.max(10, Math.min(
+            rect.left + rect.width / 2 - 200,
+            window.innerWidth - 420
+        ));
+        tooltip.style.left = `${left}px`;
+    };
+
+    const hideTooltip = () => {
+        if (tooltip) { tooltip.remove(); tooltip = null; }
+    };
+
+    element.addEventListener('mouseenter', showTooltip);
+    element.addEventListener('mouseleave', hideTooltip);
+    if (Platform.isMobile) {
+        element.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (tooltip) { hideTooltip(); } else { showTooltip(); }
+        });
+    }
+    element.addEventListener('scroll', hideTooltip, { capture: true });
+}

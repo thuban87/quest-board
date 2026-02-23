@@ -8,10 +8,13 @@
  *    [Acc 1]   [Legs]        [Acc 2]
  *              [Boots]
  *              [Acc 3]
+ *
+ * Uses rich DOM tooltips via attachGearTooltip.
  */
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { GearSlot, GearItem, EquippedGearMap, TIER_INFO, GEAR_SLOT_NAMES, GEAR_SLOT_ICONS } from '../../models/Gear';
+import { attachGearTooltip } from '../../utils/gearFormatters';
 
 interface EquipmentPaperdollProps {
     equippedGear: EquippedGearMap;
@@ -24,44 +27,28 @@ interface EquipmentPaperdollProps {
     classEmoji?: string;
 }
 
-/** Generate a tooltip string for a gear item */
-function getGearTooltip(item: GearItem): string {
-    const tierInfo = TIER_INFO[item.tier];
-    const lines = [
-        `${item.name}`,
-        `${tierInfo.emoji} ${tierInfo.name} • Level ${item.level}`,
-        '',
-        `+${item.stats.primaryValue} ${item.stats.primaryStat.charAt(0).toUpperCase() + item.stats.primaryStat.slice(1)}`,
-    ];
-
-    if (item.stats.secondaryStats) {
-        for (const [stat, value] of Object.entries(item.stats.secondaryStats)) {
-            if (value && value > 0) {
-                lines.push(`+${value} ${stat.charAt(0).toUpperCase() + stat.slice(1)}`);
-            }
-        }
-    }
-    if (item.stats.attackPower) lines.push(`+${item.stats.attackPower} Attack Power`);
-    if (item.stats.defense) lines.push(`+${item.stats.defense} Defense`);
-    if (item.stats.critChance) lines.push(`+${item.stats.critChance}% Crit Chance`);
-    if (item.stats.blockChance) lines.push(`+${item.stats.blockChance}% Block Chance`);
-
-    return lines.join('\n');
-}
-
-/** Shared slot rendering for a single paperdoll gear slot */
+/** Shared slot rendering for a single paperdoll gear slot with rich tooltip */
 const PaperdollSlot: React.FC<{
     slot: GearSlot;
-    item: GearItem | null;
+    item: GearItem | null | undefined;
     onClick?: () => void;
 }> = ({ slot, item, onClick }) => {
+    const ref = useRef<HTMLDivElement>(null);
     const label = GEAR_SLOT_NAMES[slot];
     const emoji = GEAR_SLOT_ICONS[slot];
 
+    useEffect(() => {
+        if (ref.current && item) {
+            // Attach rich tooltip (single item, no comparison — this IS the equipped item)
+            attachGearTooltip(ref.current, item, null);
+        }
+    }, [item]);
+
     return (
         <div
+            ref={ref}
             className={`qb-paperdoll-slot qb-paperdoll-slot-${slot} ${item ? `qb-tier-${item.tier}` : ''}`}
-            title={item ? getGearTooltip(item) : `${label} - Click to equip`}
+            title={item ? undefined : `${label} - Click to equip`}
             onClick={onClick}
         >
             <div
@@ -113,7 +100,7 @@ export const EquipmentPaperdoll: React.FC<EquipmentPaperdollProps> = ({
                             <React.Fragment key={slot}>
                                 <PaperdollSlot
                                     slot={slot}
-                                    item={equippedGear?.[slot] ?? null}
+                                    item={equippedGear?.[slot]}
                                     onClick={() => onSlotClick?.(slot)}
                                 />
                                 <div
@@ -142,7 +129,7 @@ export const EquipmentPaperdoll: React.FC<EquipmentPaperdollProps> = ({
                         <PaperdollSlot
                             key={slot}
                             slot={slot}
-                            item={equippedGear?.[slot] ?? null}
+                            item={equippedGear?.[slot]}
                             onClick={() => onSlotClick?.(slot)}
                         />
                     );

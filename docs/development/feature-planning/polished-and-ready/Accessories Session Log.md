@@ -295,3 +295,95 @@ Each session entry includes:
 
 ### Next Session Prompt
 > Phase 4b (Meta-Game Integration) is complete. Begin Phase 4c: unit and integration tests for all Phase 4a/4b consumer integrations. Key areas to test: XP multiplier stacking in useXPAward, streak shield generalization in StreakService, HP/Mana clamping in characterStore, dynamic stamina cap, sell gold multiplier in InventoryModal.sellItem, and dungeon map reveal in dungeonStore.
+
+---
+
+## Session 7 — 2026-02-22 — Phase 4c: Tests — Consumer Integration ✅
+
+**Focus:** Integration tests for all Phase 4a/4b consumer integrations, plus React testing infrastructure setup
+
+**Completed:**
+- [x] Installed `@testing-library/react` + `jsdom` for React hook/component testing
+- [x] Updated `vitest.config.ts` environment from `node` → `jsdom`
+- [x] Cleaned up `test/setup.ts` — removed manual DOM mock (jsdom provides it)
+- [x] Wrote `test/accessory-integration.test.ts` — 33 tests across 8 describe blocks
+- [x] Fixed pre-existing import path bugs in `accessory-drops.test.ts` and `boss-loot-table.test.ts`
+
+**Files Changed:**
+- `test/accessory-integration.test.ts` — **[NEW]** 33 integration tests covering 8 consumer systems
+- `vitest.config.ts` — Environment change (`node` → `jsdom`)
+- `test/setup.ts` — Removed manual DOM mock
+- `test/accessory-drops.test.ts` — Fixed import paths (`../../src/` → `../src/`)
+- `test/boss-loot-table.test.ts` — Fixed import paths (`../../src/` → `../src/`)
+- `package.json` — Added `@testing-library/react`, `jsdom` devDependencies
+- `package-lock.json` — Updated lockfile
+
+**Testing Notes:**
+- 829 tests pass (0 failures), up from 765
+  - +33 new integration tests
+  - +31 recovered tests from path fix (accessory-drops + boss-loot-table)
+- Test coverage across 8 describe blocks:
+  - `deriveCombatStats` (5) — crit/dodge/block, HP/Mana%, stat multiplier, loot tier, fire resist
+  - `handleVictory` (3) — XP multiplier, gold multiplier, boss loot templating
+  - `LootGenerationService` (5) — quest gold, daily gold, set chance, tier upgrade, boss consumable
+  - `StreakService` (4) — shield counts, weekly reset, streak preservation
+  - `characterStore` (6) — HP/Mana clamping, stamina cap, sell value, rapid equip
+  - `dungeonStore` (2) — map reveal, golden chest
+  - `useXPAward` (4) — quest/recurring/first-daily XP, additive stacking
+  - `gearFormatters` (4) — tooltip abilities, T1 omission, lifesteal proc, stat gain
+
+**Bugs Found & Fixed:**
+- **Pre-existing path bug:** `accessory-drops.test.ts` and `boss-loot-table.test.ts` used `../../src/` imports but live directly in `test/` (1 level deep). Fixed to `../src/`, recovering 31 tests that were silently failing.
+
+**Next Steps:**
+- Phase 6: Achievement Accessory Migration
+- Phase 7: AI Generation
+- Future: Title System implementation
+
+### Next Session Prompt
+> Phase 4c (Consumer Integration Tests) is complete — 33 tests verifying all accessory consumer integrations. React testing infrastructure (`@testing-library/react` + jsdom) is now installed and ready for future component/hook testing. The full test suite is at 829 tests with 0 failures. Next priorities: Phase 6 (Achievement Accessory Migration) or Title System implementation.
+
+---
+
+## Session 8 — 2026-02-22 — Phase 5: Manual Testing & Fixes ✅
+
+**Focus:** Brad's manual QA pass on all accessory features, implementing missing functionality, fixing tooltips, and upgrading character sheet tooltips.
+
+**Completed:**
+- [x] Implemented Phoenix Feather dungeon revive (was missing entirely)
+- [x] Fixed accessory tooltip to be context-aware (browse = 1×3 grid, slot-click = 1×1 comparison)
+- [x] Replaced plain `title` tooltips on character sheet with rich DOM tooltips
+- [x] Added then removed ACC-DEBUG logs for combat stats, smelting, XP, gold, stamina, and sell value
+- [x] Added CSS for multi-accessory tooltip layout
+- [x] Brad passed all 25 manual test items
+
+**Files Changed:**
+- `src/components/DungeonView.tsx` — Phoenix Feather auto-revive logic in `handleDefeat`
+- `src/store/dungeonStore.ts` — Added `markPhoenixFeatherUsed` action
+- `src/utils/gearFormatters.ts` — Added `createAccessoryMultiTooltip` and `attachAccessoryTooltip`
+- `src/modals/InventoryModal.ts` — Context-aware accessory tooltip + import fix
+- `src/components/character/EquipmentGrid.tsx` — Rich tooltip via `useRef`+`useEffect`+`attachGearTooltip`
+- `src/components/character/EquipmentPaperdoll.tsx` — Rich tooltip via `useRef`+`useEffect`+`attachGearTooltip`
+- `src/styles/inventory.css` — Multi-accessory tooltip CSS
+- `src/services/CombatService.ts` — Debug log added then removed
+- `src/services/SmeltingService.ts` — Debug log added then removed
+- `src/services/BattleService.ts` — Debug log added then removed
+- `src/services/LootGenerationService.ts` — Debug log added then removed
+- `src/hooks/useXPAward.ts` — Debug log added then removed
+- `src/store/characterStore.ts` — Debug log added then removed
+
+**Testing Notes:**
+- 829 tests pass (0 failures)
+- All 25 manual test items passed by Brad
+- Build clean, deployed to test vault
+
+**Bugs Found & Fixed:**
+- **Missing feature:** Phoenix Feather dungeon revive had store tracking (`phoenixFeatherUsedThisDungeon`) but no actual revive logic in `DungeonView.tsx`
+- **Tooltip bug:** Accessory tooltip showed 1×1 comparison in all contexts instead of 1×3 grid when browsing
+
+**Next Steps:**
+- Phase 5 complete — accessories fully tested and working
+- Next: Phase 6 (Achievement Accessory Migration) or Title System implementation
+
+### Next Session Prompt
+> Phase 5 (Manual Testing & Fixes) is complete. All 25 test matrix items passed. Phoenix Feather revive implemented, accessory tooltips are context-aware, and character sheet has rich tooltips. All debug logs removed. 829 tests, 0 failures. Next priorities: Phase 6 (Achievement Accessory Migration) or Title System implementation.

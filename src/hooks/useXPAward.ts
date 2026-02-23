@@ -217,6 +217,7 @@ export function useXPAward({ app, vault, plugin, customStatMappings, onCategoryU
         const accXPBonus = accQuestXP + accRecurringXP + accFirstDailyXP;
         const adjustedXP = Math.floor(baseXP * (1 + accXPBonus));
 
+
         const totalXP = calculateXPWithBonus(adjustedXP, quest.category, character);
 
         // Track old level for level-up detection

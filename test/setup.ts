@@ -18,22 +18,6 @@ if (typeof globalThis.crypto === 'undefined') {
     } as Crypto;
 }
 
-// Create minimal DOM environment for tests
-if (typeof document === 'undefined') {
-    // Node environment - create basic document mock
-    (globalThis as any).document = {
-        createElement: (tag: string) => ({
-            tagName: tag.toUpperCase(),
-            style: {},
-            classList: {
-                add: () => { },
-                remove: () => { },
-                toggle: () => { },
-            },
-            appendChild: () => { },
-            addEventListener: () => { },
-        }),
-    };
-}
+// Note: jsdom environment (vitest.config.ts) provides a full DOM — no manual mock needed.
 
 export { };

@@ -16,30 +16,30 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
-import { LootGenerationService } from '../../src/services/LootGenerationService';
-import { SmeltingService } from '../../src/services/SmeltingService';
-import { getAccessoryTemplate } from '../../src/data/accessories';
-import { getMonsterTemplate, getBossTemplates } from '../../src/data/monsters';
-import type { GearItem, GearTier } from '../../src/models/Gear';
+import { LootGenerationService } from '../src/services/LootGenerationService';
+import { SmeltingService } from '../src/services/SmeltingService';
+import { getAccessoryTemplate } from '../src/data/accessories';
+import { getMonsterTemplate, getBossTemplates } from '../src/data/monsters';
+import type { GearItem, GearTier } from '../src/models/Gear';
 
 // Mock dependencies
-vi.mock('../../src/data/uniqueItems', () => ({
+vi.mock('../src/data/uniqueItems', () => ({
     createUniqueItem: vi.fn(() => null),
 }));
 
-vi.mock('../../src/services/SetBonusService', () => ({
+vi.mock('../src/services/SetBonusService', () => ({
     setBonusService: {
         getSetFromQuestPath: vi.fn(() => null),
     },
 }));
 
-vi.mock('../../src/services/PowerUpService', () => ({
+vi.mock('../src/services/PowerUpService', () => ({
     getGoldMultiplierFromPowerUps: vi.fn(() => 1.0),
     expirePowerUps: vi.fn((pups: any[]) => pups),
 }));
 
 // Mock characterStore for SmeltingService
-vi.mock('../../src/store/characterStore', () => ({
+vi.mock('../src/store/characterStore', () => ({
     useCharacterStore: {
         getState: vi.fn(() => ({
             character: {

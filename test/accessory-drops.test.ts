@@ -13,27 +13,27 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
-import { LootGenerationService, GEAR_SLOT_WEIGHTS } from '../../src/services/LootGenerationService';
-import { PRIMARY_GEAR_SLOTS, ALL_GEAR_SLOTS, GearSlot, GEAR_SLOT_NAMES } from '../../src/models/Gear';
-import { ACCESSORY_TIER_POOLS, getAccessoryTemplatesByTier } from '../../src/data/accessories';
+import { LootGenerationService, GEAR_SLOT_WEIGHTS } from '../src/services/LootGenerationService';
+import { PRIMARY_GEAR_SLOTS, ALL_GEAR_SLOTS, GearSlot, GEAR_SLOT_NAMES } from '../src/models/Gear';
+import { ACCESSORY_TIER_POOLS, getAccessoryTemplatesByTier } from '../src/data/accessories';
 
 // Mock dependencies
-vi.mock('../../src/data/uniqueItems', () => ({
+vi.mock('../src/data/uniqueItems', () => ({
     createUniqueItem: vi.fn(() => null),
 }));
 
-vi.mock('../../src/services/SetBonusService', () => ({
+vi.mock('../src/services/SetBonusService', () => ({
     setBonusService: {
         getSetFromQuestPath: vi.fn(() => null),
     },
 }));
 
-vi.mock('../../src/services/PowerUpService', () => ({
+vi.mock('../src/services/PowerUpService', () => ({
     getGoldMultiplierFromPowerUps: vi.fn(() => 1.0),
     expirePowerUps: vi.fn((pups: any[]) => pups),
 }));
 
-vi.mock('../../src/data/monsters', () => ({
+vi.mock('../src/data/monsters', () => ({
     getMonsterTemplate: vi.fn(() => null),
 }));
 
