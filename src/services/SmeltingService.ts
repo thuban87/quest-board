@@ -180,9 +180,13 @@ export class SmeltingService {
             let outputTier = this.getOutputTier(items);
 
             // Blacksmith's Favor: chance to jump an extra tier
-            if (doubleTierChance && doubleTierChance > 0 && Math.random() < doubleTierChance) {
-                const extraTier = getNextTier(outputTier);
-                if (extraTier) {
+            if (doubleTierChance && doubleTierChance > 0) {
+                const roll = Math.random();
+                const jumped = roll < doubleTierChance;
+                const extraTier = jumped ? getNextTier(outputTier) : null;
+
+
+                if (jumped && extraTier) {
                     outputTier = extraTier;
                 }
             }

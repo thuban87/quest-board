@@ -847,6 +847,8 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         // Check daily cap (with accessory bonus)
         const staminaCapBonus = getUtilityBonus(character.equippedGear, 'staminaCap');
         const effectiveDailyCap = MAX_DAILY_STAMINA + staminaCapBonus;
+
+
         if (todayGained >= effectiveDailyCap) return;
 
         // Grant up to daily cap, respecting max current stamina

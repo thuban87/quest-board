@@ -342,3 +342,48 @@ Each session entry includes:
 
 ### Next Session Prompt
 > Phase 4c (Consumer Integration Tests) is complete — 33 tests verifying all accessory consumer integrations. React testing infrastructure (`@testing-library/react` + jsdom) is now installed and ready for future component/hook testing. The full test suite is at 829 tests with 0 failures. Next priorities: Phase 6 (Achievement Accessory Migration) or Title System implementation.
+
+---
+
+## Session 8 — 2026-02-22 — Phase 5: Manual Testing & Fixes ✅
+
+**Focus:** Brad's manual QA pass on all accessory features, implementing missing functionality, fixing tooltips, and upgrading character sheet tooltips.
+
+**Completed:**
+- [x] Implemented Phoenix Feather dungeon revive (was missing entirely)
+- [x] Fixed accessory tooltip to be context-aware (browse = 1×3 grid, slot-click = 1×1 comparison)
+- [x] Replaced plain `title` tooltips on character sheet with rich DOM tooltips
+- [x] Added then removed ACC-DEBUG logs for combat stats, smelting, XP, gold, stamina, and sell value
+- [x] Added CSS for multi-accessory tooltip layout
+- [x] Brad passed all 25 manual test items
+
+**Files Changed:**
+- `src/components/DungeonView.tsx` — Phoenix Feather auto-revive logic in `handleDefeat`
+- `src/store/dungeonStore.ts` — Added `markPhoenixFeatherUsed` action
+- `src/utils/gearFormatters.ts` — Added `createAccessoryMultiTooltip` and `attachAccessoryTooltip`
+- `src/modals/InventoryModal.ts` — Context-aware accessory tooltip + import fix
+- `src/components/character/EquipmentGrid.tsx` — Rich tooltip via `useRef`+`useEffect`+`attachGearTooltip`
+- `src/components/character/EquipmentPaperdoll.tsx` — Rich tooltip via `useRef`+`useEffect`+`attachGearTooltip`
+- `src/styles/inventory.css` — Multi-accessory tooltip CSS
+- `src/services/CombatService.ts` — Debug log added then removed
+- `src/services/SmeltingService.ts` — Debug log added then removed
+- `src/services/BattleService.ts` — Debug log added then removed
+- `src/services/LootGenerationService.ts` — Debug log added then removed
+- `src/hooks/useXPAward.ts` — Debug log added then removed
+- `src/store/characterStore.ts` — Debug log added then removed
+
+**Testing Notes:**
+- 829 tests pass (0 failures)
+- All 25 manual test items passed by Brad
+- Build clean, deployed to test vault
+
+**Bugs Found & Fixed:**
+- **Missing feature:** Phoenix Feather dungeon revive had store tracking (`phoenixFeatherUsedThisDungeon`) but no actual revive logic in `DungeonView.tsx`
+- **Tooltip bug:** Accessory tooltip showed 1×1 comparison in all contexts instead of 1×3 grid when browsing
+
+**Next Steps:**
+- Phase 5 complete — accessories fully tested and working
+- Next: Phase 6 (Achievement Accessory Migration) or Title System implementation
+
+### Next Session Prompt
+> Phase 5 (Manual Testing & Fixes) is complete. All 25 test matrix items passed. Phoenix Feather revive implemented, accessory tooltips are context-aware, and character sheet has rich tooltips. All debug logs removed. 829 tests, 0 failures. Next priorities: Phase 6 (Achievement Accessory Migration) or Title System implementation.

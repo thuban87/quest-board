@@ -14,6 +14,8 @@ Run this at the end of each coding session, **after testing has been completed a
 git status
 git diff --stat
 ```
+Run ONLY these two commands. Do NOT run any additional git commands to "get more detail." These are the ONLY git commands for this step. Do not run variations, follow-ups, or "let me try a different flag" commands.
+
 
 2. **Update the Session Log.** Add a new entry to `docs\development\feature-planning\polished-and-ready\Accessories Session Log.md` documenting what was accomplished this session. Follow the existing entry format in the file. Include: date, what was done, files changed, test results, and any issues discovered.
 

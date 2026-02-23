@@ -75,6 +75,7 @@ interface DungeonState {
     endCombat: () => void;
     markBossDefeated: () => void;  // Called after boss is killed
     restartDungeonMonsters: () => void;  // Respawn all monsters, reset to room 1
+    markPhoenixFeatherUsed: () => void;   // Mark Phoenix Feather accessory as consumed this dungeon
 
     // Persistence
     loadPersistedState: (state: PersistedDungeonState | null) => void;
@@ -401,6 +402,10 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
             activeCombatRoomId: null,
             explorationState: 'EXPLORING',
         });
+    },
+
+    markPhoenixFeatherUsed: () => {
+        set({ phoenixFeatherUsedThisDungeon: true });
     },
 
     // Persistence
