@@ -246,7 +246,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 |---------|-------------|--------|
 | **AI Dungeon Generation** | Create dungeons from text prompts via Gemini | High | ✅ Complete
 | **Accessory Special Abilities** | Unique effects: sneak past monsters, reset rest timer (cooldown), etc. | High | 🔄 Phase 1 Complete |
-| **Character Titles** | Ecosystem of titles earned from various activities | Medium |
+| **Character Titles** | Ecosystem of titles earned from various activities | Medium | 🔄 Phase 0 Complete |
 | **Dungeon Bosses** | Boss monsters at dungeon end | Medium | ✅ Complete
 | **Skills/Abilities** | Class-specific moves using mana (Pokemon Gen 1 style) | ✅ Complete (Phase 9 Done, Deploy Pending) |
 | **Tier Sprite Choices** | At tier-up, choose from 3 sprite looks | Medium |

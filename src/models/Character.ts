@@ -798,7 +798,7 @@ export function migrateCharacterV2toV3(oldData: Record<string, unknown>): Charac
         return migrateCharacterV3toV4(oldData);
     }
     if ((oldData.schemaVersion as number) >= 4) {
-        return oldData as unknown as Character;
+        return migrateCharacterV3toV4(oldData);
     }
 
     // Build migrated character
@@ -831,7 +831,7 @@ export function migrateCharacterV3toV4(oldData: Record<string, unknown>): Charac
         return migrateCharacterV4toV5(oldData);
     }
     if ((oldData.schemaVersion as number) >= 5) {
-        return oldData as unknown as Character;
+        return migrateCharacterV4toV5(oldData);
     }
 
     // Build migrated character
@@ -964,9 +964,9 @@ function getDefaultSkillLoadout(skills: import('./Skill').Skill[], slots: number
  * @returns Migrated character data conforming to schema v6
  */
 export function migrateCharacterV5toV6(oldData: Record<string, unknown>): Character {
-    // Already v6 or higher? Return as-is
+    // Already v6 or higher? Chain to next migration
     if ((oldData.schemaVersion as number) >= 6) {
-        return oldData as unknown as Character;
+        return migrateCharacterV6toV7(oldData);
     }
 
     // Convert boolean → number: true = 1 shield used, false = 0
@@ -982,6 +982,19 @@ export function migrateCharacterV5toV6(oldData: Record<string, unknown>): Charac
     // Remove old boolean field
     delete migrated.shieldUsedThisWeek;
 
-    return migrated as unknown as Character;
+    // Chain to v6 → v7 migration
+    return migrateCharacterV6toV7(migrated);
+}
+
+/**
+ * Migrate character data from schema v6 to schema v7.
+ * STUB — returns data unchanged. Phase 1 replaces this
+ * with real migration (lifetimeStats, title fields).
+ *
+ * @param oldData - Character data at schema v6
+ * @returns Character data unchanged (stub)
+ */
+export function migrateCharacterV6toV7(oldData: Record<string, unknown>): Character {
+    return oldData as unknown as Character;
 }
 

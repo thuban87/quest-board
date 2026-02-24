@@ -304,7 +304,7 @@ export interface Character {
 
 ---
 
-## Phase 0: Migration Chain Fix (Pre-requisite)
+## Phase 0: Migration Chain Fix (Pre-requisite) — ✅ Complete
 
 **Effort:** Small
 **Estimated Time:** 30 minutes
@@ -345,7 +345,7 @@ export interface Character {
 
 ---
 
-## Phase 0.5: Tests — Migration Chain Fix
+## Phase 0.5: Tests — Migration Chain Fix — ✅ Complete
 
 **Effort:** Small
 **Estimated Time:** 30-45 minutes
