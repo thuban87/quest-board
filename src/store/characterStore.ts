@@ -602,6 +602,11 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
                 lastModified: new Date().toISOString(),
             },
         });
+
+        // Track positive gold in lifetime stats (for gold-1000 achievement)
+        if (delta > 0) {
+            get().incrementLifetimeStat('goldEarned', delta);
+        }
     },
 
     addGear: (item) => {
@@ -754,10 +759,14 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             character: {
                 ...character,
                 gearInventory: newInventory,
-                gold: character.gold + adjustedGold,
                 lastModified: new Date().toISOString(),
             },
         });
+
+        // Route gold through updateGold() for lifetimeStats tracking
+        if (adjustedGold > 0) {
+            get().updateGold(adjustedGold);
+        }
 
         return { removed, totalGold: adjustedGold };
     },

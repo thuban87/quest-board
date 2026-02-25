@@ -128,3 +128,51 @@ Each session entry should include:
 
 ### Next Steps:
 - Phase 2: TitleService + caller-side integration (useXPAward, BattleService, etc.)
+
+---
+
+## 2026-02-25 - Phase 2 & 2.5: Title Service, Achievement Integration & Tests
+
+**Focus:** Create TitleService, wire title grants into achievement callers, add lifetime stat tracking, create new AchievementService check methods, and write test coverage
+
+### Completed:
+- ✅ Created `src/services/TitleService.ts` — 5 methods: grantTitle, equipTitle, getUnlockedTitles, getEquippedTitle, createTitlePowerUps (class-specific The Focused, multi-buff The Relentless)
+- ✅ Added 4 new `AchievementService` check methods: checkBattleCountAchievements, checkBossKillAchievements, checkDungeonAchievements, checkGoldAchievements
+- ✅ Wired title grants in `useXPAward.ts` — level, quest count, and category count achievements; fixed both TODO lines (quest count uses lifetimeStats, category count derives from activityHistory); added incrementLifetimeStat for questsCompleted
+- ✅ Wired title grants in `QuestActionsService.ts` — streak achievements; fixed null vault instantiation bug
+- ✅ Wired dungeon achievement checks in `DungeonView.tsx` — DRY helper across all 3 exit paths (handleExit, onLeave, handleExitConfirm)
+- ✅ Refactored `BattleService.handleVictory()` — gold routed through updateGold(); added battlesWon + bossesDefeated lifetime stat increments
+- ✅ Refactored `BattleService.handleDefeat()` — gold penalty routed through updateGold()
+- ✅ Updated `characterStore.updateGold()` — tracks positive gold deltas as goldEarned in lifetimeStats
+- ✅ Refactored `characterStore.bulkRemoveGear()` — gold routed through updateGold()
+- ✅ Updated `dungeonStore.exitDungeon()` — increments dungeonAttempts (always) and dungeonsCompleted (boss defeated only)
+- ✅ Created `test/services/TitleService.test.ts` — 19 tests covering createTitlePowerUps, getUnlockedTitles, getEquippedTitle
+- ✅ Added 25 tests to `test/achievements.test.ts` for 4 new check methods
+- ✅ Fixed `test/accessory-integration.test.ts` — added lifetimeStats to mock character
+
+### Files Changed:
+- `src/services/TitleService.ts` [NEW] — Title service with 5 methods
+- `src/services/AchievementService.ts` [MODIFIED] — 4 new check methods
+- `src/hooks/useXPAward.ts` [MODIFIED] — Title grants, fixed TODO lines, lifetime stat tracking
+- `src/services/QuestActionsService.ts` [MODIFIED] — Fixed null vault, title grants on streaks
+- `src/services/BattleService.ts` [MODIFIED] — Gold routing, lifetime stat increments
+- `src/store/characterStore.ts` [MODIFIED] — updateGold goldEarned tracking, bulkRemoveGear refactor
+- `src/store/dungeonStore.ts` [MODIFIED] — Lifetime stat increments in exitDungeon
+- `src/components/DungeonView.tsx` [MODIFIED] — DRY dungeon achievement helper at 3 exit paths
+- `test/services/TitleService.test.ts` [NEW] — 19 tests
+- `test/achievements.test.ts` [MODIFIED] — 25 new tests
+- `test/accessory-integration.test.ts` [MODIFIED] — Added lifetimeStats to mock
+
+### Testing Notes:
+- 921/921 tests pass (44 new, 0 regressions)
+- 30 test files
+- Brad manually confirmed plugin loads correctly in test vault (Phase 2 smoke test)
+- Fixed 1 regression: accessory-integration.test.ts mock missing lifetimeStats caused handleVictory crash
+
+### Blockers/Issues:
+- Title buffs for crit chance and boss damage will not function until Phase 3 deriveCombatStats fix
+- grantTitle/equipTitle require Zustand store mocking for unit tests (deferred to integration tests)
+
+### Next Steps:
+- Phase 3: deriveCombatStats integration for title stat buffs
+- Phase 4: Title UI (Character Sheet, equip modal, progress dashboard)

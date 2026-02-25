@@ -117,6 +117,14 @@ function makeCharacter(overrides: Partial<Character> = {}): Character {
         triggerCooldowns: {},
         skills: { unlocked: [], equipped: [] },
         dungeonExploration: {},
+        lifetimeStats: {
+            questsCompleted: 0,
+            battlesWon: 0,
+            bossesDefeated: 0,
+            dungeonsCompleted: 0,
+            dungeonAttempts: 0,
+            goldEarned: 0,
+        },
         ...overrides,
     } as Character;
 }

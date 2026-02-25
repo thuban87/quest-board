@@ -20,6 +20,7 @@ import { toggleTaskInFile, readTasksWithSections, getTaskCompletion } from './Ta
 import { updateStreak, getStreakDisplay, StreakUpdateResult } from './StreakService';
 import { lootGenerationService } from './LootGenerationService';
 import { AchievementService } from './AchievementService';
+import { grantTitle } from './TitleService';
 import { showAchievementUnlock } from '../modals/AchievementUnlockModal';
 import { showLootModal } from '../modals/LootModal';
 import { showInventoryManagementModal } from '../modals/InventoryManagementModal';
@@ -180,14 +181,21 @@ export async function moveQuest(
                 // === STREAK ACHIEVEMENTS ===
                 // Check for streak milestone achievements (7-day, 30-day, etc.)
                 const achievements = useCharacterStore.getState().achievements;
-                const achievementService = new AchievementService(null as any); // vault not needed for checks
+                const achievementService = new AchievementService(vault);
                 const streakAchievementCheck = achievementService.checkStreakAchievements(achievements, newStreak);
 
                 if (streakAchievementCheck.newlyUnlocked.length > 0) {
-                    // Show unlock popups
+                    // Show unlock popups + check for title grants
                     streakAchievementCheck.newlyUnlocked.forEach((achievement, index) => {
                         setTimeout(() => {
                             showAchievementUnlock(null as any, achievement);
+                            // Title grant for achievements with grantedTitleId
+                            if (achievement.grantedTitleId) {
+                                const title = grantTitle(achievement.grantedTitleId);
+                                if (title) {
+                                    new Notice(`🏅 Title unlocked: ${title.name}!`, 4000);
+                                }
+                            }
                         }, 2000 + (index * 1000));
                     });
 

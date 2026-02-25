@@ -1071,18 +1071,26 @@ export function handleVictory(): void {
     const updatedChar = useCharacterStore.getState().character;
     const newXP = updatedChar?.isTrainingMode ? updatedChar.trainingXP : updatedChar?.totalXP ?? 0;
 
-    // Write back gold, HP/Mana, maxHP/maxMana in a single setCharacter call
+    // Route gold through updateGold() for lifetimeStats tracking
+    useCharacterStore.getState().updateGold(adjustedGold);
+
+    // Write back HP/Mana, maxHP/maxMana (gold already updated above)
     const freshCharacter = useCharacterStore.getState().character;
     if (freshCharacter && store.playerStats) {
         useCharacterStore.getState().setCharacter({
             ...freshCharacter,
-            gold: freshCharacter.gold + adjustedGold,
             currentHP: store.playerCurrentHP,
             maxHP: store.playerStats.maxHP,
             currentMana: store.playerCurrentMana,
             maxMana: store.playerStats.maxMana,
             lastModified: new Date().toISOString(),
         });
+    }
+
+    // === LIFETIME STAT TRACKING ===
+    useCharacterStore.getState().incrementLifetimeStat('battlesWon', 1);
+    if (monster.tier === 'boss' || monster.tier === 'raid_boss') {
+        useCharacterStore.getState().incrementLifetimeStat('bossesDefeated', 1);
     }
 
     // End battle
@@ -1174,24 +1182,25 @@ export function handleDefeat(): void {
         }
     }
 
-    // Calculate 10% gold penalty (applied in setCharacter below)
+    // Calculate 10% gold penalty — route through updateGold() for consistency
     const goldLost = Math.floor(character.gold * DEFEAT_GOLD_PENALTY);
+    characterStore.updateGold(-goldLost);
 
     // Set HP to 0 (defeated), status to unconscious - preserve derived maxHP for next session
-    if (store.playerStats) {
+    // Re-read character after gold update
+    const freshChar = useCharacterStore.getState().character;
+    if (freshChar && store.playerStats) {
         characterStore.setCharacter({
-            ...character,
-            gold: character.gold - goldLost,
+            ...freshChar,
             currentHP: 0,
             maxHP: store.playerStats.maxHP,
             status: 'unconscious',
             lastModified: new Date().toISOString(),
         });
-    } else {
+    } else if (freshChar) {
         // Fallback: just set HP to 0, status to unconscious
         characterStore.setCharacter({
-            ...character,
-            gold: character.gold - goldLost,
+            ...freshChar,
             currentHP: 0,
             status: 'unconscious',
             lastModified: new Date().toISOString(),

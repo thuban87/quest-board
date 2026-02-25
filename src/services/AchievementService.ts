@@ -211,6 +211,114 @@ export class AchievementService {
     }
 
     /**
+     * Check battle count achievements (e.g., battles-25)
+     */
+    checkBattleCountAchievements(
+        achievements: Achievement[],
+        battlesWon: number
+    ): AchievementCheckResult {
+        const newlyUnlocked: Achievement[] = [];
+        let totalXpBonus = 0;
+
+        for (const achievement of achievements) {
+            if (isUnlocked(achievement)) continue;
+            if (achievement.trigger.type !== 'manual') continue;
+            if (achievement.id !== 'battles-25') continue;
+
+            achievement.progress = battlesWon;
+
+            if (battlesWon >= achievement.trigger.target) {
+                achievement.unlockedAt = new Date().toISOString();
+                newlyUnlocked.push(achievement);
+                totalXpBonus += achievement.xpBonus;
+            }
+        }
+
+        return { newlyUnlocked, totalXpBonus };
+    }
+
+    /**
+     * Check boss kill achievements (e.g., bosses-10)
+     */
+    checkBossKillAchievements(
+        achievements: Achievement[],
+        bossesDefeated: number
+    ): AchievementCheckResult {
+        const newlyUnlocked: Achievement[] = [];
+        let totalXpBonus = 0;
+
+        for (const achievement of achievements) {
+            if (isUnlocked(achievement)) continue;
+            if (achievement.trigger.type !== 'manual') continue;
+            if (achievement.id !== 'bosses-10') continue;
+
+            achievement.progress = bossesDefeated;
+
+            if (bossesDefeated >= achievement.trigger.target) {
+                achievement.unlockedAt = new Date().toISOString();
+                newlyUnlocked.push(achievement);
+                totalXpBonus += achievement.xpBonus;
+            }
+        }
+
+        return { newlyUnlocked, totalXpBonus };
+    }
+
+    /**
+     * Check dungeon completion achievements (e.g., dungeons-3)
+     */
+    checkDungeonAchievements(
+        achievements: Achievement[],
+        dungeonsCompleted: number
+    ): AchievementCheckResult {
+        const newlyUnlocked: Achievement[] = [];
+        let totalXpBonus = 0;
+
+        for (const achievement of achievements) {
+            if (isUnlocked(achievement)) continue;
+            if (achievement.trigger.type !== 'manual') continue;
+            if (achievement.id !== 'dungeons-3') continue;
+
+            achievement.progress = dungeonsCompleted;
+
+            if (dungeonsCompleted >= achievement.trigger.target) {
+                achievement.unlockedAt = new Date().toISOString();
+                newlyUnlocked.push(achievement);
+                totalXpBonus += achievement.xpBonus;
+            }
+        }
+
+        return { newlyUnlocked, totalXpBonus };
+    }
+
+    /**
+     * Check gold milestone achievements (e.g., gold-1000)
+     */
+    checkGoldAchievements(
+        achievements: Achievement[],
+        goldEarned: number
+    ): AchievementCheckResult {
+        const newlyUnlocked: Achievement[] = [];
+        let totalXpBonus = 0;
+
+        for (const achievement of achievements) {
+            if (isUnlocked(achievement)) continue;
+            if (achievement.trigger.type !== 'manual') continue;
+            if (achievement.id !== 'gold-1000') continue;
+
+            achievement.progress = goldEarned;
+
+            if (goldEarned >= achievement.trigger.target) {
+                achievement.unlockedAt = new Date().toISOString();
+                newlyUnlocked.push(achievement);
+                totalXpBonus += achievement.xpBonus;
+            }
+        }
+
+        return { newlyUnlocked, totalXpBonus };
+    }
+
+    /**
      * Manually unlock an achievement (for special achievements)
      */
     unlockAchievement(achievements: Achievement[], achievementId: string): Achievement | null {
