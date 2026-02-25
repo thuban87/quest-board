@@ -176,3 +176,35 @@ Each session entry should include:
 ### Next Steps:
 - Phase 3: deriveCombatStats integration for title stat buffs
 - Phase 4: Title UI (Character Sheet, equip modal, progress dashboard)
+
+---
+
+## 2026-02-25 - Phase 3 & 3.5: Buff Engine & Integration Tests
+
+**Focus:** Fix pre-existing `deriveCombatStats()` bug where power-up stat boosts had zero combat impact, add Slayer of the Void boss damage check, and write integration tests
+
+### Completed:
+- ✅ Added `getCritFromPowerUps()` helper to `PowerUpService.ts` — sums `crit_chance` effects from active power-ups
+- ✅ Fixed `deriveCombatStats()` in `CombatService.ts` — integrated flat stat boosts (`getStatBoostFromPowerUps`), percent stat boosts (`getPercentStatBoostFromPowerUps`), and crit chance (`getCritFromPowerUps`) from active power-ups; added `expirePowerUps()` call to clean stale buffs before reading
+- ✅ Added Slayer of the Void boss damage check (+5% to bosses) in `BattleService.ts` — both `calculatePlayerDamage()` (basic attacks) and `executePlayerSkill()` (skills)
+- ✅ Verified The Focused, The Relentless, and expiration safety are already handled from Phase 2
+- ✅ Logging compliance: all new code uses `console.warn`/`console.error` only
+- ✅ Created `test/services/TitleBuffIntegration.test.ts` — 23 tests covering XP integration, stat integration, combat/crit, gold, compound buffs, and expiration safety
+
+### Files Changed:
+- `src/services/PowerUpService.ts` [MODIFIED] — Added `getCritFromPowerUps()` helper (+14 lines)
+- `src/services/CombatService.ts` [MODIFIED] — Fixed `deriveCombatStats()` to integrate power-up boosts (+16 lines, -5 lines)
+- `src/services/BattleService.ts` [MODIFIED] — Slayer of the Void boss damage in 2 locations (+14 lines)
+- `test/services/TitleBuffIntegration.test.ts` [NEW] — 23 integration tests (561 lines)
+
+### Testing Notes:
+- 944/944 tests pass (23 new, 0 regressions)
+- 31 test files
+- Brad confirmed plugin loads and works in test vault (Phase 3 smoke test)
+- Fixed 1 test during development: The Focused (Warrior) needed higher base stats (STR/CON=40) so 3% boost survived `Math.floor()`
+
+### Blockers/Issues:
+- None discovered
+
+### Next Steps:
+- Phase 4: Title UI (Character Sheet display, equip modal, progress dashboard)

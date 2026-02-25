@@ -617,6 +617,13 @@ function calculatePlayerDamage(
         finalDamage += bonusDamage;
     }
 
+    // Title: Slayer of the Void — +5% damage to bosses
+    const slayerChar = useCharacterStore.getState().character;
+    if (slayerChar?.equippedTitle === 'slayer-of-the-void' &&
+        (monster.tier === 'boss' || monster.tier === 'raid_boss')) {
+        finalDamage = Math.floor(finalDamage * 1.05);
+    }
+
     return {
         damage: finalDamage,
         attackPower,
@@ -1431,6 +1438,13 @@ export function executePlayerSkill(): void {
 
     // Apply damage to monster
     if (result.damage && result.damage > 0) {
+        // Title: Slayer of the Void — +5% damage to bosses
+        const skillSlayerChar = useCharacterStore.getState().character;
+        if (skillSlayerChar?.equippedTitle === 'slayer-of-the-void' &&
+            (monster.tier === 'boss' || monster.tier === 'raid_boss')) {
+            result.damage = Math.floor(result.damage * 1.05);
+        }
+
         const newMonsterHP = Math.max(0, monster.currentHP - result.damage);
         store.updateMonsterHP(newMonsterHP);
 

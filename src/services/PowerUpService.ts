@@ -856,6 +856,20 @@ export function getPercentStatBoostFromPowerUps(
 }
 
 /**
+ * Calculate total crit chance bonus from active power-ups
+ * Sums all `crit_chance` effect values (e.g., Lucky Star +10, Eagle Eye +2)
+ */
+export function getCritFromPowerUps(powerUps: ActivePowerUp[]): number {
+    let crit = 0;
+    for (const powerUp of powerUps) {
+        if (powerUp.effect.type === 'crit_chance') {
+            crit += powerUp.effect.value;
+        }
+    }
+    return crit;
+}
+
+/**
  * Calculate total gold multiplier from active power-ups
  * Returns multiplier (e.g., 1.15 = +15% gold with 3 stacks of +5%)
  */
