@@ -38,6 +38,9 @@ export interface Achievement {
     // State (set when unlocked)
     unlockedAt?: string;      // ISO date string
     progress?: number;        // Current progress toward target
+
+    /** If set, unlocking this achievement also grants this title ID */
+    grantedTitleId?: string;
 }
 
 /**

@@ -141,6 +141,19 @@ function makeCharacterAtVersion(version: number): Record<string, unknown> {
         delete base.shieldUsedThisWeek;
     }
 
+    if (version >= 7) {
+        base.equippedTitle = null;
+        base.unlockedTitles = ['the-novice'];
+        base.lifetimeStats = {
+            questsCompleted: 0,
+            battlesWon: 0,
+            bossesDefeated: 0,
+            dungeonsCompleted: 0,
+            dungeonAttempts: 0,
+            goldEarned: 0,
+        };
+    }
+
     return base;
 }
 
@@ -169,14 +182,16 @@ describe('Chain Forward Guards', () => {
         expect(result.totalShieldsUsedThisWeek).toBeDefined();
     });
 
-    it('v6 character entering migrateCharacterV5toV6 chains to stub v6→v7 (not returned as-is)', () => {
+    it('v6 character entering migrateCharacterV5toV6 chains to v6→v7 (not returned as-is)', () => {
         const v6Char = makeCharacterAtVersion(6);
         const result = migrateCharacterV5toV6(v6Char);
 
-        // The stub just returns data unchanged, but the important thing is
-        // it reaches migrateCharacterV6toV7 without error
+        // The real v7 migration adds title fields and lifetimeStats
         expect(result).toBeDefined();
-        expect(result.schemaVersion).toBe(6); // Stub doesn't change version yet
+        expect(result.schemaVersion).toBe(7);
+        expect(result.equippedTitle).toBeNull();
+        expect(result.unlockedTitles).toEqual(['the-novice']);
+        expect(result.lifetimeStats).toBeDefined();
     });
 });
 
@@ -228,16 +243,19 @@ describe('Full Chain Flow', () => {
         expect(result).toBeDefined();
     });
 
-    it('v6 character reaches stub v6→v7 (confirms the bug is fixed)', () => {
+    it('v6 character reaches v6→v7 and gets title fields (confirms the bug is fixed)', () => {
         const v6Char = makeCharacterAtVersion(6);
 
         // Enter at the top of the chain
         const result = migrateCharacterV1toV2(v6Char);
 
-        // Should chain all the way through without error
+        // Should chain all the way through to v7
         expect(result).toBeDefined();
         expect(result.name).toBe('TestChar');
+        expect(result.schemaVersion).toBe(7);
         expect(result.totalShieldsUsedThisWeek).toBe(1); // preserved from input
+        expect(result.equippedTitle).toBeNull();
+        expect(result.unlockedTitles).toEqual(['the-novice']);
     });
 
     it('each migration applies its expected field additions', () => {
@@ -293,17 +311,27 @@ describe('Regression Safety', () => {
         expect(result.activityHistory).toEqual([]);
     });
 
-    it('stub v6→v7 returns data unchanged (no fields added yet)', () => {
+    it('v6→v7 migration adds title fields and lifetimeStats', () => {
         const v6Char = makeCharacterAtVersion(6);
         const result = migrateCharacterV6toV7(v6Char);
 
-        // Stub should return identical data
-        expect(result.schemaVersion).toBe(6);
+        // v7 migration sets schema version
+        expect(result.schemaVersion).toBe(7);
         expect(result.name).toBe('TestChar');
         expect(result.totalShieldsUsedThisWeek).toBe(1);
-        // No new fields added by stub
-        expect((result as any).equippedTitle).toBeUndefined();
-        expect((result as any).unlockedTitles).toBeUndefined();
-        expect((result as any).lifetimeStats).toBeUndefined();
+
+        // Title fields
+        expect(result.equippedTitle).toBeNull();
+        expect(result.unlockedTitles).toEqual(['the-novice']);
+
+        // LifetimeStats with all zeros (no activityHistory in test data)
+        expect(result.lifetimeStats).toEqual({
+            questsCompleted: 0,
+            battlesWon: 0,
+            bossesDefeated: 0,
+            dungeonsCompleted: 0,
+            dungeonAttempts: 0,
+            goldEarned: 0,
+        });
     });
 });

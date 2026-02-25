@@ -85,3 +85,46 @@ Each session entry should include:
 
 ### Next Steps:
 - Phase 1: Data Models & Schema Migration (Title.ts, titles.ts, Achievement updates, Character v7 migration)
+
+---
+
+## 2026-02-24 - Phase 1 & 1.5: Data Models, Schema Migration & Tests
+
+**Focus:** Implement all title system data models, schema v7 migration, store actions, and comprehensive test coverage
+
+### Completed:
+- ✅ Created `src/models/Title.ts` — TitleRarity, Title, TitleBuff interfaces + getTitleById/isBuffTitle helpers
+- ✅ Created `src/data/titles.ts` — 12 title definitions (6 cosmetic + 6 buff) with STARTING_TITLE_ID
+- ✅ Updated `src/models/Achievement.ts` — Added `grantedTitleId?: string` field
+- ✅ Updated `src/data/achievements.ts` — 7 new achievements + grantedTitleId on 12 total achievements
+- ✅ Updated `src/models/Character.ts` — LifetimeStats interface, 3 new Character fields, schema v7, migration with activityHistory backfill
+- ✅ Updated `src/store/characterStore.ts` — 5 new store actions (setEquippedTitle, addUnlockedTitle, incrementLifetimeStat, removePowerUpsByTrigger, addPowerUps)
+- ✅ Fixed `src/services/TestCharacterGenerator.ts` — Added missing v7 fields
+- ✅ Updated `test/models/migrationChain.test.ts` — Tests now expect real v7 migration behavior
+- ✅ Created `test/models/title.test.ts` — 26 tests (data integrity, achievement-title refs, migration backfill, invalid title)
+- ✅ Updated `test/store/characterStore.test.ts` — 18 new store action tests
+- ✅ Refactored `getTitleById()` from lazy require() to standard ES import (vitest compatibility)
+
+### Files Changed:
+- `src/models/Title.ts` [NEW] — Title model interfaces and helpers
+- `src/data/titles.ts` [NEW] — 12 title definitions
+- `src/models/Achievement.ts` [MODIFIED] — Added grantedTitleId field
+- `src/data/achievements.ts` [MODIFIED] — 7 new achievements, 12 title mappings
+- `src/models/Character.ts` [MODIFIED] — Schema v7, LifetimeStats, migration, createCharacter defaults
+- `src/store/characterStore.ts` [MODIFIED] — 5 new actions, title fields in store createCharacter
+- `src/services/TestCharacterGenerator.ts` [MODIFIED] — Added v7 fields
+- `test/models/migrationChain.test.ts` [MODIFIED] — Updated for real v7 migration
+- `test/models/title.test.ts` [NEW] — 26 title data layer tests
+- `test/store/characterStore.test.ts` [MODIFIED] — 18 new store action tests
+
+### Testing Notes:
+- 883/883 tests pass (44 new, 0 regressions)
+- 29 test files
+- Brad manually confirmed character loads at schema v7, lifetimeStats backfilled correctly
+- Fixed `getTitleById()` circular import (lazy require → ES import, ESM handles circular refs via live bindings)
+
+### Blockers/Issues:
+- None
+
+### Next Steps:
+- Phase 2: TitleService + caller-side integration (useXPAward, BattleService, etc.)

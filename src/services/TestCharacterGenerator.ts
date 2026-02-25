@@ -202,6 +202,18 @@ export function generateTestCharacter(
             equipped: equippedIds,
         },
         persistentStatusEffects: [],
+
+        // Title System
+        equippedTitle: existingCharacter?.equippedTitle || null,
+        unlockedTitles: existingCharacter?.unlockedTitles || ['the-novice'],
+        lifetimeStats: existingCharacter?.lifetimeStats || {
+            questsCompleted: 0,
+            battlesWon: 0,
+            bossesDefeated: 0,
+            dungeonsCompleted: 0,
+            dungeonAttempts: 0,
+            goldEarned: 0,
+        },
     };
 
     return character;

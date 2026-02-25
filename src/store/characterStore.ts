@@ -16,6 +16,7 @@ import {
     MAX_ACTIVITY_HISTORY,
     migrateCharacterV1toV2,
     CHARACTER_SCHEMA_VERSION,
+    LifetimeStats,
 } from '../models';
 import { getUtilityBonus, getGoldMultiplier, getCombatBonus } from '../services/AccessoryEffectService';
 import { GearItem, GearSlot, EquippedGearMap, canEquipGear } from '../models/Gear';
@@ -193,6 +194,23 @@ interface CharacterActions {
 
     /** Use a stat elixir: consume from inventory, add ActivePowerUp. Returns false if invalid/missing. */
     useStatElixir: (itemId: string) => boolean;
+
+    // ========== Title System ==========
+
+    /** Set the currently equipped title */
+    setEquippedTitle: (titleId: string | null) => void;
+
+    /** Add a title to unlocked titles (no-op if already present) */
+    addUnlockedTitle: (titleId: string) => void;
+
+    /** Increment a lifetime stat counter */
+    incrementLifetimeStat: (stat: keyof LifetimeStats, amount: number) => void;
+
+    /** Remove all power-ups with a specific triggeredBy value */
+    removePowerUpsByTrigger: (trigger: string) => void;
+
+    /** Append power-ups to the activePowerUps array */
+    addPowerUps: (powerUps: ActivePowerUp[]) => void;
 }
 
 type CharacterStore = CharacterState & CharacterActions;
@@ -326,6 +344,18 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
             },
             persistentStatusEffects: [],
             triggerCooldowns: {},
+
+            // Title System
+            equippedTitle: null,
+            unlockedTitles: ['the-novice'],
+            lifetimeStats: {
+                questsCompleted: 0,
+                battlesWon: 0,
+                bossesDefeated: 0,
+                dungeonsCompleted: 0,
+                dungeonAttempts: 0,
+                goldEarned: 0,
+            },
         };
 
         set({ character });
@@ -1168,6 +1198,79 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
         });
 
         return true;
+    },
+
+    // ========== Title System ==========
+
+    setEquippedTitle: (titleId) => {
+        const { character } = get();
+        if (!character) return;
+
+        set({
+            character: {
+                ...character,
+                equippedTitle: titleId,
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    addUnlockedTitle: (titleId) => {
+        const { character } = get();
+        if (!character) return;
+
+        // No-op if already unlocked
+        if (character.unlockedTitles.includes(titleId)) return;
+
+        set({
+            character: {
+                ...character,
+                unlockedTitles: [...character.unlockedTitles, titleId],
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    incrementLifetimeStat: (stat, amount) => {
+        const { character } = get();
+        if (!character) return;
+
+        set({
+            character: {
+                ...character,
+                lifetimeStats: {
+                    ...character.lifetimeStats,
+                    [stat]: character.lifetimeStats[stat] + amount,
+                },
+                lastModified: new Date().toISOString(),
+            },
+        });
+    },
+
+    removePowerUpsByTrigger: (trigger) => {
+        const { character } = get();
+        if (!character) return;
+
+        set({
+            character: {
+                ...character,
+                activePowerUps: character.activePowerUps.filter(
+                    (pu) => pu.triggeredBy !== trigger
+                ),
+            },
+        });
+    },
+
+    addPowerUps: (powerUps) => {
+        const { character } = get();
+        if (!character) return;
+
+        set({
+            character: {
+                ...character,
+                activePowerUps: [...character.activePowerUps, ...powerUps],
+            },
+        });
     },
 }));
 
