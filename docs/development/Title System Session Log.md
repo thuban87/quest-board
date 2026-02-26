@@ -208,3 +208,41 @@ Each session entry should include:
 
 ### Next Steps:
 - Phase 4: Title UI (Character Sheet display, equip modal, progress dashboard)
+
+---
+
+## 2026-02-25 - Phase 4 & 4.5: Title UI & Tests
+
+**Focus:** Character Identity title display, Title Selection Modal, and Phase 4.5 test suite
+
+### Completed:
+- ✅ Modified `CharacterIdentity.tsx` — Added `equippedTitle` prop, `onTitleClick` callback, inline title display with rarity CSS classes and muted placeholder
+- ✅ Created `TitleSelectionModal.ts` — Obsidian Modal with DOM API (createEl/createDiv/createSpan), radio-style selection, unlocked/locked sections, buff labels, rarity badges
+- ✅ Wired `CharacterPage.tsx` — Combat guard via `useBattleStore`, title resolution via `getEquippedTitle()`
+- ✅ Wired `CharacterSidebar.tsx` — Added `onTitleClick` callback prop, title resolution
+- ✅ Wired `SidebarQuests.tsx` — Passed `onTitleClick` to `CharacterSidebar` with combat guard
+- ✅ Brad manually tested in Obsidian — all functionality works
+- ✅ Created `TitleSelectionModal.test.ts` — 34 tests across 7 describe blocks
+- ✅ Full regression passes: 978/978 tests (34 new, 0 regressions)
+
+### Files Changed:
+- `src/components/character/CharacterIdentity.tsx` [MODIFIED] — Title display, 2 new props (+18 lines)
+- `src/components/CharacterPage.tsx` [MODIFIED] — Combat guard, title resolution, 3 new imports (+15 lines)
+- `src/components/CharacterSidebar.tsx` [MODIFIED] — Callback prop, title resolution (+8 lines)
+- `src/components/SidebarQuests.tsx` [MODIFIED] — Title click handler, 3 new imports (+13 lines)
+- `src/modals/TitleSelectionModal.ts` [NEW] — 156 lines, full title selection modal
+- `test/modals/TitleSelectionModal.test.ts` [NEW] — 428 lines, 34 tests
+
+### Testing Notes:
+- 978/978 tests pass (34 new, 0 regressions)
+- 32 test files
+- Brad confirmed title display, selection, equip/unequip, and modal all work in test vault
+- Fixed 1 test during development: DOM compliance test caught `innerHTML` in JSDoc comment — updated to strip comments before checking
+
+### Blockers/Issues:
+- None discovered
+
+### Next Steps:
+- Phase 5: Progress Dashboard Report Generator (title stats in export)
+- Phase 6: CSS & Polish (rarity colors, title styling, animations)
+

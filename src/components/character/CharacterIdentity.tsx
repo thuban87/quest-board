@@ -7,6 +7,7 @@
 import React from 'react';
 import { Character, ClassInfo, getTrainingLevelDisplay, ActivePowerUp, CLASS_INFO } from '../../models/Character';
 import { getTimeRemaining, isExpiringSoon } from '../../services/PowerUpService';
+import { Title } from '../../models/Title';
 
 interface CharacterIdentityProps {
     character: Character;
@@ -16,6 +17,10 @@ interface CharacterIdentityProps {
     spriteSize?: number;
     /** All active buffs including class perk */
     allBuffs: ActivePowerUp[];
+    /** Resolved equipped title (or null if none) */
+    equippedTitle?: Title | null;
+    /** Callback when user clicks on the title area to open selection modal */
+    onTitleClick?: () => void;
 }
 
 export const CharacterIdentity: React.FC<CharacterIdentityProps> = ({
@@ -24,6 +29,8 @@ export const CharacterIdentity: React.FC<CharacterIdentityProps> = ({
     spriteResourcePath,
     spriteSize = 80,
     allBuffs,
+    equippedTitle,
+    onTitleClick,
 }) => {
     const isTraining = character.isTrainingMode;
     const currentLevel = isTraining ? character.trainingLevel : character.level;
@@ -59,6 +66,22 @@ export const CharacterIdentity: React.FC<CharacterIdentityProps> = ({
 
                 <div className="qb-sheet-info">
                     <h2 className="qb-sheet-name">{character.name}</h2>
+                    {/* Title Display */}
+                    <div
+                        className="qb-title-inline"
+                        onClick={onTitleClick}
+                        title={equippedTitle ? equippedTitle.description : 'Click to select a title'}
+                    >
+                        <span className="qb-title-brackets">⟨ </span>
+                        {equippedTitle ? (
+                            <span className={`qb-title-rarity qb-title-${equippedTitle.rarity}`}>
+                                {equippedTitle.name}
+                            </span>
+                        ) : (
+                            <span className="qb-title-empty">No Title</span>
+                        )}
+                        <span className="qb-title-brackets"> ⟩</span>
+                    </div>
                     <p className="qb-sheet-class">
                         {isTraining && 'Training '}
                         Level {isTraining ? getTrainingLevelDisplay(currentLevel) : currentLevel} {classInfo.name}

@@ -807,7 +807,7 @@ export interface Character {
 
 ---
 
-## Phase 4: UI — Character Identity & Title Selection Modal
+## Phase 4: UI — Character Identity & Title Selection Modal — ✅ Complete
 
 **Effort:** Medium
 **Estimated Time:** 2-2.5 hours
@@ -881,7 +881,7 @@ export interface Character {
 
 ---
 
-## Phase 4.5: Tests — UI
+## Phase 4.5: Tests — UI — ✅ Complete
 
 **Effort:** Small
 **Estimated Time:** 1 hour
