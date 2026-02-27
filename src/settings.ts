@@ -123,6 +123,9 @@ export interface QuestBoardSettings {
     assetUpdateFrequency: 'daily' | 'weekly' | 'manual';      // How often to check for asset updates
     lastAssetCheck: number;                                    // Timestamp of last update check
     assetConfigured: boolean;                                  // True after user has completed initial asset setup
+
+    // Export
+    exportFolder: string;                                      // Folder where character exports are saved
 }
 
 /**
@@ -196,6 +199,9 @@ export const DEFAULT_SETTINGS: QuestBoardSettings = {
     assetUpdateFrequency: 'weekly',
     lastAssetCheck: 0,
     assetConfigured: false,
+
+    // Export
+    exportFolder: '',
 };
 
 /**
@@ -330,6 +336,26 @@ export class QuestBoardSettingTab extends PluginSettingTab {
                     this.plugin.settings.userDungeonFolder = value;
                     await this.plugin.saveSettings();
                 }));
+
+        // --- Export ---
+        new Setting(filePathsContent).setHeading().setName('Export');
+
+        new Setting(filePathsContent)
+            .setName('Export folder')
+            .setDesc('Folder where character exports are saved')
+            .addText(text => {
+                text.setPlaceholder('Quest Board/quests')
+                    .setValue(this.plugin.settings.exportFolder || '')
+                    .onChange(async (value) => {
+                        this.plugin.settings.exportFolder = value;
+                        await this.plugin.saveSettings();
+                    });
+
+                // Add folder autocomplete
+                import('./utils/FolderSuggest').then(({ FolderSuggest }) => {
+                    new FolderSuggest(this.app, text.inputEl);
+                });
+            });
 
         // --- Asset Delivery ---
         new Setting(filePathsContent).setHeading().setName('Asset Delivery');

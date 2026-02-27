@@ -72,6 +72,10 @@ export class Vault {
         return null;
     }
 
+    getFolderByPath(_path: string): TFolder | null {
+        return null;
+    }
+
     getResourcePath(_file: TFile): string {
         return '/mock/resource/path';
     }

@@ -246,3 +246,43 @@ Each session entry should include:
 - Phase 5: Progress Dashboard Report Generator (title stats in export)
 - Phase 6: CSS & Polish (rarity colors, title styling, animations)
 
+---
+
+## 2026-02-27 - Phase 5 & 5.5: Progress Dashboard Report Generator & Tests
+
+**Focus:** Character export/report generation with date-range filtering, custom date picker fix, export-to-vault, and unit tests
+
+### Completed:
+- ✅ Created `CharacterExportService.ts` — 4 methods: `generateCharacterSummary`, `generateProgressReport`, `copyToClipboard` (with modal fallback), `createExportNote` (collision-safe naming)
+- ✅ Updated `ProgressStatsService.ts` — Added `'custom'` to `DatePreset` union type and `getAllPresets()`
+- ✅ Rewrote `ProgressDashboardModal.ts` — Export buttons (📋 Copy report, 💾 Save to vault), custom date picker fix (disabled/readonly when preset active, enabled for custom range)
+- ✅ Added `exportFolder` setting to `settings.ts` — Interface, default, and settings UI with `FolderSuggest` autocomplete
+- ✅ Registered `export-character` command in `main.ts`
+- ✅ Updated `CharacterPage.tsx` — Passes export/quest folder settings to modal
+- ✅ Brad manually tested in Obsidian — all 7 test matrix items passed
+- ✅ Created `CharacterExportService.test.ts` — 16 tests across 5 describe blocks
+- ✅ Updated `progress-stats.test.ts` — Preset count assertion updated from 6 → 7
+- ✅ Added `getFolderByPath` to Obsidian mock
+
+### Files Changed:
+- `src/services/CharacterExportService.ts` [NEW] — 311 lines, 4 export methods + clipboard fallback modal
+- `src/modals/ProgressDashboardModal.ts` [MODIFIED] — Export buttons, custom date picker fix, settings pass-through
+- `src/services/ProgressStatsService.ts` [MODIFIED] — `'custom'` preset added (+3 lines)
+- `src/settings.ts` [MODIFIED] — `exportFolder` field, default, and settings UI (+26 lines)
+- `main.ts` [MODIFIED] — `export-character` command, `getQuestFolderPath` import (+14 lines)
+- `src/components/CharacterPage.tsx` [MODIFIED] — Settings pass-through to modal (+3 lines)
+- `test/services/CharacterExportService.test.ts` [NEW] — 16 tests
+- `test/progress-stats.test.ts` [MODIFIED] — Preset count 6→7
+- `test/mocks/obsidian.ts` [MODIFIED] — Added `getFolderByPath` to Vault mock
+
+### Testing Notes:
+- 993/994 tests pass (16 new, 0 regressions)
+- 33 test files
+- 1 pre-existing flaky failure: `monster.test.ts` line 98 — random tier multiplier averages (unrelated to Phase 5)
+- Brad confirmed export buttons, date picker fix, export folder setting, and command all work in test vault
+
+### Blockers/Issues:
+- Pre-existing flaky `monster.test.ts` — uses random sampling averages for tier multiplier comparisons, occasionally fails due to statistical variance
+
+### Next Steps:
+- Phase 6: CSS & Polish (rarity colors, title styling, animations)

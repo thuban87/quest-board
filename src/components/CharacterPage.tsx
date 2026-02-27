@@ -163,7 +163,9 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
             onSave,
         }).open();
     };
-    const handleOpenProgressDashboard = () => showProgressDashboardModal(app, onSave);
+    const handleOpenProgressDashboard = () => showProgressDashboardModal(
+        app, onSave, plugin.settings.exportFolder, `${plugin.settings.storageFolder}/quests`
+    );
     const handleTitleClick = () => {
         if (useBattleStore.getState().state !== 'IDLE') {
             new Notice('Cannot change titles during combat');

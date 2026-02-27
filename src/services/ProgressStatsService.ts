@@ -40,7 +40,8 @@ export type DatePreset =
     | 'last_7_days'
     | 'this_month'
     | 'last_30_days'
-    | 'all_time';
+    | 'all_time'
+    | 'custom';
 
 export interface DateRange {
     start: string;  // YYYY-MM-DD
@@ -270,5 +271,6 @@ export function getAllPresets(): { value: DatePreset; label: string }[] {
         { value: 'this_month', label: 'This Month' },
         { value: 'last_30_days', label: 'Last 30 Days' },
         { value: 'all_time', label: 'All Time' },
+        { value: 'custom', label: 'Custom range' },
     ];
 }

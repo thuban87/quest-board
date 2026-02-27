@@ -357,9 +357,9 @@ describe('formatDateForDisplay', () => {
 // =====================
 
 describe('getAllPresets', () => {
-    it('should return all 6 presets', () => {
+    it('should return all 7 presets', () => {
         const presets = getAllPresets();
-        expect(presets).toHaveLength(6);
+        expect(presets).toHaveLength(7);
     });
 
     it('should include expected preset values', () => {
