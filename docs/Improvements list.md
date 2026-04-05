@@ -21,6 +21,10 @@
 
 
 ## Battle Issues
+- [ ] Mobile combat animations: explore using existing 8-directional sprites to simulate movement during battle (e.g., attack lunge, dodge, hit reaction) without needing new sprite assets
+
+## General Ideas
+- [ ] Stretch Quests: optional bonus tasks attached to a quest that don't count toward the quest's completion but award extra XP/points if completed
 
 
 ## Mobile issues checklist:
