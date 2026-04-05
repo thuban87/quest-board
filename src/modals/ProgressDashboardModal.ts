@@ -3,9 +3,10 @@
  * 
  * Phase 4: Full-page modal showing progress analytics over time.
  * Features date range picker, summary stats, category breakdown, and activity log.
+ * Phase 5: Export buttons (copy report / save to vault) and custom date picker fix.
  */
 
-import { App, Modal } from 'obsidian';
+import { App, Modal, Notice } from 'obsidian';
 import { useCharacterStore } from '../store/characterStore';
 import { ActivityEvent } from '../models/Character';
 import {
@@ -16,6 +17,11 @@ import {
     DatePreset,
     ProgressStats,
 } from '../services/ProgressStatsService';
+import {
+    generateProgressReport,
+    copyToClipboard,
+    createExportNote,
+} from '../services/CharacterExportService';
 
 // ============================================
 // Modal Options
@@ -24,6 +30,10 @@ import {
 export interface ProgressDashboardModalOptions {
     app: App;
     onSave: () => Promise<void>;
+    /** Folder where character exports are saved (empty = use questFolder) */
+    exportFolder?: string;
+    /** Quest folder as fallback for exports */
+    questFolder?: string;
 }
 
 // ============================================
@@ -35,10 +45,14 @@ export class ProgressDashboardModal extends Modal {
     private startDate: string = '';
     private endDate: string = '';
     private onSave: () => Promise<void>;
+    private exportFolder: string;
+    private questFolder: string;
 
     constructor(options: ProgressDashboardModalOptions) {
         super(options.app);
         this.onSave = options.onSave;
+        this.exportFolder = options.exportFolder || '';
+        this.questFolder = options.questFolder || 'Quest Board/quests';
 
         // Initialize dates from preset
         const range = getDatePreset(this.preset);
@@ -79,7 +93,7 @@ export class ProgressDashboardModal extends Modal {
         );
 
         // === HEADER ===
-        this.renderHeader(contentEl);
+        this.renderHeader(contentEl, stats);
 
         // === DATE PICKER ===
         this.renderDatePicker(contentEl);
@@ -97,12 +111,50 @@ export class ProgressDashboardModal extends Modal {
         this.renderActivityLog(contentEl, history);
     }
 
-    private renderHeader(container: HTMLElement): void {
+    private renderHeader(container: HTMLElement, stats: ProgressStats): void {
         const header = container.createDiv({ cls: 'qb-progress-header' });
         header.createEl('h2', { text: '📊 Progress Dashboard' });
 
         const subtitle = header.createEl('p', { cls: 'qb-progress-subtitle' });
         subtitle.textContent = `${formatDateForDisplay(this.startDate)} — ${formatDateForDisplay(this.endDate)}`;
+
+        // Export buttons
+        const exportRow = header.createDiv({ cls: 'qb-progress-export-row' });
+
+        const copyBtn = exportRow.createEl('button', {
+            cls: 'qb-progress-export-btn',
+            text: '📋 Copy report',
+        });
+        copyBtn.addEventListener('click', () => {
+            const character = useCharacterStore.getState().character;
+            if (!character) return;
+            const dateRange = { start: this.startDate, end: this.endDate, label: this.getDateRangeLabel() };
+            const report = generateProgressReport(character, stats, dateRange);
+            copyToClipboard(this.app, report);
+        });
+
+        const saveBtn = exportRow.createEl('button', {
+            cls: 'qb-progress-export-btn',
+            text: '💾 Save to vault',
+        });
+        saveBtn.addEventListener('click', async () => {
+            const character = useCharacterStore.getState().character;
+            if (!character) return;
+            const dateRange = { start: this.startDate, end: this.endDate, label: this.getDateRangeLabel() };
+            const report = generateProgressReport(character, stats, dateRange);
+            await createExportNote(this.app, character, report, this.exportFolder, this.questFolder);
+        });
+    }
+
+    /**
+     * Get a human-readable label for the current date range.
+     */
+    private getDateRangeLabel(): string {
+        if (this.preset !== 'custom') {
+            const range = getDatePreset(this.preset);
+            return range.label;
+        }
+        return `${formatDateForDisplay(this.startDate)} — ${formatDateForDisplay(this.endDate)}`;
     }
 
     private renderDatePicker(container: HTMLElement): void {
@@ -118,24 +170,33 @@ export class ProgressDashboardModal extends Modal {
                 text: preset.label,
             });
             btn.addEventListener('click', () => {
-                this.preset = preset.value;
-                const range = getDatePreset(preset.value);
-                this.startDate = range.start;
-                this.endDate = range.end;
-                this.render();
+                if (preset.value === 'custom') {
+                    // Enable custom range mode — keep current dates, just switch preset
+                    this.preset = 'custom';
+                    this.render();
+                } else {
+                    this.preset = preset.value;
+                    const range = getDatePreset(preset.value);
+                    this.startDate = range.start;
+                    this.endDate = range.end;
+                    this.render();
+                }
             });
         }
 
         // Custom date inputs
         const customRow = pickerContainer.createDiv({ cls: 'qb-progress-custom-dates' });
+        const isCustom = this.preset === 'custom';
 
         const startLabel = customRow.createEl('label');
         startLabel.textContent = 'From: ';
         const startInput = startLabel.createEl('input', { type: 'date' });
         startInput.value = this.startDate;
+        startInput.disabled = !isCustom;
+        if (!isCustom) startInput.readOnly = true;
         startInput.addEventListener('change', () => {
             this.startDate = startInput.value;
-            this.preset = 'all_time' as DatePreset; // Clear preset when using custom
+            this.preset = 'custom';
             this.render();
         });
 
@@ -143,9 +204,11 @@ export class ProgressDashboardModal extends Modal {
         endLabel.textContent = ' To: ';
         const endInput = endLabel.createEl('input', { type: 'date' });
         endInput.value = this.endDate;
+        endInput.disabled = !isCustom;
+        if (!isCustom) endInput.readOnly = true;
         endInput.addEventListener('change', () => {
             this.endDate = endInput.value;
-            this.preset = 'all_time' as DatePreset;
+            this.preset = 'custom';
             this.render();
         });
     }
@@ -301,6 +364,11 @@ export class ProgressDashboardModal extends Modal {
 // Helper to show modal
 // ============================================
 
-export function showProgressDashboardModal(app: App, onSave: () => Promise<void>): void {
-    new ProgressDashboardModal({ app, onSave }).open();
+export function showProgressDashboardModal(
+    app: App,
+    onSave: () => Promise<void>,
+    exportFolder?: string,
+    questFolder?: string
+): void {
+    new ProgressDashboardModal({ app, onSave, exportFolder, questFolder }).open();
 }

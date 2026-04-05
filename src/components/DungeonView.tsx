@@ -22,6 +22,9 @@ import { BattleView } from './BattleView';
 import { DungeonDeathModal, calculateRescueCost } from '../modals/DungeonDeathModal';
 import { InventoryModal } from '../modals/InventoryModal';
 import { DungeonMapModal } from '../modals/DungeonMapModal';
+import { AchievementService } from '../services/AchievementService';
+import { grantTitle } from '../services/TitleService';
+import { showAchievementUnlock } from '../modals/AchievementUnlockModal';
 import { useUIStore } from '../store/uiStore';
 import type { Direction, RoomTemplate, RoomState, TileSet, DungeonTemplate } from '../models/Dungeon';
 import type { LootDrop } from '../models/Gear';
@@ -1122,14 +1125,46 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ assetFolder, adapter, 
     // EXIT HANDLER
     // =====================
 
+    /**
+     * Check dungeon-related achievements after exitDungeon().
+     * DRY helper called by all 3 exit paths.
+     */
+    const checkDungeonAchievementsOnExit = useCallback(() => {
+        const char = useCharacterStore.getState().character;
+        if (!char) return;
+
+        const achievements = useCharacterStore.getState().achievements;
+        const achievementService = new AchievementService(null as any);
+        const dungeonCheck = achievementService.checkDungeonAchievements(
+            achievements,
+            char.lifetimeStats.dungeonsCompleted
+        );
+
+        if (dungeonCheck.newlyUnlocked.length > 0) {
+            dungeonCheck.newlyUnlocked.forEach((achievement, index) => {
+                setTimeout(() => {
+                    showAchievementUnlock(app, achievement);
+                    if (achievement.grantedTitleId) {
+                        const title = grantTitle(achievement.grantedTitleId);
+                        if (title) {
+                            new Notice(`\ud83c\udfc5 Title unlocked: ${title.name}!`, 4000);
+                        }
+                    }
+                }, 1000 + (index * 1000));
+            });
+            useCharacterStore.setState({ achievements: [...achievements] });
+        }
+    }, [app]);
+
     const handleExit = useCallback(() => {
         exitDungeon();
+        checkDungeonAchievementsOnExit();
         // Persist exploration history to disk
         if (onSave) {
             onSave();
         }
         onClose();
-    }, [exitDungeon, onClose, onSave]);
+    }, [exitDungeon, onClose, onSave, checkDungeonAchievementsOnExit]);
 
     // =====================
     // COMBAT HANDLERS
@@ -1227,6 +1262,7 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ assetFolder, adapter, 
                 resetBattle();
                 endCombat();
                 exitDungeon();
+                checkDungeonAchievementsOnExit();
                 onClose();
             },
         }).open();
@@ -1277,8 +1313,9 @@ export const DungeonView: React.FC<DungeonViewProps> = ({ assetFolder, adapter, 
     const handleExitConfirm = useCallback(() => {
         setShowExitSummary(false);
         exitDungeon();
+        checkDungeonAchievementsOnExit();
         onClose();
-    }, [exitDungeon, onClose]);
+    }, [exitDungeon, onClose, checkDungeonAchievementsOnExit]);
 
     // =====================
     // RENDER

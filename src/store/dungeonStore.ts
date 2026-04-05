@@ -235,6 +235,13 @@ export const useDungeonStore = create<DungeonState>()((set, get) => ({
                 dungeonId: state.dungeonTemplateId ?? undefined,
                 details: `Completed dungeon (${state.visitedRooms.size} rooms explored)`,
             });
+
+            // === LIFETIME STAT TRACKING ===
+            // Must happen BEFORE the set() call below that resets bossDefeated
+            useCharacterStore.getState().incrementLifetimeStat('dungeonAttempts', 1);
+            if (state.bossDefeated) {
+                useCharacterStore.getState().incrementLifetimeStat('dungeonsCompleted', 1);
+            }
         }
 
         set({

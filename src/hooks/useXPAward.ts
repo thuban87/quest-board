@@ -17,6 +17,7 @@ import { resolveLinkedPath } from '../utils/pathValidator';
 import { calculateXPWithBonus, checkLevelUp, getLevelUpMessage } from '../services/XPSystem';
 import { processXPForStats, applyLevelUpStats, STAT_NAMES } from '../services/StatsService';
 import { AchievementService } from '../services/AchievementService';
+import { grantTitle } from '../services/TitleService';
 import { showAchievementUnlock } from '../modals/AchievementUnlockModal';
 import { LevelUpModal } from '../modals/LevelUpModal';
 import { checkAndUnlockSkills } from '../services/SkillService';
@@ -366,6 +367,13 @@ export function useXPAward({ app, vault, plugin, customStatMappings, onCategoryU
                         if (achievement.xpBonus > 0) {
                             addXP(achievement.xpBonus);
                         }
+                        // Title grant for achievements with grantedTitleId
+                        if (achievement.grantedTitleId) {
+                            const title = grantTitle(achievement.grantedTitleId);
+                            if (title) {
+                                new Notice(`🏅 Title unlocked: ${title.name}!`, 4000);
+                            }
+                        }
                     }, 1500 + (index * 1000)); // Stagger popups
                 });
 
@@ -444,15 +452,24 @@ export function useXPAward({ app, vault, plugin, customStatMappings, onCategoryU
                 }
             }
 
-            // Check for quest count achievements
+            // === LIFETIME STAT: Quest Completion ===
+            useCharacterStore.getState().incrementLifetimeStat('questsCompleted', 1);
+
+            // Check for quest count achievements (using lifetimeStats)
             const achievementService = new AchievementService(vault);
-            const questCountCheck = achievementService.checkQuestCountAchievements(achievements, 1); // TODO: track total quest count
+            const currentChar = useCharacterStore.getState().character;
+            const totalQuests = currentChar?.lifetimeStats?.questsCompleted ?? 1;
+            const questCountCheck = achievementService.checkQuestCountAchievements(achievements, totalQuests);
 
             // Check for category-specific achievements (category_count type)
+            // Count category completions from activityHistory
+            const categoryCount = currentChar?.activityHistory?.filter(
+                e => e.type === 'quest_complete' && e.category === quest.category
+            ).length ?? 1;
             const categoryCountCheck = achievementService.checkCategoryCountAchievements(
                 achievements,
                 quest.category,
-                1 // TODO: track category counts properly
+                categoryCount
             );
 
             // Show unlock popups for quest count achievements
@@ -461,6 +478,13 @@ export function useXPAward({ app, vault, plugin, customStatMappings, onCategoryU
                     showAchievementUnlock(app, achievement);
                     if (achievement.xpBonus > 0) {
                         addXP(achievement.xpBonus);
+                    }
+                    // Title grant for achievements with grantedTitleId
+                    if (achievement.grantedTitleId) {
+                        const title = grantTitle(achievement.grantedTitleId);
+                        if (title) {
+                            new Notice(`🏅 Title unlocked: ${title.name}!`, 4000);
+                        }
                     }
                 }, 2000 + (index * 1000));
             });
@@ -471,6 +495,13 @@ export function useXPAward({ app, vault, plugin, customStatMappings, onCategoryU
                     showAchievementUnlock(app, achievement);
                     if (achievement.xpBonus > 0) {
                         addXP(achievement.xpBonus);
+                    }
+                    // Title grant for achievements with grantedTitleId
+                    if (achievement.grantedTitleId) {
+                        const title = grantTitle(achievement.grantedTitleId);
+                        if (title) {
+                            new Notice(`🏅 Title unlocked: ${title.name}!`, 4000);
+                        }
                     }
                 }, 3000 + questCountCheck.newlyUnlocked.length * 1000 + (index * 1000));
             });

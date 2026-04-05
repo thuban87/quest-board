@@ -454,6 +454,22 @@
         min-width: 96vw;
     }
 
+    /* Title wraps below name on narrow screens */
+    .qb-title-inline {
+        display: block;
+        text-align: center;
+    }
+
+    /* Title modal — full width, scrollable */
+    .qb-title-modal {
+        max-width: 100%;
+    }
+
+    .qb-title-row {
+        min-height: 48px;
+        padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+    }
+
     /* XP Row - Stack vertically on mobile */
     .qb-xp-row {
         flex-direction: column;

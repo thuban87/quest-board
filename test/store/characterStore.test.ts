@@ -222,3 +222,234 @@ describe('useStatElixir', () => {
         expect(powerUp.id).toContain('elixir_strength_');
     });
 });
+
+// =====================
+// Title System Store Actions (Phase 1.5)
+// =====================
+
+describe('setEquippedTitle', () => {
+    beforeEach(() => {
+        useCharacterStore.setState({
+            character: makeCharacter({
+                equippedTitle: null,
+                unlockedTitles: ['the-novice', 'eagle-eye'],
+                lifetimeStats: {
+                    questsCompleted: 0, battlesWon: 0, bossesDefeated: 0,
+                    dungeonsCompleted: 0, dungeonAttempts: 0, goldEarned: 0,
+                },
+            }),
+        });
+    });
+
+    it('sets equippedTitle to a title ID', () => {
+        useCharacterStore.getState().setEquippedTitle('eagle-eye');
+        expect(useCharacterStore.getState().character!.equippedTitle).toBe('eagle-eye');
+    });
+
+    it('clears equippedTitle when set to null', () => {
+        useCharacterStore.getState().setEquippedTitle('eagle-eye');
+        useCharacterStore.getState().setEquippedTitle(null);
+        expect(useCharacterStore.getState().character!.equippedTitle).toBeNull();
+    });
+
+    it('does nothing when no character', () => {
+        useCharacterStore.setState({ character: null });
+        useCharacterStore.getState().setEquippedTitle('eagle-eye');
+        expect(useCharacterStore.getState().character).toBeNull();
+    });
+});
+
+describe('addUnlockedTitle', () => {
+    beforeEach(() => {
+        useCharacterStore.setState({
+            character: makeCharacter({
+                equippedTitle: null,
+                unlockedTitles: ['the-novice'],
+                lifetimeStats: {
+                    questsCompleted: 0, battlesWon: 0, bossesDefeated: 0,
+                    dungeonsCompleted: 0, dungeonAttempts: 0, goldEarned: 0,
+                },
+            }),
+        });
+    });
+
+    it('adds a new title to unlockedTitles', () => {
+        useCharacterStore.getState().addUnlockedTitle('eagle-eye');
+        expect(useCharacterStore.getState().character!.unlockedTitles).toEqual(['the-novice', 'eagle-eye']);
+    });
+
+    it('does not duplicate when adding the same title twice', () => {
+        useCharacterStore.getState().addUnlockedTitle('eagle-eye');
+        useCharacterStore.getState().addUnlockedTitle('eagle-eye');
+        expect(useCharacterStore.getState().character!.unlockedTitles).toEqual(['the-novice', 'eagle-eye']);
+    });
+
+    it('does nothing when no character', () => {
+        useCharacterStore.setState({ character: null });
+        useCharacterStore.getState().addUnlockedTitle('eagle-eye');
+        expect(useCharacterStore.getState().character).toBeNull();
+    });
+});
+
+describe('incrementLifetimeStat', () => {
+    beforeEach(() => {
+        useCharacterStore.setState({
+            character: makeCharacter({
+                equippedTitle: null,
+                unlockedTitles: ['the-novice'],
+                lifetimeStats: {
+                    questsCompleted: 5, battlesWon: 3, bossesDefeated: 1,
+                    dungeonsCompleted: 0, dungeonAttempts: 2, goldEarned: 100,
+                },
+            }),
+        });
+    });
+
+    it('increments battlesWon correctly', () => {
+        useCharacterStore.getState().incrementLifetimeStat('battlesWon', 1);
+        expect(useCharacterStore.getState().character!.lifetimeStats.battlesWon).toBe(4);
+    });
+
+    it('increments goldEarned by arbitrary amount', () => {
+        useCharacterStore.getState().incrementLifetimeStat('goldEarned', 50);
+        expect(useCharacterStore.getState().character!.lifetimeStats.goldEarned).toBe(150);
+    });
+
+    it('does not affect other stats', () => {
+        useCharacterStore.getState().incrementLifetimeStat('battlesWon', 1);
+        const stats = useCharacterStore.getState().character!.lifetimeStats;
+        expect(stats.questsCompleted).toBe(5);
+        expect(stats.bossesDefeated).toBe(1);
+        expect(stats.goldEarned).toBe(100);
+    });
+
+    it('does nothing when no character', () => {
+        useCharacterStore.setState({ character: null });
+        useCharacterStore.getState().incrementLifetimeStat('battlesWon', 1);
+        expect(useCharacterStore.getState().character).toBeNull();
+    });
+});
+
+describe('removePowerUpsByTrigger', () => {
+    beforeEach(() => {
+        useCharacterStore.setState({
+            character: makeCharacter({
+                equippedTitle: null,
+                unlockedTitles: ['the-novice'],
+                lifetimeStats: {
+                    questsCompleted: 0, battlesWon: 0, bossesDefeated: 0,
+                    dungeonsCompleted: 0, dungeonAttempts: 0, goldEarned: 0,
+                },
+                activePowerUps: [
+                    { id: 'title-1', name: 'Title Buff', icon: '⭐', description: 'test', triggeredBy: 'title', startedAt: '2026-01-01', expiresAt: null, effect: { type: 'xp_multiplier', value: 1.03 } },
+                    { id: 'consumable-1', name: 'Elixir', icon: '🧪', description: 'test', triggeredBy: 'consumable', startedAt: '2026-01-01', expiresAt: '2026-01-02', effect: { type: 'stat_percent_boost', stat: 'strength', value: 0.1 } },
+                    { id: 'title-2', name: 'Another Title Buff', icon: '🎯', description: 'test', triggeredBy: 'title', startedAt: '2026-01-01', expiresAt: null, effect: { type: 'gold_multiplier', value: 1.05 } },
+                    { id: 'power-up-1', name: 'Hat Trick', icon: '🎩', description: 'test', triggeredBy: 'hat_trick', startedAt: '2026-01-01', expiresAt: '2026-01-02', effect: { type: 'xp_multiplier', value: 1.1 } },
+                ],
+            }),
+        });
+    });
+
+    it('removes only power-ups with the matching trigger', () => {
+        useCharacterStore.getState().removePowerUpsByTrigger('title');
+        const powerUps = useCharacterStore.getState().character!.activePowerUps;
+
+        expect(powerUps).toHaveLength(2);
+        expect(powerUps.map(p => p.id)).toEqual(['consumable-1', 'power-up-1']);
+    });
+
+    it('does not affect power-ups with different triggers', () => {
+        useCharacterStore.getState().removePowerUpsByTrigger('title');
+        const powerUps = useCharacterStore.getState().character!.activePowerUps;
+
+        expect(powerUps.find(p => p.triggeredBy === 'consumable')).toBeDefined();
+        expect(powerUps.find(p => p.triggeredBy === 'hat_trick')).toBeDefined();
+    });
+
+    it('does nothing when no matching trigger exists', () => {
+        useCharacterStore.getState().removePowerUpsByTrigger('nonexistent');
+        const powerUps = useCharacterStore.getState().character!.activePowerUps;
+        expect(powerUps).toHaveLength(4);
+    });
+
+    it('does nothing when no character', () => {
+        useCharacterStore.setState({ character: null });
+        useCharacterStore.getState().removePowerUpsByTrigger('title');
+        expect(useCharacterStore.getState().character).toBeNull();
+    });
+});
+
+describe('addPowerUps', () => {
+    beforeEach(() => {
+        useCharacterStore.setState({
+            character: makeCharacter({
+                equippedTitle: null,
+                unlockedTitles: ['the-novice'],
+                lifetimeStats: {
+                    questsCompleted: 0, battlesWon: 0, bossesDefeated: 0,
+                    dungeonsCompleted: 0, dungeonAttempts: 0, goldEarned: 0,
+                },
+                activePowerUps: [
+                    { id: 'existing-1', name: 'Existing Buff', icon: '⚡', description: 'test', triggeredBy: 'consumable', startedAt: '2026-01-01', expiresAt: '2026-01-02', effect: { type: 'xp_multiplier', value: 1.05 } },
+                ],
+            }),
+        });
+    });
+
+    it('appends power-ups to the existing array', () => {
+        useCharacterStore.getState().addPowerUps([
+            { id: 'title-1', name: 'Title Buff', icon: '⭐', description: 'test', triggeredBy: 'title', startedAt: '2026-01-01', expiresAt: null, effect: { type: 'xp_multiplier', value: 1.03 } },
+        ]);
+        const powerUps = useCharacterStore.getState().character!.activePowerUps;
+        expect(powerUps).toHaveLength(2);
+        expect(powerUps[0].id).toBe('existing-1');
+        expect(powerUps[1].id).toBe('title-1');
+    });
+
+    it('appends multiple power-ups at once', () => {
+        useCharacterStore.getState().addPowerUps([
+            { id: 'title-1', name: 'Buff 1', icon: '⭐', description: 'test', triggeredBy: 'title', startedAt: '2026-01-01', expiresAt: null, effect: { type: 'xp_multiplier', value: 1.03 } },
+            { id: 'title-2', name: 'Buff 2', icon: '🎯', description: 'test', triggeredBy: 'title', startedAt: '2026-01-01', expiresAt: null, effect: { type: 'gold_multiplier', value: 1.05 } },
+        ]);
+        const powerUps = useCharacterStore.getState().character!.activePowerUps;
+        expect(powerUps).toHaveLength(3);
+    });
+
+    it('does nothing when no character', () => {
+        useCharacterStore.setState({ character: null });
+        useCharacterStore.getState().addPowerUps([
+            { id: 'title-1', name: 'Buff', icon: '⭐', description: 'test', triggeredBy: 'title', startedAt: '2026-01-01', expiresAt: null, effect: { type: 'xp_multiplier', value: 1.03 } },
+        ]);
+        expect(useCharacterStore.getState().character).toBeNull();
+    });
+});
+
+describe('Surgical remove → add sequence', () => {
+    it('removePowerUpsByTrigger then addPowerUps produces correct state', () => {
+        useCharacterStore.setState({
+            character: makeCharacter({
+                equippedTitle: null,
+                unlockedTitles: ['the-novice'],
+                lifetimeStats: {
+                    questsCompleted: 0, battlesWon: 0, bossesDefeated: 0,
+                    dungeonsCompleted: 0, dungeonAttempts: 0, goldEarned: 0,
+                },
+                activePowerUps: [
+                    { id: 'old-title-1', name: 'Old Buff', icon: '⭐', description: 'test', triggeredBy: 'title', startedAt: '2026-01-01', expiresAt: null, effect: { type: 'xp_multiplier', value: 1.03 } },
+                    { id: 'consumable-1', name: 'Elixir', icon: '🧪', description: 'test', triggeredBy: 'consumable', startedAt: '2026-01-01', expiresAt: '2026-01-02', effect: { type: 'stat_percent_boost', stat: 'strength', value: 0.1 } },
+                ],
+            }),
+        });
+
+        // Simulate title swap: remove old title buffs, add new ones
+        useCharacterStore.getState().removePowerUpsByTrigger('title');
+        useCharacterStore.getState().addPowerUps([
+            { id: 'new-title-1', name: 'New Buff', icon: '🎯', description: 'test', triggeredBy: 'title', startedAt: '2026-01-01', expiresAt: null, effect: { type: 'gold_multiplier', value: 1.05 } },
+        ]);
+
+        const powerUps = useCharacterStore.getState().character!.activePowerUps;
+        expect(powerUps).toHaveLength(2);
+        expect(powerUps[0].id).toBe('consumable-1'); // Preserved
+        expect(powerUps[1].id).toBe('new-title-1');  // New
+    });
+});

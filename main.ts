@@ -6,7 +6,7 @@
  */
 
 import { Plugin, WorkspaceLeaf, TFile, Notice } from 'obsidian';
-import { QuestBoardSettings, DEFAULT_SETTINGS, QuestBoardSettingTab } from './src/settings';
+import { QuestBoardSettings, DEFAULT_SETTINGS, QuestBoardSettingTab, getQuestFolderPath } from './src/settings';
 import {
     QUEST_BOARD_VIEW_TYPE,
     QUEST_SIDEBAR_VIEW_TYPE,
@@ -633,7 +633,19 @@ export default class QuestBoardPlugin extends Plugin {
                 showProgressDashboardModal(this.app, async () => {
                     this.settings.character = useCharacterStore.getState().character;
                     await this.saveSettings();
-                });
+                }, this.settings.exportFolder, getQuestFolderPath(this.settings));
+            },
+        });
+
+        // Add command to export character report (Phase 5: Title System)
+        this.addCommand({
+            id: 'export-character',
+            name: 'Export Character Report',
+            callback: () => {
+                showProgressDashboardModal(this.app, async () => {
+                    this.settings.character = useCharacterStore.getState().character;
+                    await this.saveSettings();
+                }, this.settings.exportFolder, getQuestFolderPath(this.settings));
             },
         });
 

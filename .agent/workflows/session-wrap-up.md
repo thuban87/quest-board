@@ -17,11 +17,11 @@ git diff --stat
 Run ONLY these two commands. Do NOT run any additional git commands to "get more detail." These are the ONLY git commands for this step. Do not run variations, follow-ups, or "let me try a different flag" commands.
 
 
-2. **Update the Session Log.** Add a new entry to `docs\development\feature-planning\polished-and-ready\Accessories Session Log.md` documenting what was accomplished this session. Follow the existing entry format in the file. Include: date, what was done, files changed, test results, and any issues discovered.
+2. **Update the Session Log.** Add a new entry to `docs\development\Title System Session Log.md` documenting what was accomplished this session. Follow the existing entry format in the file. Include: date, what was done, files changed, test results, and any issues discovered.
 
 3. **Update the Feature Roadmap.** Update `docs\development\Feature Roadmap v2.md` to reflect completed work, status changes, or any new items discovered during the session.
 
-4. **Update the planning guide** Update `docs\development\feature-planning\in-review\docs\development\feature-planning\polished-and-ready\Accessories & Special Abilities Brainstorm.md` with a brief "completed" status next to the phase header.
+4. **Update the planning guide** Update `docs\development\Title System Implementation Plan.md` with a brief "completed" status next to the phase header.
 
 5. **Provide a git commit message.** Generate a clear, descriptive commit message summarizing all work done this session. **Do not use quotation marks anywhere in the message.** Format:
 

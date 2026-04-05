@@ -7,7 +7,7 @@
  */
 
 import React, { useMemo, useEffect, useRef } from 'react';
-import { App } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import { useCharacterStore, selectActiveSetBonuses, selectInventory } from '../store/characterStore';
 import { AchievementService } from '../services/AchievementService';
 import { useQuestStore } from '../store/questStore';
@@ -24,6 +24,9 @@ import { showSkillLoadoutModal } from '../modals/SkillLoadoutModal';
 import { openStoreModal } from '../modals/StoreModal';
 import { AchievementHubModal } from '../modals/AchievementHubModal';
 import { showProgressDashboardModal } from '../modals/ProgressDashboardModal';
+import { TitleSelectionModal } from '../modals/TitleSelectionModal';
+import { getEquippedTitle } from '../services/TitleService';
+import { useBattleStore } from '../store/battleStore';
 import {
     CharacterIdentity,
     ResourceBars,
@@ -99,6 +102,12 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
         [character]
     );
 
+    // Equipped title (resolved from character store)
+    const equippedTitle = useMemo(
+        () => character ? getEquippedTitle(character) : null,
+        [character]
+    );
+
     if (!character || !combatStats) {
         return (
             <div className="qb-charpage">
@@ -154,7 +163,16 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
             onSave,
         }).open();
     };
-    const handleOpenProgressDashboard = () => showProgressDashboardModal(app, onSave);
+    const handleOpenProgressDashboard = () => showProgressDashboardModal(
+        app, onSave, plugin.settings.exportFolder, `${plugin.settings.storageFolder}/quests`
+    );
+    const handleTitleClick = () => {
+        if (useBattleStore.getState().state !== 'IDLE') {
+            new Notice('Cannot change titles during combat');
+            return;
+        }
+        new TitleSelectionModal(app, character, onSave).open();
+    };
 
     // Back to board
     const handleBack = () => {
@@ -210,6 +228,8 @@ export const CharacterPage: React.FC<CharacterPageProps> = ({ plugin, app }) => 
                         spriteResourcePath={spriteUrl}
                         spriteSize={200}
                         allBuffs={allBuffs}
+                        equippedTitle={equippedTitle}
+                        onTitleClick={handleTitleClick}
                     />
 
                     <ResourceBars character={character} combatStats={combatStats} />

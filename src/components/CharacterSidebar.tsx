@@ -13,6 +13,7 @@ import { GearSlot, ALL_GEAR_SLOTS } from '../models/Gear';
 import { getXPProgress, getXPForNextLevel, XP_THRESHOLDS, TRAINING_XP_THRESHOLDS } from '../services/XPSystem';
 import { getClassPerkAsPowerUp, expirePowerUps } from '../services/PowerUpService';
 import { deriveCombatStats } from '../services/CombatService';
+import { getEquippedTitle } from '../services/TitleService';
 import {
     CharacterIdentity,
     ResourceBars,
@@ -34,6 +35,8 @@ interface CharacterSidebarProps {
     onOpenBlacksmith?: () => void;
     /** Open skill loadout modal */
     onOpenSkillLoadout?: () => void;
+    /** Open title selection modal */
+    onTitleClick?: () => void;
 
     spriteResourcePath?: string;
 }
@@ -45,6 +48,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
     onOpenInventoryForSlot,
     onOpenBlacksmith,
     onOpenSkillLoadout,
+    onTitleClick,
 
     spriteResourcePath,
 }) => {
@@ -86,6 +90,9 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
     // Combat stats
     const combatStats = useMemo(() => deriveCombatStats(character), [character]);
 
+    // Equipped title
+    const equippedTitle = useMemo(() => getEquippedTitle(character), [character]);
+
     // Gear slot click handler
     const handleSlotClick = (slot: GearSlot) => {
         if (onOpenInventoryForSlot) {
@@ -106,6 +113,8 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
                 classInfo={classInfo}
                 spriteResourcePath={spriteResourcePath}
                 allBuffs={allBuffs}
+                equippedTitle={equippedTitle}
+                onTitleClick={onTitleClick}
             />
 
             <div className="qb-sheet-xp-section">

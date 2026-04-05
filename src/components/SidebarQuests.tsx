@@ -7,7 +7,7 @@
  */
 
 import React, { useEffect, useCallback, useState, useRef, useMemo } from 'react';
-import { App as ObsidianApp } from 'obsidian';
+import { App as ObsidianApp, Notice } from 'obsidian';
 import type QuestBoardPlugin from '../../main';
 import { Quest, isManualQuest } from '../models/Quest';
 import { ColumnConfigService } from '../services/ColumnConfigService';
@@ -43,7 +43,9 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { showInventoryModal } from '../modals/InventoryModal';
 import { showBlacksmithModal } from '../modals/BlacksmithModal';
 import { showSkillLoadoutModal } from '../modals/SkillLoadoutModal';
+import { TitleSelectionModal } from '../modals/TitleSelectionModal';
 import { ScrivenersQuillModal } from '../modals/ScrivenersQuillModal';
+import { useBattleStore } from '../store/battleStore';
 import { Quest as QuestModel } from '../models/Quest';
 
 interface SidebarQuestsProps {
@@ -436,6 +438,15 @@ export const SidebarQuests: React.FC<SidebarQuestsProps> = ({ plugin, app }) => 
                             onSave: handleSaveCharacter
                         })}
                         spriteResourcePath={spriteResourcePath}
+                        onTitleClick={() => {
+                            const character = useCharacterStore.getState().character;
+                            if (!character) return;
+                            if (useBattleStore.getState().state !== 'IDLE') {
+                                new Notice('Cannot change titles during combat');
+                                return;
+                            }
+                            new TitleSelectionModal(app, character, handleSaveCharacter).open();
+                        }}
                     />
                 ) : (
                     /* Achievements View */

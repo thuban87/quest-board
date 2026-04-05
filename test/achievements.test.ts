@@ -764,3 +764,311 @@ describe('getDefaultAchievements', () => {
         expect(defaults2[0].progress).toBeUndefined();
     });
 });
+
+// =====================
+// checkBattleCountAchievements TESTS
+// =====================
+
+describe('checkBattleCountAchievements', () => {
+    let service: AchievementService;
+
+    beforeEach(() => {
+        service = new AchievementService(null as any);
+    });
+
+    it('should unlock battles-25 achievement at target', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'battles-25',
+                trigger: { type: 'manual', target: 25 },
+                xpBonus: 75,
+            }),
+        ];
+
+        const result = service.checkBattleCountAchievements(achievements, 25);
+
+        expect(result.newlyUnlocked).toHaveLength(1);
+        expect(result.newlyUnlocked[0].id).toBe('battles-25');
+        expect(result.totalXpBonus).toBe(75);
+    });
+
+    it('should NOT unlock battles-25 below target', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'battles-25',
+                trigger: { type: 'manual', target: 25 },
+            }),
+        ];
+
+        const result = service.checkBattleCountAchievements(achievements, 24);
+
+        expect(result.newlyUnlocked).toHaveLength(0);
+    });
+
+    it('should NOT re-unlock already unlocked battles achievement', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'battles-25',
+                trigger: { type: 'manual', target: 25 },
+                unlockedAt: '2024-01-15T12:00:00Z',
+            }),
+        ];
+
+        const result = service.checkBattleCountAchievements(achievements, 30);
+
+        expect(result.newlyUnlocked).toHaveLength(0);
+    });
+
+    it('should update progress on battles achievement', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'battles-25',
+                trigger: { type: 'manual', target: 25 },
+            }),
+        ];
+
+        service.checkBattleCountAchievements(achievements, 15);
+
+        expect(achievements[0].progress).toBe(15);
+    });
+
+    it('should ignore non-battles manual achievements', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'bosses-10',
+                trigger: { type: 'manual', target: 10 },
+            }),
+        ];
+
+        const result = service.checkBattleCountAchievements(achievements, 30);
+
+        expect(result.newlyUnlocked).toHaveLength(0);
+    });
+});
+
+// =====================
+// checkBossKillAchievements TESTS
+// =====================
+
+describe('checkBossKillAchievements', () => {
+    let service: AchievementService;
+
+    beforeEach(() => {
+        service = new AchievementService(null as any);
+    });
+
+    it('should unlock bosses-10 achievement at target', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'bosses-10',
+                trigger: { type: 'manual', target: 10 },
+                xpBonus: 100,
+            }),
+        ];
+
+        const result = service.checkBossKillAchievements(achievements, 10);
+
+        expect(result.newlyUnlocked).toHaveLength(1);
+        expect(result.totalXpBonus).toBe(100);
+    });
+
+    it('should NOT unlock bosses-10 below target', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'bosses-10',
+                trigger: { type: 'manual', target: 10 },
+            }),
+        ];
+
+        const result = service.checkBossKillAchievements(achievements, 9);
+
+        expect(result.newlyUnlocked).toHaveLength(0);
+    });
+
+    it('should NOT re-unlock already unlocked boss achievement', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'bosses-10',
+                trigger: { type: 'manual', target: 10 },
+                unlockedAt: '2024-01-15T12:00:00Z',
+            }),
+        ];
+
+        const result = service.checkBossKillAchievements(achievements, 15);
+
+        expect(result.newlyUnlocked).toHaveLength(0);
+    });
+
+    it('should ignore non-bosses manual achievements', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'battles-25',
+                trigger: { type: 'manual', target: 25 },
+            }),
+        ];
+
+        const result = service.checkBossKillAchievements(achievements, 30);
+
+        expect(result.newlyUnlocked).toHaveLength(0);
+    });
+});
+
+// =====================
+// checkDungeonAchievements TESTS
+// =====================
+
+describe('checkDungeonAchievements', () => {
+    let service: AchievementService;
+
+    beforeEach(() => {
+        service = new AchievementService(null as any);
+    });
+
+    it('should unlock dungeons-3 achievement at target', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'dungeons-3',
+                trigger: { type: 'manual', target: 3 },
+                xpBonus: 150,
+            }),
+        ];
+
+        const result = service.checkDungeonAchievements(achievements, 3);
+
+        expect(result.newlyUnlocked).toHaveLength(1);
+        expect(result.totalXpBonus).toBe(150);
+    });
+
+    it('should NOT unlock dungeons-3 below target', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'dungeons-3',
+                trigger: { type: 'manual', target: 3 },
+            }),
+        ];
+
+        const result = service.checkDungeonAchievements(achievements, 2);
+
+        expect(result.newlyUnlocked).toHaveLength(0);
+    });
+
+    it('should NOT re-unlock already unlocked dungeon achievement', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'dungeons-3',
+                trigger: { type: 'manual', target: 3 },
+                unlockedAt: '2024-01-15T12:00:00Z',
+            }),
+        ];
+
+        const result = service.checkDungeonAchievements(achievements, 5);
+
+        expect(result.newlyUnlocked).toHaveLength(0);
+    });
+
+    it('should update progress on dungeon achievement', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'dungeons-3',
+                trigger: { type: 'manual', target: 3 },
+            }),
+        ];
+
+        service.checkDungeonAchievements(achievements, 2);
+
+        expect(achievements[0].progress).toBe(2);
+    });
+});
+
+// =====================
+// checkGoldAchievements TESTS
+// =====================
+
+describe('checkGoldAchievements', () => {
+    let service: AchievementService;
+
+    beforeEach(() => {
+        service = new AchievementService(null as any);
+    });
+
+    it('should unlock gold-1000 achievement at target', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'gold-1000',
+                trigger: { type: 'manual', target: 1000 },
+                xpBonus: 200,
+            }),
+        ];
+
+        const result = service.checkGoldAchievements(achievements, 1000);
+
+        expect(result.newlyUnlocked).toHaveLength(1);
+        expect(result.totalXpBonus).toBe(200);
+    });
+
+    it('should unlock gold-1000 when exceeding target', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'gold-1000',
+                trigger: { type: 'manual', target: 1000 },
+            }),
+        ];
+
+        const result = service.checkGoldAchievements(achievements, 1500);
+
+        expect(result.newlyUnlocked).toHaveLength(1);
+    });
+
+    it('should NOT unlock gold-1000 below target', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'gold-1000',
+                trigger: { type: 'manual', target: 1000 },
+            }),
+        ];
+
+        const result = service.checkGoldAchievements(achievements, 999);
+
+        expect(result.newlyUnlocked).toHaveLength(0);
+    });
+
+    it('should NOT re-unlock already unlocked gold achievement', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'gold-1000',
+                trigger: { type: 'manual', target: 1000 },
+                unlockedAt: '2024-01-15T12:00:00Z',
+            }),
+        ];
+
+        const result = service.checkGoldAchievements(achievements, 2000);
+
+        expect(result.newlyUnlocked).toHaveLength(0);
+    });
+
+    it('should update progress on gold achievement', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'gold-1000',
+                trigger: { type: 'manual', target: 1000 },
+            }),
+        ];
+
+        service.checkGoldAchievements(achievements, 750);
+
+        expect(achievements[0].progress).toBe(750);
+    });
+
+    it('should ignore non-gold manual achievements', () => {
+        const achievements = [
+            createTestAchievement({
+                id: 'dungeons-3',
+                trigger: { type: 'manual', target: 3 },
+            }),
+        ];
+
+        const result = service.checkGoldAchievements(achievements, 5000);
+
+        expect(result.newlyUnlocked).toHaveLength(0);
+    });
+});

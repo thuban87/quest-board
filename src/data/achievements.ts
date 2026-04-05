@@ -11,12 +11,13 @@ import { Achievement } from '../models/Achievement';
  * Level milestone achievements
  */
 const LEVEL_ACHIEVEMENTS: Achievement[] = [
-    { id: 'level-10', name: 'Veteran Adventurer', description: 'Reach Level 10', emoji: '🎖️', category: 'milestone', trigger: { type: 'level', target: 10 }, xpBonus: 50 },
+    { id: 'level-10', name: 'Veteran Adventurer', description: 'Reach Level 10', emoji: '🎖️', category: 'milestone', trigger: { type: 'level', target: 10 }, xpBonus: 50, grantedTitleId: 'the-dedicated' },
     { id: 'level-13', name: 'Seasoned Hero', description: 'Reach Level 13', emoji: '⚔️', category: 'milestone', trigger: { type: 'level', target: 13 }, xpBonus: 75 },
     { id: 'level-16', name: 'Master of Quests', description: 'Reach Level 16', emoji: '🏅', category: 'milestone', trigger: { type: 'level', target: 16 }, xpBonus: 100 },
     { id: 'level-18', name: 'Legendary Champion', description: 'Reach Level 18', emoji: '🦁', category: 'milestone', trigger: { type: 'level', target: 18 }, xpBonus: 125 },
+    { id: 'level-20', name: 'Veteran Fighter', description: 'Reach Level 20', emoji: '🔨', category: 'milestone', trigger: { type: 'level', target: 20 }, xpBonus: 150, grantedTitleId: 'the-tempered' },
     { id: 'level-21', name: 'Epic Warrior', description: 'Reach Level 21', emoji: '🐉', category: 'milestone', trigger: { type: 'level', target: 21 }, xpBonus: 150 },
-    { id: 'level-25', name: 'Mythic Conqueror', description: 'Reach Level 25', emoji: '👑', category: 'milestone', trigger: { type: 'level', target: 25 }, xpBonus: 200 },
+    { id: 'level-25', name: 'Mythic Conqueror', description: 'Reach Level 25', emoji: '👑', category: 'milestone', trigger: { type: 'level', target: 25 }, xpBonus: 200, grantedTitleId: 'the-focused' },
     { id: 'level-30', name: 'Titan of Tasks', description: 'Reach Level 30', emoji: '⭐', category: 'milestone', trigger: { type: 'level', target: 30 }, xpBonus: 250 },
     { id: 'level-35', name: 'Ascended One', description: 'Reach Level 35', emoji: '🌟', category: 'milestone', trigger: { type: 'level', target: 35 }, xpBonus: 300 },
     { id: 'level-38', name: 'Near Immortal', description: 'Reach Level 38', emoji: '💫', category: 'milestone', trigger: { type: 'level', target: 38 }, xpBonus: 350 },
@@ -56,11 +57,29 @@ const INTERVIEW_ACHIEVEMENTS: Achievement[] = [
  */
 const STREAK_ACHIEVEMENTS: Achievement[] = [
     { id: 'streak-3', name: 'Getting Consistent', description: 'Maintain a 3-day quest streak', emoji: '🔥', category: 'streak', trigger: { type: 'streak', target: 3 }, xpBonus: 25 },
-    { id: 'streak-7', name: 'Week Warrior', description: 'Maintain a 7-day quest streak', emoji: '📅', category: 'streak', trigger: { type: 'streak', target: 7 }, xpBonus: 50 },
+    { id: 'streak-7', name: 'Week Warrior', description: 'Maintain a 7-day quest streak', emoji: '📅', category: 'streak', trigger: { type: 'streak', target: 7 }, xpBonus: 50, grantedTitleId: 'streak-keeper' },
     { id: 'streak-14', name: 'Fortnight Fighter', description: 'Maintain a 14-day quest streak', emoji: '💪', category: 'streak', trigger: { type: 'streak', target: 14 }, xpBonus: 100 },
-    { id: 'streak-30', name: 'Monthly Master', description: 'Maintain a 30-day quest streak', emoji: '🌟', category: 'streak', trigger: { type: 'streak', target: 30 }, xpBonus: 200 },
+    { id: 'streak-30', name: 'Monthly Master', description: 'Maintain a 30-day quest streak', emoji: '🌟', category: 'streak', trigger: { type: 'streak', target: 30 }, xpBonus: 200, grantedTitleId: 'the-relentless' },
     { id: 'streak-60', name: 'Unstoppable', description: 'Maintain a 60-day quest streak', emoji: '⚡', category: 'streak', trigger: { type: 'streak', target: 60 }, xpBonus: 400 },
     { id: 'streak-90', name: 'Legendary Discipline', description: 'Maintain a 90-day quest streak', emoji: '🏆', category: 'streak', trigger: { type: 'streak', target: 90 }, xpBonus: 750 },
+];
+
+/**
+ * Quest count achievements (total quests completed)
+ */
+const QUEST_COUNT_ACHIEVEMENTS: Achievement[] = [
+    { id: 'quests-10', name: "Adventurer's Start", description: 'Complete 10 quests', emoji: '🗡️', category: 'quest_count', trigger: { type: 'quest_count', target: 10 }, xpBonus: 50, grantedTitleId: 'questrunner' },
+    { id: 'quests-50', name: 'Seasoned Adventurer', description: 'Complete 50 quests', emoji: '📚', category: 'quest_count', trigger: { type: 'quest_count', target: 50 }, xpBonus: 150, grantedTitleId: 'the-scholar' },
+];
+
+/**
+ * Combat and lifetime stat achievements (manual trigger, checked against lifetimeStats)
+ */
+const COMBAT_ACHIEVEMENTS: Achievement[] = [
+    { id: 'dungeons-3', name: 'Dungeon Explorer', description: 'Complete 3 dungeons', emoji: '🗺️', category: 'special', trigger: { type: 'manual', target: 1 }, xpBonus: 100, grantedTitleId: 'dungeon-delver' },
+    { id: 'gold-1000', name: 'Fortune Seeker', description: 'Earn 1000 total gold', emoji: '💰', category: 'special', trigger: { type: 'manual', target: 1 }, xpBonus: 100, grantedTitleId: 'fortune-favored' },
+    { id: 'battles-25', name: 'Veteran Fighter', description: 'Win 25 battles', emoji: '⚔️', category: 'special', trigger: { type: 'manual', target: 1 }, xpBonus: 100, grantedTitleId: 'eagle-eye' },
+    { id: 'bosses-10', name: 'Boss Hunter', description: 'Defeat 10 bosses', emoji: '💀', category: 'special', trigger: { type: 'manual', target: 1 }, xpBonus: 200, grantedTitleId: 'slayer-of-the-void' },
 ];
 
 /**
@@ -79,6 +98,8 @@ export const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     ...APPLICATION_ACHIEVEMENTS,
     ...INTERVIEW_ACHIEVEMENTS,
     ...STREAK_ACHIEVEMENTS,
+    ...QUEST_COUNT_ACHIEVEMENTS,
+    ...COMBAT_ACHIEVEMENTS,
     ...SPECIAL_ACHIEVEMENTS,
 ];
 

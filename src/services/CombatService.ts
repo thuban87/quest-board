@@ -8,6 +8,7 @@
 import { Character, CharacterStats, CharacterClass } from '../models/Character';
 import { GearItem, EquippedGearMap, ALL_GEAR_SLOTS, GearSlot } from '../models/Gear';
 import { getCombatBonus, getStatMultiplier } from './AccessoryEffectService';
+import { expirePowerUps, getStatBoostFromPowerUps, getPercentStatBoostFromPowerUps, getCritFromPowerUps } from './PowerUpService';
 import {
     CLASS_COMBAT_CONFIG,
     getLevelModifier,
@@ -170,13 +171,18 @@ export function deriveCombatStats(character: Character): CombatStats {
     const gear = character.equippedGear;
     const gearStats = aggregateGearStats(gear);
 
-    // Compute flat stats, then apply accessory stat multiplier (Heart of the Wyrm: +10% ALL)
+    // Expire stale power-ups before reading
+    const activePowerUps = expirePowerUps(character.activePowerUps || []);
+
+    // Compute flat stats, then apply accessory + power-up multipliers
     const computeStat = (stat: keyof CharacterStats): number => {
         const flat = (character.baseStats[stat] || 0) +
             (character.statBonuses?.[stat] || 0) +
-            (gearStats.statBonuses[stat] || 0);
+            (gearStats.statBonuses[stat] || 0) +
+            getStatBoostFromPowerUps(activePowerUps, stat);
         const accMult = getStatMultiplier(gear, stat);
-        return Math.floor(flat * (1 + accMult));
+        const pctMult = getPercentStatBoostFromPowerUps(activePowerUps, stat);
+        return Math.floor(flat * (1 + accMult + pctMult));
     };
 
     const totalStats: CharacterStats = {
@@ -214,8 +220,8 @@ export function deriveCombatStats(character: Character): CombatStats {
     // Magic Defense: WIS/2 + gear magic defense * 1.5 + accessory magic defense
     const magicDefense = Math.floor(totalStats.wisdom / 2) + Math.floor(gearStats.magicDefense * 1.5) + getCombatBonus(gear, 'magDef');
 
-    // Crit Chance: DEX * 0.5% + gear bonus + accessory crit
-    const critChance = (totalStats.dexterity * CRIT_PER_DEX) + gearStats.critChance + getCombatBonus(gear, 'crit');
+    // Crit Chance: DEX * 0.5% + gear bonus + accessory crit + power-up crit
+    const critChance = (totalStats.dexterity * CRIT_PER_DEX) + gearStats.critChance + getCombatBonus(gear, 'crit') + getCritFromPowerUps(activePowerUps);
 
     // Dodge Chance: DEX * 0.5% + gear bonus + accessory dodge, capped at 25%
     const dodgeChance = Math.min(DODGE_CAP, (totalStats.dexterity * DODGE_PER_DEX) + gearStats.dodgeChance + getCombatBonus(gear, 'dodge'));

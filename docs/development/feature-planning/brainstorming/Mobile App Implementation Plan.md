@@ -2,9 +2,9 @@
 ## Monorepo Migration + React Native Companion App
 
 > **Status:** 🔲 DRAFT — Pending Brad's review
-> **Estimated Sessions:** 20–25 sessions (50–63 hours)
+> **Estimated Sessions:** ~29–31 sessions (54–71 hours)
 > **Created:** 2026-02-21
-> **Last Updated:** 2026-02-21
+> **Last Updated:** 2026-04-04
 > **Companion Log:** [[Mobile App Session Log]]
 > **Related:** [[Android App Feasibility Report]]
 
@@ -435,10 +435,10 @@ export interface IStorageProvider {
 
 ---
 
-#### Phase 2: Abstraction Interfaces + Pure Services
-**Estimated Time:** 2.5–3 hours
+#### Phase 2a: Abstraction Interfaces
+**Estimated Time:** 1–1.5 hours
 **Prerequisite:** Phase 1
-**Goal:** Create the 8 abstraction interfaces in core. Migrate `Gear.ts` (with UUID abstraction). Copy all 20 pure services (no Obsidian imports) into core. Copy 2 stores that need minor abstraction (`battleStore`, `dungeonStore`).
+**Goal:** Create the 8 abstraction interfaces that will be used by all abstractable services. This is new code that requires careful design — these interfaces define the contract between core and platform packages.
 
 **Tasks:**
 
@@ -452,21 +452,31 @@ export interface IStorageProvider {
 - [ ] Create `packages/core/src/interfaces/IFileWatcher.ts`
 - [ ] Create `packages/core/src/interfaces/IStorageProvider.ts`
 - [ ] Create `packages/core/src/interfaces/index.ts` barrel export
+- [ ] Verify `packages/core/` compiles with `tsc --noEmit`
+
+---
+
+#### Phase 2b: Pure Services + Store Abstractions
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Phase 2a
+**Goal:** Copy all 20 pure services (no Obsidian imports) into core. Migrate `Gear.ts` with UUID abstraction. Abstract the 2 stores that have minor platform dependencies.
 
 **Gear.ts fix:**
 - [ ] Copy `Gear.ts` to `packages/core/src/models/`
 - [ ] Replace `crypto.randomUUID()` with an injected `generateId()` function or import from a tiny cross-platform UUID utility
 
-**Pure Services (20 files — COPY):**
-- [ ] Copy: `AccessoryEffectService.ts`, `BattleService.ts`, `ColumnConfigService.ts`, `CombatService.ts`, `ConsumableUsageService.ts`, `DungeonMapService.ts`, `LootGenerationService.ts`, `MonsterService.ts`, `PowerUpService.ts`, `ProgressStatsService.ts`, `SkillService.ts`, `SmeltingService.ts`, `StatsService.ts`, `StatusEffectService.ts`, `StreakService.ts`, `TemplateStatsService.ts`, `TestCharacterGenerator.ts`, `XPSystem.ts`, `RecoveryTimerStatusProvider.ts`, `index.ts`
+**Pure Services (20 files — COPY, ~6,090 LOC total):**
+- [ ] Copy: `AccessoryEffectService.ts`, `BattleService.ts` (1,680 LOC), `ColumnConfigService.ts`, `CombatService.ts` (479 LOC), `ConsumableUsageService.ts`, `DungeonMapService.ts`, `LootGenerationService.ts` (1,112 LOC), `MonsterService.ts` (294 LOC), `PowerUpService.ts` (975 LOC), `ProgressStatsService.ts`, `SkillService.ts` (612 LOC), `SmeltingService.ts` (286 LOC), `StatsService.ts` (283 LOC), `StatusEffectService.ts`, `StreakService.ts`, `TemplateStatsService.ts`, `TestCharacterGenerator.ts`, `XPSystem.ts` (369 LOC), `RecoveryTimerStatusProvider.ts`, `index.ts`
 - [ ] Fix import paths within core
 
 **Stores with minor abstraction (2 files):**
 - [ ] Copy `battleStore.ts` — replace `localStorage` with `IStorageProvider` parameter
 - [ ] Copy `dungeonStore.ts` — replace `crypto.randomUUID()` with injected ID generator
 
-**Tasks:**
 - [ ] Verify `packages/core/` compiles with `tsc --noEmit`
+
+> [!NOTE]
+> The pure services are bulk copies — no logic changes needed. The only new work is the Gear.ts UUID fix and the two store abstractions. This should be largely mechanical.
 
 #### Tech Debt:
 - Pure services are copies, not yet consumed by Obsidian plugin. Resolved in Phase 4.
@@ -475,7 +485,7 @@ export interface IStorageProvider {
 
 #### Phase 2.5: Tests — Interfaces + Pure Services
 **Estimated Time:** 2–2.5 hours
-**Prerequisite:** Phase 2
+**Prerequisite:** Phase 2b
 **Coverage Target:** ≥80% line, ≥80% branch
 **Test File Location:** `packages/core/test/`
 
@@ -496,43 +506,9 @@ export interface IStorageProvider {
 ---
 
 #### Phase 3: Abstractable Services Migration
-**Estimated Time:** 3–4 hours (largest phase)
-**Prerequisite:** Phase 2
-**Goal:** Refactor the 17 services that import from `obsidian` to instead accept abstraction interfaces via constructor/parameter injection. Copy the refactored versions into core.
 
 > [!IMPORTANT]
-> This is the most complex phase. Each service needs its Obsidian imports replaced with interface parameters. The logic stays identical — only the I/O layer changes.
-
-**Files to refactor and copy (17 files):**
-
-| Service | Obsidian Deps | Replace With |
-|---------|---------------|--------------|
-| QuestService.ts | `App, Vault, TFile, TFolder, debounce` | `IFileSystem, IFileWatcher` |
-| QuestActionsService.ts | `Vault, Notice, App, TFile` | `IFileSystem, INotification` |
-| RecurringQuestService.ts | `Vault, TFile, TFolder, normalizePath` | `IFileSystem` |
-| TaskFileService.ts | `Vault, TFile, debounce` | `IFileSystem, IFileWatcher` |
-| TemplateService.ts | `Vault, TFile, TFolder` | `IFileSystem` |
-| AchievementService.ts | `Vault` | `IDataStore` |
-| DailyNoteService.ts | `Vault, TFile, TFolder` | `IFileSystem` |
-| FolderWatchService.ts | `Vault, TFile, Notice, normalizePath` | `IFileSystem, IFileWatcher, INotification` |
-| UserDungeonLoader.ts | `App, TFile, TFolder, Vault` | `IFileSystem` |
-| AIDungeonService.ts | `requestUrl` | `IHttpClient` |
-| AIQuestService.ts | `requestUrl` | `IHttpClient` |
-| BountyService.ts | `requestUrl` | `IHttpClient` |
-| SetBonusService.ts | `App, requestUrl` | `IHttpClient, IDataStore` |
-| SpriteService.ts | `DataAdapter` | `IAssetResolver` |
-| AssetService.ts | `App, Vault, DataAdapter, requestUrl` | `IFileSystem, IHttpClient` |
-| BalanceTestingService.ts | `App, TFile, TFolder` | `IFileSystem` |
-| RecoveryTimerService.ts | `Notice` | `INotification` |
-
-**Tasks:**
-- [ ] For each service: refactor constructor/factory to accept interface parameters instead of Obsidian types
-- [ ] Remove all `import ... from 'obsidian'` lines from core versions
-- [ ] Replace `Vault.read(file)` → `fileSystem.read(path)` patterns
-- [ ] Replace `new Notice()` → `notification.show()` patterns
-- [ ] Replace `requestUrl()` → `httpClient.request()` patterns
-- [ ] Verify `packages/core/` compiles with zero `obsidian` imports: `grep -r "from 'obsidian'" packages/core/src/` returns nothing
-- [ ] Verify `tsc --noEmit` passes
+> This is the most complex part of the migration. Each service needs its Obsidian imports replaced with interface parameters via constructor/parameter injection. The logic stays identical — only the I/O layer changes. This work is split into 5 sub-phases grouped by interface dependency and complexity.
 
 **Approach for each service:**
 1. Read the original file to understand all Obsidian API usage points
@@ -540,46 +516,177 @@ export interface IStorageProvider {
 3. Keep all business logic identical — only change the I/O calls
 4. Ensure the core version has no Obsidian imports
 
-#### Tech Debt:
+#### Tech Debt (applies to all Phase 3 sub-phases):
 - Some services use Obsidian's `debounce` utility. Need a platform-agnostic debounce (trivial to implement or import from lodash).
 - Services using `moment` (provided globally by Obsidian) need a standard date library alternative for core. Consider `date-fns` or vanilla `Intl.DateTimeFormat`.
 
 ---
 
-#### Phase 3.5: Tests — Abstractable Services
-**Estimated Time:** 2.5–3 hours
-**Prerequisite:** Phase 3
+#### Phase 3a: Trivial Service Swaps
+**Estimated Time:** 1–1.5 hours
+**Prerequisite:** Phase 2b
+**Goal:** Refactor the 3 simplest abstractable services — each has only a single Obsidian dependency to swap. Quick wins that validate the DI pattern before tackling larger files.
+
+**Files to refactor (3 files, ~676 LOC total):**
+
+| Service | LOC | Obsidian Deps | Replace With |
+|---------|-----|---------------|--------------|
+| RecoveryTimerService.ts | 122 | `Notice` | `INotification` |
+| SpriteService.ts | 180 | `DataAdapter` | `IAssetResolver` |
+| AchievementService.ts | 374 | `Vault` | `IDataStore` |
+
+**Tasks:**
+- [ ] Refactor RecoveryTimerService: swap `new Notice()` → `notification.show()`
+- [ ] Refactor SpriteService: swap `DataAdapter` → `IAssetResolver`
+- [ ] Refactor AchievementService: swap `Vault` → `IDataStore`
+- [ ] Verify `tsc --noEmit` passes
+
+---
+
+#### Phase 3b: IHttpClient Services
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Phase 3a
+**Goal:** Refactor the 4 services that depend on Obsidian's `requestUrl`. All follow the same pattern: replace `requestUrl()` calls with `httpClient.request()`.
+
+**Files to refactor (4 files, ~1,961 LOC total):**
+
+| Service | LOC | Obsidian Deps | Replace With |
+|---------|-----|---------------|--------------|
+| AIQuestService.ts | 376 | `requestUrl` | `IHttpClient` |
+| AssetService.ts | 313 | `App, Vault, DataAdapter, requestUrl` | `IFileSystem, IHttpClient` |
+| AIDungeonService.ts | 627 | `requestUrl` | `IHttpClient` |
+| BountyService.ts | 645 | `requestUrl` | `IHttpClient` |
+
+**Tasks:**
+- [ ] Refactor AIQuestService: swap `requestUrl` → `httpClient.request()`
+- [ ] Refactor AssetService: swap `requestUrl` + `Vault`/`DataAdapter` → `IHttpClient` + `IFileSystem`
+- [ ] Refactor AIDungeonService: swap `requestUrl` → `httpClient.request()`
+- [ ] Refactor BountyService: swap `requestUrl` → `httpClient.request()`
+- [ ] Verify `tsc --noEmit` passes
+
+---
+
+#### Phase 3c: IFileSystem Services — Small Batch
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Phase 3b
+**Goal:** Refactor 3 smaller file-system-dependent services. Straightforward `Vault` → `IFileSystem` swaps.
+
+**Files to refactor (3 files, ~1,137 LOC total):**
+
+| Service | LOC | Obsidian Deps | Replace With |
+|---------|-----|---------------|--------------|
+| DailyNoteService.ts | 241 | `Vault, TFile, TFolder` | `IFileSystem` |
+| TaskFileService.ts | 405 | `Vault, TFile, debounce` | `IFileSystem, IFileWatcher` |
+| TemplateService.ts | 491 | `Vault, TFile, TFolder` | `IFileSystem` |
+
+**Tasks:**
+- [ ] Refactor DailyNoteService: swap `Vault`/`TFile`/`TFolder` → `IFileSystem`
+- [ ] Refactor TaskFileService: swap `Vault`/`TFile` → `IFileSystem` + `IFileWatcher`; replace Obsidian `debounce` with platform-agnostic version
+- [ ] Refactor TemplateService: swap `Vault`/`TFile`/`TFolder` → `IFileSystem`
+- [ ] Verify `tsc --noEmit` passes
+
+---
+
+#### Phase 3d: IFileSystem Services — Large Batch
+**Estimated Time:** 2–2.5 hours
+**Prerequisite:** Phase 3c
+**Goal:** Refactor the larger and more complex file-system-dependent services. Several of these require multiple interfaces.
+
+**Files to refactor (5 files, ~2,868 LOC total):**
+
+| Service | LOC | Obsidian Deps | Replace With |
+|---------|-----|---------------|--------------|
+| RecurringQuestService.ts | 538 | `Vault, TFile, TFolder, normalizePath` | `IFileSystem` |
+| BalanceTestingService.ts | 448 | `App, TFile, TFolder` | `IFileSystem` |
+| UserDungeonLoader.ts | 651 | `App, TFile, TFolder, Vault` | `IFileSystem` |
+| FolderWatchService.ts | 616 | `Vault, TFile, Notice, normalizePath` | `IFileSystem, IFileWatcher, INotification` |
+| SetBonusService.ts | 615 | `App, requestUrl` | `IHttpClient, IDataStore` |
+
+**Tasks:**
+- [ ] Refactor RecurringQuestService: swap `Vault`/`TFile`/`TFolder` → `IFileSystem`
+- [ ] Refactor BalanceTestingService: swap `App`/`TFile`/`TFolder` → `IFileSystem`
+- [ ] Refactor UserDungeonLoader: swap `App`/`TFile`/`TFolder`/`Vault` → `IFileSystem`
+- [ ] Refactor FolderWatchService: swap to `IFileSystem` + `IFileWatcher` + `INotification`
+- [ ] Refactor SetBonusService: swap `App`/`requestUrl` → `IHttpClient` + `IDataStore`
+- [ ] Verify `tsc --noEmit` passes
+
+---
+
+#### Phase 3e: Quest Heavyweight Services
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Phase 3d
+**Goal:** Refactor the two most critical services in the plugin. These are the heart of quest management and deserve a focused session.
+
+**Files to refactor (2 files, ~1,669 LOC total):**
+
+| Service | LOC | Obsidian Deps | Replace With |
+|---------|-----|---------------|--------------|
+| QuestActionsService.ts | 784 | `Vault, Notice, App, TFile` | `IFileSystem, INotification` |
+| QuestService.ts | 885 | `App, Vault, TFile, TFolder, debounce` | `IFileSystem, IFileWatcher` |
+
+**Tasks:**
+- [ ] Refactor QuestActionsService: swap `Vault`/`Notice`/`App`/`TFile` → `IFileSystem` + `INotification`
+- [ ] Refactor QuestService: swap `App`/`Vault`/`TFile`/`TFolder` → `IFileSystem` + `IFileWatcher`; replace Obsidian `debounce` with platform-agnostic version
+- [ ] Verify `packages/core/` compiles with zero `obsidian` imports: `grep -r "from 'obsidian'" packages/core/src/` returns nothing
+- [ ] Verify `tsc --noEmit` passes
+
+> [!NOTE]
+> After Phase 3e, all 17 abstractable services are in core. The full `grep` check for Obsidian imports happens here as the final gate before testing.
+
+---
+
+#### Phase 3.5a: Tests — Abstractable Services (Batch 1: Phases 3a–3c)
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Phase 3c
 **Coverage Target:** ≥80% line, ≥80% branch
 **Test File Location:** `packages/core/test/`
 
 **Tasks:**
-- [ ] Create comprehensive mock implementations of `IFileSystem`, `IHttpClient`, `INotification`
-- [ ] Write tests for each of the 17 refactored services using mock interfaces
-- [ ] Test that quest CRUD operations work through `IFileSystem` mock
-- [ ] Test that AI services work through `IHttpClient` mock
-- [ ] Test that notification-dependent services work through `INotification` mock
+- [ ] Create comprehensive mock implementations of `INotification`, `IAssetResolver`, `IDataStore`, `IHttpClient`, `IFileSystem`, `IFileWatcher`
+- [ ] Write tests for Phase 3a services (RecoveryTimerService, SpriteService, AchievementService)
+- [ ] Write tests for Phase 3b services (AIQuestService, AssetService, AIDungeonService, BountyService)
+- [ ] Write tests for Phase 3c services (DailyNoteService, TaskFileService, TemplateService)
 - [ ] Copy and adapt existing tests for services that had test coverage
 
 **Key Test Cases:**
-- QuestService: CRUD operations via mock file system
-- RecurringQuestService: schedule generation with mock file creation
 - AI services: prompt construction and response parsing with mock HTTP
 - BountyService: template generation with and without API
 - TaskFileService: task parsing and checkbox toggling via mock files
+- DailyNoteService: daily note detection and quest generation via mock files
 
 **Command:** `cd packages/core && npx vitest run`
 
 ---
 
-#### Phase 4: Build Cutover
-**Estimated Time:** 2.5–3 hours
-**Prerequisite:** Phase 3 (all core tests passing)
-**Goal:** Switch the Obsidian plugin to import from `@quest-board/core` instead of local files. Move Obsidian-specific files into `packages/obsidian/`. Create Obsidian adapter implementations.
-
-> [!CAUTION]
-> This is the point of no return. After this phase, the Obsidian plugin depends on the core package. Make sure all Phase 3.5 tests pass first. Create a git branch before starting.
+#### Phase 3.5b: Tests — Abstractable Services (Batch 2: Phases 3d–3e)
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Phase 3e
+**Coverage Target:** ≥80% line, ≥80% branch
+**Test File Location:** `packages/core/test/`
 
 **Tasks:**
+- [ ] Write tests for Phase 3d services (RecurringQuestService, BalanceTestingService, UserDungeonLoader, FolderWatchService, SetBonusService)
+- [ ] Write tests for Phase 3e services (QuestActionsService, QuestService)
+- [ ] Test that quest CRUD operations work through `IFileSystem` mock
+- [ ] Test that notification-dependent services work through `INotification` mock
+
+**Key Test Cases:**
+- QuestService: CRUD operations via mock file system
+- QuestActionsService: move/complete/archive quests via mock file system
+- RecurringQuestService: schedule generation with mock file creation
+- FolderWatchService: file event handling via mock watcher
+
+**Command:** `cd packages/core && npx vitest run`
+
+---
+
+#### Phase 4a: Create Obsidian Adapters
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Phase 3.5b (all core tests passing)
+**Goal:** Write the Obsidian implementations of each core interface. These are small wrapper classes that translate core interface calls into Obsidian API calls.
+
+> [!CAUTION]
+> Phase 4 (a + b) is the point of no return. After this, the Obsidian plugin depends on the core package. Make sure all Phase 3.5b tests pass first. Create a git branch before starting Phase 4a.
 
 **Create Obsidian adapters (6 files — NEW):**
 - [ ] `packages/obsidian/src/adapters/ObsidianFileSystem.ts` — wraps `Vault` API
@@ -588,6 +695,14 @@ export interface IStorageProvider {
 - [ ] `packages/obsidian/src/adapters/ObsidianDataStore.ts` — wraps `loadData`/`saveData`
 - [ ] `packages/obsidian/src/adapters/ObsidianAssetResolver.ts` — wraps `DataAdapter`
 - [ ] `packages/obsidian/src/adapters/ObsidianFileWatcher.ts` — wraps vault events
+- [ ] Verify adapters compile with `tsc --noEmit`
+
+---
+
+#### Phase 4b: File Moves + Import Cutover
+**Estimated Time:** 2–2.5 hours
+**Prerequisite:** Phase 4a
+**Goal:** Move all Obsidian-specific files into `packages/obsidian/`, update every import to use `@quest-board/core`, wire up adapters in `main.ts`, and delete the original `src/` directory. This is the largest single session — lots of file moves and import rewrites.
 
 **Move Obsidian-specific files:**
 - [ ] Move `main.ts` → `packages/obsidian/main.ts`
@@ -622,7 +737,7 @@ export interface IStorageProvider {
 
 #### Phase 4.5: Tests — Build Cutover
 **Estimated Time:** 1.5–2 hours
-**Prerequisite:** Phase 4
+**Prerequisite:** Phase 4b
 **Coverage Target:** Existing tests continue to pass
 **Test File Location:** `packages/obsidian/test/` and `packages/core/test/`
 
@@ -758,15 +873,15 @@ export interface IStorageProvider {
 
 ---
 
-#### Phase 7: Mobile Adapters
-**Estimated Time:** 2.5–3 hours
+#### Phase 7a: Core Mobile Adapters
+**Estimated Time:** 1.5–2 hours
 **Prerequisite:** Phase 6
-**Goal:** Implement the core abstraction interfaces for the React Native environment. This is the mobile equivalent of the Obsidian adapters from Phase 4.
+**Goal:** Implement the core abstraction interfaces for the React Native environment. This is the mobile equivalent of the Obsidian adapters from Phase 4a — straightforward wrapper classes with no unknowns.
 
 **Tasks:**
 
-**MobileFileSystem (most critical):**
-- [ ] Implement `IFileSystem` using `expo-file-system` for local vault access
+**MobileFileSystem:**
+- [ ] Implement `IFileSystem` using `expo-file-system` for local file access
 - [ ] Support reading/writing quest markdown files from a configured vault directory
 - [ ] Handle YAML frontmatter parsing (same format as Obsidian)
 - [ ] Implement path normalization for mobile file systems
@@ -787,21 +902,43 @@ export interface IStorageProvider {
 - [ ] Implement `IAssetResolver` for sprite/asset paths in the mobile context
 - [ ] Bundle critical sprites with the app or load from vault
 
-**Cloud storage integration:**
-- [ ] Research and implement vault folder selection (let user point to their synced vault folder)
-- [ ] For Google Drive: use SAF (Storage Access Framework) on Android via `expo-document-picker` or `react-native-saf-x`
-- [ ] For iCloud: use `expo-file-system` with iCloud container paths on iOS
-- [ ] Create a `VaultConfigScreen` where the user selects their vault location
+---
+
+#### Phase 7b: Vault Access + Folder Picker
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Phase 7a
+**Goal:** Figure out how the React Native app accesses the same vault files that Obsidian uses on the device, and build a vault folder picker UI. This phase starts with research/discovery.
+
+> [!NOTE]
+> **Simplified approach:** If Obsidian's vault is stored in a user-accessible location on the device (e.g., shared storage, `Documents/`, or a Google Drive-synced folder), the React Native app can read it directly with `expo-file-system` + standard Android storage permissions. No cloud API integration needed. This phase starts by confirming this assumption on Brad's Android device.
+
+**Tasks:**
+
+**Research/Discovery:**
+- [ ] Determine where Obsidian stores the vault on Brad's Android device (app-private vs. shared storage)
+- [ ] Test whether `expo-file-system` can read files from that location with standard permissions
+- [ ] If direct access works: skip cloud API integration entirely
+- [ ] If direct access fails: investigate SAF (Storage Access Framework) via `react-native-saf-x` or `expo-document-picker` as fallback
+
+**Vault Folder Picker:**
+- [ ] Create a `VaultConfigScreen` where the user selects their vault folder path
+- [ ] Persist the selected vault path in app settings
+- [ ] Validate the selected folder contains expected vault structure (look for `Quest Board/quests/` and `data.json`)
+- [ ] Wire `MobileFileSystem` to use the configured vault path as its root
+
+**Refresh on app focus:**
+- [ ] Re-read quest files and `data.json` when the app returns to foreground
+- [ ] Show a loading indicator during refresh
 
 #### Tech Debt:
-- Cloud storage access is the biggest unknown. May need native modules or a "dev client" build instead of Expo Go. Flag this as a potential blocker during implementation.
-- File watching on mobile is limited — may need to poll for changes instead of getting real-time events.
+- If direct file access doesn't work, cloud storage API integration (Google Drive SAF, iCloud containers) becomes a significant additional effort. Flag as a blocker if encountered.
+- File watching on mobile is limited — polling on app focus is the initial strategy.
 
 ---
 
 #### Phase 7.5: Tests — Mobile Adapters
 **Estimated Time:** 1.5–2 hours
-**Prerequisite:** Phase 7
+**Prerequisite:** Phase 7b
 **Coverage Target:** ≥80% line, ≥80% branch
 **Test File Location:** `packages/mobile/test/`
 
@@ -822,30 +959,26 @@ export interface IStorageProvider {
 
 ---
 
-#### Phase 8: Quest Management UI
-**Estimated Time:** 3–4 hours
-**Prerequisite:** Phase 7
-**Goal:** Build the quest list and detail screens — the core mobile experience. Users should be able to view quests, mark tasks complete, and see quest status.
+#### Phase 8a: Quest List Screen
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Phase 7b
+**Goal:** Build the quest list screen — the main screen users see when they open the app. Quests grouped by kanban column, pull-to-refresh, tappable cards.
 
-**Screens to build:**
+**Screen to build:**
 - [ ] `QuestListScreen.tsx` — List of all quests, grouped by status/column, pull-to-refresh
-- [ ] `QuestDetailScreen.tsx` — Full quest view with task checkboxes, metadata, priority
-- [ ] `QuestCreateScreen.tsx` — Simple quest creation form (title, priority, category, due date)
 
 **Components to build:**
 - [ ] `QuestCard.tsx` — Compact quest card for list view (priority color, task progress bar)
-- [ ] `TaskCheckbox.tsx` — Tappable task item with completion animation
 - [ ] `StatusBadge.tsx` — Quest status indicator
 
 **Integration:**
 - [ ] Connect to `questStore` from `@quest-board/core`
-- [ ] Use `QuestService` (with `MobileFileSystem`) for quest CRUD
-- [ ] Use `QuestActionsService` for move/complete/archive actions
+- [ ] Use `QuestService` (with `MobileFileSystem`) for quest loading
 - [ ] Implement pull-to-refresh (re-read quest files from vault)
 
 **Design notes:**
 - Use React Native's `FlatList` for performant quest lists
-- Touch targets minimum 44x44px per Obsidian mobile guidelines
+- Touch targets minimum 44x44px
 - Follow the RPG visual theme (class colors, XP bars)
 
 #### Tech Debt:
@@ -854,9 +987,28 @@ export interface IStorageProvider {
 
 ---
 
+#### Phase 8b: Quest Detail + Creation Screens
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Phase 8a
+**Goal:** Build the quest detail view (task checkboxes, metadata) and a simple quest creation form. Users can view quest details, mark tasks complete, and create new quests.
+
+**Screens to build:**
+- [ ] `QuestDetailScreen.tsx` — Full quest view with task checkboxes, metadata, priority
+- [ ] `QuestCreateScreen.tsx` — Simple quest creation form (title, priority, category, due date)
+
+**Components to build:**
+- [ ] `TaskCheckbox.tsx` — Tappable task item with completion animation
+
+**Integration:**
+- [ ] Use `QuestActionsService` for move/complete/archive actions
+- [ ] Wire task checkbox toggles to update quest markdown files
+- [ ] Wire quest creation form to `QuestService.createQuest()`
+
+---
+
 #### Phase 8.5: Tests — Quest Management UI
 **Estimated Time:** 1.5–2 hours
-**Prerequisite:** Phase 8
+**Prerequisite:** Phase 8b
 **Coverage Target:** ≥80% line, ≥80% branch
 **Test File Location:** `packages/mobile/test/`
 
@@ -871,28 +1023,43 @@ export interface IStorageProvider {
 
 ---
 
-#### Phase 9: Character & Combat UI
-**Estimated Time:** 3–4 hours
-**Prerequisite:** Phase 8
-**Goal:** Build the character sheet and combat screens. Users can view their character stats, engage in combat, and see XP/level progress.
+#### Phase 9a: Character Screen
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Phase 8b
+**Goal:** Build the character sheet screen. Users can view their character stats, class info, level, XP progress, and equipped gear at a glance.
 
-**Screens to build:**
-- [ ] `CharacterScreen.tsx` — Character stats, level, XP bar, class info, equipped gear
-- [ ] `CombatScreen.tsx` — Turn-based battle UI (attack, skills, items, flee)
-- [ ] `LevelUpScreen.tsx` — Level-up celebration screen
+**Screen to build:**
+- [ ] `CharacterScreen.tsx` — Character stats, level, XP bar, class info, equipped gear summary
 
 **Components to build:**
 - [ ] `XPBar.tsx` — Animated XP progress bar
 - [ ] `StatBlock.tsx` — Character stat display (STR, DEF, etc.)
+
+**Integration:**
+- [ ] Connect to `characterStore` from `@quest-board/core`
+- [ ] Use `XPSystem` for level/XP calculations
+- [ ] Use `StatsService` for stat derivation with gear bonuses
+
+---
+
+#### Phase 9b: Combat + Level-Up UI
+**Estimated Time:** 2–2.5 hours
+**Prerequisite:** Phase 9a
+**Goal:** Build the turn-based combat screen and level-up celebration. This is the most complex mobile UI — multiple interactive elements, turn state management, and animations.
+
+**Screens to build:**
+- [ ] `CombatScreen.tsx` — Turn-based battle UI (attack, skills, items, flee)
+- [ ] `LevelUpScreen.tsx` — Level-up celebration screen
+
+**Components to build:**
 - [ ] `HealthBar.tsx` — HP/MP/Stamina bars for combat
 - [ ] `SkillButton.tsx` — Skill selection during combat
 - [ ] `MonsterDisplay.tsx` — Monster sprite and stats during battle
 
 **Integration:**
-- [ ] Connect to `characterStore` from `@quest-board/core`
 - [ ] Use `BattleService`, `CombatService`, `SkillService`, `MonsterService` from core
-- [ ] Use `XPSystem` for level/XP calculations
-- [ ] Use `StatsService` for stat derivation
+- [ ] Connect to `battleStore` for combat state machine
+- [ ] Wire turn execution (player action → damage calc → monster turn → result)
 
 #### Tech Debt:
 - Skill loadout management (selecting which 4 skills to equip) deferred to polish phase.
@@ -902,7 +1069,7 @@ export interface IStorageProvider {
 
 #### Phase 9.5: Tests — Character & Combat UI
 **Estimated Time:** 1.5–2 hours
-**Prerequisite:** Phase 9
+**Prerequisite:** Phase 9b
 **Coverage Target:** ≥80% line, ≥80% branch
 **Test File Location:** `packages/mobile/test/`
 
@@ -981,14 +1148,23 @@ export interface IStorageProvider {
 
 ---
 
-#### Phase 12: Home Screen Widgets
-**Estimated Time:** 3.5–4.5 hours
+#### Phase 12a: Android Widgets (Primary)
+**Estimated Time:** 2–2.5 hours
 **Prerequisite:** Phase 11
-**Goal:** Build home screen widgets for both Android and iOS that display a quest's task list with interactive checkboxes. Tap a checkbox to mark a task complete directly from the home screen. Tap the quest title to open the Quest Board app to that quest's detail screen.
+**Goal:** Build Android home screen widgets using `react-native-android-widget`. Two widget types: a **Single Quest Widget** (task checklist for one quest) and a **Column Widget** (overview of all quests in a kanban column). Both support interactive checkboxes — mark tasks complete directly from the home screen without opening the app.
 
-**Android Widget:**
+> [!IMPORTANT]
+> Widgets require a **dev client build** (not Expo Go). You'll need Android Studio installed to test widgets. This is a step up from Expo Go development.
+
+**Shared widget infrastructure:**
 - [ ] Install `react-native-android-widget` with Expo config plugin
-- [ ] Build a medium-sized widget layout showing:
+- [ ] Create `WidgetDataProvider` service that reads quest files and formats data for widgets
+- [ ] Create `WidgetUpdateService` that refreshes widget data after task changes in the app
+- [ ] Handle edge cases: quest deleted, vault unavailable, no quests match
+- [ ] Configure React Navigation deep linking for `quest-board://quest/{questId}`
+
+**Single Quest Widget (medium size):**
+- [ ] Build widget layout showing:
   - Quest title (tappable → opens app to quest detail via deep link)
   - Task checklist with checkboxes (tappable → toggles task completion)
   - Task progress bar (e.g., "3/5")
@@ -999,56 +1175,82 @@ export interface IStorageProvider {
 - [ ] Implement widget refresh (update widget data when tasks change)
 - [ ] Support widget configuration: let user pick which quest to display when adding the widget
 
-**iOS Widget:**
-- [ ] Use Expo's `expo-widgets` library (or SwiftUI widget target if Expo's alpha API is too unstable)
-- [ ] Build small and medium widget sizes:
-  - **Small:** Single quest name + progress bar + task count
-  - **Medium:** Quest title + task checklist with toggles (same as Android)
-- [ ] Implement app group data sharing (widget reads quest data from shared container)
-- [ ] Implement `addUserInteractionListener` for checkbox interactions
-- [ ] Support deep linking: tap quest title → open app to that quest
-
-**Shared widget logic:**
-- [ ] Create `WidgetDataProvider` service that reads quest files and formats data for widgets
-- [ ] Create `WidgetUpdateService` that refreshes widget data after task changes in the app
-- [ ] Handle edge cases: quest deleted, vault unavailable, no quests match
-
-**Deep linking setup:**
-- [ ] Configure React Navigation deep linking for `quest-board://quest/{questId}`
-- [ ] Widget taps open the app directly to `QuestDetailScreen` for the displayed quest
-
-> [!IMPORTANT]
-> Widgets require a **dev client build** (not Expo Go). You'll need Android Studio and/or Xcode installed to test widgets. This is a step up from Expo Go development.
-
-> [!WARNING]
-> The Expo iOS widget library (`expo-widgets`) is currently in **alpha** and may have breaking changes. If it's too unstable at implementation time, fall back to a native SwiftUI widget target with manual bridging. The Android library (`react-native-android-widget`) is more mature.
+**Column Widget (medium/large size):**
+- [ ] Build widget layout showing:
+  - Column name as header (e.g., "Active")
+  - List of quests in column order, each with:
+    - Quest name (tappable → opens app to quest detail)
+    - Mini progress bar or task count (e.g., "2/4")
+    - Priority color indicator
+  - Optional: allow checking off the next incomplete task per quest directly from the column view
+- [ ] Support widget configuration: let user pick which kanban column to display
+- [ ] Implement widget refresh on quest status changes
 
 #### Tech Debt:
 - Widget data is read-only from the file system (reads quest files, writes checkbox changes). No real-time sync — widget refreshes on a schedule or when the app triggers an update.
-- iOS widget implementation depends on Expo alpha API stability. May need to revisit.
-- Widget configuration (picking which quest to show) is basic — a simple list picker. Could be enhanced with smart defaults (e.g., "show my most urgent quest") later.
+- Widget configuration (picking which quest/column to show) is basic — a simple list picker. Could be enhanced with smart defaults (e.g., "show my most urgent quest") later.
 
 ---
 
-#### Phase 12.5: Tests — Home Screen Widgets
-**Estimated Time:** 1.5–2 hours
-**Prerequisite:** Phase 12
+#### Phase 12a.5: Tests — Android Widgets
+**Estimated Time:** 1–1.5 hours
+**Prerequisite:** Phase 12a
 **Coverage Target:** ≥80% line, ≥80% branch for widget services
 **Test File Location:** `packages/mobile/test/`
 
 **Tasks:**
 - [ ] Test `WidgetDataProvider` returns correct quest/task data from mock file system
+- [ ] Test `WidgetDataProvider` returns correct column quest list from mock data
 - [ ] Test `WidgetUpdateService` triggers widget refresh after task changes
 - [ ] Test checkbox tap handler correctly updates quest markdown file
 - [ ] Test deep link URL generation for quest IDs
-- [ ] Test edge cases: missing quest file, empty task list, vault unavailable
-- [ ] Manual testing on physical devices (widgets can't be tested in simulators reliably)
+- [ ] Test edge cases: missing quest file, empty task list, vault unavailable, empty column
+- [ ] Manual testing on physical Android device
 
 **Key Test Cases:**
-- Widget displays correct task count and completion status
+- Single quest widget displays correct task count and completion status
+- Column widget displays quests in correct column order
 - Tapping a checkbox writes the updated markdown back to the file system
 - Tapping quest title generates correct deep link URL
-- Widget gracefully handles deleted/missing quest files
+- Widgets gracefully handle deleted/missing quest files
+
+**Command:** `cd packages/mobile && npx jest`
+
+---
+
+#### Phase 12b: iOS Widgets (Optional)
+**Estimated Time:** 2–2.5 hours
+**Prerequisite:** Phase 12a
+**Goal:** Port the widget experience to iOS. Reuses the `WidgetDataProvider` and `WidgetUpdateService` from Phase 12a. Can be deferred or skipped entirely if iOS is not a priority.
+
+> [!WARNING]
+> The Expo iOS widget library (`expo-widgets`) is currently in **alpha** and may have breaking changes. If it's too unstable at implementation time, fall back to a native SwiftUI widget target with manual bridging, or skip this phase entirely. The Android widgets from Phase 12a cover the primary use case.
+
+**Tasks:**
+- [ ] Use Expo's `expo-widgets` library (or SwiftUI widget target if Expo's alpha API is too unstable)
+- [ ] Build small and medium widget sizes:
+  - **Small:** Single quest name + progress bar + task count
+  - **Medium:** Quest title + task checklist with toggles (same as Android single quest widget)
+- [ ] Implement app group data sharing (widget reads quest data from shared container)
+- [ ] Implement `addUserInteractionListener` for checkbox interactions
+- [ ] Support deep linking: tap quest title → open app to that quest
+- [ ] Consider column widget for iOS (if medium widget size supports list layouts)
+
+#### Tech Debt:
+- iOS widget implementation depends on Expo alpha API stability. May need to revisit or defer.
+- iOS column widget may not be feasible depending on widget size constraints.
+
+---
+
+#### Phase 12b.5: Tests — iOS Widgets
+**Estimated Time:** 0.5–1 hours
+**Prerequisite:** Phase 12b
+**Test File Location:** `packages/mobile/test/`
+
+**Tasks:**
+- [ ] Verify `WidgetDataProvider` and `WidgetUpdateService` work for iOS widget data format
+- [ ] Test iOS-specific deep link handling
+- [ ] Manual testing on physical iOS device (if available)
 
 **Command:** `cd packages/mobile && npx jest`
 
@@ -1059,40 +1261,50 @@ export interface IStorageProvider {
 | Phase | Title | Effort | Depends On | Est. Time |
 |-------|-------|--------|------------|-----------|
 | **Part A: Monorepo Migration** | | | | |
-| 0 | Monorepo scaffolding | Small | — | 1.5–2h |
-| 0.5 | Tests: scaffolding | Small | Phase 0 | 0.5h |
-| 1 | Zero-risk file migration | Medium | Phase 0 | 2–2.5h |
-| 1.5 | Tests: zero-risk files | Medium | Phase 1 | 1.5–2h |
-| 2 | Interfaces + pure services | Medium | Phase 1 | 2.5–3h |
-| 2.5 | Tests: interfaces + services | Medium | Phase 2 | 2–2.5h |
-| 3 | Abstractable services | Large | Phase 2 | 3–4h |
-| 3.5 | Tests: abstractable services | Large | Phase 3 | 2.5–3h |
-| 4 | Build cutover | Large | Phase 3 | 2.5–3h |
-| 4.5 | Tests: build cutover | Medium | Phase 4 | 1.5–2h |
-| 5 | Portable utils migration | Small | Phase 4 | 1.5–2h |
-| 5.5 | Tests: portable utils | Small | Phase 5 | 1h |
-| | **Part A Subtotal** | | | **~22–28h** |
+| 0 + 0.5 | Monorepo scaffolding + verify | Small | — | 1.5–2h |
+| 1 + 1.5 | Zero-risk file migration + tests | Medium | Phase 0 | 2.5–3.5h |
+| 2a | Abstraction interfaces (8 files) | Small | Phase 1 | 1–1.5h |
+| 2b + 2.5 | Pure services + store abstractions + tests | Medium | Phase 2a | 3–4h |
+| 3a | Trivial service swaps (3 files, 676 LOC) | Small | Phase 2b | 1–1.5h |
+| 3b | IHttpClient services (4 files, 1,961 LOC) | Medium | Phase 3a | 1.5–2h |
+| 3c | IFileSystem small (3 files, 1,137 LOC) | Medium | Phase 3b | 1.5–2h |
+| 3d | IFileSystem large (5 files, 2,868 LOC) | Medium-Large | Phase 3c | 2–2.5h |
+| 3e | Quest heavyweights (2 files, 1,669 LOC) | Medium | Phase 3d | 1.5–2h |
+| 3.5a | Tests: services batch 1 (3a–3c) | Medium | Phase 3c | 1.5–2h |
+| 3.5b | Tests: services batch 2 (3d–3e) | Medium | Phase 3e | 1.5–2h |
+| 4a | Create Obsidian adapters (6 files) | Medium | Phase 3.5b | 1.5–2h |
+| 4b | File moves + import cutover | Large | Phase 4a | 2–2.5h |
+| 4.5 | Tests: build cutover + smoke test | Medium | Phase 4b | 1.5–2h |
+| 5 + 5.5 | Portable utils migration + tests | Small-Medium | Phase 4b | 2–2.5h |
+| | **Part A Subtotal** | | | **~24–32h** |
 | **Part B: React Native App** | | | | |
 | 6 | RN environment setup | Medium | Phase 5 | 2–2.5h |
 | 6.5 | Visual prototype | Medium | Phase 6 | 2–2.5h |
-| 7 | Mobile adapters | Large | Phase 6 | 2.5–3h |
-| 7.5 | Tests: mobile adapters | Medium | Phase 7 | 1.5–2h |
-| 8 | Quest management UI | Large | Phase 7 | 3–4h |
-| 8.5 | Tests: quest UI | Medium | Phase 8 | 1.5–2h |
-| 9 | Character & combat UI | Large | Phase 8 | 3–4h |
-| 9.5 | Tests: combat UI | Medium | Phase 9 | 1.5–2h |
-| 10 | Gear & achievements UI | Medium | Phase 9 | 2.5–3h |
+| 7a | Core mobile adapters | Medium | Phase 6 | 1.5–2h |
+| 7b | Vault access + folder picker | Medium | Phase 7a | 1.5–2h |
+| 7.5 | Tests: mobile adapters | Medium | Phase 7b | 1.5–2h |
+| 8a | Quest list screen | Medium | Phase 7b | 1.5–2h |
+| 8b | Quest detail + creation | Medium | Phase 8a | 1.5–2h |
+| 8.5 | Tests: quest UI | Medium | Phase 8b | 1.5–2h |
+| 9a | Character screen | Medium | Phase 8b | 1.5–2h |
+| 9b | Combat + level-up UI | Medium-Large | Phase 9a | 2–2.5h |
+| 9.5 | Tests: character & combat UI | Medium | Phase 9b | 1.5–2h |
+| 10 | Gear & achievements UI | Medium | Phase 9b | 2.5–3h |
 | 10.5 | Tests: gear & achievements | Small | Phase 10 | 1–1.5h |
 | 11 | Polish & integration | Medium | Phase 10 | 2–3h |
-| 12 | Home screen widgets | Large | Phase 11 | 3.5–4.5h |
-| 12.5 | Tests: widgets | Medium | Phase 12 | 1.5–2h |
-| | **Part B Subtotal** | | | **~28–35h** |
+| 12a | Android widgets (quest + column) | Medium-Large | Phase 11 | 2–2.5h |
+| 12a.5 | Tests: Android widgets | Medium | Phase 12a | 1–1.5h |
+| 12b | iOS widgets (optional) | Medium | Phase 12a | 2–2.5h |
+| 12b.5 | Tests: iOS widgets | Small | Phase 12b | 0.5–1h |
+| | **Part B Subtotal** | | | **~30–39h** |
 | | | | | |
-| | **TOTAL** | | | **~50–63h** |
+| | **TOTAL** | | | **~54–71h** |
 
-**Execution order:** Strictly sequential (each phase depends on the prior one).
+**Execution order:** Strictly sequential (each phase depends on the prior one). Phase 12b (iOS widgets) is optional and can be skipped.
 
-**Estimated sessions:** 20–25 sessions at ~2.5 hours each.
+**Part A estimated sessions:** ~15 sessions at ~2 hours each.
+**Part B estimated sessions:** ~16 sessions at ~2 hours each (14 if skipping iOS widgets).
+**Total estimated sessions:** ~31 sessions (~29 without iOS widgets).
 
 ---
 
@@ -1298,27 +1510,41 @@ No impact on the Obsidian plugin.
 | `packages/core/src/utils/*.ts` (5 files) | [NEW] | Copy pure utils to core |
 | `packages/core/src/store/*.ts` (6 files) | [NEW] | Copy pure stores to core |
 
-### Phase 2: Interfaces + Pure Services
+### Phase 2a: Abstraction Interfaces
 
 | File | Action | Purpose |
 |------|--------|---------|
 | `packages/core/src/interfaces/*.ts` (9 files) | [NEW] | Abstraction interfaces |
+
+### Phase 2b: Pure Services + Store Abstractions
+
+| File | Action | Purpose |
+|------|--------|---------|
 | `packages/core/src/models/Gear.ts` | [NEW] | Copy with UUID abstraction |
 | `packages/core/src/services/*.ts` (20 files) | [NEW] | Copy pure services |
 | `packages/core/src/store/battleStore.ts` | [NEW] | Copy with storage abstraction |
 | `packages/core/src/store/dungeonStore.ts` | [NEW] | Copy with UUID abstraction |
 
-### Phase 3: Abstractable Services
+### Phases 3a–3e: Abstractable Services
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `packages/core/src/services/*.ts` (17 files) | [NEW] | Refactored services with DI |
+| `packages/core/src/services/*.ts` (3 files — 3a) | [NEW] | Trivial swaps: RecoveryTimerService, SpriteService, AchievementService |
+| `packages/core/src/services/*.ts` (4 files — 3b) | [NEW] | IHttpClient: AIQuestService, AssetService, AIDungeonService, BountyService |
+| `packages/core/src/services/*.ts` (3 files — 3c) | [NEW] | IFileSystem small: DailyNoteService, TaskFileService, TemplateService |
+| `packages/core/src/services/*.ts` (5 files — 3d) | [NEW] | IFileSystem large: RecurringQuestService, BalanceTestingService, UserDungeonLoader, FolderWatchService, SetBonusService |
+| `packages/core/src/services/*.ts` (2 files — 3e) | [NEW] | Heavyweights: QuestActionsService, QuestService |
 
-### Phase 4: Build Cutover
+### Phase 4a: Obsidian Adapters
 
 | File | Action | Purpose |
 |------|--------|---------|
 | `packages/obsidian/src/adapters/*.ts` (6 files) | [NEW] | Obsidian interface implementations |
+
+### Phase 4b: File Moves + Import Cutover
+
+| File | Action | Purpose |
+|------|--------|---------|
 | `packages/obsidian/main.ts` | [MOVE] | From root `main.ts` |
 | `packages/obsidian/src/components/*.tsx` (11 files) | [MOVE] | From `src/components/` |
 | `packages/obsidian/src/hooks/*.ts` (10 files) | [MOVE] | From `src/hooks/` |
@@ -1343,23 +1569,60 @@ No impact on the Obsidian plugin.
 | `packages/mobile/src/navigation/` | [NEW] | React Navigation config |
 | `packages/mobile/src/theme/` | [NEW] | RPG color theme |
 
-### Phases 7–11: Mobile App
+### Phase 7a: Core Mobile Adapters
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `packages/mobile/src/adapters/*.ts` (5 files) | [NEW] | Mobile interface implementations |
-| `packages/mobile/src/screens/*.tsx` (6+ files) | [NEW] | App screens (replace prototype) |
-| `packages/mobile/src/components/*.tsx` (10+ files) | [NEW] | Mobile components |
+| `packages/mobile/src/adapters/MobileFileSystem.ts` | [NEW] | IFileSystem via expo-file-system |
+| `packages/mobile/src/adapters/MobileHttpClient.ts` | [NEW] | IHttpClient via fetch |
+| `packages/mobile/src/adapters/MobileNotification.ts` | [NEW] | INotification via Alert/toast |
+| `packages/mobile/src/adapters/MobileDataStore.ts` | [NEW] | IDataStore via AsyncStorage |
+| `packages/mobile/src/adapters/MobileAssetResolver.ts` | [NEW] | IAssetResolver for mobile sprites |
 
-### Phase 12: Home Screen Widgets
+### Phase 7b: Vault Access + Folder Picker
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `packages/mobile/src/widgets/WidgetDataProvider.ts` | [NEW] | Quest data formatting for widgets |
+| `packages/mobile/src/screens/VaultConfigScreen.tsx` | [NEW] | Vault folder selection UI |
+
+### Phases 8a–9b: Quest, Character & Combat Screens
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `packages/mobile/src/screens/QuestListScreen.tsx` | [NEW/REPLACE] | Real quest list (replaces prototype) |
+| `packages/mobile/src/screens/QuestDetailScreen.tsx` | [NEW/REPLACE] | Real quest detail (replaces prototype) |
+| `packages/mobile/src/screens/QuestCreateScreen.tsx` | [NEW] | Quest creation form |
+| `packages/mobile/src/screens/CharacterScreen.tsx` | [NEW] | Character stats display |
+| `packages/mobile/src/screens/CombatScreen.tsx` | [NEW] | Turn-based battle UI |
+| `packages/mobile/src/screens/LevelUpScreen.tsx` | [NEW] | Level-up celebration |
+| `packages/mobile/src/components/*.tsx` (8+ files) | [NEW] | QuestCard, TaskCheckbox, StatusBadge, XPBar, StatBlock, HealthBar, SkillButton, MonsterDisplay |
+
+### Phase 10: Gear & Achievements
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `packages/mobile/src/screens/InventoryScreen.tsx` | [NEW] | Gear inventory display |
+| `packages/mobile/src/screens/AchievementsScreen.tsx` | [NEW] | Achievement tracking |
+| `packages/mobile/src/components/GearSlot.tsx` | [NEW] | Gear slot component |
+| `packages/mobile/src/components/GearCard.tsx` | [NEW] | Gear item card |
+| `packages/mobile/src/components/AchievementCard.tsx` | [NEW] | Achievement card |
+
+### Phase 12a: Android Widgets
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `packages/mobile/src/widgets/WidgetDataProvider.ts` | [NEW] | Quest/column data formatting for widgets |
 | `packages/mobile/src/widgets/WidgetUpdateService.ts` | [NEW] | Widget refresh after task changes |
-| `packages/mobile/src/widgets/QuestWidget.tsx` | [NEW] | Android widget layout (react-native-android-widget) |
+| `packages/mobile/src/widgets/QuestWidget.tsx` | [NEW] | Android single quest widget |
+| `packages/mobile/src/widgets/ColumnWidget.tsx` | [NEW] | Android kanban column widget |
+| `packages/mobile/app.json` | [MODIFY] | Add Android widget config plugin entries |
+
+### Phase 12b: iOS Widgets (Optional)
+
+| File | Action | Purpose |
+|------|--------|---------|
 | `packages/mobile/ios/QuestWidget/` | [NEW] | iOS widget target (SwiftUI or expo-widgets) |
-| `packages/mobile/app.json` | [MODIFY] | Add widget config plugin entries |
+| `packages/mobile/app.json` | [MODIFY] | Add iOS widget config plugin entries |
 
 ---
 

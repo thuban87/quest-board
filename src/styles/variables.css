@@ -36,6 +36,10 @@
   --qb-transition-fast: 150ms ease;
   --qb-transition-normal: 250ms ease;
 
+  /* Title Rarity — overridable by theme authors */
+  --qb-title-legendary-start: #ffd700;
+  --qb-title-legendary-end: #ffaa00;
+
   /* Sprite Sizes — centralized tokens for all sprite dimensions */
   --qb-sprite-scale: 1.5;
   /* Zoom factor to fill past transparent padding */

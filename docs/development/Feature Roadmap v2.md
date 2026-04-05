@@ -246,7 +246,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 |---------|-------------|--------|
 | **AI Dungeon Generation** | Create dungeons from text prompts via Gemini | High | ✅ Complete
 | **Accessory Special Abilities** | Unique effects: sneak past monsters, reset rest timer (cooldown), etc. | High | 🔄 Phase 1 Complete |
-| **Character Titles** | Ecosystem of titles earned from various activities | Medium |
+| **Character Titles** | Ecosystem of titles earned from various activities | Medium | ✅ Complete |
 | **Dungeon Bosses** | Boss monsters at dungeon end | Medium | ✅ Complete
 | **Skills/Abilities** | Class-specific moves using mana (Pokemon Gen 1 style) | ✅ Complete (Phase 9 Done, Deploy Pending) |
 | **Tier Sprite Choices** | At tier-up, choose from 3 sprite looks | Medium |
@@ -261,7 +261,7 @@ For historical accuracy, these were listed in original roadmap Phase 3 but were 
 | **Cross-Class Gear Drops** | Get gear types you can't wear (for smelting, dual-class prep)                                                           | Low    |
 | **Gear Reward Planning**   | Define loot tables for raids and special quests                                                                         | Medium |
 | **Enrage System**          | Penalty for stale quests                                                                                                | Low    |
-| **Export Stats**           | Share progress                                                                                                          | Low    |
+| **Export Stats**           | Share progress (copy report / save to vault)                                                                            | Low    | ✅ Complete |
 | **Character Edit Modal**   | Edit existing character (name, appearance) without resetting progress                                                   | Low    |
 | **Create quest from file** | Allow for creating a quest from a file, via a context menu in the file tree, a command palette and editor context menu. | ✅ Complete |
 
@@ -432,6 +432,28 @@ Phase 4 expansion adding 52 curated accessories with passive abilities, boss-spe
 
 **Docs:** [Implementation Plan](feature-planning/polished-and-ready/Accessories%20%26%20Special%20Abilities%20Brainstorm.md) | [Session Log](feature-planning/polished-and-ready/Accessories%20Session%20Log.md)
 
+## ✅ Character Titles — Complete (2026-02-21 → 2026-04-05)
+
+Cosmetic + buff title system with 12 titles, achievement-driven unlocks, inline rarity display, selection modal, progress dashboard export, and full CSS polish. 165 new tests across 8 sessions.
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| 0: Migration Chain Fix | ✅ Complete | Fixed 3 early-return guards, stub v7 migration |
+| 0.5: Tests — Migration Chain | ✅ Complete | 10 tests |
+| 1: Data Models & Schema v7 | ✅ Complete | Title.ts, titles.ts, 7 new achievements, LifetimeStats, migration with backfill |
+| 1.5: Tests — Data Layer | ✅ Complete | 44 tests (26 title + 18 store) |
+| 2: TitleService & Achievement Integration | ✅ Complete | 5-method service, 4 new AchievementService checks, caller-side wiring |
+| 2.5: Tests — Service Layer | ✅ Complete | 44 tests (19 TitleService + 25 achievements) |
+| 3: Buff Engine | ✅ Complete | deriveCombatStats fix, crit from power-ups, Slayer of the Void boss damage |
+| 3.5: Tests — Buff Engine | ✅ Complete | 23 integration tests |
+| 4: Title UI | ✅ Complete | CharacterIdentity display, TitleSelectionModal, CharacterPage/Sidebar wiring |
+| 4.5: Tests — UI | ✅ Complete | 34 modal tests |
+| 5: Progress Dashboard Export | ✅ Complete | CharacterExportService, clipboard + vault export, custom date picker fix |
+| 5.5: Tests — Export | ✅ Complete | 16 tests |
+| 6: CSS & Polish | ✅ Complete | Rarity colors, legendary gradient, modal styles, export buttons, mobile responsive |
+
+**Docs:** [Implementation Plan](Title%20System%20Implementation%20Plan.md) | [Session Log](Title%20System%20Session%20Log.md)
+
 ---
 
 ## Architecture Notes
@@ -453,4 +475,4 @@ Phase 4 expansion adding 52 curated accessories with passive abilities, boss-spe
 
 ---
 
-**Last Updated:** 2026-02-22 (Accessories Phase 5 complete — manual testing passed, Phoenix Feather revive, rich tooltips on character sheet, all debug logs cleaned)
+**Last Updated:** 2026-04-05 (Title System complete — all phases done, CSS polish, 994 total tests)

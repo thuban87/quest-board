@@ -6,7 +6,7 @@
  */
 
 /** Current character schema version */
-export const CHARACTER_SCHEMA_VERSION = 6;
+export const CHARACTER_SCHEMA_VERSION = 7;
 
 /**
  * Character class types
@@ -79,6 +79,19 @@ export interface CharacterStats {
     constitution: number;
     dexterity: number;
     charisma: number;
+}
+
+/**
+ * Lifetime stats — running counters for all-time totals.
+ * Used by achievement checks (O(1) lookups) and analytics dashboard.
+ */
+export interface LifetimeStats {
+    questsCompleted: number;
+    battlesWon: number;
+    bossesDefeated: number;
+    dungeonsCompleted: number;
+    dungeonAttempts: number;
+    goldEarned: number;
 }
 
 /**
@@ -522,6 +535,17 @@ export interface Character {
 
     /** Map of trigger ID → last fired date (YYYY-MM-DD) for daily cooldowns */
     triggerCooldowns?: Record<string, string>;
+
+    // ========== Title System ==========
+
+    /** Currently equipped title ID (null = no title equipped) */
+    equippedTitle: string | null;
+
+    /** Array of unlocked title IDs */
+    unlockedTitles: string[];
+
+    /** Running lifetime counters for achievement checks and analytics */
+    lifetimeStats: LifetimeStats;
 }
 
 /**
@@ -633,6 +657,18 @@ export function createCharacter(
         },
         persistentStatusEffects: [],
         triggerCooldowns: {},
+
+        // Title System
+        equippedTitle: null,
+        unlockedTitles: ['the-novice'],
+        lifetimeStats: {
+            questsCompleted: 0,
+            battlesWon: 0,
+            bossesDefeated: 0,
+            dungeonsCompleted: 0,
+            dungeonAttempts: 0,
+            goldEarned: 0,
+        },
     };
 }
 
@@ -798,7 +834,7 @@ export function migrateCharacterV2toV3(oldData: Record<string, unknown>): Charac
         return migrateCharacterV3toV4(oldData);
     }
     if ((oldData.schemaVersion as number) >= 4) {
-        return oldData as unknown as Character;
+        return migrateCharacterV3toV4(oldData);
     }
 
     // Build migrated character
@@ -831,7 +867,7 @@ export function migrateCharacterV3toV4(oldData: Record<string, unknown>): Charac
         return migrateCharacterV4toV5(oldData);
     }
     if ((oldData.schemaVersion as number) >= 5) {
-        return oldData as unknown as Character;
+        return migrateCharacterV4toV5(oldData);
     }
 
     // Build migrated character
@@ -964,9 +1000,9 @@ function getDefaultSkillLoadout(skills: import('./Skill').Skill[], slots: number
  * @returns Migrated character data conforming to schema v6
  */
 export function migrateCharacterV5toV6(oldData: Record<string, unknown>): Character {
-    // Already v6 or higher? Return as-is
+    // Already v6 or higher? Chain to next migration
     if ((oldData.schemaVersion as number) >= 6) {
-        return oldData as unknown as Character;
+        return migrateCharacterV6toV7(oldData);
     }
 
     // Convert boolean → number: true = 1 shield used, false = 0
@@ -981,6 +1017,64 @@ export function migrateCharacterV5toV6(oldData: Record<string, unknown>): Charac
 
     // Remove old boolean field
     delete migrated.shieldUsedThisWeek;
+
+    // Chain to v6 → v7 migration
+    return migrateCharacterV6toV7(migrated);
+}
+
+/**
+ * Migrate character data from schema v6 to schema v7.
+ * Adds title system fields (equippedTitle, unlockedTitles) and
+ * lifetimeStats with backfill from activityHistory.
+ *
+ * @param oldData - Character data at schema v6
+ * @returns Migrated character data conforming to schema v7
+ */
+export function migrateCharacterV6toV7(oldData: Record<string, unknown>): Character {
+    // Already v7 or higher? Return as-is (future-proofed for v8+)
+    if ((oldData.schemaVersion as number) >= 7) {
+        return oldData as unknown as Character;
+    }
+
+    // Backfill lifetimeStats from activityHistory (one-time scan)
+    const activityHistory = (oldData.activityHistory as ActivityEvent[]) || [];
+    let questsCompleted = 0;
+    let battlesWon = 0;
+    let dungeonAttempts = 0;
+    let goldEarned = 0;
+
+    for (const event of activityHistory) {
+        switch (event.type) {
+            case 'quest_complete':
+                questsCompleted++;
+                break;
+            case 'bounty_victory':
+                battlesWon++;
+                break;
+            case 'dungeon_complete':
+                dungeonAttempts++;
+                break;
+        }
+        // Sum gold from all events (lower bound — only activityHistory sources)
+        if (event.goldGained && event.goldGained > 0) {
+            goldEarned += event.goldGained;
+        }
+    }
+
+    const migrated = {
+        ...oldData,
+        schemaVersion: 7,
+        equippedTitle: null,
+        unlockedTitles: ['the-novice'],
+        lifetimeStats: {
+            questsCompleted,
+            battlesWon,
+            bossesDefeated: 0,       // Cannot determine retroactively
+            dungeonsCompleted: 0,    // Cannot distinguish completed vs attempted
+            dungeonAttempts,
+            goldEarned,
+        },
+    };
 
     return migrated as unknown as Character;
 }
