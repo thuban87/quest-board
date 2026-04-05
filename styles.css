@@ -37,6 +37,10 @@
   --qb-transition-fast: 150ms ease;
   --qb-transition-normal: 250ms ease;
 
+  /* Title Rarity — overridable by theme authors */
+  --qb-title-legendary-start: #ffd700;
+  --qb-title-legendary-end: #ffaa00;
+
   /* Sprite Sizes — centralized tokens for all sprite dimensions */
   --qb-sprite-scale: 1.5;
   /* Zoom factor to fill past transparent padding */
@@ -392,6 +396,45 @@
   margin: var(--qb-spacing-xs) 0 0 0;
   color: var(--text-faint);
   font-size: 0.85rem;
+}
+/* ===========================================
+   Title Display (inline after character name)
+   =========================================== */
+.qb-title-inline {
+  display: inline-block;
+  cursor: pointer;
+  margin-top: var(--qb-spacing-xs);
+  font-size: 1rem;
+  transition: opacity var(--qb-transition-fast);
+}
+.qb-title-inline:hover {
+  opacity: 0.8;
+}
+.qb-title-brackets {
+  color: var(--text-muted);
+  font-weight: 300;
+}
+.qb-title-empty {
+  color: var(--text-faint);
+  font-style: italic;
+}
+.qb-title-rarity.qb-title-common {
+  color: var(--text-muted);
+}
+.qb-title-rarity.qb-title-rare {
+  color: var(--color-blue);
+  text-shadow: 0 0 8px rgba(var(--color-blue-rgb), 0.3);
+}
+.qb-title-rarity.qb-title-epic {
+  color: var(--color-purple);
+  text-shadow: 0 0 10px rgba(var(--color-purple-rgb), 0.4);
+}
+.qb-title-rarity.qb-title-legendary {
+  background: linear-gradient(90deg, var(--qb-title-legendary-start), var(--qb-title-legendary-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
 }
 .qb-sheet-xp-section {
   background: var(--background-secondary);
@@ -2057,6 +2100,107 @@
   color: var(--text-muted);
   font-size: 0.85rem;
   margin: 0 0 var(--qb-spacing-lg) 0;
+}
+/* ===========================================
+   Title Selection Modal
+   =========================================== */
+.qb-title-modal {
+  max-width: 480px;
+}
+.qb-title-modal h2 {
+  margin: 0 0 var(--qb-spacing-md) 0;
+  font-size: 1.4rem;
+}
+.qb-title-modal hr {
+  border: none;
+  border-top: 1px solid var(--qb-card-border);
+  margin: 0;
+}
+.qb-title-section-header {
+  padding: var(--qb-spacing-sm) var(--qb-spacing-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.qb-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--qb-spacing-md);
+  padding: var(--qb-spacing-md);
+  cursor: pointer;
+  transition: background var(--qb-transition-fast);
+  min-height: 44px;
+}
+.qb-title-row:hover {
+  background: var(--background-modifier-hover);
+}
+.qb-title-row-selected {
+  background: rgba(var(--interactive-accent-rgb, 88, 86, 214), 0.1);
+}
+.qb-title-row-locked {
+  opacity: 0.5;
+  cursor: default;
+}
+.qb-title-row-locked:hover {
+  background: transparent;
+}
+.qb-title-radio {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  font-size: 1rem;
+}
+.qb-title-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.qb-title-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.qb-title-buff-label {
+  font-size: 0.8rem;
+  color: var(--interactive-accent);
+  font-weight: 500;
+}
+.qb-title-description {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.qb-title-unlock-condition {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+.qb-title-rarity-badge {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: var(--qb-radius-sm);
+}
+.qb-title-rarity-badge.qb-title-common {
+  color: var(--text-muted);
+  background: var(--background-secondary);
+}
+.qb-title-rarity-badge.qb-title-rare {
+  color: var(--color-blue);
+  background: rgba(var(--color-blue-rgb), 0.1);
+}
+.qb-title-rarity-badge.qb-title-epic {
+  color: var(--color-purple);
+  background: rgba(var(--color-purple-rgb), 0.1);
+}
+.qb-title-rarity-badge.qb-title-legendary {
+  color: var(--qb-title-legendary-start);
+  background: rgba(255, 215, 0, 0.1);
 }
 /* ===========================================
    Task List on Quest Cards
@@ -9554,6 +9698,27 @@
     padding: var(--size-4-2);
     margin: 0;
 }
+/* Export Buttons */
+.qb-progress-export-row {
+  display: flex;
+  gap: var(--size-4-2);
+  justify-content: center;
+  margin-top: var(--size-4-2);
+}
+.qb-progress-export-btn {
+  padding: var(--size-4-1) var(--size-4-3);
+  border-radius: var(--radius-s);
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: all 0.2s ease;
+}
+.qb-progress-export-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
 /* Responsive */
 @media (max-width: 600px) {
     .qb-progress-stats-grid {
@@ -10364,6 +10529,22 @@
     /* Recurring Quests Dashboard */
     .qb-recurring-dashboard {
         min-width: 96vw;
+    }
+
+    /* Title wraps below name on narrow screens */
+    .qb-title-inline {
+        display: block;
+        text-align: center;
+    }
+
+    /* Title modal — full width, scrollable */
+    .qb-title-modal {
+        max-width: 100%;
+    }
+
+    .qb-title-row {
+        min-height: 48px;
+        padding: var(--qb-spacing-sm) var(--qb-spacing-md);
     }
 
     /* XP Row - Stack vertically on mobile */

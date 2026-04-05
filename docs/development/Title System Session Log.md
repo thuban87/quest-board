@@ -286,3 +286,41 @@ Each session entry should include:
 
 ### Next Steps:
 - Phase 6: CSS & Polish (rarity colors, title styling, animations)
+
+---
+
+## 2026-04-05 - Phase 6: CSS & Polish
+
+**Focus:** Style title display and selection modal, export buttons, mobile responsiveness
+
+### Completed:
+- ✅ Added legendary gradient custom properties to `variables.css` (`--qb-title-legendary-start`, `--qb-title-legendary-end`) — theme-overridable
+- ✅ Styled title inline display in `character.css` — clickable with hover fade, muted brackets, faint italic empty state
+- ✅ Rarity color tiers: common (muted), rare (blue + glow), epic (purple + stronger glow), legendary (gold gradient with `background-clip: text`)
+- ✅ Styled title selection modal in `modals.css` — 480px max-width, rows with hover/selected/locked states, radio indicators, rarity badge pills, buff labels, section headers
+- ✅ Rarity badges use `text-transform: uppercase` on `.qb-title-rarity-badge` (source text is sentence case per Obsidian guideline)
+- ✅ Added export button styles to `progress.css` — small unobtrusive buttons with hover state
+- ✅ Added mobile responsive rules to `mobile.css` — title wraps to block display (centered), modal full-width, 48px touch targets
+- ✅ Build passes, 994/994 tests pass (0 regressions), deployed to test vault
+- ✅ Brad confirmed styles look great in test vault
+
+### Files Changed:
+- `src/styles/variables.css` [MODIFIED] — Legendary gradient custom properties (+3 lines)
+- `src/styles/character.css` [MODIFIED] — Title inline display styles (+40 lines)
+- `src/styles/modals.css` [MODIFIED] — Title modal styles (+95 lines)
+- `src/styles/progress.css` [MODIFIED] — Export button styles (+18 lines)
+- `src/styles/mobile.css` [MODIFIED] — Mobile title + modal rules (+13 lines)
+
+### Testing Notes:
+- 994/994 tests pass (0 new tests — CSS-only phase, exempt from test requirement per plan)
+- 33 test files
+- Build passes cleanly
+- All new styles use Obsidian CSS variables (`--color-blue`, `--color-purple`, `--text-muted`, etc.) — no hardcoded colors except legendary gradient defaults (overridable via custom properties)
+
+### Blockers/Issues:
+- None
+
+### Summary:
+- **Title System feature is COMPLETE.** All 7 phases (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6) finished across 8 sessions.
+- 994 total tests (165 new across the feature), 33 test files, 0 regressions.
+- Feature includes: 12 titles (6 cosmetic + 6 buff), schema v7 migration, title service, achievement integration, lifetime stats, buff engine, title UI, selection modal, progress dashboard export, and full CSS polish.

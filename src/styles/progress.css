@@ -305,6 +305,30 @@
     margin: 0;
 }
 
+/* Export Buttons */
+.qb-progress-export-row {
+  display: flex;
+  gap: var(--size-4-2);
+  justify-content: center;
+  margin-top: var(--size-4-2);
+}
+
+.qb-progress-export-btn {
+  padding: var(--size-4-1) var(--size-4-3);
+  border-radius: var(--radius-s);
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: all 0.2s ease;
+}
+
+.qb-progress-export-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
 /* Responsive */
 @media (max-width: 600px) {
     .qb-progress-stats-grid {

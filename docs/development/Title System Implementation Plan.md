@@ -1073,45 +1073,45 @@ export interface Character {
 
 | Test | Expected | Status |
 |------|----------|--------|
-| Title data integrity (all 12 titles valid) | Pass | |
-| Achievement→title reference integrity | Pass | |
-| Schema v6→v7 migration + lifetimeStats backfill | Pass, defaults applied | |
-| Migration chain: v5 character flows through all migrations to v7 | Pass | |
-| Migration chain: v6 character reaches v6→v7 migration | Pass | |
-| Store: simple setter actions | Pass | |
-| TitleService: grant, equip, unequip | Pass | |
-| Caller-side achievement integration | Pass | |
-| Lifetime stat increment + manual achievement check | Pass | |
-| Buff: XP multiplier flows through | Pass, ±0.01 tolerance | |
-| Buff: All stats boost applies | Pass, +1 each | |
-| Buff: Crit chance applies | Pass, +2% | |
-| Buff: Gold multiplier applies | Pass, +5% | |
-| Buff: "The Focused" boosts both primary stats | Pass | |
-| Boss damage (direct check, not PowerUpEffect) | Pass, +5% to bosses only | |
-| Buff: Compound buff (The Relentless) | Pass, both effects | |
-| `expirePowerUps()` skips title power-ups | Pass | |
-| TitleSelectionModal logic + DOM API | Pass | |
-| Export: summary + progress report content | Pass | |
-| Clipboard error handling (try/catch, no execCommand) | Pass | |
+| Title data integrity (all 12 titles valid) | Pass | ✅ |
+| Achievement→title reference integrity | Pass | ✅ |
+| Schema v6→v7 migration + lifetimeStats backfill | Pass, defaults applied | ✅ |
+| Migration chain: v5 character flows through all migrations to v7 | Pass | ✅ |
+| Migration chain: v6 character reaches v6→v7 migration | Pass | ✅ |
+| Store: simple setter actions | Pass | ✅ |
+| TitleService: grant, equip, unequip | Pass | ✅ |
+| Caller-side achievement integration | Pass | ✅ |
+| Lifetime stat increment + manual achievement check | Pass | ✅ |
+| Buff: XP multiplier flows through | Pass, ±0.01 tolerance | ✅ |
+| Buff: All stats boost applies | Pass, +1 each | ✅ |
+| Buff: Crit chance applies | Pass, +2% | ✅ |
+| Buff: Gold multiplier applies | Pass, +5% | ✅ |
+| Buff: "The Focused" boosts both primary stats | Pass | ✅ |
+| Boss damage (direct check, not PowerUpEffect) | Pass, +5% to bosses only | ✅ |
+| Buff: Compound buff (The Relentless) | Pass, both effects | ✅ |
+| `expirePowerUps()` skips title power-ups | Pass | ✅ |
+| TitleSelectionModal logic + DOM API | Pass | ✅ |
+| Export: summary + progress report content | Pass | ✅ |
+| Clipboard error handling (try/catch, no execCommand) | Pass | ✅ |
 
 ### Manual Testing
 
 | Test | Expected | Status |
 |------|----------|--------|
-| Build passes (`npm run build`) | No errors | |
-| Deploy to test vault (`npm run deploy:test`) | Files copied | |
-| Existing character loads without crash | v7 migration runs, lifetimeStats backfilled | |
-| "The Novice" auto-unlocked | Shows in title list | |
-| Click title area → modal opens | Modal displays | |
-| Equip title → name updates | Title appears inline | |
-| Equip buff title → buff icon appears | In buff row | |
-| Unequip title → cleared | "No Title" shown | |
-| Unlock achievement with title → title unlocks | Notice shown | |
-| Progress Dashboard → export buttons work | Both copy + save | |
-| Export note created in configured folder | Timestamped `.md` file | |
-| Export folder setting with autocomplete | Works in settings panel | |
-| Mobile: title wraps below name | No truncation | |
-| Mobile: modal scrolls, tap targets ≥44px | Usable on mobile | |
+| Build passes (`npm run build`) | No errors | ✅ |
+| Deploy to test vault (`npm run deploy:test`) | Files copied | ✅ |
+| Existing character loads without crash | v7 migration runs, lifetimeStats backfilled | ✅ |
+| "The Novice" auto-unlocked | Shows in title list | ✅ |
+| Click title area → modal opens | Modal displays | ✅ |
+| Equip title → name updates | Title appears inline | ✅ |
+| Equip buff title → buff icon appears | In buff row | ✅ |
+| Unequip title → cleared | "No Title" shown | ✅ |
+| Unlock achievement with title → title unlocks | Notice shown | ✅ |
+| Progress Dashboard → export buttons work | Both copy + save | ✅ |
+| Export note created in configured folder | Timestamped `.md` file | ✅ |
+| Export folder setting with autocomplete | Works in settings panel | ✅ |
+| Mobile: title wraps below name | No truncation | ✅ |
+| Mobile: modal scrolls, tap targets ≥44px | Usable on mobile | ✅ |
 
 ---
 
@@ -1150,8 +1150,11 @@ export interface Character {
 | 5 | `src/settings.ts` | [MODIFY] | Add `exportFolder` setting + folder autocomplete input |
 | 5 | `main.ts` | [MODIFY] | Register export command |
 | 5.5 | `test/services/CharacterExportService.test.ts` | [NEW] | Export + report tests |
-| 6 | `src/styles/character.css` | [MODIFY] | Title display styles + mobile wrap + legenday CSS custom properties |
-| 6 | `src/styles/modals.css` | [MODIFY] | Title modal styles + rarity badge text-transform |
+| 6 | `src/styles/variables.css` | [MODIFY] | Legendary gradient custom properties (`--qb-title-legendary-start/end`) |
+| 6 | `src/styles/character.css` | [MODIFY] | Title inline display styles (rarity colors, legendary gradient, brackets, empty state) |
+| 6 | `src/styles/modals.css` | [MODIFY] | Title modal styles (rows, radio, rarity badges, buff labels, locked state) |
+| 6 | `src/styles/progress.css` | [MODIFY] | Export button row + button styles |
+| 6 | `src/styles/mobile.css` | [MODIFY] | Title wraps to block on narrow screens, modal full-width, 48px touch targets |
 
 ---
 

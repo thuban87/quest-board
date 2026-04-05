@@ -140,6 +140,53 @@
   font-size: 0.85rem;
 }
 
+/* ===========================================
+   Title Display (inline after character name)
+   =========================================== */
+.qb-title-inline {
+  display: inline-block;
+  cursor: pointer;
+  margin-top: var(--qb-spacing-xs);
+  font-size: 1rem;
+  transition: opacity var(--qb-transition-fast);
+}
+
+.qb-title-inline:hover {
+  opacity: 0.8;
+}
+
+.qb-title-brackets {
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.qb-title-empty {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.qb-title-rarity.qb-title-common {
+  color: var(--text-muted);
+}
+
+.qb-title-rarity.qb-title-rare {
+  color: var(--color-blue);
+  text-shadow: 0 0 8px rgba(var(--color-blue-rgb), 0.3);
+}
+
+.qb-title-rarity.qb-title-epic {
+  color: var(--color-purple);
+  text-shadow: 0 0 10px rgba(var(--color-purple-rgb), 0.4);
+}
+
+.qb-title-rarity.qb-title-legendary {
+  background: linear-gradient(90deg, var(--qb-title-legendary-start), var(--qb-title-legendary-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
+}
+
 .qb-sheet-xp-section {
   background: var(--background-secondary);
   border-radius: var(--qb-radius-md);
