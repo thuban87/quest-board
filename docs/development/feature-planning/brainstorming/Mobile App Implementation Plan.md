@@ -2,9 +2,9 @@
 ## Monorepo Migration + React Native Companion App
 
 > **Status:** 🔲 DRAFT — Pending Brad's review
-> **Estimated Sessions:** ~29–31 sessions (54–71 hours)
+> **Estimated Sessions:** ~34–36 sessions (62–81.5 hours, includes pre-migration upgrades + CharacterChangeEngine)
 > **Created:** 2026-02-21
-> **Last Updated:** 2026-04-04
+> **Last Updated:** 2026-04-05
 > **Companion Log:** [[Mobile App Session Log]]
 > **Related:** [[Android App Feasibility Report]]
 
@@ -17,6 +17,7 @@
 - [Key Design Decisions](#key-design-decisions)
 - [Architecture](#architecture)
 - [Implementation Phases](#implementation-phases)
+  - [Pre-Migration: Dependency Upgrades (Sessions A–B)](#pre-migration-dependency-upgrades-sessions-a-b)
   - [Part A: Monorepo Migration (Phases 0–5)](#part-a-monorepo-migration-phases-0-5)
   - [Part B: React Native App (Phases 6–12)](#part-b-react-native-app-phases-6-12)
 - [Plan Summary](#plan-summary)
@@ -72,19 +73,19 @@ An [audit of the codebase](Android%20App%20Feasibility%20Report.md) found that *
 > **Future considerations (intentionally excluded):**
 > - Push notifications for recurring quests
 > - Mobile widgets showing character stats
-> - Offline-first conflict resolution (files may conflict if edited on two devices simultaneously — we'll handle this simply by treating the most recently modified file as canonical)
+> - Offline-first conflict resolution (quest files use last-write-wins; character data uses an append-only event log — see [Data Sync Strategy](#data-sync-strategy))
 
 ---
 
 ## Key Design Decisions
 
-### 1. npm Workspaces for Monorepo
+### 1. pnpm Workspaces for Monorepo
 
-**Decision:** Use npm workspaces (built into npm) rather than pnpm, yarn, or Turborepo.
+**Decision:** Use pnpm workspaces rather than npm, yarn, or Turborepo.
 
-**Why:** Brad already uses npm. Zero new tooling to learn. The monorepo has only 3 packages — no need for the build orchestration that Turborepo provides. npm workspaces handle dependency hoisting and cross-package imports natively.
+**Why:** pnpm is the dominant monorepo tool in the Expo/React Native ecosystem. The official [expo-monorepo-example](https://github.com/byCedric/expo-monorepo-example) uses pnpm. pnpm supports the `workspace:*` protocol for precise cross-package version resolution, has better symlink handling with Metro bundler, faster installs, and stricter dependency hoisting that prevents phantom dependencies. The monorepo has only 3 packages — no need for the build orchestration that Turborepo provides.
 
-**Tradeoff:** Slower installs than pnpm, no build caching like Turborepo. Acceptable at this scale.
+**Tradeoff:** Requires installing pnpm (`npm install -g pnpm`) and converting the existing `package-lock.json` to `pnpm-lock.yaml`. This is a one-time migration cost. React Native's Metro bundler requires explicit configuration for workspace symlinks (`watchFolders`, `nodeModulesPaths` in `metro.config.js`) — follow the [Expo monorepo guide](https://docs.expo.dev/guides/monorepos/) during Phase 6.
 
 ### 2. React Native with Expo
 
@@ -97,15 +98,18 @@ An [audit of the codebase](Android%20App%20Feasibility%20Report.md) found that *
 - File system access is available via `expo-file-system`
 - Expo SDK includes everything we need (file system, storage, notifications)
 
-**Tradeoff:** Some native modules require "dev client" builds instead of Expo Go. We don't anticipate needing any for our feature set.
+**Tradeoff:** Some native modules require "dev client" builds instead of Expo Go. SAF (Storage Access Framework) on Android and widget support both require dev client builds, so development will shift from Expo Go to dev client relatively early (Phase 7b).
+
+> [!NOTE]
+> **Target Expo SDK 55** (released February 2026). All references to SDK-specific features in this plan target SDK 55 as the baseline.
 
 ### 3. Shared Vault Files for Data Sync
 
-**Decision:** The mobile app reads and writes the same markdown quest files and `data.json` that the Obsidian plugin uses, synced via cloud storage.
+**Decision:** The mobile app reads and writes the same markdown quest files that the Obsidian plugin uses, synced via cloud storage. Character data is synced via **per-platform event logs** (see [Data Sync Strategy](#data-sync-strategy)) — each platform writes to its own changelog file (`changelog-obsidian.jsonl` and `changelog-mobile.jsonl`), and on startup both platforms read and merge both files by timestamp. The Obsidian plugin exports a **baseline snapshot** (`baseline.json`) to `Quest Board/sync/` for the mobile app's initial character state — the mobile app never reads `.obsidian/plugins/quest-board/data.json` directly.
 
-**Why:** This is the simplest approach that keeps a single source of truth. No backend to build or maintain. The vault files are already human-readable markdown with YAML frontmatter — easily parsed on any platform.
+**Why:** This is the simplest approach that keeps a single source of truth. No backend to build or maintain. The vault files are already human-readable markdown with YAML frontmatter — easily parsed on any platform. The per-platform event log pattern prevents data loss AND eliminates write conflicts — since each platform only appends to its own file, cloud sync cannot produce corrupted files. Using an exported baseline file instead of reading `data.json` directly avoids reliance on Obsidian's internal file structure.
 
-**Tradeoff:** Sync depends on the cloud provider's sync speed. Conflicts are possible if both platforms edit the same file simultaneously. We accept this risk for personal use.
+**Tradeoff:** Sync depends on the cloud provider's sync speed. The Obsidian plugin must periodically export the baseline snapshot (on save, on unload). Quest file conflicts use last-write-wins; character data conflicts are resolved via the event logs.
 
 ### 4. Provider-Agnostic Cloud Storage
 
@@ -115,9 +119,9 @@ An [audit of the codebase](Android%20App%20Feasibility%20Report.md) found that *
 
 ### 5. Core Package Is Pure TypeScript — No React
 
-**Decision:** `@quest-board/core` contains zero React code. Zustand stores are included (Zustand works without React), but React hooks stay in the platform packages.
+**Decision:** `@quest-board/core` contains zero React code. Zustand stores are included using `createStore()` from `zustand/vanilla` (not the React-bound `create()` hook), and React hooks stay in the platform packages.
 
-**Why:** The core package must work in any JavaScript environment — Obsidian's Electron, React Native's Hermes engine, Node.js for testing. React is a rendering concern that belongs in the platform layer.
+**Why:** The core package must work in any JavaScript environment — Obsidian's Electron, React Native's Hermes engine, Node.js for testing. React is a rendering concern that belongs in the platform layer. Zustand's vanilla API provides the same store functionality (`getState`, `setState`, `subscribe`) without a React dependency. Each platform package wraps the vanilla stores with `useStore(vanillaStore, selector)` to get React hook reactivity.
 
 ### 6. Dependency Injection for Platform Services
 
@@ -145,7 +149,7 @@ quest-board/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   └── src/
-│   │       ├── models/             # All 13 model files
+│   │       ├── models/             # All 14 model files (including Title.ts)
 │   │       ├── data/               # All 13 static data files
 │   │       ├── config/             # combatConfig.ts
 │   │       ├── services/           # 37 service files (pure + abstracted)
@@ -155,11 +159,13 @@ quest-board/
 │   │           ├── IFileSystem.ts
 │   │           ├── IHttpClient.ts
 │   │           ├── INotification.ts
-│   │           ├── IDataStore.ts
+│   │           ├── IPluginDataStore.ts
 │   │           ├── IAssetResolver.ts
 │   │           ├── IPlatformProvider.ts
 │   │           ├── IFileWatcher.ts
-│   │           └── IStorageProvider.ts
+│   │           ├── IStorageProvider.ts
+│   │           ├── ISaveCallback.ts
+│   │           └── ILevelUpCallback.ts
 │   │
 │   ├── obsidian/                   # @quest-board/obsidian
 │   │   ├── package.json
@@ -205,7 +211,7 @@ quest-board/
 │           │   ├── InventoryScreen.tsx
 │           │   └── AchievementsScreen.tsx
 │           ├── components/         # Shared mobile components
-│           ├── navigation/         # React Navigation setup
+│           ├── app/                # Expo Router file-based routes
 │           └── theme/              # Mobile-specific theming
 ```
 
@@ -257,14 +263,19 @@ export interface IFileSystem {
   read(path: string): Promise<string>;
   /** Write string contents to file (create or overwrite) */
   write(path: string, content: string): Promise<void>;
+  /** Atomically read, modify, and write a file. The callback receives the current
+   *  contents and returns the new contents. Prevents race conditions. */
+  readAndProcess(path: string, fn: (content: string) => string): Promise<void>;
   /** Create a new file (error if exists) */
   create(path: string, content: string): Promise<void>;
   /** Delete a file */
   delete(path: string): Promise<void>;
   /** Check if file exists */
   exists(path: string): Promise<boolean>;
-  /** List files in a folder */
-  list(folderPath: string): Promise<string[]>;
+  /** List files in a folder with metadata */
+  list(folderPath: string): Promise<Array<{ path: string; isFolder: boolean; mtime?: number }>>;
+  /** Get file metadata (modification time, size) */
+  stat(path: string): Promise<{ mtime: number; size: number }>;
   /** Create folder (recursive) */
   createFolder(path: string): Promise<void>;
   /** Rename/move a file */
@@ -297,10 +308,12 @@ export interface INotification {
   showError(message: string): void;
 }
 
-// packages/core/src/interfaces/IDataStore.ts
-export interface IDataStore {
-  load<T>(key: string): Promise<T | null>;
-  save<T>(key: string, data: T): Promise<void>;
+// packages/core/src/interfaces/IPluginDataStore.ts
+export interface IPluginDataStore {
+  /** Load the full plugin data blob (character, settings, achievements, inventory) */
+  loadPluginData(): Promise<PluginData | null>;
+  /** Save the full plugin data blob */
+  savePluginData(data: PluginData): Promise<void>;
 }
 
 // packages/core/src/interfaces/IAssetResolver.ts
@@ -322,11 +335,89 @@ export interface IStorageProvider {
   setItem(key: string, value: string): void;
   removeItem(key: string): void;
 }
+
+// packages/core/src/interfaces/ISaveCallback.ts
+export interface ISaveCallback {
+  /** Persist character data after state changes (battle outcomes, XP gains, etc.) */
+  save(): Promise<void>;
+}
+
+// packages/core/src/interfaces/ILevelUpCallback.ts
+export interface ILevelUpCallback {
+  /** Show level-up celebration UI */
+  onLevelUp(options: {
+    characterClass: string;
+    newLevel: number;
+    tierChanged: boolean;
+    isTrainingMode: boolean;
+    onGraduate?: () => void;
+    unlockedSkills?: import('../models/Skill').Skill[];
+  }): void;
+}
 ```
 
 ---
 
 ## Implementation Phases
+
+### Pre-Migration: Dependency Upgrades (Sessions A–B)
+
+> [!IMPORTANT]
+> These two sessions must be completed before starting the monorepo migration. They upgrade React and Zustand to the versions required by the core package and the React Native mobile app. Each is a focused upgrade session — no architectural changes.
+
+---
+
+#### Session A: React 18 → 19 Upgrade
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** None
+**Goal:** Upgrade React to v19 in the existing plugin. Fix all type errors and breaking changes. Verify the plugin builds and works.
+
+**Tasks:**
+- [ ] Upgrade `react` and `react-dom` from `^18.2.0` to `^19.0.0` in `package.json`
+- [ ] Upgrade `@types/react` and `@types/react-dom` to React 19-compatible versions
+- [ ] Upgrade `@testing-library/react` if needed for React 19 compatibility
+- [ ] Fix breaking changes:
+  - [ ] `forwardRef` is no longer needed in React 19 — `ref` is a regular prop. Audit components using `forwardRef` and simplify if applicable.
+  - [ ] JSX namespace moved — fix any TypeScript errors related to `JSX.Element` → `React.JSX.Element`
+  - [ ] `propTypes` removed from React package — remove any `propTypes` usage if present
+  - [ ] Check for `defaultProps` usage on function components (deprecated in React 19)
+- [ ] Run `pnpm run build` — fix all type errors until build passes
+- [ ] Run `pnpm run test:run` — fix any broken tests
+- [ ] Deploy to test vault: `pnpm run deploy:test`
+- [ ] **HARD STOP** — Brad tests in test vault
+
+**Testing:** Build passes, all existing tests pass, manual smoke test in test vault.
+
+---
+
+#### Session B: Zustand 4 → 5 Upgrade
+**Estimated Time:** 1.5–2 hours
+**Prerequisite:** Session A
+**Goal:** Upgrade Zustand to v5 in the existing plugin. Fix breaking changes around persistence behavior. Verify all stores work correctly.
+
+**Tasks:**
+- [ ] Upgrade `zustand` from `^4.4.0` to `^5.0.0` in `package.json`
+- [ ] Fix breaking changes:
+  - [ ] **Persistence default behavior** changed in Zustand 4.5.5+ (carried into v5) — default state no longer auto-persists. Verify `battleStore` persist middleware still works correctly (crash recovery to localStorage).
+  - [ ] Check for any deprecated APIs (`destroy()` removed, use `store.destroy` or just discard the store)
+  - [ ] Verify `create<T>()` type inference still works for all 7 stores
+- [ ] Test each store manually:
+  - [ ] `characterStore` — load character, modify XP, verify state updates
+  - [ ] `questStore` — load quests, upsert, verify Map operations
+  - [ ] `battleStore` — start battle, verify persist/recovery works with localStorage
+  - [ ] `dungeonStore` — start dungeon, verify crypto.randomUUID still works
+  - [ ] `filterStore`, `taskSectionsStore`, `uiStore` — basic operations
+- [ ] Run `pnpm run build` — fix all errors until build passes
+- [ ] Run `pnpm run test:run` — fix any broken tests
+- [ ] Deploy to test vault: `pnpm run deploy:test`
+- [ ] **HARD STOP** — Brad tests in test vault
+
+**Testing:** Build passes, all existing tests pass, manual smoke test in test vault with focus on combat (battleStore persistence) and quest management.
+
+> [!NOTE]
+> The Zustand vanilla store refactor (`create()` → `createStore()` from `zustand/vanilla`) happens separately during Phase 2b when stores are copied to the core package. Session B only upgrades the version — no API pattern changes.
+
+---
 
 ### Part A: Monorepo Migration (Phases 0–5)
 
@@ -337,20 +428,27 @@ export interface IStorageProvider {
 
 #### Phase 0: Monorepo Scaffolding
 **Estimated Time:** 1.5–2 hours
-**Prerequisite:** None
-**Goal:** Set up the npm workspace structure, package configs, and build tooling without touching any existing source code.
+**Prerequisite:** Sessions A and B complete
+**Goal:** Set up the pnpm workspace structure, package configs, and build tooling without touching any existing source code.
 
 **Tasks:**
-- [ ] Create root `package.json` workspace config pointing to `packages/*`
-- [ ] Create `packages/core/package.json` with name `@quest-board/core`
+- [ ] **Migrate to pnpm:** Install pnpm (`npm install -g pnpm`), create `pnpm-workspace.yaml` pointing to `packages/*`, convert `package-lock.json` to `pnpm-lock.yaml` via `pnpm import`, delete `package-lock.json`
+- [ ] Update root `package.json` to remove npm `workspaces` field (pnpm uses `pnpm-workspace.yaml` instead)
+- [ ] Create `packages/core/package.json` with name `@quest-board/core`, add dependencies: `js-yaml`, `date-fns`, `striptags`
 - [ ] Create `packages/core/tsconfig.json` (target ES2018, strict, no JSX)
 - [ ] Create `packages/core/src/` directory structure (models, services, store, data, config, utils, interfaces)
 - [ ] Create `packages/core/src/index.ts` barrel export
 - [ ] Create `packages/obsidian/package.json` with dependency on `@quest-board/core`
-- [ ] Verify `npm install` resolves workspace dependencies
-- [ ] Verify existing `npm run build` still works unchanged (the obsidian package doesn't use core yet)
+- [ ] **Pre-implementation fix:** Audit ALL source files for `vault.modify()` usage. Per Obsidian guidelines, only **read-modify-write** patterns need conversion to `vault.process()` — full overwrites (generating entirely new content) should stay as `vault.modify()`.
+  - `main.ts` (line 1015) — **CONVERT to `vault.process()`** — read-modify-write pattern (reads content, inserts `difficulty` field, writes back)
+  - `QuestService.ts` (lines 638, 783) — **KEEP** — full overwrite (generates new AI quest JSON / new quest markdown)
+  - `AIQuestPreviewModal.ts` (line 114) — **KEEP** — full overwrite (saves generated quest file)
+  - `ScrivenersQuillModal.ts` (lines 1008, 1135) — **KEEP** — full overwrite (overwrites quest/template file with new content)
+- [ ] Update `.gitignore` for monorepo structure: add `packages/*/node_modules/`, `packages/*/dist/`, `packages/mobile/.expo/`, `packages/mobile/android/`, `packages/mobile/ios/`
+- [ ] Verify `pnpm install` resolves workspace dependencies
+- [ ] Verify existing `pnpm run build` still works unchanged (the obsidian package doesn't use core yet)
 
-**Testing:** Manual — verify `npm install` and `npm run build` succeed.
+**Testing:** Manual — verify `pnpm install` and `pnpm run build` succeed.
 
 > [!NOTE]
 > The existing `src/`, `main.ts`, `esbuild.config.mjs`, etc. remain at the repo root during this phase. They'll move to `packages/obsidian/` during the cutover phase (Phase 4).
@@ -368,9 +466,9 @@ export interface IStorageProvider {
 > This phase is lightweight. The scaffolding phase creates no business logic — just directory structure and config files. Verification is limited to build/install sanity checks.
 
 **Tasks:**
-- [ ] Run `npm install` from root — verify no errors, verify workspace symlinks created
-- [ ] Run `npm run build` — verify Obsidian plugin still builds identically
-- [ ] Run `npm run test:run` — verify all existing tests still pass
+- [ ] Run `pnpm install` from root — verify no errors, verify workspace symlinks created
+- [ ] Run `pnpm run build` — verify Obsidian plugin still builds identically
+- [ ] Run `pnpm run test:run` — verify all existing tests still pass
 - [ ] Create a trivial test in `packages/core/` to verify the test runner works there too
 
 ---
@@ -380,10 +478,10 @@ export interface IStorageProvider {
 **Prerequisite:** Phase 0
 **Goal:** Copy all files with zero Obsidian dependencies into `packages/core/`. Fix internal import paths. These files move with no logic changes.
 
-**Files to copy (48 files):**
+**Files to copy (49 files):**
 
-**Models (12 files):**
-- `Achievement.ts`, `Bounty.ts`, `Character.ts`, `Consumable.ts`, `CustomColumn.ts`, `Dungeon.ts`, `Monster.ts`, `Quest.ts`, `QuestStatus.ts`, `Skill.ts`, `StatusEffect.ts`, `index.ts`
+**Models (13 files):**
+- `Achievement.ts`, `Bounty.ts`, `Character.ts`, `Consumable.ts`, `CustomColumn.ts`, `Dungeon.ts`, `Monster.ts`, `Quest.ts`, `QuestStatus.ts`, `Skill.ts`, `StatusEffect.ts`, `Title.ts`, `index.ts`
 
 **Data (13 files):**
 - `monsters.ts`, `monsterSkills.ts`, `skills.ts`, `starterGear.ts`, `achievements.ts`, `uniqueItems.ts`, `TileRegistry.ts`, `accessories.ts`, `dungeons/index.ts`, `dungeons/*.ts` (5 dungeon templates)
@@ -392,13 +490,13 @@ export interface IStorageProvider {
 - `combatConfig.ts`
 
 **Pure Utils (5 files):**
-- `safeJson.ts`, `sanitizer.ts`, `timeFormatters.ts`, `pathfinding.ts`, `skillFormatters.ts`
+- `safeJson.ts`, `sanitizer.ts` (core version: `sanitizeText()` only — strip HTML via lightweight regex; DOMPurify stays in obsidian package for `sanitizeHtml()`), `timeFormatters.ts`, `pathfinding.ts`, `skillFormatters.ts`
 
 **Pure Stores (6 files):**
 - `questStore.ts`, `characterStore.ts`, `filterStore.ts`, `taskSectionsStore.ts`, `uiStore.ts`, `index.ts`
 
 **Tasks:**
-- [ ] Copy all 48 files into their respective `packages/core/src/` directories
+- [ ] Copy all 49 files into their respective `packages/core/src/` directories
 - [ ] Fix internal import paths (e.g., `../models/Character` → `../models/Character` — paths should be the same within core)
 - [ ] Verify `packages/core/` compiles with `tsc --noEmit`
 - [ ] Create barrel exports in `packages/core/src/index.ts`
@@ -435,23 +533,35 @@ export interface IStorageProvider {
 
 ---
 
-#### Phase 2a: Abstraction Interfaces
-**Estimated Time:** 1–1.5 hours
+#### Phase 2a: Abstraction Interfaces + FrontmatterUtils
+**Estimated Time:** 1.5–2 hours
 **Prerequisite:** Phase 1
-**Goal:** Create the 8 abstraction interfaces that will be used by all abstractable services. This is new code that requires careful design — these interfaces define the contract between core and platform packages.
+**Goal:** Create the 10 abstraction interfaces and a cross-platform frontmatter parsing utility. These interfaces define the contract between core and platform packages.
 
 **Tasks:**
 
-**Interfaces (8 files — NEW):**
-- [ ] Create `packages/core/src/interfaces/IFileSystem.ts`
+**Interfaces (10 files — NEW):**
+- [ ] Create `packages/core/src/interfaces/IFileSystem.ts` (note: `list()` returns `Array<{ path: string; isFolder: boolean; mtime?: number }>`, includes `stat()` method)
 - [ ] Create `packages/core/src/interfaces/IHttpClient.ts`
 - [ ] Create `packages/core/src/interfaces/INotification.ts`
-- [ ] Create `packages/core/src/interfaces/IDataStore.ts`
+- [ ] Create `packages/core/src/interfaces/IPluginDataStore.ts` (typed to `PluginData` schema, not generic key-value)
 - [ ] Create `packages/core/src/interfaces/IAssetResolver.ts`
 - [ ] Create `packages/core/src/interfaces/IPlatformProvider.ts`
 - [ ] Create `packages/core/src/interfaces/IFileWatcher.ts`
 - [ ] Create `packages/core/src/interfaces/IStorageProvider.ts`
+- [ ] Create `packages/core/src/interfaces/ISaveCallback.ts` (replaces module-level `setSaveCallback` pattern)
+- [ ] Create `packages/core/src/interfaces/ILevelUpCallback.ts` (replaces module-level `setLevelUpCallback` pattern)
 - [ ] Create `packages/core/src/interfaces/index.ts` barrel export
+
+**FrontmatterUtils (NEW — replaces gray-matter dependency):**
+- [ ] Create `packages/core/src/utils/FrontmatterUtils.ts` — cross-platform frontmatter parsing using `js-yaml` + simple `---` delimiter splitting (~50 lines)
+  - `parseFrontmatter(content: string): { data: Record<string, any>; body: string }` — split on `---` delimiters, parse YAML block with `js-yaml`
+  - `stringifyFrontmatter(data: Record<string, any>, body: string): string` — serialize YAML + body back to markdown
+  - `processFrontmatter(fs: IFileSystem, path: string, mutator: (fm: Record<string, any>) => void): Promise<void>` — atomic read-modify-write wrapper for frontmatter (replaces Obsidian's `processFrontMatter()` in core services)
+
+> [!NOTE]
+> **Why js-yaml instead of gray-matter?** gray-matter internally imports Node.js `fs` module. While it has a `"browser"` field that stubs `fs`, React Native's Metro bundler may not respect this field, causing build failures on Hermes. `js-yaml` is pure JavaScript with zero Node dependencies — guaranteed to work everywhere. The custom `FrontmatterUtils` wrapper is ~50 lines and handles everything gray-matter did for our use case.
+
 - [ ] Verify `packages/core/` compiles with `tsc --noEmit`
 
 ---
@@ -463,15 +573,23 @@ export interface IStorageProvider {
 
 **Gear.ts fix:**
 - [ ] Copy `Gear.ts` to `packages/core/src/models/`
-- [ ] Replace `crypto.randomUUID()` with an injected `generateId()` function or import from a tiny cross-platform UUID utility
+- [ ] Create shared `generateId()` utility in `packages/core/src/utils/generateId.ts` — uses `crypto.randomUUID()` with the existing fallback pattern from `Gear.ts`. This utility is used by `Gear.ts`, `dungeonStore.ts`, and any future code needing UUIDs.
+- [ ] Replace `crypto.randomUUID()` in `Gear.ts` with `generateId()` import
 
-**Pure Services (20 files — COPY, ~6,090 LOC total):**
-- [ ] Copy: `AccessoryEffectService.ts`, `BattleService.ts` (1,680 LOC), `ColumnConfigService.ts`, `CombatService.ts` (479 LOC), `ConsumableUsageService.ts`, `DungeonMapService.ts`, `LootGenerationService.ts` (1,112 LOC), `MonsterService.ts` (294 LOC), `PowerUpService.ts` (975 LOC), `ProgressStatsService.ts`, `SkillService.ts` (612 LOC), `SmeltingService.ts` (286 LOC), `StatsService.ts` (283 LOC), `StatusEffectService.ts`, `StreakService.ts`, `TemplateStatsService.ts`, `TestCharacterGenerator.ts`, `XPSystem.ts` (369 LOC), `RecoveryTimerStatusProvider.ts`, `index.ts`
+**Pure Services (21 files — COPY, ~6,262 LOC total):**
+- [ ] Copy: `AccessoryEffectService.ts`, `BattleService.ts` (1,680 LOC), `ColumnConfigService.ts`, `CombatService.ts` (479 LOC), `ConsumableUsageService.ts`, `DungeonMapService.ts`, `LootGenerationService.ts` (1,112 LOC), `MonsterService.ts` (294 LOC), `PowerUpService.ts` (975 LOC), `ProgressStatsService.ts`, `SkillService.ts` (612 LOC), `SmeltingService.ts` (286 LOC), `StatsService.ts` (283 LOC), `StatusEffectService.ts`, `StreakService.ts`, `TemplateStatsService.ts`, `TestCharacterGenerator.ts`, `TitleService.ts` (172 LOC), `XPSystem.ts` (369 LOC), `RecoveryTimerStatusProvider.ts`, `index.ts`
+- [ ] **Refactor BattleService callbacks:** Convert module-level `setSaveCallback`/`setLevelUpCallback` to constructor-injected `ISaveCallback` and `ILevelUpCallback` interfaces. This replaces the imperative setter pattern with proper DI.
 - [ ] Fix import paths within core
 
-**Stores with minor abstraction (2 files):**
-- [ ] Copy `battleStore.ts` — replace `localStorage` with `IStorageProvider` parameter
-- [ ] Copy `dungeonStore.ts` — replace `crypto.randomUUID()` with injected ID generator
+**Stores refactor (all 8 stores — Zustand vanilla conversion):**
+
+> [!IMPORTANT]
+> All stores must be converted from `create<T>()` (React-bound) to `createStore<T>()` from `zustand/vanilla` for the core package. Each platform package then wraps the vanilla store with `useStore(vanillaStore, selector)` for React hook reactivity. This is a required change for core to be React-free.
+
+- [ ] Convert all 8 stores from `import { create } from 'zustand'` → `import { createStore } from 'zustand/vanilla'`
+- [ ] `battleStore.ts` — additionally replace `localStorage` with `IStorageProvider` parameter (note: `IStorageProvider` interface intentionally matches Zustand's `StateStorage` interface to minimize adapter code)
+- [ ] `dungeonStore.ts` — additionally replace `crypto.randomUUID()` with shared `generateId()` utility
+- [ ] Create React wrapper hooks in platform packages: `packages/obsidian/src/hooks/stores.ts` exporting `useQuestStore`, `useCharacterStore`, etc. using `useStore(vanillaStore, selector)`
 
 - [ ] Verify `packages/core/` compiles with `tsc --noEmit`
 
@@ -517,8 +635,9 @@ export interface IStorageProvider {
 4. Ensure the core version has no Obsidian imports
 
 #### Tech Debt (applies to all Phase 3 sub-phases):
-- Some services use Obsidian's `debounce` utility. Need a platform-agnostic debounce (trivial to implement or import from lodash).
-- Services using `moment` (provided globally by Obsidian) need a standard date library alternative for core. Consider `date-fns` or vanilla `Intl.DateTimeFormat`.
+- Some services use Obsidian's `debounce` utility (4 files, 21 call sites). Create a platform-agnostic `debounce()` utility in `packages/core/src/utils/debounce.ts` (~15 lines). Do NOT add lodash as a dependency for one utility function.
+- Services using `moment` (provided globally by Obsidian) need `date-fns` as a replacement in core. `DailyNoteService.ts` declares `moment` as a global — replace `moment(date).format(format)` with `date-fns` `format()`. **Note:** moment and date-fns format strings differ — moment `'YYYY-MM-DD'` → date-fns `'yyyy-MM-dd'`. `date-fns` is tree-shakeable and much lighter than `moment` for mobile.
+- Quest file parsing currently uses Obsidian's `processFrontMatter()` API for atomic YAML frontmatter read-modify-write. Core uses `FrontmatterUtils.processFrontmatter()` (created in Phase 2a) which wraps `IFileSystem.readAndProcess()` with `js-yaml` parse/serialize. The Obsidian adapter can still use the native `processFrontMatter()` for its atomic guarantees.
 
 ---
 
@@ -533,12 +652,12 @@ export interface IStorageProvider {
 |---------|-----|---------------|--------------|
 | RecoveryTimerService.ts | 122 | `Notice` | `INotification` |
 | SpriteService.ts | 180 | `DataAdapter` | `IAssetResolver` |
-| AchievementService.ts | 374 | `Vault` | `IDataStore` |
+| AchievementService.ts | 374 | `Vault` (unused) | Remove `Vault` param entirely (dead code) |
 
 **Tasks:**
 - [ ] Refactor RecoveryTimerService: swap `new Notice()` → `notification.show()`
 - [ ] Refactor SpriteService: swap `DataAdapter` → `IAssetResolver`
-- [ ] Refactor AchievementService: swap `Vault` → `IDataStore`
+- [ ] Refactor AchievementService: remove unused `Vault` constructor parameter (no replacement needed — it was dead code)
 - [ ] Verify `tsc --noEmit` passes
 
 ---
@@ -567,7 +686,7 @@ export interface IStorageProvider {
 ---
 
 #### Phase 3c: IFileSystem Services — Small Batch
-**Estimated Time:** 1.5–2 hours
+**Estimated Time:** 1.5–2 hours (may run 20-30% over due to `TFile`/`TFolder` type check refactoring and moment→date-fns conversion)
 **Prerequisite:** Phase 3b
 **Goal:** Refactor 3 smaller file-system-dependent services. Straightforward `Vault` → `IFileSystem` swaps.
 
@@ -581,14 +700,16 @@ export interface IStorageProvider {
 
 **Tasks:**
 - [ ] Refactor DailyNoteService: swap `Vault`/`TFile`/`TFolder` → `IFileSystem`
+- [ ] **Replace `moment` with `date-fns` in DailyNoteService:** Remove `declare const moment` global, add `import { format } from 'date-fns'`, convert all format strings from moment syntax to date-fns syntax (e.g., `'YYYY-MM-DD'` → `'yyyy-MM-dd'`, `'dddd'` → `'EEEE'`)
 - [ ] Refactor TaskFileService: swap `Vault`/`TFile` → `IFileSystem` + `IFileWatcher`; replace Obsidian `debounce` with platform-agnostic version
 - [ ] Refactor TemplateService: swap `Vault`/`TFile`/`TFolder` → `IFileSystem`
+- [ ] Create `packages/core/src/utils/debounce.ts` — platform-agnostic debounce utility (~15 lines)
 - [ ] Verify `tsc --noEmit` passes
 
 ---
 
 #### Phase 3d: IFileSystem Services — Large Batch
-**Estimated Time:** 2–2.5 hours
+**Estimated Time:** 2–2.5 hours (may run 20-30% over — these services have heavy `TFile`/`TFolder` type narrowing and `instanceof` checks that need refactoring for interface-based access)
 **Prerequisite:** Phase 3c
 **Goal:** Refactor the larger and more complex file-system-dependent services. Several of these require multiple interfaces.
 
@@ -600,20 +721,20 @@ export interface IStorageProvider {
 | BalanceTestingService.ts | 448 | `App, TFile, TFolder` | `IFileSystem` |
 | UserDungeonLoader.ts | 651 | `App, TFile, TFolder, Vault` | `IFileSystem` |
 | FolderWatchService.ts | 616 | `Vault, TFile, Notice, normalizePath` | `IFileSystem, IFileWatcher, INotification` |
-| SetBonusService.ts | 615 | `App, requestUrl` | `IHttpClient, IDataStore` |
+| SetBonusService.ts | 615 | `App, requestUrl, Vault` | `IHttpClient, IFileSystem, IPluginDataStore` |
 
 **Tasks:**
 - [ ] Refactor RecurringQuestService: swap `Vault`/`TFile`/`TFolder` → `IFileSystem`
 - [ ] Refactor BalanceTestingService: swap `App`/`TFile`/`TFolder` → `IFileSystem`
 - [ ] Refactor UserDungeonLoader: swap `App`/`TFile`/`TFolder`/`Vault` → `IFileSystem`
 - [ ] Refactor FolderWatchService: swap to `IFileSystem` + `IFileWatcher` + `INotification`
-- [ ] Refactor SetBonusService: swap `App`/`requestUrl` → `IHttpClient` + `IDataStore`
+- [ ] Refactor SetBonusService: swap `App`/`requestUrl`/`Vault` → `IHttpClient` + `IFileSystem` + `IPluginDataStore` (note: also uses `(vault as any).children` for folder traversal — replace with `IFileSystem.list()`)
 - [ ] Verify `tsc --noEmit` passes
 
 ---
 
 #### Phase 3e: Quest Heavyweight Services
-**Estimated Time:** 1.5–2 hours
+**Estimated Time:** 1.5–2 hours (may run 20-30% over — QuestService has 5 `processFrontMatter` call sites and 2 `vault.modify` calls that need careful conversion to `FrontmatterUtils`)
 **Prerequisite:** Phase 3d
 **Goal:** Refactor the two most critical services in the plugin. These are the heart of quest management and deserve a focused session.
 
@@ -642,7 +763,7 @@ export interface IStorageProvider {
 **Test File Location:** `packages/core/test/`
 
 **Tasks:**
-- [ ] Create comprehensive mock implementations of `INotification`, `IAssetResolver`, `IDataStore`, `IHttpClient`, `IFileSystem`, `IFileWatcher`
+- [ ] Create comprehensive mock implementations of `INotification`, `IAssetResolver`, `IPluginDataStore`, `IHttpClient`, `IFileSystem`, `IFileWatcher`
 - [ ] Write tests for Phase 3a services (RecoveryTimerService, SpriteService, AchievementService)
 - [ ] Write tests for Phase 3b services (AIQuestService, AssetService, AIDungeonService, BountyService)
 - [ ] Write tests for Phase 3c services (DailyNoteService, TaskFileService, TemplateService)
@@ -688,13 +809,15 @@ export interface IStorageProvider {
 > [!CAUTION]
 > Phase 4 (a + b) is the point of no return. After this, the Obsidian plugin depends on the core package. Make sure all Phase 3.5b tests pass first. Create a git branch before starting Phase 4a.
 
-**Create Obsidian adapters (6 files — NEW):**
-- [ ] `packages/obsidian/src/adapters/ObsidianFileSystem.ts` — wraps `Vault` API
+**Create Obsidian adapters (8 files — NEW):**
+- [ ] `packages/obsidian/src/adapters/ObsidianFileSystem.ts` — wraps `Vault` API (note: `list()` must return `{ path, isFolder, mtime? }` objects, `stat()` wraps `vault.adapter.stat()`)
 - [ ] `packages/obsidian/src/adapters/ObsidianHttpClient.ts` — wraps `requestUrl`
 - [ ] `packages/obsidian/src/adapters/ObsidianNotification.ts` — wraps `Notice`
-- [ ] `packages/obsidian/src/adapters/ObsidianDataStore.ts` — wraps `loadData`/`saveData`
+- [ ] `packages/obsidian/src/adapters/ObsidianPluginDataStore.ts` — wraps `loadData`/`saveData` with typed `PluginData` schema
 - [ ] `packages/obsidian/src/adapters/ObsidianAssetResolver.ts` — wraps `DataAdapter`
 - [ ] `packages/obsidian/src/adapters/ObsidianFileWatcher.ts` — wraps vault events
+- [ ] `packages/obsidian/src/adapters/ObsidianSaveCallback.ts` — wraps character persistence via `plugin.saveSettings()`
+- [ ] `packages/obsidian/src/adapters/ObsidianLevelUpCallback.ts` — wraps `LevelUpModal` display
 - [ ] Verify adapters compile with `tsc --noEmit`
 
 ---
@@ -713,21 +836,25 @@ export interface IStorageProvider {
 - [ ] Move `src/styles/` → `packages/obsidian/src/styles/`
 - [ ] Move `src/settings.ts` → `packages/obsidian/src/settings.ts`
 - [ ] Move Obsidian-specific utils (`FolderSuggest.ts`, `FileSuggest.ts`, `dailyNotesDetector.ts`) → `packages/obsidian/src/utils/`
+- [ ] Move Obsidian-only services that are NOT extracted to core: `CharacterExportService.ts`, `StatusBarService.ts`, `BuffStatusProvider.ts` → `packages/obsidian/src/services/` (these use heavy DOM/Obsidian APIs and have no mobile equivalent)
 - [ ] Move `esbuild.config.mjs` → `packages/obsidian/`
 - [ ] Move `postcss.config.cjs` → `packages/obsidian/`
 
 **Update imports everywhere:**
 - [ ] Update all files in `packages/obsidian/` to import models, services, stores, utils from `@quest-board/core`
 - [ ] Update `main.ts` to instantiate Obsidian adapters and inject them into core services
-- [ ] Update `esbuild.config.mjs` entry point and output paths
+- [ ] **esbuild workspace resolution:** Update `esbuild.config.mjs` to resolve `@quest-board/core` to `packages/core/src/index.ts` using esbuild's `alias` option or `tsconfig` paths. Do NOT pre-compile core — esbuild bundles core source directly into `main.js`. The `@quest-board/core` package must NOT be listed as an external.
+- [ ] **Output file locations:** Ensure esbuild `outfile` points to repo root `main.js`, PostCSS outputs to repo root `styles.css`. `manifest.json` and `versions.json` stay at repo root. Obsidian expects all three at the plugin root.
 - [ ] Update build scripts in root `package.json`
+- [ ] **Update `deploy.mjs`:** Verify deploy scripts find built artifacts in correct locations after the restructure
+- [ ] **Update `version-bump.mjs`:** Ensure the version script finds `manifest.json` and `versions.json` at repo root (not inside `packages/obsidian/`). Verify `pnpm run version` still works.
 
 **Delete originals:**
 - [ ] Remove `src/models/`, `src/services/`, `src/store/`, `src/data/`, `src/config/`, `src/utils/` (portable files) from root `src/`
 - [ ] Remove remaining root `src/` directory (should be empty)
 
 **Verify:**
-- [ ] `npm run build` produces working `main.js` and `styles.css`
+- [ ] `pnpm run build` produces working `main.js` and `styles.css`
 - [ ] Deploy to test vault and manually verify the plugin works
 
 #### Tech Debt:
@@ -745,7 +872,7 @@ export interface IStorageProvider {
 - [ ] Move remaining Obsidian-specific tests to `packages/obsidian/test/`
 - [ ] Update test imports to use `@quest-board/core`
 - [ ] Write adapter unit tests (mock Obsidian API, verify adapters call correct methods)
-- [ ] Run full test suite from root: `npm run test:run`
+- [ ] Run full test suite from root: `pnpm run test:run`
 - [ ] Deploy to test vault — full manual smoke test
 
 **Key Test Cases:**
@@ -755,7 +882,7 @@ export interface IStorageProvider {
 - ObsidianNotification adapter correctly wraps Notice
 - Plugin loads, quests display, combat works, gear equips
 
-**Command:** `npm run test:run` (from root, runs all workspace tests)
+**Command:** `pnpm run test:run` (from root, runs all workspace tests)
 
 ---
 
@@ -768,8 +895,9 @@ export interface IStorageProvider {
 - [ ] `validator.ts` — extract validation rules to core, leave `Notice` calls in obsidian wrapper
 - [ ] `pathValidator.ts` — extract path logic to core, leave `Vault`/`TFile` usage in obsidian adapter
 - [ ] `columnMigration.ts` — extract migration logic to core, leave vault file ops in obsidian adapter
-- [ ] `gearFormatters.ts` — extract tooltip data formatting to core, leave DOM tooltip rendering in obsidian
+- [ ] `gearFormatters.ts` — extract data model only (stat labels, tier colors, effect descriptions as plain data objects) to core. The DOM tooltip rendering (`document.createElement`, `getBoundingClientRect`, mouse/touch event listeners, `Platform.isMobile`) stays in obsidian. Mobile will need its own `GearTooltip` React Native component from scratch — this is NOT a split, it's "extract data, rewrite rendering per-platform."
 - [ ] `platform.ts` — replace with `IPlatformProvider` from core interfaces
+- [ ] `sanitizer.ts` — split into core version (`sanitizeText()` using `striptags` npm package for reliable HTML stripping, no DOMPurify) and obsidian version (keeps `sanitizeHtml()` with DOMPurify for HTML rendering contexts). React Native doesn't render HTML, so `sanitizeHtml()` is irrelevant on mobile. Note: `striptags` is ~2KB, zero deps, more reliable than regex-based stripping.
 
 #### Tech Debt:
 - `gearFormatters.ts` is the messiest split — it mixes data formatting with DOM tooltip positioning. The core version should return formatted data objects; the obsidian version renders them into DOM.
@@ -789,7 +917,77 @@ export interface IStorageProvider {
 - [ ] Test gear formatter data output
 - [ ] Verify obsidian wrappers still work with core utils
 
-**Command:** `npm run test:run`
+**Command:** `pnpm run test:run`
+
+---
+
+#### Phase 5b: CharacterChangeEngine
+**Estimated Time:** 3–4 hours
+**Prerequisite:** Phase 5
+**Goal:** Build the event-sourcing engine that enables character data sync between Obsidian and mobile. This is a new core service that both platforms will use. It handles event creation, per-platform changelog files, event replay, and periodic compaction.
+
+> [!IMPORTANT]
+> The CharacterChangeEngine belongs in `@quest-board/core` — both platforms need it. It writes to per-platform changelog files (`changelog-obsidian.jsonl`, `changelog-mobile.jsonl`) stored in `Quest Board/sync/` within the vault. Each platform only writes to its own file; on startup, both files are read and merged by timestamp. This eliminates write conflicts entirely — appending to separate files means cloud sync simply propagates each file independently.
+
+**Tasks:**
+
+**Event type definitions (in core models):**
+- [ ] Define `CharacterChangeEvent` interface with typed discriminated union for ~15 event types: `xp_gained`, `level_up`, `gear_equipped`, `gear_unequipped`, `gear_smelted`, `achievement_unlocked`, `title_equipped`, `consumable_used`, `skill_equipped`, `stat_modified`, `gold_changed`, `streak_updated`, `power_up_granted`, `combat_result`, `inventory_changed`
+- [ ] Each event includes: `seq` (monotonic sequence number per platform), `ts` (ISO 8601 timestamp), `src` (`'obsidian' | 'mobile'`), `type`, `data` (typed payload per event type). The `seq` field enables gap detection during replay — warn if sequences aren't contiguous (indicates missing events). Replay can skip events with `seq <= lastAppliedSeq` for idempotency.
+
+**CharacterChangeEngine service:**
+- [ ] Create `packages/core/src/services/CharacterChangeEngine.ts`
+- [ ] `appendEvent(fs: IFileSystem, platform: 'obsidian' | 'mobile', event: CharacterChangeEvent): Promise<void>` — append a single JSONL line to the platform's changelog file. **Write format:** always prepend a newline before the JSON (`\n{"seq":...}`), so a crash mid-write produces a truncated incomplete line at the end of the file that the JSONL parser will safely skip. This eliminates the need for temp-file-then-rename atomicity (which is unreliable with SAF URIs and cloud sync).
+- [ ] `replayEvents(baseCharacter: Character, events: CharacterChangeEvent[]): Character` — apply events in timestamp order to derive current state (pure function, no I/O)
+- [ ] `loadAndMergeChangelogs(fs: IFileSystem, syncFolder: string, since?: string): Promise<CharacterChangeEvent[]>` — read both per-platform changelog files, merge by timestamp, filter to events after `since`
+- [ ] `compactChangelogs(fs: IFileSystem, syncFolder: string, platform: 'obsidian' | 'mobile', currentCharacter: Character): Promise<void>` — write new baseline snapshot (`baseline-{timestamp}.json`) to sync folder. Each platform only deletes events from its **own** changelog file that are older than the baseline timestamp. Never truncate or write to the other platform's changelog.
+- [ ] Handle malformed/corrupt JSONL entries gracefully (skip with warning, don't crash)
+- [ ] Handle clock skew: sort by timestamp but treat events within 1-second window as unordered (apply in file order)
+- [ ] On replay, both platforms filter events to only those **after** the latest baseline's timestamp
+
+**Obsidian integration:**
+- [ ] Modify `useSaveCharacter` hook (in obsidian package) to also call `CharacterChangeEngine.appendEvent()` on each character state change
+- [ ] On plugin load, call `loadAndMergeChangelogs()` to replay any mobile-originated events since last session
+- [ ] **Export baseline snapshot:** On `saveSettings()` and on `onunload()`, write `baseline-{timestamp}.json` to `Quest Board/sync/` containing the current character, inventory, achievements, and settings. This is the mobile app's entry point for character state — it never reads `data.json` directly.
+- [ ] Ensure `Quest Board/sync/` folder is created on first run
+
+**Vault file structure:**
+```
+Quest Board/
+├── quests/
+└── sync/
+    ├── baseline-{timestamp}.json  ← Written by either platform during compaction
+    ├── changelog-obsidian.jsonl   ← Written by Obsidian plugin only
+    └── changelog-mobile.jsonl     ← Written by mobile app only
+```
+
+> [!NOTE]
+> The `activityHistory` array in the Character schema is kept separate from the event log for now. The event log is for **sync**; `activityHistory` is for **display** (progress dashboard). They have different schemas and retention policies. Unification is tracked as future tech debt.
+
+#### Tech Debt:
+- `activityHistory` and event log are maintained separately. Could be unified in a future schema migration.
+- Old baseline files accumulate until both platforms have seen them. Add lazy cleanup: on startup, if there are multiple `baseline-*.json` files, keep only the latest and delete older ones (each platform can safely do this since they only need the latest).
+
+---
+
+#### Phase 5.5b: Tests — CharacterChangeEngine
+**Estimated Time:** 2–2.5 hours
+**Prerequisite:** Phase 5b
+**Coverage Target:** ≥80% line, ≥80% branch
+**Test File Location:** `packages/core/test/`
+
+**Tasks:**
+- [ ] Test event serialization/deserialization for all 15 event types
+- [ ] Test `replayEvents()` produces correct character state from a sequence of events
+- [ ] Test `replayEvents()` is idempotent (replaying the same events twice produces same result)
+- [ ] Test `loadAndMergeChangelogs()` correctly merges two per-platform files by timestamp
+- [ ] Test `appendEvent()` writes valid JSONL to mock file system
+- [ ] Test `compactChangelogs()` produces correct baseline and truncates logs
+- [ ] Test malformed JSONL handling (corrupt lines are skipped, valid lines still processed)
+- [ ] Test clock skew handling (events within 1-second window)
+- [ ] Test empty changelog files (first run)
+
+**Command:** `cd packages/core && npx vitest run`
 
 ---
 
@@ -802,19 +1000,21 @@ export interface IStorageProvider {
 
 #### Phase 6: React Native Environment Setup
 **Estimated Time:** 2–2.5 hours
-**Prerequisite:** Phase 5 (all of Part A complete)
-**Goal:** Set up the React Native development environment with Expo, create the app scaffold, and verify the core package integrates.
+**Prerequisite:** Phase 5b (all of Part A complete)
+**Goal:** Set up the React Native development environment with Expo, create the app scaffold, configure Metro for monorepo, and verify the core package integrates.
 
 **Tasks:**
-- [ ] Install Expo CLI globally: `npm install -g expo-cli`
-- [ ] Create Expo app: `npx create-expo-app packages/mobile --template blank-typescript`
+- [ ] Create Expo app: `npx create-expo-app packages/mobile --template default@sdk-55`
 - [ ] Update `packages/mobile/package.json` to add `@quest-board/core` workspace dependency
-- [ ] Install React Navigation: `@react-navigation/native`, `@react-navigation/bottom-tabs`, `@react-navigation/stack`
+- [ ] **Use Expo Router** (Expo's default, built on React Navigation): file-based routing, zero-config deep linking (simplifies Phase 12a widget deep linking), typed routes. Comes pre-configured with the default template.
 - [ ] Install `expo-file-system` for local file access
 - [ ] Install `react-native-safe-area-context`, `react-native-screens`, `react-native-gesture-handler`
 - [ ] Install Zustand (should be hoisted from workspace)
-- [ ] Create basic navigation skeleton (tab navigator with placeholder screens)
+- [ ] **Configure Metro for monorepo** (critical): Follow [Expo monorepo guide](https://docs.expo.dev/guides/monorepos/). Configure `watchFolders` to include workspace root and `packages/core/`, set `nodeModulesPaths` to resolve from both app-level and root-level `node_modules`, verify React is not duplicated in the dependency tree
+- [ ] **Set up Vitest** for mobile package testing (consistent with core and obsidian packages): install `vitest`, create `packages/mobile/vitest.config.ts`
+- [ ] Create basic navigation skeleton (tab navigator with placeholder screens using Expo Router's file-based routing in `app/` directory)
 - [ ] Verify core package imports work: `import { Quest, XPSystem } from '@quest-board/core'`
+- [ ] **Hermes V1 / New Architecture compatibility check:** React Native 0.84+ (bundled with Expo SDK 55) uses Hermes V1 as default engine and mandates the New Architecture. Verify all core dependencies work: run a smoke test importing `js-yaml`, `zustand`, `striptags`, and any other core deps. If any fail on Hermes, add polyfills or find alternatives before proceeding.
 - [ ] Run on Expo Go (physical device or emulator): `npx expo start`
 
 **Testing:** Manual — app launches, navigation works, core imports resolve.
@@ -881,9 +1081,13 @@ export interface IStorageProvider {
 **Tasks:**
 
 **MobileFileSystem:**
-- [ ] Implement `IFileSystem` using `expo-file-system` for local file access
+- [ ] Implement `IFileSystem` using `expo-file-system`'s class-based API (`File`, `Directory`, `Paths` classes). This API is the default import in SDK 55 (the legacy function-based API is available under `expo-file-system/legacy` but should not be used for new code).
+- [ ] Use `new File(path).text()` for reads, `new File(path).write(content)` for writes, `new Directory(path).list()` for listing
+- [ ] `list()` must return `Array<{ path: string; isFolder: boolean; mtime?: number }>` per the `IFileSystem` interface
+- [ ] Implement `stat()` using `File` metadata API for modification time and file size
+- [ ] Implement `readAndProcess()` as read → callback → write (non-atomic on mobile, acceptable for single-user)
 - [ ] Support reading/writing quest markdown files from a configured vault directory
-- [ ] Handle YAML frontmatter parsing (same format as Obsidian)
+- [ ] Handle YAML frontmatter parsing using `FrontmatterUtils` from `@quest-board/core` (uses `js-yaml`, not gray-matter)
 - [ ] Implement path normalization for mobile file systems
 
 **MobileHttpClient:**
@@ -894,9 +1098,12 @@ export interface IStorageProvider {
 - [ ] Implement `INotification` using React Native `Alert` or a toast library (`react-native-toast-message`)
 
 **MobileDataStore:**
-- [ ] Implement `IDataStore` using `expo-file-system` or `AsyncStorage`
-- [ ] Store character data, settings, achievements in app-local storage
-- [ ] Support reading `data.json` from the vault (for syncing character/settings from desktop)
+- [ ] Implement `IPluginDataStore` using `AsyncStorage` for app-local cache
+- [ ] Read character baseline from `Quest Board/sync/baseline-{latest}.json` (exported by Obsidian plugin, NOT from `.obsidian/plugins/quest-board/data.json`)
+- [ ] Integrate with `CharacterChangeEngine` from `@quest-board/core` (built in Phase 5b):
+  - [ ] On app launch, call `loadAndMergeChangelogs()` to replay events from both changelog files since last known state
+  - [ ] On character state changes, call `appendEvent()` with `platform: 'mobile'` to write to `Quest Board/sync/changelog-mobile.jsonl`
+  - [ ] Trigger compaction when combined entries exceed 500 (writes new `baseline-{timestamp}.json`, cleans only own changelog)
 
 **MobileAssetResolver:**
 - [ ] Implement `IAssetResolver` for sprite/asset paths in the mobile context
@@ -910,28 +1117,38 @@ export interface IStorageProvider {
 **Goal:** Figure out how the React Native app accesses the same vault files that Obsidian uses on the device, and build a vault folder picker UI. This phase starts with research/discovery.
 
 > [!NOTE]
-> **Simplified approach:** If Obsidian's vault is stored in a user-accessible location on the device (e.g., shared storage, `Documents/`, or a Google Drive-synced folder), the React Native app can read it directly with `expo-file-system` + standard Android storage permissions. No cloud API integration needed. This phase starts by confirming this assumption on Brad's Android device.
+> **Primary approach: SAF (Storage Access Framework).** On modern Android (11+), apps cannot directly access files outside their sandbox. The mobile app uses SAF via `expo-file-system`'s built-in SAF support (stable in SDK 55 — SAF URIs work directly inside the `File` and `Directory` classes) combined with `expo-document-picker` for folder selection. On iOS, vault access requires either iCloud container sharing or the iOS Files app integration via `expo-file-system` config plugin.
 
 **Tasks:**
 
-**Research/Discovery:**
-- [ ] Determine where Obsidian stores the vault on Brad's Android device (app-private vs. shared storage)
-- [ ] Test whether `expo-file-system` can read files from that location with standard permissions
-- [ ] If direct access works: skip cloud API integration entirely
-- [ ] If direct access fails: investigate SAF (Storage Access Framework) via `react-native-saf-x` or `expo-document-picker` as fallback
+**Android Vault Access (SAF — Primary Path):**
+- [ ] Use `expo-document-picker` to let the user select their vault folder (returns a SAF content:// URI with persistent permissions)
+- [ ] `expo-file-system`'s `File` and `Directory` classes support SAF URIs natively (SDK 55) — no third-party SAF library needed
+- [ ] Implement `MobileFileSystem` adapter to read/write via SAF content URIs transparently behind the `IFileSystem` interface
+- [ ] **Verify SAF persistent permissions survive device restart.** SAF permissions expire on reboot unless `takePersistableUriPermission()` is called. Check whether `expo-document-picker` / `expo-file-system` handles this automatically in SDK 55. If not, implement manual permission persistence via a config plugin or native module.
+- [ ] Test reading quest markdown files and `Quest Board/sync/baseline-{latest}.json` via SAF
+- [ ] Configure dev client build if required by document picker native modules (verify whether Expo Go is sufficient for this phase)
 
-**Vault Folder Picker:**
-- [ ] Create a `VaultConfigScreen` where the user selects their vault folder path
-- [ ] Persist the selected vault path in app settings
-- [ ] Validate the selected folder contains expected vault structure (look for `Quest Board/quests/` and `data.json`)
-- [ ] Wire `MobileFileSystem` to use the configured vault path as its root
+**iOS Vault Access:**
+- [ ] Determine vault location on iOS (iCloud Drive, local Obsidian folder, or shared container)
+- [ ] Use `expo-file-system` with `supportsOpeningDocumentsInPlace` + `enableFileSharing` config for Files app integration
+- [ ] Test reading vault files from the accessible location
 
-**Refresh on app focus:**
-- [ ] Re-read quest files and `data.json` when the app returns to foreground
+**Vault Folder Picker (shared):**
+- [ ] Create a `VaultConfigScreen` where the user selects their vault folder
+- [ ] Persist the selected vault path/URI in app settings
+- [ ] Validate the selected folder contains expected vault structure (look for `Quest Board/quests/` and `Quest Board/sync/`)
+
+**Refresh on app focus (incremental sync):**
+- [ ] Track `lastSyncTimestamp` in AsyncStorage
+- [ ] On foreground, only re-read quest files modified since last sync (use `IFileSystem.stat()` mtime to filter)
+- [ ] For changelogs, only read new lines since last known byte offset (seek to position, not full re-read)
+- [ ] Replay any new character change log entries since last applied `seq` number
 - [ ] Show a loading indicator during refresh
+- [ ] This turns O(N) full reload into O(delta) incremental sync
 
 #### Tech Debt:
-- If direct file access doesn't work, cloud storage API integration (Google Drive SAF, iCloud containers) becomes a significant additional effort. Flag as a blocker if encountered.
+- SAF URIs on Android are content:// URIs, not file:// paths. `expo-file-system`'s `File`/`Directory` classes handle this natively in SDK 55, but test thoroughly — SAF reads are slower than direct file:// access.
 - File watching on mobile is limited — polling on app focus is the initial strategy.
 
 ---
@@ -943,7 +1160,7 @@ export interface IStorageProvider {
 **Test File Location:** `packages/mobile/test/`
 
 **Tasks:**
-- [ ] Set up Jest for React Native testing (Expo default)
+- [ ] Configure Vitest for mobile package (consistent with core and obsidian packages)
 - [ ] Write unit tests for `MobileFileSystem` with mocked `expo-file-system`
 - [ ] Write unit tests for `MobileHttpClient` with mocked `fetch`
 - [ ] Write unit tests for `MobileDataStore` with mocked storage
@@ -955,7 +1172,7 @@ export interface IStorageProvider {
 - HTTP requests are correctly formatted for Gemini API
 - Data store persists and retrieves character data correctly
 
-**Command:** `cd packages/mobile && npx jest`
+**Command:** `cd packages/mobile && npx vitest run`
 
 ---
 
@@ -976,10 +1193,22 @@ export interface IStorageProvider {
 - [ ] Use `QuestService` (with `MobileFileSystem`) for quest loading
 - [ ] Implement pull-to-refresh (re-read quest files from vault)
 
+**Hooks → Mobile equivalents:**
+> [!NOTE]
+> Obsidian hooks stay in `packages/obsidian/`. Mobile must re-implement the equivalent logic:
+> - `useQuestLoader` → Load quests on mount + reload on app focus (no vault file watchers on mobile)
+> - `useXPAward` → Reuse core XP logic, but skip vault file watchers; trigger on task toggle directly
+> - `useFilteredQuests` → May port as-is (pure React hook, no Obsidian deps)
+> - `useCollapsedItems` → Re-implement with `AsyncStorage` instead of `localStorage`
+> - `useDndQuests` → Skip entirely (no drag-and-drop on mobile initially)
+
 **Design notes:**
 - Use React Native's `FlatList` for performant quest lists
 - Touch targets minimum 44x44px
 - Follow the RPG visual theme (class colors, XP bars)
+
+> [!IMPORTANT]
+> **Accessibility (applies to all screen-building phases 8–10):** For every new component, add `accessibilityLabel` props, ensure minimum 4.5:1 color contrast ratio, and verify 44x44px touch targets. Building this in now takes ~5 minutes per component vs. a full retrofit pass later.
 
 #### Tech Debt:
 - No drag-and-drop reordering on mobile initially. Can add later with `react-native-draggable-flatlist`.
@@ -1019,7 +1248,7 @@ export interface IStorageProvider {
 - [ ] Test quest creation form validation
 - [ ] Test pull-to-refresh triggers file reload
 
-**Command:** `cd packages/mobile && npx jest`
+**Command:** `cd packages/mobile && npx vitest run`
 
 ---
 
@@ -1039,6 +1268,12 @@ export interface IStorageProvider {
 - [ ] Connect to `characterStore` from `@quest-board/core`
 - [ ] Use `XPSystem` for level/XP calculations
 - [ ] Use `StatsService` for stat derivation with gear bonuses
+
+**Hooks → Mobile equivalents:**
+> [!NOTE]
+> - `useSaveCharacter` → Save character to `MobileDataStore` + append event to `character-changelog.jsonl`
+> - `useResourceRegen` → Reuse core timer logic; replace `Notice` with mobile toast
+> - `useCharacterSprite` → Replace `DataAdapter` with `MobileAssetResolver`
 
 ---
 
@@ -1080,7 +1315,7 @@ export interface IStorageProvider {
 - [ ] Test skill usage and mana deduction
 - [ ] Test level-up detection and celebration trigger
 
-**Command:** `cd packages/mobile && npx jest`
+**Command:** `cd packages/mobile && npx vitest run`
 
 ---
 
@@ -1121,7 +1356,7 @@ export interface IStorageProvider {
 - [ ] Test achievement progress calculation and display
 - [ ] Test achievement unlock detection
 
-**Command:** `cd packages/mobile && npx jest`
+**Command:** `cd packages/mobile && npx vitest run`
 
 ---
 
@@ -1137,6 +1372,7 @@ export interface IStorageProvider {
 - [ ] Visual polish: consistent theming, proper spacing, class-based colors
 - [ ] Error handling: graceful behavior when vault is unavailable
 - [ ] Error handling: graceful behavior when files are corrupted
+- [ ] **Error boundaries:** Add React error boundaries on all screens and a global unhandled error handler. On crash: show toast notification with error summary, log to console, and attempt graceful state recovery.
 - [ ] Performance: quest list with 50+ quests scrolls smoothly
 - [ ] Build standalone APK for Android: `npx eas build --platform android --profile preview`
 - [ ] Build standalone IPA for iOS (if Mac available): `npx eas build --platform ios --profile preview`
@@ -1156,12 +1392,15 @@ export interface IStorageProvider {
 > [!IMPORTANT]
 > Widgets require a **dev client build** (not Expo Go). You'll need Android Studio installed to test widgets. This is a step up from Expo Go development.
 
+> [!NOTE]
+> **Decision checkpoint:** Before starting this phase, check the status of `expo-widgets`. As of April 2026 it's alpha with stable targeting mid-2026. If it has gone stable by the time you reach this phase, consider using `expo-widgets` for **both** Android and iOS instead of `react-native-android-widget` (Android) + `expo-widgets` (iOS). Single library, single API, Expo-maintained.
+
 **Shared widget infrastructure:**
-- [ ] Install `react-native-android-widget` with Expo config plugin
+- [ ] Install `react-native-android-widget` with Expo config plugin (or `expo-widgets` if stable — see decision checkpoint above)
 - [ ] Create `WidgetDataProvider` service that reads quest files and formats data for widgets
 - [ ] Create `WidgetUpdateService` that refreshes widget data after task changes in the app
 - [ ] Handle edge cases: quest deleted, vault unavailable, no quests match
-- [ ] Configure React Navigation deep linking for `quest-board://quest/{questId}`
+- [ ] Configure Expo Router deep linking for `quest-board://quest/{questId}` (zero-config with file-based routes)
 
 **Single Quest Widget (medium size):**
 - [ ] Build widget layout showing:
@@ -1214,7 +1453,7 @@ export interface IStorageProvider {
 - Tapping quest title generates correct deep link URL
 - Widgets gracefully handle deleted/missing quest files
 
-**Command:** `cd packages/mobile && npx jest`
+**Command:** `cd packages/mobile && npx vitest run`
 
 ---
 
@@ -1252,7 +1491,7 @@ export interface IStorageProvider {
 - [ ] Test iOS-specific deep link handling
 - [ ] Manual testing on physical iOS device (if available)
 
-**Command:** `cd packages/mobile && npx jest`
+**Command:** `cd packages/mobile && npx vitest run`
 
 ---
 
@@ -1260,10 +1499,14 @@ export interface IStorageProvider {
 
 | Phase | Title | Effort | Depends On | Est. Time |
 |-------|-------|--------|------------|-----------|
+| **Pre-Migration** | | | | |
+| Session A | React 18 → 19 upgrade | Small-Medium | — | 1.5–2h |
+| Session B | Zustand 4 → 5 upgrade | Small-Medium | Session A | 1.5–2h |
+| | **Pre-Migration Subtotal** | | | **~3–4h** |
 | **Part A: Monorepo Migration** | | | | |
-| 0 + 0.5 | Monorepo scaffolding + verify | Small | — | 1.5–2h |
+| 0 + 0.5 | Monorepo scaffolding + verify | Small | Sessions A+B | 1.5–2h |
 | 1 + 1.5 | Zero-risk file migration + tests | Medium | Phase 0 | 2.5–3.5h |
-| 2a | Abstraction interfaces (8 files) | Small | Phase 1 | 1–1.5h |
+| 2a | Abstraction interfaces (10 files) + FrontmatterUtils | Small-Medium | Phase 1 | 1.5–2h |
 | 2b + 2.5 | Pure services + store abstractions + tests | Medium | Phase 2a | 3–4h |
 | 3a | Trivial service swaps (3 files, 676 LOC) | Small | Phase 2b | 1–1.5h |
 | 3b | IHttpClient services (4 files, 1,961 LOC) | Medium | Phase 3a | 1.5–2h |
@@ -1276,9 +1519,10 @@ export interface IStorageProvider {
 | 4b | File moves + import cutover | Large | Phase 4a | 2–2.5h |
 | 4.5 | Tests: build cutover + smoke test | Medium | Phase 4b | 1.5–2h |
 | 5 + 5.5 | Portable utils migration + tests | Small-Medium | Phase 4b | 2–2.5h |
-| | **Part A Subtotal** | | | **~24–32h** |
+| 5b + 5.5b | CharacterChangeEngine + tests | Medium | Phase 5 | 5–6.5h |
+| | **Part A Subtotal** | | | **~29–38.5h** |
 | **Part B: React Native App** | | | | |
-| 6 | RN environment setup | Medium | Phase 5 | 2–2.5h |
+| 6 | RN environment setup | Medium | Phase 5b | 2–2.5h |
 | 6.5 | Visual prototype | Medium | Phase 6 | 2–2.5h |
 | 7a | Core mobile adapters | Medium | Phase 6 | 1.5–2h |
 | 7b | Vault access + folder picker | Medium | Phase 7a | 1.5–2h |
@@ -1298,13 +1542,14 @@ export interface IStorageProvider {
 | 12b.5 | Tests: iOS widgets | Small | Phase 12b | 0.5–1h |
 | | **Part B Subtotal** | | | **~30–39h** |
 | | | | | |
-| | **TOTAL** | | | **~54–71h** |
+| | **TOTAL** | | | **~62–81.5h** |
 
 **Execution order:** Strictly sequential (each phase depends on the prior one). Phase 12b (iOS widgets) is optional and can be skipped.
 
-**Part A estimated sessions:** ~15 sessions at ~2 hours each.
+**Pre-migration estimated sessions:** 2 sessions at ~2 hours each.
+**Part A estimated sessions:** ~18 sessions at ~2 hours each (includes CharacterChangeEngine phases + likely overruns on Phase 3 sub-phases).
 **Part B estimated sessions:** ~16 sessions at ~2 hours each (14 if skipping iOS widgets).
-**Total estimated sessions:** ~31 sessions (~29 without iOS widgets).
+**Total estimated sessions:** ~36 sessions (~34 without iOS widgets).
 
 ---
 
@@ -1317,13 +1562,23 @@ Both the Obsidian plugin and the mobile app operate on the same vault files:
 ```
 Vault Root/
 ├── Quest Board/
-│   └── quests/
-│       ├── quest-1.md          ← Both platforms read/write these
-│       ├── quest-2.md
-│       └── ...
-├── data.json                   ← Plugin settings, character, achievements
+│   ├── quests/
+│   │   ├── quest-1.md          ← Both platforms read/write these
+│   │   ├── quest-2.md
+│   │   └── ...
+│   └── sync/
+│       ├── baseline-{timestamp}.json  ← Character snapshot (written by either platform during compaction)
+│       ├── changelog-obsidian.jsonl   ← Written by Obsidian only
+│       └── changelog-mobile.jsonl     ← Written by mobile only
+├── .obsidian/
+│   └── plugins/
+│       └── quest-board/
+│           └── data.json       ← Obsidian plugin settings (internal, NOT read by mobile)
 └── ...                         ← Other vault files (untouched by mobile)
 ```
+
+> [!NOTE]
+> The mobile app **never** reads `.obsidian/plugins/quest-board/data.json` directly. Character state is synced via the `baseline-{timestamp}.json` snapshot file in `Quest Board/sync/`, which the Obsidian plugin exports on save and on unload. This avoids reliance on Obsidian's internal file structure.
 
 ### Quest Files (Markdown + YAML Frontmatter)
 
@@ -1334,25 +1589,58 @@ Quest files are the source of truth. Both platforms:
 
 This format is already platform-agnostic. No conversion needed.
 
-### Character Data (data.json)
+### Character Data (baseline + event log)
 
-The Obsidian plugin stores character state, settings, achievements, and inventory in `data.json` via Obsidian's `loadData()`/`saveData()`. The mobile app needs to:
-1. Read `data.json` from the vault for initial character sync
-2. Write character changes back to `data.json`
-3. Handle the case where both platforms have written different character states
+The Obsidian plugin stores character state, settings, achievements, and inventory in `.obsidian/plugins/quest-board/data.json` via Obsidian's `loadData()`/`saveData()`. The plugin also exports a baseline snapshot to `Quest Board/sync/baseline-{timestamp}.json` on save and on unload. The mobile app needs to:
+1. Read the latest `baseline-{timestamp}.json` from `Quest Board/sync/` for initial character state
+2. Apply any character changes via the event log (see below)
+3. Never read or write `.obsidian/plugins/quest-board/data.json` — all character sync flows through the baseline + event log
+
+### Character Change Engine (Event Log)
+
+Each platform writes character changes as **append-only events** to its own changelog file in `Quest Board/sync/`. Each line is a JSON event:
+
+```jsonl
+# changelog-obsidian.jsonl:
+{"ts":"2026-04-05T14:30:00Z","src":"obsidian","type":"xp_gained","data":{"amount":50,"source":"quest-complete"}}
+{"ts":"2026-04-05T14:32:00Z","src":"obsidian","type":"achievement_unlocked","data":{"id":"first-blood"}}
+
+# changelog-mobile.jsonl:
+{"ts":"2026-04-05T14:31:00Z","src":"mobile","type":"gear_equipped","data":{"slot":"weapon","gearId":"iron-sword-abc"}}
+```
+
+**Event types:** `xp_gained`, `level_up`, `gear_equipped`, `gear_unequipped`, `gear_smelted`, `achievement_unlocked`, `title_equipped`, `consumable_used`, `skill_equipped`, `stat_modified`, `gold_changed`, `streak_updated`, `power_up_granted`, `combat_result`, `inventory_changed`
+
+**How it works:**
+1. Both platforms read the latest `baseline-{timestamp}.json` from `Quest Board/sync/` for the baseline character state
+2. Both platforms read **both** changelog files and merge events by timestamp, replaying those newer than the baseline's timestamp
+3. When a platform makes a change, it appends to **its own** changelog file (with monotonic `seq` number) AND updates its local state
+4. Each changelog is **append-only** and platform-exclusive — cloud sync simply propagates each file independently (no write conflicts possible)
+5. On startup/focus, sort merged events by timestamp and replay to derive current state
+
+**Changelog management:**
+- The changelogs are periodically compacted: once combined entries exceed 500, the platform writes a new `baseline-{timestamp}.json` snapshot and removes only events from **its own** changelog file that predate the baseline. Never truncate or write to the other platform's file.
+- A `CharacterChangeEngine` service in `@quest-board/core` (built in Phase 5b) handles event creation, replay, and compaction
+- Both platforms use the same engine, ensuring consistent state derivation
+- The replay function must be **idempotent** — replaying the same events twice produces the same result. The `seq` field enables gap detection and deduplication.
+
+> [!NOTE]
+> This pattern is essentially **event sourcing**. The changelog also provides a natural activity history for free, potentially replacing or augmenting the existing `activityHistory` array in the Character schema.
 
 ### Sync Approach
 
 - **Cloud provider handles file sync.** We don't build sync logic — we trust Google Drive, iCloud, or whatever provider to sync files between devices.
-- **Conflict resolution: last write wins.** Simple but effective for single-user personal use.
-- **Refresh on app focus.** When the mobile app comes to the foreground, re-read quest files and `data.json` to pick up desktop changes.
+- **Quest conflict resolution: last write wins.** Simple but effective for single-user personal use. Quest files are individual markdown files, so conflicts only affect one quest at a time.
+- **Character conflict resolution: per-platform event logs.** Character data uses per-platform append-only changelogs (`changelog-obsidian.jsonl` and `changelog-mobile.jsonl`). Each platform only writes to its own file; conflicts are impossible because cloud sync handles each file independently. Events from both files are merged by timestamp to derive current state.
+- **Refresh on app focus.** When the mobile app comes to the foreground, re-read quest files and replay new changelog events to pick up desktop changes.
 - **No real-time sync.** Changes propagate when the cloud provider syncs (typically seconds to minutes).
+- **Offline operation.** Both platforms can operate fully offline. Quest file conflicts resolve via last-write-wins when cloud sync resumes. Character events from both platforms merge by timestamp when both changelogs sync — no events are lost because each platform writes to its own file. Events created offline may have overlapping timestamps with the other platform's events; this is handled correctly by the merge (both sets of events are applied).
 
 ### Provider-Specific Notes
 
 | Provider | Android Access | iOS Access | Notes |
 |----------|---------------|------------|-------|
-| Google Drive | SAF (Storage Access Framework) or Google Drive API | Google Drive app folder sync | Production vault is already on Google Drive |
+| Google Drive | SAF via `expo-file-system` (SDK 55) + `expo-document-picker` | Google Drive app folder sync | Production vault is already on Google Drive |
 | iCloud | Not available on Android | `expo-file-system` iCloud container | iOS-only |
 | Obsidian Sync | Not accessible outside Obsidian | Not accessible outside Obsidian | **Not viable** for mobile app |
 | Local folder | Direct file access | Direct file access | Manual sync (USB/airdrop) |
@@ -1365,9 +1653,10 @@ The Obsidian plugin stores character state, settings, achievements, and inventor
 ## Security & Validation
 
 - **API keys** — If the mobile app supports AI features (Gemini), the API key is stored in the app's secure storage (`expo-secure-store`), NOT in vault files. Same security model as the Obsidian plugin (keys in settings, not in vault).
-- **Input sanitization** — The core package includes `sanitizer.ts` (DOMPurify). React Native doesn't render HTML, so XSS is less of a concern, but sanitization still applies to any rendered text from quest files.
-- **Path validation** — The core `IFileSystem` interface includes `normalizePath()`. Mobile adapters must validate that all file operations stay within the configured vault directory (no path traversal).
-- **Safe JSON** — `safeJson.ts` from core prevents prototype pollution when parsing quest files or `data.json`.
+- **Input sanitization** — Platform-specific strategy: Core package includes `sanitizeText()` using the `striptags` npm package (~2KB, zero deps, reliable HTML stripping without DOMPurify). The Obsidian package keeps `sanitizeHtml()` with DOMPurify for contexts that render HTML. React Native doesn't render HTML, so XSS via HTML injection is not a relevant attack vector on mobile.
+- **Path validation** — The core `IFileSystem` interface includes `normalizePath()`. Mobile adapters must validate that all file operations stay within the configured vault directory (no path traversal). On Android, SAF URIs provide built-in sandboxing.
+- **Safe JSON** — `safeJson.ts` from core prevents prototype pollution when parsing quest files or character data.
+- **Event log integrity** — Each changelog event includes a source identifier, ISO timestamp, and monotonic sequence number. The `CharacterChangeEngine` validates events during replay, detects gaps via sequence numbers, and skips malformed entries.
 
 ---
 
@@ -1385,21 +1674,28 @@ The Obsidian plugin stores character state, settings, achievements, and inventor
 
 ### Part A (Monorepo Migration)
 
-**Before Phase 4 (cutover):** Zero risk. The original `src/` files are untouched. To rollback, simply delete the `packages/` directory and the workspace config from root `package.json`.
+**Before Phase 4 (cutover):** Zero risk. The original `src/` files are untouched. To rollback, simply delete the `packages/` directory and revert `pnpm-workspace.yaml`.
 
 **After Phase 4 (cutover):** This is a significant change. To rollback:
 1. Revert the git commit(s) from Phase 4
-2. Run `npm install` to restore original dependency structure
-3. Verify `npm run build` works
+2. Run `pnpm install` to restore original dependency structure
+3. Verify `pnpm run build` works
 
 > [!TIP]
-> Create a git branch (e.g., `feat/monorepo-migration`) before Phase 4. If the cutover goes badly, `git checkout main` restores everything instantly.
+> **Recommended git branching strategy:**
+> - **Phases 0–3:** Work on `feat/monorepo-core-extraction`. These phases only ADD files to `packages/core/` — the existing `src/` is untouched. Safe to merge to `main` incrementally after each phase. Hotfixes can be done on `main` and merged forward.
+> - **Phase 4 (cutover):** Create `feat/monorepo-cutover` from `main` (with Phases 0–3 merged). This is the "point of no return" where `src/` moves to `packages/obsidian/`. If you need to hotfix during this phase, fix on `main` (which still has old `src/`), deploy, then merge forward.
+> - **Phases 6–12 (mobile):** Work on `feat/mobile-app` or directly on `main`. The mobile app is additive (`packages/mobile/`) with zero impact on the Obsidian plugin.
+>
+> **Key insight:** Phases 0–3 are additive and can merge to `main` incrementally. Only Phase 4 is the structural break. You're never stuck in a situation where you can't ship.
+>
+> **Sprint strategy:** Part A (Phases 0–5b) is intended to be executed as a focused sprint without interleaving unrelated bug fixes. This minimizes drift between `src/` originals and `packages/core/` copies during the dual-existence period (Phases 1–3). Part B (Phases 6–12) can be developed more gradually.
 
 ### Part B (React Native App)
 
 The mobile app is entirely self-contained in `packages/mobile/`. To remove it:
 1. Delete `packages/mobile/`
-2. Remove the workspace entry from root `package.json`
+2. Remove the workspace entry from `pnpm-workspace.yaml`
 
 No impact on the Obsidian plugin.
 
@@ -1411,22 +1707,30 @@ No impact on the Obsidian plugin.
 
 | Decision | Chosen | Alternative Considered | Why |
 |----------|--------|----------------------|-----|
-| Monorepo tool | npm workspaces | pnpm, yarn, Turborepo | Already using npm; simplest option; 3 packages doesn't need orchestration |
-| React Native framework | Expo | Bare RN CLI | Simpler setup; Expo Go for testing; EAS for builds; file system API available |
+| Monorepo tool | pnpm workspaces | npm, yarn, Turborepo | Dominant in Expo ecosystem; `workspace:*` protocol; better Metro symlink handling; official expo-monorepo-example uses pnpm |
+| React Native framework | Expo | Bare RN CLI | Simpler setup; EAS for builds; file system API available |
 | Mobile UI framework | React Native core | NativeBase, Tamagui, React Native Paper | Fewer dependencies; full control over RPG theming; core components sufficient |
-| Data sync | Shared vault files | Custom backend, Firebase, Supabase | No server to maintain; single source of truth; already works with cloud storage |
+| Data sync | Shared vault files + event log | Custom backend, Firebase, Supabase | No server to maintain; single source of truth; already works with cloud storage |
+| Character conflict resolution | Append-only event log with baseline snapshots | Last-write-wins, field-level merge, CRDT | Append-only files can't conflict; baseline snapshots replace direct data.json reads; natural activity history; event sourcing is well-understood |
 | State management | Zustand (shared from core) | Redux, MobX, React Context | Already using Zustand; works outside React; shared store definitions |
-| Navigation | React Navigation | Expo Router | More mature; better TypeScript support; stack + tab patterns well-documented |
+| Navigation | Expo Router | Raw React Navigation, `@react-navigation/stack` (JS-based) | Expo Router is Expo's default recommendation as of SDK 55, built on React Navigation (superset). Provides file-based routing, typed routes, zero-config deep linking (simplifies widget deep linking in Phase 12a). |
+| Android vault access | SAF via `expo-file-system` built-in (SDK 55) + `expo-document-picker` | `react-native-saf-x` (stale, 2+ yrs), Google Drive API | Android 11+ requires SAF; `expo-file-system` SDK 55 supports SAF URIs natively in `File`/`Directory` classes, no third-party library needed |
+| Date library | date-fns | moment.js, Intl.DateTimeFormat | Tree-shakeable, lightweight, no global injection needed (moment is ~300KB) |
+| Frontmatter parsing | `js-yaml` + custom `FrontmatterUtils` (~50 lines) | gray-matter, hand-rolled parser | gray-matter imports Node.js `fs` internally — Metro/Hermes compatibility risk. `js-yaml` is pure JS, ~25KB, zero Node deps. Custom wrapper handles `---` delimiters + YAML parse/serialize. |
+| HTML sanitization | Platform-specific (DOMPurify on Obsidian, `striptags` on core/mobile) | DOMPurify everywhere with jsdom polyfill | jsdom is ~2MB, not justified for React Native which doesn't render HTML. `striptags` is ~2KB, zero deps, more reliable than regex |
+| Frontmatter parsing | `js-yaml` + custom `FrontmatterUtils` (~50 lines) | `gray-matter` | gray-matter imports Node.js `fs` internally; Metro bundler may not respect its `browser` field, causing Hermes build failures. `js-yaml` is pure JS with zero Node deps |
 
 ### Known Limitations Accepted
 
 | Limitation | Why Accepted |
 |------------|-------------|
-| Last-write-wins conflict resolution | Single user, personal use. Unlikely to edit same quest simultaneously on both devices. |
+| Quest files use last-write-wins | Single user, personal use. Unlikely to edit same quest simultaneously on both devices. Character data uses event log instead. |
 | No real-time sync | Cloud providers sync within seconds-minutes. Acceptable for task tracking. |
 | No dungeon exploration on mobile | Complex tile-based UI. Can add later. Core dungeon logic is shared if needed. |
 | No AI features on mobile initially | Requires API key management. Can add later since core AI services are shared. |
 | Limited file watching on mobile | Mobile apps can't watch files in background efficiently. Poll on app focus instead. |
+| Dev client may be required from Phase 7b | Widgets need native modules. SAF now works via `expo-file-system` built-in (SDK 55) which may not require dev client. Verify at implementation time. |
+| Obsidian Mobile may run alongside Quest Board mobile app | The event log system is designed for concurrent writes — each platform appends to its own changelog file, so no conflicts are possible for character data. Quest files use last-write-wins. The only data-loss scenario is editing the **same quest** from both Obsidian Mobile and the Quest Board app within the cloud sync window (seconds). Avoid editing quests from Obsidian Mobile while the Quest Board app is active. If this proves insufficient in practice, add a lock-file mechanism to warn users of concurrent access. |
 
 ---
 
@@ -1462,7 +1766,7 @@ No impact on the Obsidian plugin.
 | Smelting | Gear smelted correctly | |
 | Achievements | Track and unlock correctly | |
 | Recurring quests generate | On schedule, correct content | |
-| Deploy to test vault | `npm run deploy:test` works | |
+| Deploy to test vault | `pnpm run deploy:test` works | |
 
 ### Manual Tests — Mobile App
 
@@ -1495,7 +1799,9 @@ No impact on the Obsidian plugin.
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `package.json` (root) | [MODIFY] | Add `workspaces` config |
+| `pnpm-workspace.yaml` | [NEW] | pnpm workspace config |
+| `package.json` (root) | [MODIFY] | Remove npm `workspaces` field (if present), update scripts for pnpm |
+| `.gitignore` | [MODIFY] | Add monorepo paths (`packages/*/node_modules/`, `packages/*/dist/`, `packages/mobile/.expo/`, etc.) |
 | `packages/core/package.json` | [NEW] | Core package config |
 | `packages/core/tsconfig.json` | [NEW] | Core TypeScript config |
 | `packages/core/src/index.ts` | [NEW] | Barrel export |
@@ -1504,26 +1810,30 @@ No impact on the Obsidian plugin.
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `packages/core/src/models/*.ts` (12 files) | [NEW] | Copy models to core |
+| `packages/core/src/models/*.ts` (14 files) | [NEW] | Copy models to core (includes Title.ts, index.ts) |
 | `packages/core/src/data/*.ts` (13 files) | [NEW] | Copy static data to core |
 | `packages/core/src/config/combatConfig.ts` | [NEW] | Copy config to core |
 | `packages/core/src/utils/*.ts` (5 files) | [NEW] | Copy pure utils to core |
 | `packages/core/src/store/*.ts` (6 files) | [NEW] | Copy pure stores to core |
 
-### Phase 2a: Abstraction Interfaces
+### Phase 2a: Abstraction Interfaces + FrontmatterUtils
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `packages/core/src/interfaces/*.ts` (9 files) | [NEW] | Abstraction interfaces |
+| `packages/core/src/interfaces/*.ts` (11 files) | [NEW] | Abstraction interfaces (includes ISaveCallback, ILevelUpCallback, IPluginDataStore) |
+| `packages/core/src/utils/FrontmatterUtils.ts` | [NEW] | Cross-platform frontmatter parsing with js-yaml |
 
 ### Phase 2b: Pure Services + Store Abstractions
 
 | File | Action | Purpose |
 |------|--------|---------|
 | `packages/core/src/models/Gear.ts` | [NEW] | Copy with UUID abstraction |
-| `packages/core/src/services/*.ts` (20 files) | [NEW] | Copy pure services |
-| `packages/core/src/store/battleStore.ts` | [NEW] | Copy with storage abstraction |
-| `packages/core/src/store/dungeonStore.ts` | [NEW] | Copy with UUID abstraction |
+| `packages/core/src/services/*.ts` (21 files) | [NEW] | Copy pure services (includes TitleService.ts) |
+| `packages/core/src/utils/generateId.ts` | [NEW] | Shared UUID utility (crypto.randomUUID or fallback) |
+| `packages/core/src/store/*.ts` (8 files) | [NEW] | All stores converted from `create()` to `createStore()` (zustand/vanilla) |
+| `packages/core/src/store/battleStore.ts` | [NEW] | Additionally: storage abstraction via `IStorageProvider` |
+| `packages/core/src/store/dungeonStore.ts` | [NEW] | Additionally: UUID abstraction via `generateId()` |
+| `packages/obsidian/src/hooks/stores.ts` | [NEW] | React wrapper hooks using `useStore(vanillaStore, selector)` |
 
 ### Phases 3a–3e: Abstractable Services
 
@@ -1539,7 +1849,7 @@ No impact on the Obsidian plugin.
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `packages/obsidian/src/adapters/*.ts` (6 files) | [NEW] | Obsidian interface implementations |
+| `packages/obsidian/src/adapters/*.ts` (8 files) | [NEW] | Obsidian interface implementations (includes ObsidianSaveCallback, ObsidianLevelUpCallback) |
 
 ### Phase 4b: File Moves + Import Cutover
 
@@ -1553,9 +1863,29 @@ No impact on the Obsidian plugin.
 | `packages/obsidian/src/styles/*.css` (15 files) | [MOVE] | From `src/styles/` |
 | `packages/obsidian/src/settings.ts` | [MOVE] | From `src/settings.ts` |
 | `packages/obsidian/src/utils/*.ts` (3 files) | [MOVE] | Obsidian-specific utils |
+| `packages/obsidian/src/services/*.ts` (3 files) | [MOVE] | Obsidian-only: CharacterExportService, StatusBarService, BuffStatusProvider |
 | `packages/obsidian/esbuild.config.mjs` | [MOVE] | From root |
 | `packages/obsidian/postcss.config.cjs` | [MOVE] | From root |
 | `src/` (entire directory) | [DELETE] | Replaced by packages |
+
+### Phase 5: Portable Utils Migration
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `packages/core/src/utils/validator.ts` | [NEW] | Validation rules extracted from mixed util |
+| `packages/core/src/utils/pathValidator.ts` | [NEW] | Path logic extracted |
+| `packages/core/src/utils/columnMigration.ts` | [NEW] | Migration logic extracted |
+| `packages/core/src/utils/gearFormatters.ts` | [NEW] | Data model only (stat labels, tier colors, effect data) |
+| `packages/core/src/utils/sanitizeText.ts` | [NEW] | HTML stripping via `striptags` package (no DOMPurify) |
+| `packages/obsidian/src/utils/sanitizer.ts` | [MODIFY] | Keeps sanitizeHtml() with DOMPurify |
+
+### Phase 5b: CharacterChangeEngine
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `packages/core/src/models/CharacterChangeEvent.ts` | [NEW] | Event type definitions (15 types) |
+| `packages/core/src/services/CharacterChangeEngine.ts` | [NEW] | Event append, replay, merge, compaction |
+| `packages/obsidian/src/hooks/useSaveCharacter.ts` | [MODIFY] | Add changelog event appending |
 
 ### Phase 6: RN Setup + Phase 6.5: Visual Prototype
 
@@ -1566,7 +1896,7 @@ No impact on the Obsidian plugin.
 | `packages/mobile/src/screens/QuestDetailScreen.tsx` | [NEW] | Prototype quest detail with fake data |
 | `packages/mobile/src/components/QuestCard.tsx` | [NEW] | Prototype quest card component |
 | `packages/mobile/src/components/CharacterHeader.tsx` | [NEW] | Prototype character stats header |
-| `packages/mobile/src/navigation/` | [NEW] | React Navigation config |
+| `packages/mobile/app/` | [NEW] | Expo Router file-based routes |
 | `packages/mobile/src/theme/` | [NEW] | RPG color theme |
 
 ### Phase 7a: Core Mobile Adapters
@@ -1576,7 +1906,7 @@ No impact on the Obsidian plugin.
 | `packages/mobile/src/adapters/MobileFileSystem.ts` | [NEW] | IFileSystem via expo-file-system |
 | `packages/mobile/src/adapters/MobileHttpClient.ts` | [NEW] | IHttpClient via fetch |
 | `packages/mobile/src/adapters/MobileNotification.ts` | [NEW] | INotification via Alert/toast |
-| `packages/mobile/src/adapters/MobileDataStore.ts` | [NEW] | IDataStore via AsyncStorage |
+| `packages/mobile/src/adapters/MobileDataStore.ts` | [NEW] | IPluginDataStore via AsyncStorage + vault data.json |
 | `packages/mobile/src/adapters/MobileAssetResolver.ts` | [NEW] | IAssetResolver for mobile sprites |
 
 ### Phase 7b: Vault Access + Folder Picker
@@ -1646,5 +1976,11 @@ No impact on the Obsidian plugin.
 
 **This plan is complete and ready for review.** When Brad is ready to begin implementation (after completing 4 queued features):
 
-> **Next session prompt:**
-> "Let's start the monorepo migration. We're beginning Phase 0 from the Mobile App Implementation Plan. Read the plan at `docs/development/feature-planning/brainstorming/Mobile App Implementation Plan.md` and the companion session log at `docs/development/Mobile App Session Log.md`. Set up the npm workspace structure in `packages/` without touching any existing source code."
+> **Pre-migration prep session A prompt:**
+> "Before starting the monorepo migration, we need to upgrade React 18→19 in the existing plugin. Upgrade `react`, `react-dom`, and `@types/react`/`@types/react-dom` in `package.json`. Fix any type errors (JSX namespace changes, forwardRef removal if used). Verify the build passes and the plugin works in the test vault."
+>
+> **Pre-migration prep session B prompt:**
+> "We need to upgrade Zustand 4→5 in the existing plugin. Upgrade `zustand` in `package.json`. Check for breaking changes (persistence default behavior changed in 4.5.5+). Verify all stores initialize correctly, battleStore persistence works, build passes, and tests pass."
+
+> **Phase 0 session prompt:**
+> "Let's start the monorepo migration. We're beginning Phase 0 from the Mobile App Implementation Plan. Read the plan at `docs/development/feature-planning/brainstorming/Mobile App Implementation Plan.md` and the companion session log at `docs/development/Mobile App Session Log.md`. Migrate to pnpm and set up the pnpm workspace structure in `packages/` without touching any existing source code."
